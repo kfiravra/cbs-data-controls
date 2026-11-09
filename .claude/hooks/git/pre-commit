@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# Tracked git pre-commit. Enable it once per clone; linked worktrees share the setting:
+#   git config core.hooksPath .claude/hooks/git
+# Refuses a commit whose staged service source prints to the console: Console.Write*
+# in api/, console.log in web/, print( in engine/, tests exempt (see ../print-guard.sh).
+root="$(git rev-parse --show-toplevel 2>/dev/null)" || exit 0
+CLAUDE_PROJECT_DIR="$root" exec bash "$(dirname "${BASH_SOURCE[0]}")/../print-guard.sh" --staged
