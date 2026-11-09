@@ -1,0 +1,7 @@
+dev/active/
+dev/completed/
+.env
+**/.venv/
+**/node_modules/
+**/bin/
+**/obj/
