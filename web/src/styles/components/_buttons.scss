@@ -1,0 +1,180 @@
+// One filled action per view; every other action is tonal or a text button.
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  block-size: var(--size-control);
+  padding-inline: var(--space-5);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-body);
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  text-decoration: none;
+  transition:
+    background-color var(--duration-out) var(--ease-out),
+    color var(--duration-out) var(--ease-out),
+    border-color var(--duration-out) var(--ease-out),
+    transform var(--duration-press) var(--ease-out);
+
+  &:hover {
+    transition-duration: var(--duration-in), var(--duration-in), var(--duration-in), var(--duration-press);
+  }
+
+  &:active {
+    transform: translateY(1px) scale(0.985);
+  }
+
+  .icon {
+    margin-inline-start: calc(-1 * var(--space-1));
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .btn:hover {
+    transform: translateY(-1px);
+  }
+
+  .btn:active {
+    transform: translateY(1px) scale(0.985);
+  }
+}
+
+.btn--primary {
+  background: var(--color-action);
+  color: var(--color-on-action);
+
+  &:hover {
+    background: var(--color-action-hover);
+  }
+}
+
+.btn--tonal {
+  background: var(--color-tonal);
+  color: var(--color-ink);
+
+  &:hover {
+    background: var(--color-tonal-hover);
+  }
+}
+
+.btn--text {
+  padding-inline: var(--space-2);
+  background: none;
+  color: var(--color-ink);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+  text-decoration-color: color-mix(in oklab, currentColor 40%, transparent);
+
+  &:hover {
+    text-decoration-color: currentColor;
+    transform: none;
+  }
+}
+
+.btn--sm {
+  block-size: var(--size-control-sm);
+  padding-inline: var(--space-3);
+  font-size: var(--text-small);
+}
+
+.btn--on-action {
+  background: var(--color-ground);
+  color: var(--color-ink);
+
+  &:hover {
+    background: var(--color-on-action);
+  }
+}
+
+.btn--on-action-tonal {
+  background: var(--color-on-action-tonal);
+  color: var(--color-on-action);
+
+  &:hover {
+    background: var(--color-on-action-line);
+  }
+}
+
+.btn[disabled],
+.btn[aria-disabled='true'] {
+  background: var(--color-tonal);
+  color: var(--color-muted);
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn--text[disabled] {
+  background: none;
+}
+
+.icon-btn {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  inline-size: var(--size-control);
+  block-size: var(--size-control);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--color-muted);
+  transition:
+    background-color var(--duration-out) var(--ease-out),
+    color var(--duration-out) var(--ease-out);
+
+  &:hover {
+    background: var(--color-tonal);
+    color: var(--color-ink);
+    transition-duration: var(--duration-in);
+  }
+
+  &[disabled] {
+    color: var(--color-line-strong);
+    cursor: not-allowed;
+    background: none;
+  }
+}
+
+.icon-btn--tonal {
+  background: var(--color-tonal);
+  color: var(--color-ink);
+
+  &:hover {
+    background: var(--color-tonal-hover);
+  }
+}
+
+.spinner {
+  inline-size: 16px;
+  block-size: 16px;
+  flex: none;
+  border-radius: 50%;
+  border: 2px solid color-mix(in oklab, currentColor 30%, transparent);
+  border-block-start-color: currentColor;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.link {
+  color: var(--color-action);
+  font-weight: 500;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+  text-decoration-color: color-mix(in oklab, currentColor 40%, transparent);
+  transition: text-decoration-color var(--duration-out) var(--ease-out);
+
+  &:hover {
+    text-decoration-color: currentColor;
+    transition-duration: var(--duration-in);
+  }
+}

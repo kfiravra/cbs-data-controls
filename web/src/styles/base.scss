@@ -1,0 +1,186 @@
+// Base rules and type roles. Mobile first; logical properties only, so the same rules serve any direction.
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scrollbar-color: var(--color-control-line) transparent;
+}
+
+body {
+  margin: 0;
+  background: var(--color-ground);
+  color: var(--color-ink);
+  font: 400 var(--text-body) / 1.55 var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  caret-color: var(--color-action);
+  accent-color: var(--color-ink);
+}
+
+h1,
+h2,
+h3,
+p,
+ul,
+ol,
+dl,
+dd,
+figure {
+  margin: 0;
+}
+
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+ul,
+ol {
+  padding: 0;
+  list-style: none;
+}
+
+a {
+  color: inherit;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+::selection {
+  background: color-mix(in oklab, var(--color-action) 30%, transparent);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-action);
+  outline-offset: 2px;
+  border-radius: var(--radius-xs);
+}
+
+[hidden] {
+  display: none !important;
+}
+
+.sr-only {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+.nb {
+  white-space: nowrap;
+}
+
+.muted {
+  color: var(--color-muted);
+}
+
+// type roles
+.t-page {
+  font-size: var(--text-page);
+  font-weight: 500;
+  line-height: 1.25;
+  text-wrap: balance;
+}
+
+.t-title {
+  font-size: var(--text-title);
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.t-small {
+  font-size: var(--text-small);
+  line-height: 1.5;
+}
+
+.t-label {
+  font-size: var(--text-label);
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+// icons: drawn in the colour of the text beside them
+.icon {
+  display: inline-flex;
+  flex: none;
+  inline-size: var(--size-icon);
+  block-size: var(--size-icon);
+}
+
+.icon--sm {
+  inline-size: 16px;
+  block-size: 16px;
+}
+
+.icon--lg {
+  inline-size: 24px;
+  block-size: 24px;
+}
+
+// arrows and chevrons follow the reading direction
+[dir='rtl'] .icon--dir {
+  transform: scaleX(-1);
+}
+
+.only-wide {
+  display: none;
+}
+
+@media (min-width: 640px) {
+  .only-wide {
+    display: revert;
+  }
+
+  .only-narrow {
+    display: none !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn,
+  .btn:hover,
+  .btn:active {
+    transform: none;
+  }
+
+  .btn--primary:active {
+    background: var(--color-action-pressed);
+  }
+
+  .btn--tonal:active {
+    background: var(--color-line-strong);
+  }
+
+  .skeleton,
+  .spinner,
+  .mark--changed {
+    animation: none;
+  }
+}

@@ -1,0 +1,285 @@
+// A strip of the operating grey over the table it controls; a table from 640, card rows below it.
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.toolbar__search {
+  flex: 1 1 180px;
+}
+
+.toolbar__filter {
+  flex: 0 1 auto;
+  min-inline-size: 180px;
+}
+
+.toolbar__filters {
+  display: none;
+  flex: 1 1 100%;
+  gap: var(--space-3);
+
+  &.is-open {
+    display: grid;
+  }
+}
+
+@media (min-width: 640px) {
+  .toolbar__search {
+    flex: 0 1 380px;
+  }
+
+  .toolbar__filters,
+  .toolbar__filters.is-open {
+    display: contents;
+  }
+}
+
+.table {
+  inline-size: 100%;
+  border-collapse: collapse;
+
+  thead {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--space-1) var(--space-3);
+    padding-block: var(--space-4);
+    border-block-end: 1px solid var(--color-line);
+  }
+
+  td {
+    display: block;
+    padding: 0;
+    min-inline-size: 0;
+  }
+
+  .cell-main,
+  .cell-full {
+    grid-column: 1 / -1;
+  }
+
+  .cell-end {
+    text-align: end;
+  }
+
+  .cell-result {
+    align-self: center;
+  }
+
+  .cell-actions {
+    grid-column: 2;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--space-1);
+  }
+
+  .cell-void {
+    display: none;
+  }
+}
+
+.cell-title {
+  font-weight: 500;
+  text-decoration: none;
+}
+
+a.cell-title:hover {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+}
+
+.cell-desc {
+  font-size: var(--text-small);
+  line-height: 1.5;
+  color: var(--color-muted);
+  text-wrap: pretty;
+}
+
+.cell-meta {
+  font-size: var(--text-small);
+  color: var(--color-muted);
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-small);
+  font-weight: 500;
+}
+
+.status--success {
+  color: var(--color-success);
+}
+
+.status--danger {
+  color: var(--color-danger);
+}
+
+.status--quiet {
+  color: var(--color-muted);
+  font-weight: 400;
+}
+
+.reasons {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.reason {
+  display: grid;
+  grid-template-columns: var(--size-mark) minmax(0, 1fr);
+  gap: var(--space-2);
+  align-items: start;
+  line-height: 1.6;
+
+  .mark {
+    margin-block-start: 2px;
+  }
+}
+
+.table-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-block-start: var(--space-4);
+  font-size: var(--text-small);
+  color: var(--color-muted);
+}
+
+.pager {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.th-sort {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  border: 0;
+  padding: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+}
+
+th[aria-sort='ascending'] .th-sort,
+th[aria-sort='descending'] .th-sort {
+  color: var(--color-ink);
+}
+
+@media (min-width: 640px) {
+  .table {
+    thead {
+      position: static;
+      inline-size: auto;
+      block-size: auto;
+      overflow: visible;
+      clip-path: none;
+    }
+
+    tr {
+      display: table-row;
+      padding: 0;
+    }
+
+    th,
+    td {
+      display: table-cell;
+      padding: var(--space-3);
+      text-align: start;
+      vertical-align: top;
+      border-block-end: 1px solid var(--color-line);
+    }
+
+    th {
+      padding-block: 10px;
+      font-size: var(--text-small);
+      font-weight: 500;
+      color: var(--color-muted);
+      white-space: nowrap;
+      border-block-end-color: var(--color-line-strong);
+      vertical-align: bottom;
+    }
+
+    tbody tr {
+      transition: background-color var(--duration-out) var(--ease-out);
+    }
+
+    tbody tr:hover {
+      background: var(--color-row-hover);
+    }
+
+    .cell-actions {
+      display: table-cell;
+      inline-size: 1%;
+      white-space: nowrap;
+      text-align: end;
+      padding-block: var(--space-2);
+
+      > * {
+        vertical-align: middle;
+      }
+    }
+
+    .cell-end {
+      text-align: start;
+    }
+
+    .cell-void {
+      display: table-cell;
+      color: var(--color-muted);
+    }
+
+    .cell-meta {
+      padding-block-start: 15px;
+    }
+
+    .cell-nowrap {
+      white-space: nowrap;
+    }
+
+    .col-40 {
+      inline-size: 40%;
+    }
+
+    .col-16 {
+      inline-size: 16%;
+    }
+
+    .col-18 {
+      inline-size: 18%;
+    }
+
+    .col-20 {
+      inline-size: 20%;
+    }
+
+    .col-12 {
+      inline-size: 12%;
+    }
+  }
+
+  // the table's text stays on the page's edge
+  .table-bleed {
+    margin-inline: calc(-1 * var(--space-3));
+  }
+}

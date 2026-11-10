@@ -1,14 +1,13 @@
 # dc-web notes
 
 ## State
-Phase 1 in progress (2026-11-11, unattended night run on Kfir's word). Phase 0 was done by Kfir: the worktree
-`../cbs-web` on `feat/web` is cut from main at `f9928bf`, which already holds dc-contracts (#1), `docs/design.md`
-and `docs/PRODUCT.md`; this folder came from git, `.env` and `.claude/settings.local.json` are in place.
+Phase 1 done and committed (2026-11-11, unattended night run on Kfir's word); its review is next, then phase 2.
+The dev server for the mocked specs runs on :4200 from this worktree.
 
 ## Next
-1. Phase 1: scaffold `web/`, tokens, shell, i18n, the shell spec.
-2. Phases 2 to 6 in order, each with its review, fix commit and ticks.
-3. Phase 7: write the gate specs; run them only when the api and the engine are on main.
+1. `/phase-review web` on the phase 1 commit, one `fix(web): review fixes` commit.
+2. Phase 2: reconcile with `contracts/`, core logic test-first, api layer, fixtures and routes.
+3. Phases 3 to 6 in order; phase 7 writes the gate specs and runs them only when the api and the engine are on main.
 
 ## Blockers
 - Phase 7 runs (the gate on the real stack, the pre-load, the hosted build): the api and the engine are not on
@@ -21,6 +20,23 @@ and `docs/PRODUCT.md`; this folder came from git, `.env` and `.claude/settings.l
 2. A cost line (npm install, a Playwright run, a reviewer, a critique) is written to the Log and the run starts
    at once; nothing waits for a word tonight.
 3. Phase 2's `git merge main` is a no-op: the branch was cut after dc-contracts merged.
+
+4. `vitest` is pinned to `~4.0.8` (4.0.18 installed): npm 10.9.2 crashes on the peer set of vitest 4.1.x
+   ("Cannot read properties of null (reading 'edgesOut')"), so `ng new` could not install with `^4.0.8`.
+5. `ng new` ran with `--file-name-style-guide=2016`, so files are `*.component.ts` and `*.service.ts` as Design A
+   names them; classes carry the suffix (`BannerComponent`) and a routed screen is `*.page.ts`.
+6. Specs read `contracts/` and the sources with `node:fs`. The unit-test builder bundles for the browser, so the
+   test target builds with a `testing` configuration that keeps `node:fs` and `node:path` external.
+7. The form field is 44px through `mat.form-field-overrides` (the height and padding of density -3), not through
+   a global density of -3, which would shrink every Material component.
+8. The font ships as the Hebrew and Latin subsets only (weights 400, 500, 600), as design.md says.
+9. No Material component with an `*Intl` service is used (the table foot is the app's own; no sort header, no
+   datepicker), so nothing is provided there and `he.json` has no `material` namespace.
+10. Material's select panel has no shape token: it keeps Material's 4px (design.md asks 6px). For phase 8.
+11. `npm run typecheck:e2e` type-checks the Playwright specs and the typed fixtures (Design O wants a contract
+    change to break the build; Playwright itself does not type-check). It is part of every phase gate here.
+12. The shell has no banner slot of its own: design.md puts a banner under the page head, so each screen renders
+    its banner there (`.page-banner`).
 
 ## Last reviewed
 (none)
@@ -103,3 +119,8 @@ rewrote. A review that found nothing, or did not run, is logged as that.
   questions, no stop at phase gates, decisions written here, steps that need the api or the engine wait for their
   merge, the shared SQL Server container is never touched, `contracts/` is frozen, scope is the plan as it is,
   push and PR only if the gate passes (his word given in that message), no merge. Phase 0 found done on disk.
+- 2026-11-11 cost lines, started without waiting (decision 2 above): npm install for the scaffold (316 MB after
+  the first install), Chromium headless shell 1254 for Playwright 1.65 (126 MB), `ng serve` kept running on :4200.
+- 2026-11-11 phase 1 on Fable 5.2: gate `gates/phase-1.txt` (ngc, ng lint, e2e type check, 11 unit tests, ng
+  build, print guard, `e2e/mocked/shell.spec.ts` on mobile and desktop: 4 passed). Screenshots in
+  `screenshots/phase-1/`. The Material theme compiles; no screen draws a themed field yet (phase 3 is the first).

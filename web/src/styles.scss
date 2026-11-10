@@ -1,0 +1,12 @@
+// Global styles: the tokens, the base rules, the Material theme, then the native component partials.
+@use 'styles/tokens';
+@use 'styles/base';
+@use 'styles/material-theme';
+@use 'styles/components/shell';
+@use 'styles/components/buttons';
+@use 'styles/components/fields';
+@use 'styles/components/mark';
+@use 'styles/components/tables';
+@use 'styles/components/results';
+@use 'styles/components/builder';
+@use 'styles/components/states';

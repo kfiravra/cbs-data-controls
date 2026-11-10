@@ -194,28 +194,28 @@ eight screenshots). Never read its `vendor/` or `.taste-skill/`.
 Verify: `git -C ../cbs-web status --short` prints nothing and `../cbs-web/docs/design.md` exists.
 
 ### Phase 1: workspace, tokens, shell, i18n (reads nothing from `contracts/`)
-- [ ] Say the cost first (npm install: about two minutes, about 400 MB), then scaffold from the worktree root:
+- [x] Say the cost first (npm install: about two minutes, about 400 MB), then scaffold from the worktree root:
       `ng new web --style=scss --routing --ssr=false --skip-git --package-manager=npm`. In `web/`:
       `ng add @angular/material@21`, `ng add angular-eslint@21`, `npm i @ngx-translate/core@18
       @ngx-translate/http-loader@18 @fontsource/ibm-plex-sans-hebrew`, `npm i -D @playwright/test
       @material-symbols/svg-400`, `npx playwright install chromium` (if system libraries are missing, ask Kfir to
       run the `--with-deps` form with `!`: sudo is denied here).
-- [ ] `angular.json`: `src/assets` in the build assets, `.svg` loaded as text, `proxy.conf.json` (`/api` to
+- [x] `angular.json`: `src/assets` in the build assets, `.svg` loaded as text, `proxy.conf.json` (`/api` to
       `http://localhost:5000`) on serve. `web/.gitignore`: `e2e/screenshots/`, `test-results/`,
       `playwright-report/`.
-- [ ] `eslint.config.js`: the ESLint block of `.claude/standards/linter-followups.md` (no-console, the Hebrew
+- [x] `eslint.config.js`: the ESLint block of `.claude/standards/linter-followups.md` (no-console, the Hebrew
       literal rule, the size warnings; `max-lines-per-function` off for specs).
-- [ ] Styles per Design B: tokens, base, the native component partials, the Material theme. Look up the names of
+- [x] Styles per Design B: tokens, base, the native component partials, the Material theme. Look up the names of
       `mat.theme`, `mat.theme-overrides` and the per-component `overrides` tokens through context7 before writing
       the theme. Two hours at most (Risks).
-- [ ] The font from `@fontsource/ibm-plex-sans-hebrew` (400, 500, 600) through the stylesheet; icons per Design B.
-- [ ] Language and direction per Design C: `main.ts`, `LanguageService`, `LOCALE_ID` and locale data, the translate
+- [x] The font from `@fontsource/ibm-plex-sans-hebrew` (400, 500, 600) through the stylesheet; icons per Design B.
+- [x] Language and direction per Design C: `main.ts`, `LanguageService`, `LOCALE_ID` and locale data, the translate
       providers, the plural helper, Material's Intl strings.
-- [ ] Shell: app bar (brand mark, name), page container, banner slot, the routes of Design D with
+- [x] Shell: app bar (brand mark, name), page container, banner slot, the routes of Design D with
       lazy placeholder screens and the not-found state.
-- [ ] Shared components, first group of Design I.
-- [ ] `he.json` with the keys used so far; the key guard and the style guard of Design N.
-- [ ] `playwright.config.ts` per Design O. `e2e/mocked/shell.spec.ts`: `lang` and `dir`, the
+- [x] Shared components, first group of Design I.
+- [x] `he.json` with the keys used so far; the key guard and the style guard of Design N.
+- [x] `playwright.config.ts` per Design O. `e2e/mocked/shell.spec.ts`: `lang` and `dir`, the
       font is loaded (`document.fonts.check`), no request failed, the not-found state; screenshots.
 
 Verify: `/check --tests` · `cd web && npx playwright test e2e/mocked/shell.spec.ts` (about a minute: say so first)
