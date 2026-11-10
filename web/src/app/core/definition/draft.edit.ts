@@ -1,6 +1,7 @@
 import { Glossary } from '../api/api.types';
 import { findRelationship } from '../glossary/glossary.lookups';
 import { changeField, changeMode, changeOperator } from './condition.rules';
+import { NodeInput } from './draft.check';
 import { FieldRef, GroupOp, ListValue, Quantifier, Scalar } from './definition.types';
 import {
   DraftGroup,
@@ -43,10 +44,12 @@ export interface EditContext {
   readonly ids: IdSource;
 }
 
-/** Where the keyboard focus belongs after an edit: a row, or the adders of a group. */
+/** Where the keyboard focus belongs after an edit: a row (or one input of it), or the adders of a group. */
 export interface FocusTarget {
   readonly node?: string;
   readonly group?: string;
+  /** The input of the row to focus; the row's first control when left out. */
+  readonly input?: NodeInput;
 }
 
 export interface EditResult {

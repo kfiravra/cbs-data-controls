@@ -99,7 +99,8 @@
   gap: var(--space-4);
 }
 
-.page-banner {
+// banners stand under the page head; the block takes no room while it holds none
+.page-banners:not(:empty) {
   margin-block-end: var(--space-5);
 }
 

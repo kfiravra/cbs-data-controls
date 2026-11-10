@@ -1,14 +1,14 @@
 # dc-web notes
 
 ## State
-Phase 3 done and committed (2026-11-11, unattended night run on Kfir's word). The fixes of the phase 2 review
-are the next commit, then the phase 3 review, then phase 4. Reviews run in the background while the next phase
-is built, so a review-fix commit lands after the next phase's commit. The dev server runs on :4200.
+Phase 4 done and committed (2026-11-11, unattended night run on Kfir's word). The fixes of the phase 3 review
+are the next commit, then the phase 4 review runs in the background while phase 5 is built. The dev server
+runs on :4200.
 
 ## Next
-1. `fix(web): review fixes` for the phase 2 review (findings in the Log), then `/phase-review web` on phase 3.
-2. Phase 4: the sentence field and the validate loop, load, save, save and run, archive, errors.
-3. Phases 5 and 6; phase 7 writes the gate specs and runs them only when the api and the engine are on main.
+1. `fix(web): review fixes` for the phase 3 review (findings in the Log), then `/phase-review web` on phase 4.
+2. Phase 5: the results screen (store, summary, breakdown, table, every state).
+3. Phase 6; phase 7 writes the gate specs and runs them only when the api and the engine are on main.
 
 ## Blockers
 - Phase 7 runs (the gate on the real stack, the pre-load, the hosted build): the api and the engine are not on
@@ -62,6 +62,16 @@ is built, so a review-fix commit lands after the next phase's commit. The dev se
     3 active-in-inactive-department, 4 missing-mandatory-data, 5 department-without-active-employees,
     6 inactive-ministry-salary-out-of-range): it is the one order in which "examples 2 to 5" are the heuristic
     ones. `e2e/fixtures/examples.ts` holds it as `exampleNumber(n)`.
+
+21. The editor has one route, `controls/:id`, where `new` is the id of a control that is not saved yet (Design D
+    lists `/controls/new` and `/controls/:id`; the addresses are the same). With two route entries a first save
+    would rebuild the screen; with one, the screen stays and only its address changes.
+22. An archived control opened by its address shows its name, description and sentence as text, with the banner
+    and "duplicate" (Design J: "read-only ... 'duplicate' as the one action"). The builder is not drawn disabled.
+23. "Try again" on a failure banner of the editor reads again what could not be read (the control, the
+    glossary), and otherwise asks the engine for the sentence again; a failed save is retried with Save.
+24. After a save that is followed by a run that does not start, the control stays saved, the address becomes
+    the control's, and the failure is the banner.
 
 ## Reconciliation with `contracts/` (phase 2, 2026-11-11)
 Read: `api.md`, `errors.md`, `glossary.json`, `control-definition.schema.json`, the six examples and the thirteen
@@ -220,3 +230,12 @@ rewrote. A review that found nothing, or did not run, is logged as that.
   Left: no test at a clock change (the spec cannot set the zone of the machine); `ControlVersionSummary` is not
   mirrored because no screen reads the version list (the health shape comes with the gate fixture in phase 7);
   no `unit(field)` accessor, since it would only return `field.unit`.
+- 2026-11-11 phase 4 on Fable 5.2: gate `gates/phase-4.txt` (ngc, ng lint, e2e type check, 196 unit tests in 23
+  files, ng build, print guard, `e2e/mocked` on mobile and desktop: 60 passed). `editor.store.spec.ts` holds the
+  validate loop (nothing sent for an unfinished draft, 400ms, an older request cancelled, no dimming while
+  waiting), the save states and the §13 test of errors to rows; it found one defect before the commit (a reload
+  after a conflict did not ask for the sentence again). `editor.spec.ts` covers new, stored, unfinished, a 422 on
+  a row, conflict, outdated on load, engine down, glossary down, archive, an archived control, duplicate, the
+  root change with its undo, the trace and `beforeunload`. From here `builder.spec.ts` compares the definition
+  the editor validates with the example's, node for node. Screenshots in `screenshots/phase-4/`. The stale
+  token is white at 72% (`#ffffffb8`), measured 4.86:1 on Action. No cut taken: the settle is built.

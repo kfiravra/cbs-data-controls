@@ -14,6 +14,7 @@
   <app-field-picker
     class="cond__field"
     data-focus="first"
+    data-input="left"
     [groups]="groups()"
     [value]="condition().left"
     [label]="'editor.field.label' | translate"
@@ -22,6 +23,7 @@
   />
   <app-operator-picker
     class="cond__op"
+    data-input="operator"
     [operators]="operators()"
     [fieldType]="field()?.type"
     [rightIsField]="condition().mode === 'field'"
@@ -29,7 +31,7 @@
     [invalid]="hasFault('operator')"
     (pick)="emit({ kind: 'operator', id: condition().id, operator: $event })"
   />
-  <div class="cond__value" [class.cond__value--bare]="comparable().length === 0">
+  <div class="cond__value" data-input="value values right" [class.cond__value--bare]="comparable().length === 0">
     <app-value-input
       [condition]="condition()"
       [field]="field()"

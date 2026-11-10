@@ -276,19 +276,19 @@ Review: `/phase-review web`
 Commit: `feat(web): condition builder from the glossary`
 
 ### Phase 4: editor: sentence, save, run, errors
-- [ ] Sentence field: the parts with their marks, the validate loop of Design J, the stale state, the first-time
+- [x] Sentence field: the parts with their marks, the validate loop of Design J, the stale state, the first-time
       hint, the status line, `aria-live`.
-- [ ] The trace across row and clause. The settle when a clause changes (cut 2).
-- [ ] Load (an existing control, a new one, `?from=<id>`, a suggestion in router state), the details fields, save,
+- [x] The trace across row and clause. The settle when a clause changes (cut 2).
+- [x] Load (an existing control, a new one, `?from=<id>`, a suggestion in router state), the details fields, save,
       save and run, cancel, archive with the confirm dialog, the toasts.
-- [ ] Errors: client issues on save, 422 mapped to rows and inputs, the conflict banner with its reload, an outdated
+- [x] Errors: client issues on save, 422 mapped to rows and inputs, the conflict banner with its reload, an outdated
       definition on load, the engine down.
-- [ ] A root entity change clears the tree with an Undo toast; `beforeunload` while the draft is dirty.
-- [ ] Specs: validation errors map to rows (the §13 test); the validate loop (no request for an incomplete draft,
+- [x] A root entity change clears the tree with an Undo toast; `beforeunload` while the draft is dirty.
+- [x] Specs: validation errors map to rows (the §13 test); the validate loop (no request for an incomplete draft,
       stale while incomplete, an older answer never replaces a newer one); the save states.
-- [ ] `e2e/mocked/editor.spec.ts`: new, existing, incomplete, 422 on a row, conflict, outdated, engine down;
+- [x] `e2e/mocked/editor.spec.ts`: new, existing, incomplete, 422 on a row, conflict, outdated, engine down;
       screenshots.
-- [ ] `docs/design.md`: Rule sentence (the stale form replaces the open clause), the stale token with its measured
+- [x] `docs/design.md`: Rule sentence (the stale form replaces the open clause), the stale token with its measured
       contrast (at least 4.5:1 on Action; white at 72% measured about 4.8 in planning, re-measure), the settle's
       trigger, and the closing paragraph on what the contracts now provide.
 

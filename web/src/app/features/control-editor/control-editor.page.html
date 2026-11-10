@@ -1,51 +1,208 @@
-<app-page-head [title]="(id() ? 'editor.titleEdit' : 'editor.titleNew') | translate" [back]="true" />
+@if (store.loadState() === 'notFound') {
+  <app-not-found />
+} @else {
+  <app-page-head [title]="title() | translate" [meta]="meta()" [back]="true">
+    @if (store.control() && !store.archived()) {
+      <button class="btn btn--text" type="button" data-testid="archive" [disabled]="busy()" (click)="archive()">
+        <app-icon name="archive" />{{ 'editor.archive.action' | translate }}
+      </button>
+    }
+  </app-page-head>
 
-@if (store.glossaryError(); as error) {
-  <app-error-banner class="page-banner" [error]="error" (retry)="retry()" />
-}
-
-<div class="editor">
-  <div class="editor__main">
-    <section aria-labelledby="s-root">
-      <div class="section__head">
-        <h2 class="t-title" id="s-root">{{ 'editor.root.title' | translate }}</h2>
-        <p class="muted t-small">{{ 'editor.root.hint' | translate }}</p>
-      </div>
-      @if (store.map(); as map) {
-        <app-relationship-map [map]="map" labelledBy="s-root" (choose)="store.chooseRoot($event)" />
-        @if (rootSummary(); as summary) {
-          <p class="t-small" data-testid="root-summary">
-            {{ 'editor.root.returns' | translate: { entity: summary.entity } }}
-            @if (summary.also) {
-              {{ 'editor.root.also' | translate: { list: summary.also } }}
-            }
-          </p>
-        }
-      } @else {
-        <app-skeleton width="60%" />
-      }
-    </section>
-
-    <section aria-labelledby="s-conditions">
-      <div class="section__head">
-        <h2 class="t-title" id="s-conditions">{{ 'editor.conditions.title' | translate }}</h2>
-        <p class="muted t-small">{{ 'editor.conditions.hint' | translate }}</p>
-      </div>
-      @if (store.view(); as view) {
-        <app-condition-builder
-          [draft]="store.draft()"
-          [rootEntity]="store.rootEntity()!"
-          [view]="view"
-          [focus]="store.focus()"
-          (edit)="store.apply($event)"
-          (trace)="store.traced.set($event)"
-        />
-      } @else {
-        <div class="builder" aria-hidden="true">
-          <app-skeleton width="70%" />
-          <app-skeleton width="52%" />
-        </div>
-      }
-    </section>
+  <div class="stack page-banners">
+    @if (store.glossaryError(); as error) {
+      <app-error-banner [error]="error" (retry)="retry()" />
+    }
+    @if (store.failure(); as error) {
+      <app-error-banner [error]="error" (retry)="retry()" />
+    }
+    @if (store.archived()) {
+      <app-banner
+        tone="warning"
+        icon="archive"
+        data-testid="archived-banner"
+        [title]="'errors.CONTROL_ARCHIVED.title' | translate"
+        [body]="'errors.CONTROL_ARCHIVED.body' | translate"
+        [actionLabel]="'editor.actions.duplicate' | translate"
+        (action)="duplicate()"
+      />
+    }
+    @if (store.conflict()) {
+      <app-banner
+        tone="warning"
+        icon="sync_problem"
+        data-testid="conflict-banner"
+        [urgent]="true"
+        [title]="'errors.CONCURRENCY_CONFLICT.title' | translate"
+        [body]="'errors.CONCURRENCY_CONFLICT.body' | translate"
+        [actionLabel]="'editor.actions.loadCurrent' | translate"
+        (action)="store.reload()"
+      />
+    }
+    @if (store.outdated()) {
+      <app-banner
+        tone="warning"
+        icon="link_off"
+        data-testid="outdated-banner"
+        [title]="'errors.CONTROL_DEFINITION_OUTDATED.title' | translate"
+        [body]="'errors.CONTROL_DEFINITION_OUTDATED.body' | translate"
+      />
+    }
+    @if (treeErrors(); as text) {
+      <app-banner
+        tone="danger"
+        data-testid="tree-errors"
+        [urgent]="true"
+        [title]="'errors.DEFINITION_INVALID.title' | translate"
+        [body]="text"
+      />
+    }
   </div>
-</div>
+
+  @if (store.archived()) {
+    <section class="stack" data-testid="archived-view">
+      <h2 class="t-title"><bdi>{{ store.name() }}</bdi></h2>
+      @if (store.description(); as description) {
+        <p class="muted"><bdi>{{ description }}</bdi></p>
+      }
+      @if (store.sentence().parts; as parts) {
+        <p class="sentence"><app-text-parts [parts]="parts" [marks]="store.marks()" /></p>
+      }
+    </section>
+  } @else {
+    <div class="editor">
+      <div class="editor__main">
+        <section aria-labelledby="s-details">
+          <h2 class="t-title" id="s-details">{{ 'editor.details.title' | translate }}</h2>
+          <div class="field">
+            <label class="field__label" for="control-name">{{ 'editor.details.name.label' | translate }}</label>
+            <mat-form-field appearance="outline" subscriptSizing="dynamic" [class.field--invalid]="!!store.nameIssue()">
+              <input
+                #nameInput
+                matInput
+                id="control-name"
+                type="text"
+                autocomplete="off"
+                data-testid="control-name"
+                [attr.aria-invalid]="!!store.nameIssue()"
+                [attr.aria-describedby]="store.nameIssue() ? 'control-name-error' : null"
+                [value]="store.name()"
+                (input)="store.setName($any($event.target).value)"
+              />
+            </mat-form-field>
+            @if (store.nameIssue(); as issue) {
+              <p class="field__error" id="control-name-error" role="alert" data-testid="name-error">
+                <app-icon name="error" size="sm" />{{ 'editor.details.name.' + issue | translate: { max: nameMax } }}
+              </p>
+            }
+          </div>
+          <div class="field">
+            <label class="field__label" for="control-description">
+              {{ 'editor.details.description.label' | translate }}
+              <span class="muted">{{ 'editor.details.description.optional' | translate }}</span>
+            </label>
+            <mat-form-field
+              appearance="outline"
+              subscriptSizing="dynamic"
+              [class.field--invalid]="!!store.descriptionIssue()"
+            >
+              <textarea
+                matInput
+                id="control-description"
+                rows="2"
+                data-testid="control-description"
+                [attr.aria-invalid]="!!store.descriptionIssue()"
+                [attr.aria-describedby]="store.descriptionIssue() ? 'control-description-error' : null"
+                [value]="store.description()"
+                (input)="store.setDescription($any($event.target).value)"
+              ></textarea>
+            </mat-form-field>
+            @if (store.descriptionIssue(); as issue) {
+              <p class="field__error" id="control-description-error" role="alert">
+                <app-icon name="error" size="sm" />
+                {{ 'editor.details.description.' + issue | translate: { max: descriptionMax } }}
+              </p>
+            }
+          </div>
+        </section>
+
+        <section aria-labelledby="s-root">
+          <div class="section__head">
+            <h2 class="t-title" id="s-root">{{ 'editor.root.title' | translate }}</h2>
+            <p class="muted t-small">{{ 'editor.root.hint' | translate }}</p>
+          </div>
+          @if (store.map(); as map) {
+            <app-relationship-map [map]="map" labelledBy="s-root" (choose)="chooseRoot($event)" />
+            @if (rootSummary(); as summary) {
+              <p class="t-small" data-testid="root-summary">
+                {{ 'editor.root.returns' | translate: { entity: summary.entity } }}
+                @if (summary.also) {
+                  {{ 'editor.root.also' | translate: { list: summary.also } }}
+                }
+              </p>
+            }
+          } @else {
+            <app-skeleton width="60%" />
+          }
+        </section>
+
+        <section aria-labelledby="s-conditions">
+          <div class="section__head">
+            <h2 class="t-title" id="s-conditions">{{ 'editor.conditions.title' | translate }}</h2>
+            <p class="muted t-small">{{ 'editor.conditions.hint' | translate }}</p>
+          </div>
+          @if (store.view(); as view) {
+            <app-condition-builder
+              [draft]="store.draft()"
+              [rootEntity]="store.rootEntity()!"
+              [view]="view"
+              [focus]="store.focus()"
+              (edit)="store.apply($event)"
+              (trace)="store.traced.set($event)"
+            />
+          } @else {
+            <div class="builder" aria-hidden="true">
+              <app-skeleton width="70%" />
+              <app-skeleton width="52%" />
+            </div>
+          }
+        </section>
+      </div>
+
+      <aside class="editor__side" aria-labelledby="sentence-title">
+        <app-sentence-field
+          [parts]="store.sentence().parts"
+          [stale]="store.sentence().stale"
+          [marks]="store.marks()"
+          [traced]="store.traced()"
+          [open]="store.openNodes()"
+          [changed]="store.settling()"
+          [status]="status()"
+          (trace)="store.traced.set($event)"
+        >
+          <button class="btn btn--on-action" type="button" data-testid="save-run" [disabled]="busy()" (click)="save(true)">
+            @if (store.saveState() === 'running') {
+              <span class="spinner" aria-hidden="true"></span>{{ 'editor.actions.running' | translate }}
+            } @else {
+              {{ 'editor.actions.saveAndRun' | translate }}
+            }
+          </button>
+          <button
+            class="btn btn--on-action-tonal"
+            type="button"
+            data-testid="save"
+            [disabled]="busy()"
+            (click)="save(false)"
+          >
+            @if (store.saveState() === 'saving') {
+              <span class="spinner" aria-hidden="true"></span>{{ 'editor.actions.saving' | translate }}
+            } @else {
+              {{ 'editor.actions.save' | translate }}
+            }
+          </button>
+          <a class="btn btn--text btn--sm" routerLink="/" data-testid="cancel">{{ 'editor.actions.cancel' | translate }}</a>
+        </app-sentence-field>
+      </aside>
+    </div>
+  }
+}

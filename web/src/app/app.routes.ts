@@ -9,14 +9,9 @@ export const routes: Routes = [
       import('./features/controls-list/controls-list.page').then((m) => m.ControlsListPage),
   },
   {
-    path: 'controls/new',
-    title: 'editor.titleNew',
-    loadComponent: () =>
-      import('./features/control-editor/control-editor.page').then((m) => m.ControlEditorPage),
-  },
-  {
+    // `new` is the id of a control that is not saved yet: one route, so a first save keeps the screen
     path: 'controls/:id',
-    title: 'editor.titleEdit',
+    title: (route) => (route.paramMap.get('id') === 'new' ? 'editor.titleNew' : 'editor.titleEdit'),
     loadComponent: () =>
       import('./features/control-editor/control-editor.page').then((m) => m.ControlEditorPage),
   },

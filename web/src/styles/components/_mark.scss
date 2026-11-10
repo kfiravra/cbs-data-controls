@@ -119,6 +119,17 @@
     color: var(--color-on-action);
     justify-self: center;
   }
+
+  .btn[disabled] {
+    background: var(--color-on-action-tonal);
+    color: var(--color-on-action);
+  }
+
+  // the last valid sentence, kept while the draft is unfinished or invalid
+  .sentence--stale {
+    color: var(--color-on-action-stale);
+    transition: color var(--duration-in) var(--ease-out);
+  }
 }
 
 @keyframes mark-settle-on-action {

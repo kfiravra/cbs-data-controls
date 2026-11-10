@@ -69,9 +69,20 @@ export class ConditionBuilderComponent {
 
   private moveFocus(target: FocusTarget): void {
     const root = this.host.nativeElement;
-    const element = target.node
-      ? root.querySelector<HTMLElement>(`[data-node="${target.node}"] [data-focus="first"] [tabindex], [data-node="${target.node}"] [data-focus="first"][tabindex]`)
-      : root.querySelector<HTMLElement>(`[data-group="${target.group}"] > .group > .group__body > .adders > [data-adder]`);
-    element?.focus();
+    if (!target.node) {
+      root
+        .querySelector<HTMLElement>(`[data-group="${target.group}"] > .group > .group__body > .adders > [data-adder]`)
+        ?.focus();
+      return;
+    }
+    const row = root.querySelector<HTMLElement>(`[data-node="${target.node}"]`);
+    // the input the caller named, else the first control of the row
+    const within =
+      (target.input && row?.querySelector<HTMLElement>(`[data-input~="${target.input}"]`)) ||
+      row?.querySelector<HTMLElement>('[data-focus="first"]');
+    const control = within?.matches('[tabindex], input, button')
+      ? within
+      : within?.querySelector<HTMLElement>('[tabindex], input, button');
+    control?.focus();
   }
 }

@@ -4,8 +4,10 @@ import { DefinitionNode, GroupNode } from '../../src/app/core/definition/definit
 import { Example, exampleNumber } from '../fixtures/examples';
 import { glossary, label } from '../fixtures/glossary';
 import { BuilderDriver } from '../support/builder-driver';
+import { lastValidated, normalized } from '../support/definitions';
 import { t } from '../support/i18n';
 import { expect, test } from '../support/mocked';
+import { FakeApi } from '../support/routes';
 import { shot } from '../support/shots';
 
 const letters = t('common.markLetters').split(' ');
@@ -23,8 +25,13 @@ function fieldLabel(scope: string, field: string, path: readonly string[] = []):
   return label(glossary.entities.find((entity) => entity.key === owner)!.fields.find((f) => f.key === field)!.label);
 }
 
-/** What the builder must show for a definition: every marked node with its letter, and each row's field. */
-async function expectBuilt(page: Page, example: Example): Promise<void> {
+/**
+ * What the builder must have built: the definition the editor asks the engine about is the example's, node
+ * for node (operators, values, paths, nesting and all/any included), and on screen every marked node carries
+ * its letter and shows its field.
+ */
+async function expectBuilt(page: Page, api: FakeApi, example: Example): Promise<void> {
+  await expect.poll(() => lastValidated(api)).toEqual(normalized(example.definition));
   const builder = page.getByTestId('condition-builder');
   const nodes = marked(example.definition.where);
   const rows = builder.locator('[data-testid="condition-row"], [data-testid="related-node"]');
@@ -56,33 +63,33 @@ async function open(page: Page): Promise<Locator> {
 }
 
 test.describe('condition builder', () => {
-  test('builds example 6 with the pointer: a two-hop path and a nested group', async ({ page }, testInfo) => {
+  test('builds example 6 with the pointer: a two-hop path and a nested group', async ({ page, api }, testInfo) => {
     const example = exampleNumber(6);
     await open(page);
 
     await new BuilderDriver(page).build(example.definition);
 
-    await expectBuilt(page, example);
+    await expectBuilt(page, api, example);
     await shot(page, testInfo, 'builder-example-6');
   });
 
-  test('builds example 5 with the keyboard alone: another root entity and a related-records node', async ({ page }, testInfo) => {
+  test('builds example 5 with the keyboard alone: another root entity and a related-records node', async ({ page, api }, testInfo) => {
     const example = exampleNumber(5);
     await open(page);
 
     await new BuilderDriver(page, true).build(example.definition);
 
-    await expectBuilt(page, example);
+    await expectBuilt(page, api, example);
     await shot(page, testInfo, 'builder-example-5');
   });
 
-  test('builds example 4, a tree three groups deep', async ({ page }, testInfo) => {
+  test('builds example 4, a tree three groups deep', async ({ page, api }, testInfo) => {
     const example = exampleNumber(4);
     await open(page);
 
     await new BuilderDriver(page).build(example.definition);
 
-    await expectBuilt(page, example);
+    await expectBuilt(page, api, example);
     await shot(page, testInfo, 'builder-deep-tree');
   });
 

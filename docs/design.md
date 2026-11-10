@@ -11,6 +11,7 @@ colors:
   action-hover: "#355aec"
   action-pressed: "#486fef"
   on-action: "#ffffff"
+  on-action-stale: "#ffffffb8"
   action-tint: "#1f2de61a"
   action-track: "#1f2de629"
   on-action-tonal: "#ffffff2e"
@@ -317,7 +318,8 @@ icon and words. Each colour below is the CSS custom property `--color-<name>`.
 - **Action tint** (`#1f2de61a`, 10%): the ground of a mark, of a highlighted value and of a selected filter row.
   **Action track** (`#1f2de629`, 16%): the unfilled part of a meter.
 - **On action tonal** (`#ffffff2e`) and **On action line** (`#ffffff47`): marks, the second button and the divider
-  on the sentence field.
+  on the sentence field. **On action stale** (`#ffffffb8`, 72% white): the last valid sentence, kept on the field
+  while the draft is unfinished or refused.
 
 ### Neutral
 
@@ -348,6 +350,7 @@ icon and words. Each colour below is the CSS custom property `--color-<name>`.
 | Muted on Ground / on Surface | 5.2 / 4.7 |
 | Action on Ground / on Surface / on Action tint | 7.1 / 6.5 / 6.2 |
 | On action on Action / on Action hover | 8.2 / 5.5 |
+| On action stale on Action | 4.9 |
 | On bar on Bar | 17.1 |
 | Danger, Warning, Success on Ground | 5.9, 5.9, 6.0 |
 | Danger, Warning, Success on their own tint over Surface (worst case) | 4.7, 4.6, 4.7 |
@@ -564,8 +567,13 @@ never ends on a mark. Two forms:
 
 - **Field:** in the editor only. Action ground, On action text, 8px radius, 24px padding: a small heading
   (`הבקרה במילים`), the sentence, under a divider one line of status when something is unfinished (`תנאי ה לא
-  הושלם: חסר ערך להשוואה.`), then save and run, save, and cancel. An unfinished clause is underlined with dashes
-  and ends in an ellipsis.
+  הושלם: חסר ערך להשוואה.`), then save and run, save, and cancel. The sentence is the engine's: the editor asks
+  for it 400ms after the last edit of a complete draft and draws what comes back. While a condition is
+  unfinished or refused nothing is asked: the last valid sentence stays, in On action stale, the mark of the
+  open condition is outlined, and the status line names it. Marks are those of the current draft, so a clause
+  whose condition was removed stands without one. Before the first valid sentence the field holds one line of
+  hint. A sentence that is waiting for its answer is not dimmed, so typing does not make it flicker. Changes of
+  the sentence and of the status line are announced politely.
 - **Plain:** on Ground, for reading: under the title of a run, and for each draft in the suggestions dialog.
 
 ### Relationship map
@@ -701,9 +709,9 @@ two signs of waiting.
 - **Focus is instant:** the ring and a field's focus border appear with no transition.
 - **The trace:** while a condition is under the pointer or in focus (its row, its clause, its meter row), its mark
   fills everywhere it stands on the screen.
-- **The settle:** when a condition is edited, its clause in the sentence is rewritten in place and its mark there
-  fills at once and eases back over 600ms, so the eye finds what the edit changed. This is the one authored moment
-  of the product.
+- **The settle:** when a new sentence arrives from the engine, each clause whose text changed is rewritten in
+  place and its mark there fills at once and eases back over 600ms, so the eye finds what the edit changed. The
+  first sentence of a screen settles nothing. This is the one authored moment of the product.
 - **Waiting:** a 16px spinner turning once a second inside the button that started the work, and skeleton rows
   breathing between full and 45% opacity over 1.4s.
 - **Reduced motion:** buttons do not step and a press shows as a tone (Action pressed); the spinner and the
@@ -759,8 +767,9 @@ Notes for the client task; the visual system above does not depend on them.
   the worded form.
 - **Fonts and icons.** IBM Plex Sans Hebrew (SIL Open Font License 1.1) in weights 400, 500 and 600 and the
   Material Symbols Sharp icons in use (Apache 2.0) are bundled with the build; icons are registered as SVG.
-- **What the design asks of the contracts.** The sentence needs the preview as parts, each tied to a condition id
-  where it speaks for one, or built in the client from the glossary's templates; a single string cannot carry the
-  marks. A reason needs its condition id and its actual value as a parameter, apart from the text. The breakdown
-  needs a count per condition for the run, and the results need a filter by condition. A run needs the definition
-  of the version that ran, so marks and clauses match what was checked.
+- **What the contracts provide.** Every sentence arrives with `sentenceParts` and every reason with `textParts`
+  (`contracts/api.md`): pieces of text, each tied to the condition it speaks for and to its role (the field, a
+  value, the record's actual value). The client draws the parts and renders no text of its own; a mark stands
+  before the first clause of each condition, and an actual value is drawn as the value. A run carries a count per
+  condition that can be matched, exact also above the row cap, and its results filter by condition. The
+  definition of the version that ran is one request away, so the marks of a run are those of what was checked.

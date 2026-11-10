@@ -16,6 +16,7 @@ export type MarkState = 'resting' | 'traced' | 'active' | 'open';
     '[class.mark--active]': 'state() === "active"',
     '[class.mark--open]': 'state() === "open"',
     '[class.mark--changed]': 'changed()',
+    '[attr.data-state]': 'state()',
     '[attr.role]': 'name() ? "img" : null',
     '[attr.aria-label]': 'name() ?? null',
     '[attr.aria-hidden]': 'name() ? null : "true"',
