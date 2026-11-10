@@ -1,0 +1,59 @@
+[project]
+name = "data-controls-engine"
+version = "0.1.0"
+description = "The control engine of Data Controls: validates, compiles, runs and explains control definitions."
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115,<1",
+    # The same version scripts/contracts-check.py pins: both must report a schema violation at the same path.
+    "jsonschema==4.26.0",
+    "pydantic-settings>=2.6,<3",
+    "pyodbc>=5.2,<6",
+    "sqlalchemy>=2.0.36,<2.1",
+    # Windows has no zone database of its own; zoneinfo reads this one.
+    "tzdata>=2024.1",
+    "uvicorn>=0.32,<1",
+]
+
+[dependency-groups]
+dev = [
+    # Starlette 1.10 runs its TestClient on httpx2 and deprecates httpx for it.
+    "httpx2>=2.16,<3",
+    "pyright>=1.1.380",
+    "pytest>=8,<10",
+    "ruff>=0.8",
+]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+markers = ["integration: needs the seeded database on localhost:1433 (fails, never skips, when it is down)"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+# PLW1514 (open() without an encoding) is a preview rule; the second flag keeps every other preview rule off.
+preview = true
+explicit-preview-rules = true
+select = ["E", "F", "I", "B", "UP", "S", "T20", "C901", "PLR0915", "PLW1514"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "T20"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 12
+
+[tool.ruff.lint.pylint]
+max-statements = 50
+
+[tool.pyright]
+pythonVersion = "3.12"
+venvPath = "."
+venv = ".venv"
+include = ["app", "tests"]
+strict = ["app"]

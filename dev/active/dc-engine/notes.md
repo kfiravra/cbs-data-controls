@@ -1,18 +1,19 @@
 # dc-engine notes
 
 ## State
-Phase 0 done on 2026-11-11; phase 1 is next. The run is unattended on Kfir's word of 2026-11-11 (the night
-brief, see "Decisions taken unattended"): no questions, no stop at a phase gate, push and PR allowed once the
-gate passes, no merge. `contracts/` merged as `f9928bf`; this worktree (`../cbs-engine`, `feat/engine`) was cut
-from it and already holds `.env` and this folder.
+Phase 1 done on 2026-11-11 (gate: `gates/phase-1.txt`, 137 tests); phase 2, the validator, is next. The run is
+unattended on Kfir's word of 2026-11-11 (the night brief, see "Decisions taken unattended"): no questions, no
+stop at a phase gate, push and PR allowed once the gate passes, no merge.
 
-The plan was written on Fable on 2026-11-10 and amended the same day for dc-delivery's asks (plan.md decisions
-20 to 25) and for the scope decision (no LLM lane, Hebrew only, no offline bundle).
+What exists: `engine/` with `pyproject.toml`, `uv.lock`, `.python-version` (3.12) and `requirements.txt`; the
+settings and the connection URL; problem details for every error; the correlation id; the glossary package
+(model, loader, tables, public view, catalog comparison); the executor with its guards; the startup check;
+`GET /health` and `GET /glossary`. Start: `cd engine && .venv/bin/python -m uvicorn app.main:create_app
+--factory --host 127.0.0.1 --port 8000`.
 
 ## Next
-1. Phase 1: `engine/pyproject.toml`, `uv sync`, `requirements.txt` and the wheel check, settings, errors, web,
-   main, the glossary package, the startup check, `/health` and `/glossary`, with their tests.
-2. Then phases 2 to 5 and 7 in order, each closed by `/check --tests`, a reviewer on opus, one review-fix commit
+1. Phase 2: the schema layer and the semantic layer of the validator, `ValidatedDefinition`, the fixtures.
+2. Then phases 3 to 5 and 7 in order, each closed by `/check --tests`, a reviewer on opus, one review-fix commit
    and a Log line here.
 3. The gate, then push and PR (Kfir's word is in the night brief). No merge.
 
@@ -68,6 +69,20 @@ continue". He reads these first.
 4. Phase 0's `mv` step and `git worktree add` were skipped as told: the worktree existed and the folder came
    from git.
 
+5. The test client runs on `httpx2`, not `httpx` (a dev dependency only): Starlette 1.10 deprecates `httpx`
+   for its `TestClient`. `requirements.txt` is not affected.
+6. `.env.example` writes `ENGINE_DB_HOST=127.0.0.1`; the code default stays `localhost` (Design A). On this
+   machine `localhost` resolves to `::1` first and ODBC Driver 18 never falls back to IPv4 (tried with login
+   timeouts of 5, 15 and 30 s), while compose publishes SQL Server on 127.0.0.1 only. `localhost` stays the
+   default because it is what reaches a grader's local Windows instance over shared memory.
+7. Request faults the plan left open, read from api.md as written: a body that is not JSON, by its media type
+   or because it does not parse, is 415 `REQUEST_INVALID` with no error list; a body over 1 MiB is 413 (the
+   api's limit, taken for the engine); a request with no body at all is judged by its route.
+8. Every empty `ENGINE_*` variable means unset, not only the port and the driver, so `ENGINE_CONTRACTS_DIR=`
+   in `.env.example` is the default path.
+9. The interactive docs of FastAPI (`/docs`, `/redoc`, `/openapi.json`) are switched off: one internal caller,
+   and an unknown path must answer `NOT_FOUND`.
+
 ## Waiting for a merge
 (none yet)
 
@@ -75,8 +90,17 @@ continue". He reads these first.
 One line per item, added in the step that makes it true (plan.md decision 24): the file and section, what it
 says, what is true now. The list goes into the PR body under this heading at `/ship`.
 
-(none yet. The plan already knows of two: architecture §19 and §6 on suggestions, when phase 5 lands; the engine's
-variables in architecture §14 and in the README's configuration table, when phase 1 lands.)
+- `docs/architecture.md` §14, "Configuration by environment variables: connection strings for the two logins":
+  the engine takes no connection string. It reads `ENGINE_DB_HOST`, `ENGINE_DB_PORT`, `ENGINE_DB_NAME`,
+  `ENGINE_DB_DRIVER` and `DQ_ENGINE_RO_PASSWORD`; the full list is the engine block of `.env.example`.
+- `README.md`, Configuration table ("The engine and api blocks are filled by dc-engine and dc-api"): the
+  engine's rows are the fourteen `ENGINE_*` keys of `.env.example`, with the meanings written there.
+- `docker-compose.yml`, the engine service (dc-delivery's): it must set `ENGINE_DB_HOST=db` (and may leave
+  `ENGINE_DB_PORT=1433`); the `.env` value `127.0.0.1` is for a host run and does not reach `db` from inside
+  compose. The image's start command binds `0.0.0.0:8000`.
+- README manual path, Windows: `ENGINE_DB_HOST=localhost` or `.\SQLEXPRESS` with `ENGINE_DB_PORT` empty; on
+  WSL or Linux against the compose database, `127.0.0.1` (decision 6 above).
+- Still to come: architecture §19 and §6 on suggestions, when phase 5 lands.
 
 ## Last reviewed
 (none)
@@ -113,3 +137,13 @@ variables in architecture §14 and in the README's configuration table, when pha
   `f9928bf`). Checked the driver, the port, the container and `scripts/db-check.sh` (27 passed), read
   `contracts/` against Design J and recorded the differences above. No gate file: phase 0 has no commit of its
   own in the plan; this folder was committed alone on Kfir's word (decision 3 above).
+- 2026-11-11 phase 1, unattended, `gates/phase-1.txt`: ruff, pyright strict on `app/`, 137 tests (134 unit, 3
+  against the seeded database), print guard, the wheel check `exit=0` for 3.12, 3.13 and 3.14, `/health` 200
+  under uvicorn. Two modules beyond Design A's layout: `app/services.py` (the services container, the startup
+  sequence, the one-minute health recheck) and `app/logs.py` (one log line with the correlation id and the
+  `extra=` context). `uv sync` resolved fastapi 0.162.4, starlette 1.10.0, pydantic 2.14.3, sqlalchemy 2.0.57,
+  pyodbc 5.5.0, jsonschema 4.26.0 (pinned), ruff 0.17.4, pyright 1.1.414, pytest 9.2.0.
+- 2026-11-11 00:23 one pytest run of 6.6 s overlapped a Playwright run of the cbs-web session
+  (`e2e/mocked/shell.spec.ts`): the `pgrep` line printed the other suite and the command went on anyway. Since
+  then every suite here starts through a wrapper that waits until no other suite runs (scratchpad
+  `wait-suite.sh`, 30 minutes at most); it waited once already, at 00:27.

@@ -193,21 +193,21 @@ dc-delivery" in the same step: the file and section, what it says, what is true 
       ask before stopping anything.
 
 ### Phase 1: skeleton, glossary, startup check (about 2 h)
-- [ ] `engine/pyproject.toml` (`requires-python = ">=3.12"`), `.python-version` (`3.12`), `uv.lock` and `.venv`
+- [x] `engine/pyproject.toml` (`requires-python = ">=3.12"`), `.python-version` (`3.12`), `uv.lock` and `.venv`
       through `uv sync` (state the download first), per Design A.
-- [ ] `engine/requirements.txt` exported from the lock, then the Windows wheel check for 3.12, 3.13 and 3.14, both
+- [x] `engine/requirements.txt` exported from the lock, then the Windows wheel check for 3.12, 3.13 and 3.14, both
       per Design A. A package with no wheel is replaced, or pinned to a version that has one, before code depends
       on it.
-- [ ] `.env.example`: the engine block of Design A with placeholders (`ENGINE_DB_PORT=1433` written out,
+- [x] `.env.example`: the engine block of Design A with placeholders (`ENGINE_DB_PORT=1433` written out,
       `ENGINE_DB_DRIVER=` left empty); the same keys in the worktree's `.env`.
-- [ ] `app/settings.py` (the settings, the driver choice and the connection URL of Design A), `app/errors.py`
+- [x] `app/settings.py` (the settings, the driver choice and the connection URL of Design A), `app/errors.py`
       (domain exceptions and the one mapping to problem details), `app/web.py` (correlation id, language),
       `app/main.py` (`create_app(settings=None)`, lifespan) per Designs A and G.
-- [ ] `app/glossary/`: typed model, loader, resolved operators, tables, the public view, per Design B.
-- [ ] The startup check per Design B: the catalog read is built in `compiler` and run by `executor`; `glossary`
+- [x] `app/glossary/`: typed model, loader, resolved operators, tables, the public view, per Design B.
+- [x] The startup check per Design B: the catalog read is built in `compiler` and run by `executor`; `glossary`
       compares the sets.
-- [ ] `GET /health` and `GET /glossary`.
-- [ ] Tests: the loader and the resolved operators against the real glossary; the public view has no `table`,
+- [x] `GET /health` and `GET /glossary`.
+- [x] Tests: the loader and the resolved operators against the real glossary; the public view has no `table`,
       `keyColumn`, `column`, `computed` or `join` key; a doctored copy of the glossary (one column renamed) raises
       `GLOSSARY_MISMATCH` naming it and the app refuses to start; an unknown route and a malformed body answer
       problem details with a code and no prose; the connection settings of Design I.
