@@ -1,3 +1,4 @@
+using DataControls.Api.Controls;
 using DataControls.Api.Engine;
 using DataControls.Api.Errors;
 using DataControls.Api.Glossary;
@@ -25,6 +26,7 @@ builder.Services
     .AddPersistence()
     .AddEngine()
     .AddGlossary()
+    .AddControls()
     .AddRuns()
     .AddHealth();
 

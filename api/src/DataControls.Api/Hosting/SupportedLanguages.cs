@@ -9,7 +9,7 @@ namespace DataControls.Api.Hosting;
 /// </summary>
 public sealed class SupportedLanguages
 {
-    private readonly LanguageSet _current;
+    private volatile LanguageSet _current;
 
     public SupportedLanguages(IOptions<RunsOptions> options)
     {
@@ -18,6 +18,10 @@ public sealed class SupportedLanguages
     }
 
     public string Default => _current.Default;
+
+    /// <summary>Called when a glossary has been read: its languages replace what was known.</summary>
+    public void Replace(IReadOnlyList<string> languages, string defaultLanguage) =>
+        _current = new LanguageSet(languages, defaultLanguage);
 
     public string Resolve(string? acceptLanguage)
     {

@@ -13,7 +13,7 @@ public sealed class RequestLanguageTests(ApiFixture fixture)
         var request = new HttpRequestMessage(HttpMethod.Get, "/_probe/context");
         request.Headers.TryAddWithoutValidation("Accept-Language", header);
 
-        var response = await fixture.Factory.CreateClient().SendAsync(request);
+        var response = await fixture.CreateClient().SendAsync(request);
 
         Assert.Equal("he", (await response.ReadJsonAsync()).GetProperty("language").GetString());
     }

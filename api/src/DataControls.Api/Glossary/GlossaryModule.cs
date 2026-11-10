@@ -8,6 +8,8 @@ internal static class GlossaryModule
             .BindConfiguration(GlossaryOptions.Section)
             .Validate(options => options.CacheMinutes >= 0, "Glossary:CacheMinutes must not be negative.")
             .ValidateOnStart();
+        services.AddSingleton<GlossaryCache>();
+        services.AddScoped<GlossaryService>();
         return services;
     }
 }

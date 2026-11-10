@@ -36,6 +36,22 @@ internal static partial class ContractFiles
         return rows;
     }
 
+    /// <summary>
+    /// The rows of the table under one <c>###</c> heading of <c>api.md</c>, each split into its cells, without
+    /// the header and the separator row.
+    /// </summary>
+    public static IReadOnlyList<string[]> ApiTable(string heading)
+    {
+        var lines = Read("api.md").Split('\n');
+        var start = Array.FindIndex(lines, line => line.Trim() == $"### {heading}");
+        return [.. lines
+            .Skip(start + 1)
+            .TakeWhile(line => !line.StartsWith('#'))
+            .Where(line => line.StartsWith('|'))
+            .Skip(2)
+            .Select(line => line.Trim().Trim('|').Split('|').Select(cell => cell.Trim()).ToArray())];
+    }
+
     [GeneratedRegex(@"^\| `([A-Za-z_]+)` \|")]
     private static partial Regex CodeRow();
 }

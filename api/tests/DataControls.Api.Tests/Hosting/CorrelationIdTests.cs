@@ -8,7 +8,7 @@ public sealed partial class CorrelationIdTests(ApiFixture fixture)
 {
     private const string Header = "X-Correlation-Id";
 
-    private readonly HttpClient _client = fixture.Factory.CreateClient();
+    private readonly HttpClient _client = fixture.CreateClient();
 
     [Theory]
     [InlineData("abc-123")]

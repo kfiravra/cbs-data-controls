@@ -8,7 +8,7 @@ namespace DataControls.Api.Tests.Errors;
 [Collection(ApiCollection.Name)]
 public sealed class ProblemShapeTests(ApiFixture fixture)
 {
-    private readonly HttpClient _client = fixture.Factory.CreateClient();
+    private readonly HttpClient _client = fixture.CreateClient();
 
     [Fact]
     public async Task Unknown_api_path_returns_404_with_exactly_the_problem_members()
@@ -36,7 +36,7 @@ public sealed class ProblemShapeTests(ApiFixture fixture)
     [InlineData("""{"name":"x",}""")]
     public async Task Body_returns_415_without_errors_when_it_is_sent_as_json_and_its_text_is_not_json(string body)
     {
-        var response = await _client.PostAsync("/_probe/items", JsonBody(body));
+        var response = await _client.PostAsync("/_probe/items", Body.Json(body));
 
         var problem = await HttpAssert.ProblemAsync(response, HttpStatusCode.UnsupportedMediaType, "REQUEST_INVALID");
         Assert.False(problem.TryGetProperty("errors", out _));
@@ -47,7 +47,7 @@ public sealed class ProblemShapeTests(ApiFixture fixture)
     [InlineData("5")]
     public async Task Body_returns_400_malformed_at_the_root_when_it_is_json_but_not_an_object(string body)
     {
-        var response = await _client.PostAsync("/_probe/items", JsonBody(body));
+        var response = await _client.PostAsync("/_probe/items", Body.Json(body));
 
         var problem = await HttpAssert.ProblemAsync(response, HttpStatusCode.BadRequest, "REQUEST_INVALID");
         HttpAssert.JsonEqual("""[{"path":"","code":"MALFORMED","params":{}}]""", HttpAssert.Errors(problem));
@@ -58,7 +58,7 @@ public sealed class ProblemShapeTests(ApiFixture fixture)
     [InlineData("""{"name":["a"]}""")]
     public async Task Member_returns_400_malformed_at_its_pointer_when_it_has_the_wrong_json_type(string body)
     {
-        var response = await _client.PostAsync("/_probe/items", JsonBody(body));
+        var response = await _client.PostAsync("/_probe/items", Body.Json(body));
 
         var problem = await HttpAssert.ProblemAsync(response, HttpStatusCode.BadRequest, "REQUEST_INVALID");
         HttpAssert.JsonEqual("""[{"path":"/name","code":"MALFORMED","params":{}}]""", HttpAssert.Errors(problem));
@@ -73,7 +73,7 @@ public sealed class ProblemShapeTests(ApiFixture fixture)
     [InlineData("")]
     public async Task Required_member_returns_400_required_when_it_is_missing_null_or_blank(string body)
     {
-        var response = await _client.PostAsync("/_probe/items", JsonBody(body));
+        var response = await _client.PostAsync("/_probe/items", Body.Json(body));
 
         var problem = await HttpAssert.ProblemAsync(response, HttpStatusCode.BadRequest, "REQUEST_INVALID");
         HttpAssert.JsonEqual("""[{"path":"/name","code":"REQUIRED","params":{}}]""", HttpAssert.Errors(problem));
@@ -84,7 +84,7 @@ public sealed class ProblemShapeTests(ApiFixture fixture)
     {
         var response = await _client.PostAsync(
             "/_probe/items",
-            JsonBody("""{"name":"  abcdefghijk  ","note":"abcdefghijkl"}"""));
+            Body.Json("""{"name":"  abcdefghijk  ","note":"abcdefghijkl"}"""));
 
         var problem = await HttpAssert.ProblemAsync(response, HttpStatusCode.BadRequest, "REQUEST_INVALID");
         HttpAssert.JsonEqual(
@@ -97,7 +97,7 @@ public sealed class ProblemShapeTests(ApiFixture fixture)
     {
         var hebrew = TestData.HebrewText[..ProbeController.MaxNameLength].Trim();
 
-        var response = await _client.PostAsync("/_probe/items", JsonBody($$"""{"name":"  {{hebrew}}  ","extra":true}"""));
+        var response = await _client.PostAsync("/_probe/items", Body.Json($$"""{"name":"  {{hebrew}}  ","extra":true}"""));
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Equal($$"""{"name":"{{hebrew}}","note":null}""", await response.Content.ReadAsStringAsync());
@@ -139,7 +139,7 @@ public sealed class ProblemShapeTests(ApiFixture fixture)
     {
         var oversized = $$"""{"name":"{{new string('a', 1024 * 1024)}}"}""";
 
-        var response = await _client.PostAsync("/_probe/items", JsonBody(oversized));
+        var response = await _client.PostAsync("/_probe/items", Body.Json(oversized));
 
         var problem = await HttpAssert.ProblemAsync(response, HttpStatusCode.RequestEntityTooLarge, "REQUEST_INVALID");
         Assert.False(problem.TryGetProperty("errors", out _));
@@ -169,12 +169,5 @@ public sealed class ProblemShapeTests(ApiFixture fixture)
         Assert.DoesNotContain(ProbeController.Secret, body);
         Assert.DoesNotContain("Exception", body);
         Assert.Equal(6, problem.EnumerateObject().Count());
-    }
-
-    private static StringContent JsonBody(string json)
-    {
-        var content = new StringContent(json, Encoding.UTF8);
-        content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
-        return content;
     }
 }

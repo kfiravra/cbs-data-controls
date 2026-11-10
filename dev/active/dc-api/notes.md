@@ -1,16 +1,14 @@
 # dc-api notes
 
 ## State
-Phase 1 is built and green (64 tests): the `api/` skeleton, configuration, the problem pipeline, correlation id
-and language, the `dq` model, `GET /api/v1/health` with the database probe, and the test support. Its review is
-next. The run is unattended (Kfir's word of 2026-11-11, below): no stop at phase gates, decisions are taken and
-written under "Decisions taken unattended".
+Phases 1 and 2 are built; Phase 1 is reviewed and fixed (`8e80f74`, `a781c91`), Phase 2 is green (159 tests)
+and its review is next. Phase 2 added the engine client with its resilience pipeline, the error map, the
+glossary cache and `GET /glossary`, the engine half of `/health`, the schema validator and
+`POST /controls/validate`. The run is unattended (Kfir's word of 2026-11-11, below).
 
 ## Next
-1. Phase 1 review (`/phase-review api`, one reviewer, opus), one `fix(api): review fixes` commit, the Log line.
-2. Phase 2: the engine client and its resilience pipeline, the error map, the glossary cache, the schema
-   validator (repeat `research/schema-probe.md` on the real schema first), `POST /controls/validate`.
-3. Phases 3 to 5 and the gate, in the plan's order.
+1. Phase 2 review, one `fix(api): review fixes` commit, the Log line.
+2. Phase 3 (controls), Phase 4 (runs), Phase 5 (suggestions, OpenAPI, static hosting), the gate.
 
 ## Blockers
 - None for the build. The live pass of the gate needs the engine (`feat/engine`, not merged): it waits, and this
@@ -53,8 +51,20 @@ wait for a merge: commit, no push.
    template's `appsettings.Development.json` is removed (the one filter it would carry is set in code); the api's
    version is 1.0.0 and `/health` reports the assembly version.
 
+9. **The engine fixtures are generated from the contract, not written by hand** (`Fixtures/engine/`): `run.json`
+   and the 422 problem are the two examples of `contracts/api.md` §5 as they stand, `validate.json` is the same
+   sentence without counts, and `glossary.json` is `contracts/glossary.json` made public by the rules of
+   `GET /glossary` (no `table`, `keyColumn`, `column`, `computed` or `join`; every field's operators resolved).
+   If the glossary or the example changes, the fixtures are regenerated; nothing checks that automatically.
+10. **Glossary tests and the breaker test start a host of their own**, because the cache and the breaker live as
+    long as their host. The shared host sets `Engine:BreakerMinimumThroughput` to 100000 so that failure tests
+    never open its breaker, and `Engine:AttemptTimeout` to half a second.
+11. **A success body that is not a JSON object is `INTERNAL_ERROR`** for every engine call, `/validate`
+    included; beyond that the api checks only the members it reads (the glossary's version, languages and
+    identifying fields).
+
 ## Last reviewed
-(none)
+`8e80f74` (Phase 1), fixes in `a781c91`
 
 ## Docs for dc-delivery
 Kept as the work goes (plan.md decision 26) and copied into the PR body under this heading at `/ship`. The
@@ -149,3 +159,25 @@ warning by file, what the fix changed, what was left and why, what Kfir rejected
 - 2026-11-11 00:20 Phase 1 gate green: build with `-warnaserror`, format, 64 tests, print guard
   (`gates/phase-1.txt`). NuGet on 2026-11-11: the three Microsoft packages at 10.0.15 (11.0.0 exists),
   Resilience 10.11.0, SwaggerUI 10.3.1 (11.0.0 exists), JsonSchema.Net 8.0.5 pinned (9.6.0 exists).
+- 2026-11-11 00:50 Phase 1 review (diff `f9928bf..8e80f74`, one reviewer on opus): standards 0 critical, 2
+  warning, 4 info; plan 0, 2, 2. Warnings: `Errors/ModelStateErrors.cs` passes a key without `$` as a query
+  name, so MVC's implicit `[Required]` on a non-nullable member would answer `MALFORMED` under the C# name;
+  `Errors/ProblemShapeTests.cs` shows decision 3 against the contract's "a body that is not JSON 415";
+  `Health/HealthTests.cs` derives the expected status from the response's own `engine` member;
+  `Hosting/DotEnvConfigurationProvider.cs` loads every key of `.env`, the sa and the engine passwords included.
+  Fixed in `a781c91`: implicit required switched off, with the probe's `Name` made non-nullable to prove it; a
+  body guard answers 415 for JSON text that does not parse (decision 3 rewritten) and holds an undeclared
+  length to 1 MB; the health test asserts fixed values; the `.env` source takes the three database keys and
+  `Section__Key` keys only. Info fixed in the same commit: the two foreign keys that have no ON DELETE are
+  mapped `NoAction`, one public type per file in four test files, six test names given a condition, the
+  `Run.Succeed` comment. Changed without a finding: Hebrew literals in test code replaced by the example's
+  Hebrew name read from `contracts/examples/`. Left: `SupportedLanguages` copies its set to a local (info),
+  because Phase 2 makes the set replaceable; decision 1 (Fable for execution, info) cannot be changed from
+  inside the session. Kfir rejected or rewrote: nothing; he was not present.
+- 2026-11-11 00:55 schema probe repeated on the real schema before Phase 2 (`research/schema-probe.md`): the two
+  corrections put all five schema-layer fixtures on their expected path. Two facts found on the way:
+  `JsonSchema.FromText` refuses to register the same `$id` twice in one process ("Overwriting registered schemas
+  is not permitted"), so the built schema is held statically; and 40,000 evaluations of one schema instance on
+  16 threads gave no mismatch and no exception, so evaluation is not locked.
+- 2026-11-11 01:35 Phase 2 gate green: build, format, 159 tests, print guard (`gates/phase-2.txt`). Transitive
+  packages as pinned: JsonSchema.Net 8.0.5, JsonPointer.Net 6.0.1, Json.More.Net 2.2.0, Resilience 10.11.0.

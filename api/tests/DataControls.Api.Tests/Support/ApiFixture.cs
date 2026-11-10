@@ -8,6 +8,14 @@ public sealed class ApiFixture : IAsyncLifetime
 {
     public ApiFactory Factory { get; } = new();
 
+    /// <summary>A client on the shared host, with the engine stub and the clock back at their defaults.</summary>
+    public HttpClient CreateClient()
+    {
+        Factory.Engine.Reset();
+        Factory.Clock.Reset();
+        return Factory.CreateClient();
+    }
+
     public async Task InitializeAsync()
     {
         await TestData.EnsureDatabaseAsync(Factory.Services);

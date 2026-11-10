@@ -1,3 +1,5 @@
+using System.Text.Json;
+
 namespace DataControls.Api.Errors;
 
 /// <summary>
@@ -38,6 +40,25 @@ internal sealed class RequestCheck
         }
 
         return trimmed;
+    }
+
+    /// <summary>
+    /// A definition must be a JSON object: absent or null is <c>REQUIRED</c>, any other value <c>MALFORMED</c>.
+    /// Everything about the object itself is a definition check, not a request check.
+    /// </summary>
+    public JsonElement Definition(string path, JsonElement? value)
+    {
+        switch (value?.ValueKind)
+        {
+            case JsonValueKind.Object:
+                return value.Value;
+            case null or JsonValueKind.Null or JsonValueKind.Undefined:
+                Add(path, RequestErrorCodes.Required);
+                return default;
+            default:
+                Add(path, RequestErrorCodes.Malformed);
+                return default;
+        }
     }
 
     /// <summary>An optional integer inside its range; absent is <paramref name="fallback"/>.</summary>

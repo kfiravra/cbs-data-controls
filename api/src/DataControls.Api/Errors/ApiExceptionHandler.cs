@@ -1,3 +1,4 @@
+using DataControls.Api.Engine;
 using DataControls.Api.Hosting;
 using DataControls.Api.Persistence;
 using Microsoft.AspNetCore.Diagnostics;
@@ -35,6 +36,12 @@ internal sealed class ApiExceptionHandler(
         }
 
         var correlationId = requests.Current.CorrelationId;
+        if (exception is EngineException engineFailure)
+        {
+            logger.LogWarning(exception, "Engine call failed {Failure} {CorrelationId}", engineFailure.Failure, correlationId);
+            return EngineErrorMap.ToProblem(engineFailure);
+        }
+
         if (SqlFailure.IsConnectionLevel(exception))
         {
             logger.LogWarning(exception, "The dq database did not answer {CorrelationId}", correlationId);

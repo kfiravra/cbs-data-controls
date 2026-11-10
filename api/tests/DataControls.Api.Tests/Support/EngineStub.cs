@@ -6,31 +6,72 @@ namespace DataControls.Api.Tests.Support;
 
 /// <summary>
 /// Stands in for the engine at the primary handler of the api's HTTP client, so the client and its
-/// resilience pipeline stay the real ones. Records every call and answers per route (<c>"POST /run"</c>).
+/// resilience pipeline stay the real ones. It answers from <c>Fixtures/engine/</c> unless a test tells a
+/// route (<c>"POST /run"</c>) to answer, wait or fail, and it records every call.
 /// </summary>
 public sealed class EngineStub : HttpMessageHandler
 {
+    public const string Health = "GET /health";
+    public const string Glossary = "GET /glossary";
+    public const string Validate = "POST /validate";
+    public const string Run = "POST /run";
+    public const string Suggest = "POST /suggest";
+
+    private const string ProblemContentType = "application/problem+json";
+
     private readonly ConcurrentDictionary<string, Func<EngineCall, CancellationToken, Task<HttpResponseMessage>>> _routes = new();
     private readonly ConcurrentQueue<EngineCall> _calls = new();
+
+    public EngineStub() => Reset();
 
     public IReadOnlyList<EngineCall> Calls => [.. _calls];
 
     public IReadOnlyList<EngineCall> CallsTo(string route) => [.. _calls.Where(call => call.Route == route)];
 
+    /// <summary>Forgets the calls and goes back to the fixture answers.</summary>
     public void Reset()
     {
-        _routes.Clear();
         _calls.Clear();
+        _routes.Clear();
+        Answer(Health, HttpStatusCode.OK, EngineFixtures.Read("health.json"));
+        Answer(Glossary, HttpStatusCode.OK, EngineFixtures.Read("glossary.json"));
+        Answer(Validate, HttpStatusCode.OK, EngineFixtures.Read("validate.json"));
     }
 
-    public void Answer(string route, HttpStatusCode status, string json, string contentType = "application/json") =>
-        _routes[route] = (_, _) => Task.FromResult(Json(status, json, contentType));
+    public void Answer(string route, HttpStatusCode status, string json) =>
+        _routes[route] = (_, _) => Task.FromResult(Json(status, json));
 
-    public void Respond(string route, Func<EngineCall, CancellationToken, Task<HttpResponseMessage>> responder) =>
-        _routes[route] = responder;
+    public void Respond(string route, Func<EngineCall, HttpResponseMessage> responder) =>
+        _routes[route] = (call, _) => Task.FromResult(responder(call));
 
-    public static HttpResponseMessage Json(HttpStatusCode status, string json, string contentType = "application/json") =>
-        new(status) { Content = new StringContent(json, Encoding.UTF8, contentType) };
+    /// <summary>The route refuses the connection: what a stopped engine looks like.</summary>
+    public void Refuse(string route) =>
+        _routes[route] = (_, _) => throw new HttpRequestException("Connection refused (engine stub).");
+
+    /// <summary>The route answers its fixture only after the delay, unless the call is cancelled first.</summary>
+    public void Delay(string route, TimeSpan delay)
+    {
+        var answer = _routes[route];
+        _routes[route] = async (call, cancellationToken) =>
+        {
+            await Task.Delay(delay, cancellationToken);
+            return await answer(call, cancellationToken);
+        };
+    }
+
+    public void RefuseEverything()
+    {
+        foreach (var route in new[] { Health, Glossary, Validate, Run, Suggest })
+        {
+            Refuse(route);
+        }
+    }
+
+    public static HttpResponseMessage Json(HttpStatusCode status, string json) =>
+        new(status)
+        {
+            Content = new StringContent(json, Encoding.UTF8, (int)status >= 400 ? ProblemContentType : "application/json"),
+        };
 
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
@@ -45,9 +86,6 @@ public sealed class EngineStub : HttpMessageHandler
         }
 
         // What the engine answers for a path it does not serve.
-        return Json(
-            HttpStatusCode.NotFound,
-            """{"type":"about:blank","title":"NOT_FOUND","status":404,"code":"NOT_FOUND","params":{},"correlationId":"stub"}""",
-            "application/problem+json");
+        return Json(HttpStatusCode.NotFound, EngineFixtures.Problem("NOT_FOUND", 404));
     }
 }

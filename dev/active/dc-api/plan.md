@@ -184,14 +184,14 @@ Review: `/phase-review api`
 Commit: `feat(api): host skeleton, problem details and the dq persistence model`
 
 ### Phase 2: engine client, glossary, validation
-- [ ] `EngineClient`, the forwarding handler and the resilience pipeline per Design E.
-- [ ] The engine error map per Design E, one table, tested against `contracts/errors.md`.
-- [ ] Engine fixtures under `tests/.../Fixtures/engine/`, shaped by `contracts/api.md` as written, with
+- [x] `EngineClient`, the forwarding handler and the resilience pipeline per Design E.
+- [x] The engine error map per Design E, one table, tested against `contracts/errors.md`.
+- [x] Engine fixtures under `tests/.../Fixtures/engine/`, shaped by `contracts/api.md` as written, with
       `sentenceParts` and `textParts` where the contract puts them.
-- [ ] Glossary cache, `GET /glossary`, the startup probe, the engine half of `/health` (Design F).
-- [ ] `DefinitionSchemaValidator` over the embedded schema with paths per dc-contracts H4a (Design F, H1), and
+- [x] Glossary cache, `GET /glossary`, the startup probe, the engine half of `/health` (Design F).
+- [x] `DefinitionSchemaValidator` over the embedded schema with paths per dc-contracts H4a (Design F, H1), and
       `POST /controls/validate`. Re-run the probe of `research/schema-probe.md` on the real schema first.
-- [ ] Tests: calls reaching the stub per failure kind (connection error 2, 503 2, 504 1, 422 1, 500 1, attempt
+- [x] Tests: calls reaching the stub per failure kind (connection error 2, 503 2, 504 1, 422 1, 500 1, attempt
       timeout 1); timeout and connection error answer 503 `ENGINE_UNAVAILABLE`; the breaker opens and fails
       fast (its own factory); correlation id and language forwarded; the glossary fetched once for two reads,
       served stale when the engine is down, 503 when it was never fetched; every schema-layer fixture of

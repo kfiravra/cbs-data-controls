@@ -41,6 +41,14 @@ public sealed class ApiException : Exception
     /// <summary>A request refused before its members were read: 413 for its size, 415 for its media type.</summary>
     public static ApiException RequestRejected(int status) => new(ErrorCodes.RequestInvalid, status: status);
 
+    /// <summary>A definition that fails the api's own layer: the schema version or the schema.</summary>
+    public static ApiException DefinitionInvalid(IReadOnlyList<DefinitionError> errors) =>
+        new(ErrorCodes.DefinitionInvalid, errors: JsonSerializer.SerializeToElement(errors, JsonDefaults.Options));
+
+    /// <summary>An engine answer passed on: the code of the error map with the engine's own params and errors.</summary>
+    public static ApiException Relayed(string code, JsonElement? parameters = null, JsonElement? errors = null) =>
+        new(code, parameters, errors);
+
     public static ApiException DatabaseUnavailable() => new(ErrorCodes.DatabaseUnavailable);
 
     public static ApiException Internal() => new(ErrorCodes.InternalError);

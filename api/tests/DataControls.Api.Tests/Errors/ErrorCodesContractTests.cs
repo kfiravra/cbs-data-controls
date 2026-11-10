@@ -56,6 +56,22 @@ public sealed partial class ErrorCodesContractTests
         Assert.Equal(expected, RequestErrorCodes.All.Order());
     }
 
+    [Fact]
+    public void Definition_error_codes_of_the_api_are_catalogue_rows_when_their_layer_is_the_schema_or_before_it()
+    {
+        var expected = ContractFiles.ErrorTable("Definition error codes")
+            .Where(row => row[1] is "schema" or "before the schema")
+            .Select(row => row[Code])
+            .Order();
+
+        var declared = typeof(DefinitionErrorCodes)
+            .GetFields(BindingFlags.Public | BindingFlags.Static)
+            .Select(field => (string)field.GetRawConstantValue()!)
+            .Order();
+
+        Assert.Equal(expected, declared);
+    }
+
     private static bool SentByTheApi(string[] row) => row[From] is "api" or "both";
 
     [GeneratedRegex(@"\d{3}")]

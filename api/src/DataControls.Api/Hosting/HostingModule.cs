@@ -11,6 +11,7 @@ internal static class HostingModule
         services.AddSingleton<UtcClock>();
         services.AddSingleton<SupportedLanguages>();
         services.AddSingleton<RequestContextAccessor>();
+        services.AddHostedService<StartupProbe>();
 
         services.AddControllers().AddJsonOptions(options => JsonDefaults.Apply(options.JsonSerializerOptions));
         services.ConfigureHttpJsonOptions(options => JsonDefaults.Apply(options.SerializerOptions));

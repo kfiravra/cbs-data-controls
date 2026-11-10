@@ -1,0 +1,1242 @@
+{
+  "glossaryVersion": "1.0.0",
+  "languages": [
+    "he"
+  ],
+  "defaultLanguage": "he",
+  "limits": {
+    "maxDepth": 4,
+    "maxConditions": 30,
+    "maxListValues": 100,
+    "maxPathHops": 2,
+    "maxTotalValues": 500
+  },
+  "formats": {
+    "he": {
+      "date": "dd.MM.yyyy",
+      "groupSeparator": ",",
+      "decimalSeparator": "."
+    }
+  },
+  "phrases": {
+    "and": {
+      "he": " וגם "
+    },
+    "or": {
+      "he": " או "
+    },
+    "groupOpen": {
+      "he": "("
+    },
+    "groupClose": {
+      "he": ")"
+    },
+    "listSeparator": {
+      "he": ", "
+    },
+    "reasonSeparator": {
+      "he": "; "
+    },
+    "fieldOnPath": {
+      "he": "{field} של {relationship}"
+    },
+    "relatedAny": {
+      "sentence": {
+        "he": "יש {relationship} עם ({conditions})"
+      },
+      "reason": {
+        "he": "יש {relationship} עם {conditions}"
+      }
+    },
+    "relatedNone": {
+      "sentence": {
+        "he": "אין {relationship} עם ({conditions})"
+      },
+      "reason": {
+        "he": "אין {relationship} עם {conditions}"
+      }
+    }
+  },
+  "operators": [
+    {
+      "key": "eq",
+      "arity": 1,
+      "types": [
+        "number",
+        "text",
+        "date",
+        "bool",
+        "enum"
+      ],
+      "fieldComparable": true,
+      "label": {
+        "default": {
+          "he": "שווה ל־"
+        }
+      },
+      "sentence": {
+        "default": {
+          "he": "{field}: {value}"
+        },
+        "field": {
+          "he": "{field} שווה ל{other}"
+        }
+      },
+      "reason": {
+        "default": {
+          "he": "{field}: {actual}"
+        },
+        "field": {
+          "he": "{field}: {actual} (שווה ל{other})"
+        }
+      }
+    },
+    {
+      "key": "ne",
+      "arity": 1,
+      "types": [
+        "number",
+        "text",
+        "date",
+        "bool",
+        "enum"
+      ],
+      "fieldComparable": true,
+      "label": {
+        "default": {
+          "he": "שונה מ־"
+        }
+      },
+      "sentence": {
+        "default": {
+          "he": "{field} שונה מ־{value}"
+        },
+        "text": {
+          "he": "{field} שונה מ”{value}”"
+        },
+        "enum": {
+          "he": "{field} שונה מ”{value}”"
+        },
+        "bool": {
+          "he": "{field} שונה מ”{value}”"
+        },
+        "field": {
+          "he": "{field} שונה מ{other}"
+        }
+      },
+      "reason": {
+        "default": {
+          "he": "{field}: {actual} (שונה מ־{value})"
+        },
+        "text": {
+          "he": "{field}: {actual} (שונה מ”{value}”)"
+        },
+        "enum": {
+          "he": "{field}: {actual} (שונה מ”{value}”)"
+        },
+        "bool": {
+          "he": "{field}: {actual} (שונה מ”{value}”)"
+        },
+        "field": {
+          "he": "{field}: {actual} (שונה מ{other}: {otherActual})"
+        }
+      }
+    },
+    {
+      "key": "lt",
+      "arity": 1,
+      "types": [
+        "number",
+        "date"
+      ],
+      "fieldComparable": true,
+      "label": {
+        "default": {
+          "he": "מתחת ל־"
+        },
+        "date": {
+          "he": "לפני"
+        }
+      },
+      "sentence": {
+        "default": {
+          "he": "{field} מתחת ל־{value}"
+        },
+        "date": {
+          "he": "{field} לפני {value}"
+        },
+        "field": {
+          "he": "{field} מתחת ל{other}"
+        },
+        "date.field": {
+          "he": "{field} לפני {other}"
+        }
+      },
+      "reason": {
+        "default": {
+          "he": "{field}: {actual} (מתחת ל־{value})"
+        },
+        "date": {
+          "he": "{field}: {actual} (לפני {value})"
+        },
+        "field": {
+          "he": "{field}: {actual} (מתחת ל{other}: {otherActual})"
+        },
+        "date.field": {
+          "he": "{field}: {actual} (לפני {other}: {otherActual})"
+        }
+      }
+    },
+    {
+      "key": "lte",
+      "arity": 1,
+      "types": [
+        "number",
+        "date"
+      ],
+      "fieldComparable": true,
+      "label": {
+        "default": {
+          "he": "לכל היותר"
+        },
+        "date": {
+          "he": "לא אחרי"
+        }
+      },
+      "sentence": {
+        "default": {
+          "he": "{field} לכל היותר {value}"
+        },
+        "date": {
+          "he": "{field} לא אחרי {value}"
+        },
+        "field": {
+          "he": "{field} לכל היותר {other}"
+        },
+        "date.field": {
+          "he": "{field} לא אחרי {other}"
+        }
+      },
+      "reason": {
+        "default": {
+          "he": "{field}: {actual} (לכל היותר {value})"
+        },
+        "date": {
+          "he": "{field}: {actual} (לא אחרי {value})"
+        },
+        "field": {
+          "he": "{field}: {actual} (לכל היותר {other}: {otherActual})"
+        },
+        "date.field": {
+          "he": "{field}: {actual} (לא אחרי {other}: {otherActual})"
+        }
+      }
+    },
+    {
+      "key": "gt",
+      "arity": 1,
+      "types": [
+        "number",
+        "date"
+      ],
+      "fieldComparable": true,
+      "label": {
+        "default": {
+          "he": "מעל"
+        },
+        "date": {
+          "he": "אחרי"
+        }
+      },
+      "sentence": {
+        "default": {
+          "he": "{field} מעל {value}"
+        },
+        "date": {
+          "he": "{field} אחרי {value}"
+        },
+        "field": {
+          "he": "{field} מעל {other}"
+        },
+        "date.field": {
+          "he": "{field} אחרי {other}"
+        }
+      },
+      "reason": {
+        "default": {
+          "he": "{field}: {actual} (מעל {value})"
+        },
+        "date": {
+          "he": "{field}: {actual} (אחרי {value})"
+        },
+        "field": {
+          "he": "{field}: {actual} (מעל {other}: {otherActual})"
+        },
+        "date.field": {
+          "he": "{field}: {actual} (אחרי {other}: {otherActual})"
+        }
+      }
+    },
+    {
+      "key": "gte",
+      "arity": 1,
+      "types": [
+        "number",
+        "date"
+      ],
+      "fieldComparable": true,
+      "label": {
+        "default": {
+          "he": "לפחות"
+        },
+        "date": {
+          "he": "לא לפני"
+        }
+      },
+      "sentence": {
+        "default": {
+          "he": "{field} לפחות {value}"
+        },
+        "date": {
+          "he": "{field} לא לפני {value}"
+        },
+        "field": {
+          "he": "{field} לפחות {other}"
+        },
+        "date.field": {
+          "he": "{field} לא לפני {other}"
+        }
+      },
+      "reason": {
+        "default": {
+          "he": "{field}: {actual} (לפחות {value})"
+        },
+        "date": {
+          "he": "{field}: {actual} (לא לפני {value})"
+        },
+        "field": {
+          "he": "{field}: {actual} (לפחות {other}: {otherActual})"
+        },
+        "date.field": {
+          "he": "{field}: {actual} (לא לפני {other}: {otherActual})"
+        }
+      }
+    },
+    {
+      "key": "between",
+      "arity": 2,
+      "types": [
+        "number",
+        "date"
+      ],
+      "fieldComparable": false,
+      "label": {
+        "default": {
+          "he": "בטווח"
+        }
+      },
+      "sentence": {
+        "default": {
+          "he": "{field} בטווח {value} עד {value2}"
+        }
+      },
+      "reason": {
+        "default": {
+          "he": "{field}: {actual} (בטווח {value} עד {value2})"
+        }
+      }
+    },
+    {
+      "key": "not_between",
+      "arity": 2,
+      "types": [
+        "number",
+        "date"
+      ],
+      "fieldComparable": false,
+      "label": {
+        "default": {
+          "he": "מחוץ לטווח"
+        }
+      },
+      "sentence": {
+        "default": {
+          "he": "{field} מחוץ לטווח {value} עד {value2}"
+        }
+      },
+      "reason": {
+        "default": {
+          "he": "{field}: {actual} (מחוץ לטווח {value} עד {value2})"
+        }
+      }
+    },
+    {
+      "key": "in",
+      "arity": "list",
+      "types": [
+        "number",
+        "text",
+        "enum"
+      ],
+      "fieldComparable": false,
+      "label": {
+        "default": {
+          "he": "ברשימה"
+        }
+      },
+      "sentence": {
+        "default": {
+          "he": "{field} ברשימה: {values}"
+        }
+      },
+      "reason": {
+        "default": {
+          "he": "{field}: {actual} (ברשימה)"
+        }
+      }
+    },
+    {
+      "key": "not_in",
+      "arity": "list",
+      "types": [
+        "number",
+        "text",
+        "enum"
+      ],
+      "fieldComparable": false,
+      "label": {
+        "default": {
+          "he": "לא ברשימה"
+        }
+      },
+      "sentence": {
+        "default": {
+          "he": "{field} לא ברשימה: {values}"
+        }
+      },
+      "reason": {
+        "default": {
+          "he": "{field}: {actual} (לא ברשימה)"
+        }
+      }
+    },
+    {
+      "key": "contains",
+      "arity": 1,
+      "types": [
+        "text"
+      ],
+      "fieldComparable": false,
+      "label": {
+        "default": {
+          "he": "מכיל"
+        }
+      },
+      "sentence": {
+        "default": {
+          "he": "{field}: מכיל ”{value}”"
+        }
+      },
+      "reason": {
+        "default": {
+          "he": "{field}: {actual} (מכיל ”{value}”)"
+        }
+      }
+    },
+    {
+      "key": "not_contains",
+      "arity": 1,
+      "types": [
+        "text"
+      ],
+      "fieldComparable": false,
+      "label": {
+        "default": {
+          "he": "לא מכיל"
+        }
+      },
+      "sentence": {
+        "default": {
+          "he": "{field}: לא מכיל ”{value}”"
+        }
+      },
+      "reason": {
+        "default": {
+          "he": "{field}: {actual} (לא מכיל ”{value}”)"
+        }
+      }
+    },
+    {
+      "key": "starts_with",
+      "arity": 1,
+      "types": [
+        "text"
+      ],
+      "fieldComparable": false,
+      "label": {
+        "default": {
+          "he": "מתחיל ב־"
+        }
+      },
+      "sentence": {
+        "default": {
+          "he": "{field}: מתחיל ב־”{value}”"
+        }
+      },
+      "reason": {
+        "default": {
+          "he": "{field}: {actual} (מתחיל ב־”{value}”)"
+        }
+      }
+    },
+    {
+      "key": "ends_with",
+      "arity": 1,
+      "types": [
+        "text"
+      ],
+      "fieldComparable": false,
+      "label": {
+        "default": {
+          "he": "מסתיים ב־"
+        }
+      },
+      "sentence": {
+        "default": {
+          "he": "{field}: מסתיים ב־”{value}”"
+        }
+      },
+      "reason": {
+        "default": {
+          "he": "{field}: {actual} (מסתיים ב־”{value}”)"
+        }
+      }
+    },
+    {
+      "key": "is_null",
+      "arity": 0,
+      "types": [
+        "number",
+        "text",
+        "date",
+        "bool",
+        "enum"
+      ],
+      "fieldComparable": false,
+      "label": {
+        "default": {
+          "he": "חסר"
+        }
+      },
+      "sentence": {
+        "default": {
+          "he": "{field}: חסר"
+        }
+      },
+      "reason": {
+        "default": {
+          "he": "{field}: חסר"
+        }
+      }
+    },
+    {
+      "key": "is_not_null",
+      "arity": 0,
+      "types": [
+        "number",
+        "text",
+        "date",
+        "bool",
+        "enum"
+      ],
+      "fieldComparable": false,
+      "label": {
+        "default": {
+          "he": "לא חסר"
+        }
+      },
+      "sentence": {
+        "default": {
+          "he": "{field}: לא חסר"
+        }
+      },
+      "reason": {
+        "default": {
+          "he": "{field}: {actual}"
+        }
+      }
+    },
+    {
+      "key": "is_empty",
+      "arity": 0,
+      "types": [
+        "text"
+      ],
+      "fieldComparable": false,
+      "label": {
+        "default": {
+          "he": "ריק"
+        }
+      },
+      "sentence": {
+        "default": {
+          "he": "{field}: ריק"
+        }
+      },
+      "reason": {
+        "default": {
+          "he": "{field}: ריק"
+        }
+      }
+    },
+    {
+      "key": "is_not_empty",
+      "arity": 0,
+      "types": [
+        "text"
+      ],
+      "fieldComparable": false,
+      "label": {
+        "default": {
+          "he": "לא ריק"
+        }
+      },
+      "sentence": {
+        "default": {
+          "he": "{field}: לא ריק"
+        }
+      },
+      "reason": {
+        "default": {
+          "he": "{field}: {actual}"
+        }
+      }
+    }
+  ],
+  "entities": [
+    {
+      "key": "employee",
+      "label": {
+        "singular": {
+          "he": "עובד"
+        },
+        "plural": {
+          "he": "עובדים"
+        }
+      },
+      "description": {
+        "he": "עובד במשרד ממשלתי, משויך למחלקה אחת לכל היותר."
+      },
+      "rootable": true,
+      "visible": true,
+      "identifyingFields": [
+        "first_name",
+        "last_name",
+        "employee_number"
+      ],
+      "lifecycle": {
+        "field": "status",
+        "active": "active"
+      },
+      "fields": [
+        {
+          "key": "employee_number",
+          "label": {
+            "he": "מספר עובד"
+          },
+          "description": {
+            "he": "המספר המזהה של העובד."
+          },
+          "type": "number",
+          "nullable": false,
+          "visible": true,
+          "identifier": true,
+          "operators": [
+            "eq",
+            "ne",
+            "lt",
+            "lte",
+            "gt",
+            "gte",
+            "between",
+            "not_between",
+            "in",
+            "not_in"
+          ]
+        },
+        {
+          "key": "national_id",
+          "label": {
+            "he": "מספר זהות"
+          },
+          "description": {
+            "he": "מספר תעודת הזהות של העובד, תשע ספרות."
+          },
+          "type": "text",
+          "nullable": false,
+          "visible": true,
+          "operators": [
+            "eq",
+            "ne",
+            "in",
+            "not_in",
+            "contains",
+            "not_contains",
+            "starts_with",
+            "ends_with",
+            "is_empty",
+            "is_not_empty"
+          ]
+        },
+        {
+          "key": "first_name",
+          "label": {
+            "he": "שם פרטי"
+          },
+          "description": {
+            "he": "השם הפרטי של העובד."
+          },
+          "type": "text",
+          "nullable": false,
+          "visible": true,
+          "operators": [
+            "eq",
+            "ne",
+            "in",
+            "not_in",
+            "contains",
+            "not_contains",
+            "starts_with",
+            "ends_with",
+            "is_empty",
+            "is_not_empty"
+          ]
+        },
+        {
+          "key": "last_name",
+          "label": {
+            "he": "שם משפחה"
+          },
+          "description": {
+            "he": "שם המשפחה של העובד."
+          },
+          "type": "text",
+          "nullable": false,
+          "visible": true,
+          "operators": [
+            "eq",
+            "ne",
+            "in",
+            "not_in",
+            "contains",
+            "not_contains",
+            "starts_with",
+            "ends_with",
+            "is_empty",
+            "is_not_empty"
+          ]
+        },
+        {
+          "key": "email",
+          "label": {
+            "he": "דואר אלקטרוני"
+          },
+          "description": {
+            "he": "כתובת הדואר האלקטרוני של העובד."
+          },
+          "type": "text",
+          "nullable": true,
+          "visible": true,
+          "required": "active",
+          "operators": [
+            "eq",
+            "ne",
+            "in",
+            "not_in",
+            "contains",
+            "not_contains",
+            "starts_with",
+            "ends_with",
+            "is_null",
+            "is_not_null",
+            "is_empty",
+            "is_not_empty"
+          ]
+        },
+        {
+          "key": "birth_date",
+          "label": {
+            "he": "תאריך לידה"
+          },
+          "description": {
+            "he": "תאריך הלידה של העובד."
+          },
+          "type": "date",
+          "nullable": false,
+          "visible": true,
+          "operators": [
+            "eq",
+            "ne",
+            "lt",
+            "lte",
+            "gt",
+            "gte",
+            "between",
+            "not_between"
+          ]
+        },
+        {
+          "key": "age",
+          "label": {
+            "he": "גיל"
+          },
+          "description": {
+            "he": "הגיל בשנים שלמות בתאריך ההרצה, לפי תאריך הלידה."
+          },
+          "type": "number",
+          "nullable": false,
+          "visible": true,
+          "comparable": false,
+          "operators": [
+            "eq",
+            "ne",
+            "lt",
+            "lte",
+            "gt",
+            "gte",
+            "between",
+            "not_between",
+            "in",
+            "not_in"
+          ]
+        },
+        {
+          "key": "hire_date",
+          "label": {
+            "he": "תאריך תחילת העסקה"
+          },
+          "description": {
+            "he": "התאריך שבו החלה העסקת העובד."
+          },
+          "type": "date",
+          "nullable": false,
+          "visible": true,
+          "operators": [
+            "eq",
+            "ne",
+            "lt",
+            "lte",
+            "gt",
+            "gte",
+            "between",
+            "not_between"
+          ]
+        },
+        {
+          "key": "termination_date",
+          "label": {
+            "he": "תאריך סיום העסקה"
+          },
+          "description": {
+            "he": "התאריך שבו הסתיימה העסקת העובד; ריק כל עוד העובד מועסק."
+          },
+          "type": "date",
+          "nullable": true,
+          "visible": true,
+          "required": "inactive",
+          "operators": [
+            "eq",
+            "ne",
+            "lt",
+            "lte",
+            "gt",
+            "gte",
+            "between",
+            "not_between",
+            "is_null",
+            "is_not_null"
+          ]
+        },
+        {
+          "key": "salary",
+          "label": {
+            "he": "שכר"
+          },
+          "description": {
+            "he": "השכר החודשי של העובד."
+          },
+          "type": "number",
+          "nullable": true,
+          "visible": true,
+          "unit": {
+            "he": "₪"
+          },
+          "required": "active",
+          "operators": [
+            "eq",
+            "ne",
+            "lt",
+            "lte",
+            "gt",
+            "gte",
+            "between",
+            "not_between",
+            "in",
+            "not_in",
+            "is_null",
+            "is_not_null"
+          ]
+        },
+        {
+          "key": "status",
+          "label": {
+            "he": "סטטוס"
+          },
+          "description": {
+            "he": "מצב ההעסקה של העובד."
+          },
+          "type": "enum",
+          "nullable": false,
+          "visible": true,
+          "enumValues": [
+            {
+              "value": "active",
+              "label": {
+                "he": "פעיל"
+              }
+            },
+            {
+              "value": "inactive",
+              "label": {
+                "he": "לא פעיל"
+              }
+            }
+          ],
+          "operators": [
+            "eq",
+            "ne",
+            "in",
+            "not_in"
+          ]
+        },
+        {
+          "key": "department_assignment",
+          "label": {
+            "he": "שיוך למחלקה"
+          },
+          "description": {
+            "he": "האם העובד משויך למחלקה; ניתן לבדוק רק אם השיוך חסר או לא חסר."
+          },
+          "type": "number",
+          "nullable": true,
+          "visible": true,
+          "required": "active",
+          "comparable": false,
+          "identifier": true,
+          "operators": [
+            "is_null",
+            "is_not_null"
+          ]
+        }
+      ]
+    },
+    {
+      "key": "department",
+      "label": {
+        "singular": {
+          "he": "מחלקה"
+        },
+        "plural": {
+          "he": "מחלקות"
+        }
+      },
+      "description": {
+        "he": "יחידה ארגונית במשרד ממשלתי."
+      },
+      "rootable": true,
+      "visible": true,
+      "identifyingFields": [
+        "name",
+        "department_number"
+      ],
+      "lifecycle": {
+        "field": "is_active",
+        "active": true
+      },
+      "fields": [
+        {
+          "key": "department_number",
+          "label": {
+            "he": "מספר מחלקה"
+          },
+          "description": {
+            "he": "המספר המזהה של המחלקה."
+          },
+          "type": "number",
+          "nullable": false,
+          "visible": true,
+          "identifier": true,
+          "operators": [
+            "eq",
+            "ne",
+            "lt",
+            "lte",
+            "gt",
+            "gte",
+            "between",
+            "not_between",
+            "in",
+            "not_in"
+          ]
+        },
+        {
+          "key": "name",
+          "label": {
+            "he": "שם"
+          },
+          "description": {
+            "he": "שם המחלקה."
+          },
+          "type": "text",
+          "nullable": false,
+          "visible": true,
+          "operators": [
+            "eq",
+            "ne",
+            "in",
+            "not_in",
+            "contains",
+            "not_contains",
+            "starts_with",
+            "ends_with",
+            "is_empty",
+            "is_not_empty"
+          ]
+        },
+        {
+          "key": "is_active",
+          "label": {
+            "he": "סטטוס"
+          },
+          "description": {
+            "he": "האם המחלקה פעילה."
+          },
+          "type": "bool",
+          "nullable": false,
+          "visible": true,
+          "valueLabels": {
+            "true": {
+              "he": "פעיל"
+            },
+            "false": {
+              "he": "לא פעיל"
+            }
+          },
+          "operators": [
+            "eq",
+            "ne"
+          ]
+        },
+        {
+          "key": "manager_assignment",
+          "label": {
+            "he": "שיוך מנהל"
+          },
+          "description": {
+            "he": "האם הוגדר מנהל למחלקה; ניתן לבדוק רק אם השיוך חסר או לא חסר."
+          },
+          "type": "number",
+          "nullable": true,
+          "visible": true,
+          "comparable": false,
+          "identifier": true,
+          "operators": [
+            "is_null",
+            "is_not_null"
+          ]
+        }
+      ]
+    },
+    {
+      "key": "ministry",
+      "label": {
+        "singular": {
+          "he": "משרד"
+        },
+        "plural": {
+          "he": "משרדים"
+        }
+      },
+      "description": {
+        "he": "משרד ממשלתי."
+      },
+      "rootable": true,
+      "visible": true,
+      "identifyingFields": [
+        "name"
+      ],
+      "lifecycle": {
+        "field": "is_active",
+        "active": true
+      },
+      "fields": [
+        {
+          "key": "name",
+          "label": {
+            "he": "שם"
+          },
+          "description": {
+            "he": "שם המשרד."
+          },
+          "type": "text",
+          "nullable": false,
+          "visible": true,
+          "operators": [
+            "eq",
+            "ne",
+            "in",
+            "not_in",
+            "contains",
+            "not_contains",
+            "starts_with",
+            "ends_with",
+            "is_empty",
+            "is_not_empty"
+          ]
+        },
+        {
+          "key": "is_active",
+          "label": {
+            "he": "סטטוס"
+          },
+          "description": {
+            "he": "האם המשרד פעיל."
+          },
+          "type": "bool",
+          "nullable": false,
+          "visible": true,
+          "valueLabels": {
+            "true": {
+              "he": "פעיל"
+            },
+            "false": {
+              "he": "לא פעיל"
+            }
+          },
+          "operators": [
+            "eq",
+            "ne"
+          ]
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "key": "employee.department",
+      "from": "employee",
+      "to": "department",
+      "cardinality": "many_to_one",
+      "label": {
+        "he": "המחלקה"
+      }
+    },
+    {
+      "key": "department.ministry",
+      "from": "department",
+      "to": "ministry",
+      "cardinality": "many_to_one",
+      "label": {
+        "he": "המשרד"
+      }
+    },
+    {
+      "key": "department.employees",
+      "from": "department",
+      "to": "employee",
+      "cardinality": "one_to_many",
+      "label": {
+        "he": "עובד במחלקה"
+      }
+    },
+    {
+      "key": "ministry.departments",
+      "from": "ministry",
+      "to": "department",
+      "cardinality": "one_to_many",
+      "label": {
+        "he": "מחלקה במשרד"
+      }
+    }
+  ],
+  "suggestions": {
+    "kinds": {
+      "missing_required": {
+        "name": {
+          "he": "{entity} עם נתוני חובה חסרים"
+        },
+        "description": {
+          "he": "איתור {entity} עם שדה חובה חסר במצב שבו השדה נדרש."
+        },
+        "rationale": {
+          "he": "השדות מסומנים במילון המונחים כשדות חובה, בהתאם למצב הרשומה."
+        }
+      },
+      "date_order": {
+        "name": {
+          "he": "{later} לפני {earlier}"
+        },
+        "description": {
+          "he": "איתור {entity} עם {later} לפני {earlier}."
+        },
+        "rationale": {
+          "he": "ברוב הרשומות שבהן שני התאריכים קיימים, {later} לא לפני {earlier}; הרשומות בסדר ההפוך מוצגות לבדיקה."
+        }
+      },
+      "active_under_inactive": {
+        "name": {
+          "he": "{entity} במצב פעיל כש{relationship} במצב לא פעיל"
+        },
+        "description": {
+          "he": "איתור רשומות פעילות של {entity} ש{relationship} שלהן במצב לא פעיל."
+        },
+        "rationale": {
+          "he": "מצב פעיל של רשומה אינו מתיישב עם מצב לא פעיל של {relationship} שלה; ייתכן שעדכון לא הושלם."
+        }
+      },
+      "active_without_active_children": {
+        "name": {
+          "he": "{entity} במצב פעיל ללא {relationship} במצב פעיל"
+        },
+        "description": {
+          "he": "איתור רשומות פעילות של {entity} שאין להן אף {relationship} במצב פעיל."
+        },
+        "rationale": {
+          "he": "רשומה במצב פעיל ללא אף {relationship} במצב פעיל עשויה להעיד על נתונים שלא עודכנו."
+        }
+      },
+      "missing_optional": {
+        "name": {
+          "he": "{entity} ללא {field}"
+        },
+        "description": {
+          "he": "איתור רשומות של {entity} שבהן השדה ”{field}” חסר."
+        },
+        "rationale": {
+          "he": "השדה ”{field}” אינו שדה חובה, אך ברוב הרשומות הוא מלא; הרשומות שבהן הוא חסר מוצגות לבדיקה."
+        }
+      }
+    },
+    "evidence": {
+      "violations_found": {
+        "he": "חריגות כעת: {count} מתוך {total}"
+      },
+      "field_missing": {
+        "he": "ללא {field}: {count}"
+      },
+      "date_order_split": {
+        "he": "סדר הפוך: {count} מתוך {total} רשומות עם שני התאריכים"
+      }
+    }
+  }
+}
