@@ -32,7 +32,7 @@ public sealed class RunTests(ApiFixture fixture)
         Assert.Equal(Id(control), run.GetProperty("controlId").GetInt32());
         Assert.Equal(control.GetProperty("name").GetString(), run.GetProperty("controlName").GetString());
         Assert.Equal(1, run.GetProperty("controlVersion").GetInt32());
-        Assert.Equal("employee", run.GetProperty("rootEntity").GetString());
+        Assert.Equal(Examples.RootEntity(Examples.First), run.GetProperty("rootEntity").GetString());
         Assert.Equal("2026-11-01", run.GetProperty("runDate").GetString());
         Assert.Equal("he", run.GetProperty("language").GetString());
         Assert.Matches(Timestamp, run.GetProperty("startedAt").GetString());
@@ -161,7 +161,9 @@ public sealed class RunTests(ApiFixture fixture)
     [Theory]
     [InlineData("""{"totalCount":1}""")]
     [InlineData("""{"runDate":"2026-11-01","totalCount":"3","returnedCount":0,"capExceeded":false,"durationMs":1,"engineVersion":"0.1.0","glossaryVersion":"1.0.0","sentence":"s","sentenceParts":[],"conditions":[],"violations":[]}""")]
-    [InlineData("""{"runDate":"2026-11-01","totalCount":0,"returnedCount":1,"capExceeded":false,"durationMs":1,"engineVersion":"0.1.0","glossaryVersion":"1.0.0","sentence":"s","sentenceParts":[],"conditions":[],"violations":[{"key":"1"}]}""")]
+    [InlineData("""{"runDate":"2026-11-01","totalCount":0,"returnedCount":1,"capExceeded":false,"durationMs":1,"engineVersion":"0.1.0","glossaryVersion":"1.0.0","sentence":"s","sentenceParts":[],"conditions":[],"violations":[{"key":"1","display":{},"matched":["c1"],"reasons":[],"reasonText":"r"}]}""")]
+    [InlineData("""{"runDate":"2026-11-01","totalCount":1,"returnedCount":1,"capExceeded":false,"durationMs":1,"engineVersion":"0.1.0","glossaryVersion":"1.0.0","sentence":"s","sentenceParts":[],"conditions":[],"violations":[{"key":"","display":{},"matched":["c1"],"reasons":[],"reasonText":"r"}]}""")]
+    [InlineData("""{"runDate":"2026-11-01","totalCount":1,"returnedCount":1,"capExceeded":false,"durationMs":1,"engineVersion":"0.1.0","glossaryVersion":"1.0.0","sentence":"s","sentenceParts":[],"conditions":[],"violations":[{"key":"1","matched":["c1"],"reasons":[],"reasonText":"r"}]}""")]
     public async Task Run_is_closed_failed_with_internal_error_when_the_engine_body_is_not_the_contract(string body)
     {
         var run = await RunWithEngineAnswerAsync(HttpStatusCode.OK, body);
@@ -257,6 +259,26 @@ public sealed class RunTests(ApiFixture fixture)
         HttpAssert.JsonEqual(third.GetRawText(), readThird.GetRawText());
         Assert.Equal([Id(third), Id(failed)], history.GetProperty("items").EnumerateArray().Select(Id));
         Assert.Equal((3, 1, 2), (history.GetProperty("total").GetInt32(), history.GetProperty("page").GetInt32(), history.GetProperty("pageSize").GetInt32()));
+    }
+
+    [Fact]
+    public async Task Runs_started_in_the_same_millisecond_are_ordered_by_id_in_the_history_and_in_previous_run()
+    {
+        var control = await CreateAsync();
+        _engine.Answer(EngineStub.Run, HttpStatusCode.OK, RunAnswers.Numbered(1));
+        fixture.Factory.Clock.Pin(new DateTimeOffset(2026, 11, 10, 9, 0, 0, TimeSpan.Zero));
+
+        var first = await RunRequests.StartAsync(_client, Id(control));
+        var second = await RunRequests.StartAsync(_client, Id(control));
+        var third = await RunRequests.StartAsync(_client, Id(control));
+        var history = await (await _client.GetAsync(RunRequests.RunsOf(Id(control)))).ReadJsonAsync();
+        var list = await ControlRequests.ListAsync(_client, _testId);
+
+        Assert.Equal(first.GetProperty("startedAt").GetString(), third.GetProperty("startedAt").GetString());
+        Assert.Equal([Id(third), Id(second), Id(first)], history.GetProperty("items").EnumerateArray().Select(Id));
+        Assert.Equal(Id(first), second.GetProperty("previousRun").GetProperty("id").GetInt32());
+        Assert.Equal(Id(second), third.GetProperty("previousRun").GetProperty("id").GetInt32());
+        Assert.Equal(Id(third), list.GetProperty("items")[0].GetProperty("lastRun").GetProperty("id").GetInt32());
     }
 
     [Fact]

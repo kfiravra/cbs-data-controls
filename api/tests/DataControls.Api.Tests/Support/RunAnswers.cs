@@ -5,8 +5,9 @@ namespace DataControls.Api.Tests.Support;
 
 /// <summary>
 /// Builds what the engine would answer to <c>/run</c>, in the contract's shape, from a list of violations:
-/// for an example, the keys and matched ids of its <c>expected</c>. Texts and display values are made up
-/// and predictable, so a test can say what must come back without reading the code under test.
+/// for an example, the keys and matched ids of its <c>expected</c>. Texts are made up and predictable.
+/// Display values follow the root entity's identifying fields as the glossary fixture lists them, each a
+/// number or a string by the field's type there; nothing here names a field.
 /// </summary>
 internal static class RunAnswers
 {
@@ -14,27 +15,29 @@ internal static class RunAnswers
     public const string GlossaryVersion = "1.0.0";
     public const int DurationMs = 41;
 
+    private const string NumberType = "number";
+
+    /// <summary>The root entity of the first example, for a test that needs any rootable entity.</summary>
+    public static string AnyRootEntity => Examples.RootEntity(Examples.First);
+
     /// <summary>The answer for an example control: every violation of its <c>expected</c>, in its order.</summary>
     public static string ForExample(string exampleId)
     {
-        var example = Examples.Example(exampleId);
-        var expected = example.GetProperty("expected");
-        var rootEntity = example.GetProperty("definition").GetProperty("rootEntity").GetString()!;
+        var expected = Examples.Example(exampleId).GetProperty("expected");
         var violations = expected.GetProperty("violations").EnumerateArray()
             .Select(violation => new Violation(
                 violation.GetProperty("key").GetString()!,
                 [.. violation.GetProperty("matched").EnumerateArray().Select(id => id.GetString()!)]))
             .ToList();
-        return Build(rootEntity, violations, expected.GetProperty("total").GetInt32());
+        return Build(Examples.RootEntity(exampleId), violations, expected.GetProperty("total").GetInt32());
     }
 
-    /// <summary><paramref name="count"/> violations of an employee control, keyed 1001 and up, each matching c1.</summary>
+    /// <summary><paramref name="count"/> violations keyed 1001 and up, each matching c1.</summary>
     public static string Numbered(int count, int? total = null) =>
-        Build("employee", [.. Enumerable.Range(1001, count).Select(key => new Violation(key.ToString(), ["c1"]))], total ?? count);
+        Build(AnyRootEntity, [.. Enumerable.Range(1001, count).Select(key => new Violation(key.ToString(), ["c1"]))], total ?? count);
 
-    public static string Build(string rootEntity, IReadOnlyList<Violation> violations, int total)
+    public static string Build(string rootEntity, IReadOnlyList<Violation> violations, int total, string glossaryVersion = GlossaryVersion)
     {
-        var fields = IdentifyingFields(rootEntity);
         var conditionIds = violations.SelectMany(violation => violation.Matched).Distinct().ToList();
         var answer = new JsonObject
         {
@@ -44,8 +47,8 @@ internal static class RunAnswers
             ["capExceeded"] = total > violations.Count,
             ["durationMs"] = DurationMs,
             ["engineVersion"] = EngineVersion,
-            ["glossaryVersion"] = GlossaryVersion,
-            ["sentence"] = Sentence(conditionIds),
+            ["glossaryVersion"] = glossaryVersion,
+            ["sentence"] = string.Join(" and ", conditionIds.Select(SentenceOf)),
             ["sentenceParts"] = new JsonArray([.. conditionIds.Select(id => Part(SentenceOf(id), id))]),
             ["conditions"] = new JsonArray([.. conditionIds.Select(id => (JsonNode)new JsonObject
             {
@@ -54,40 +57,51 @@ internal static class RunAnswers
                 ["sentenceParts"] = new JsonArray(Part(SentenceOf(id), id)),
                 ["count"] = violations.Count(violation => violation.Matched.Contains(id)),
             })]),
-            ["violations"] = new JsonArray([.. violations.Select(violation => (JsonNode)ViolationNode(violation, fields))]),
+            ["violations"] = new JsonArray([.. violations.Select(violation => (JsonNode)ViolationNode(rootEntity, violation))]),
         };
         return answer.ToJsonString();
     }
-
-    public static string Sentence(IEnumerable<string> conditionIds) => string.Join(" and ", conditionIds.Select(SentenceOf));
 
     public static string SentenceOf(string conditionId) => $"sentence of {conditionId}";
 
     public static string ReasonOf(string conditionId, string key) => $"{conditionId} holds for {key}";
 
-    /// <summary>What the api must store as <c>display_text</c>: the display values in the glossary's order.</summary>
-    public static string DisplayTextOf(string rootEntity, Violation violation) =>
-        string.Join(' ', IdentifyingFields(rootEntity).Select(field => DisplayValue(field, violation)));
+    /// <summary>
+    /// A violation whose display values are one token in every text field and one number in every number
+    /// field: two such violations with the same tokens have the same display text.
+    /// </summary>
+    public static Violation Uniform(string rootEntity, string key, string text, int number = 7) =>
+        new(key, ["c1"], [.. IdentifyingFields(rootEntity).Select(field => field.IsNumber ? number.ToString() : text)]);
 
-    public static IReadOnlyList<string> IdentifyingFields(string rootEntity)
+    /// <summary>The display values of a violation as text, one per identifying field, in the glossary's order.</summary>
+    public static IReadOnlyList<string> DisplayTokens(string rootEntity, Violation violation) =>
+        [.. IdentifyingFields(rootEntity).Select((field, position) => Token(field, position, violation))];
+
+    private static string Token(Field field, int position, Violation violation) =>
+        violation.Display?[position] ?? (field.IsNumber ? $"{position + 1}00" : $"value{position}of{violation.Key}");
+
+    /// <summary>The root entity's identifying fields in the glossary's order, each with whether it is a number.</summary>
+    private static List<Field> IdentifyingFields(string rootEntity)
     {
         using var glossary = JsonDocument.Parse(EngineFixtures.Read("glossary.json"));
-        return [.. glossary.RootElement.GetProperty("entities").EnumerateArray()
-            .Single(entity => entity.GetProperty("key").GetString() == rootEntity)
-            .GetProperty("identifyingFields").EnumerateArray().Select(field => field.GetString()!)];
+        var entity = glossary.RootElement.GetProperty("entities").EnumerateArray()
+            .Single(candidate => candidate.GetProperty("key").GetString() == rootEntity);
+        var types = entity.GetProperty("fields").EnumerateArray()
+            .ToDictionary(field => field.GetProperty("key").GetString()!, field => field.GetProperty("type").GetString());
+        return [.. entity.GetProperty("identifyingFields").EnumerateArray()
+            .Select(field => field.GetString()!)
+            .Select(key => new Field(key, types[key] == NumberType))];
     }
 
-    private static string DisplayValue(string field, Violation violation) =>
-        violation.DisplayValues?.GetValueOrDefault(field) ?? (field.EndsWith("_number", StringComparison.Ordinal) ? violation.Key : $"{field} of {violation.Key}");
-
-    private static JsonObject ViolationNode(Violation violation, IReadOnlyList<string> fields)
+    private static JsonObject ViolationNode(string rootEntity, Violation violation)
     {
-        // Written in reverse, so the order of display_text can only come from the glossary.
+        var fields = IdentifyingFields(rootEntity);
+        // Written last field first, so the order of display_text can only come from the glossary.
         var display = new JsonObject();
-        foreach (var field in fields.Reverse())
+        for (var position = fields.Count - 1; position >= 0; position--)
         {
-            var value = DisplayValue(field, violation);
-            display[field] = field.EndsWith("_number", StringComparison.Ordinal) && long.TryParse(value, out var number) ? number : value;
+            var token = Token(fields[position], position, violation);
+            display[fields[position].Key] = fields[position].IsNumber ? long.Parse(token) : token;
         }
 
         return new JsonObject
@@ -99,7 +113,7 @@ internal static class RunAnswers
             {
                 ["conditionId"] = id,
                 ["reasonKey"] = "eq",
-                ["params"] = new JsonObject { ["left"] = new JsonObject { ["field"] = "status" }, ["actual"] = violation.Key, ["value"] = "active" },
+                ["params"] = new JsonObject { ["left"] = new JsonObject { ["field"] = fields[0].Key }, ["actual"] = violation.Key, ["value"] = violation.Key },
                 ["text"] = violation.ReasonText ?? ReasonOf(id, violation.Key),
                 ["textParts"] = new JsonArray(Part(violation.ReasonText ?? ReasonOf(id, violation.Key), id)),
             })]),
@@ -110,10 +124,15 @@ internal static class RunAnswers
     private static JsonNode Part(string text, string nodeId) =>
         new JsonObject { ["text"] = text, ["nodeId"] = nodeId, ["role"] = "field" };
 
-    /// <summary>One violation to put in an answer; display values and the reason text may be given, else they are made up.</summary>
+    /// <summary>
+    /// One violation to put in an answer. <paramref name="Display"/> gives a value per identifying field, by
+    /// position (a number field takes digits); left out, the values are made up from the key.
+    /// </summary>
     public sealed record Violation(
         string Key,
         IReadOnlyList<string> Matched,
-        IReadOnlyDictionary<string, string>? DisplayValues = null,
+        IReadOnlyList<string>? Display = null,
         string? ReasonText = null);
+
+    private sealed record Field(string Key, bool IsNumber);
 }

@@ -30,7 +30,8 @@ public sealed class RunService(
 {
     private const string DateFormat = "yyyy-MM-dd";
 
-    private static readonly RunFailure _snapshotNotStored = new(RunStatus.Failed, ErrorCodes.InternalError, "{}");
+    // How the api itself closes a run it could not finish: the snapshot was not stored, or the host is stopping.
+    private static readonly RunFailure _notFinished = new(RunStatus.Failed, ErrorCodes.InternalError, "{}");
 
     /// <summary>Runs the control's current version and returns the closed run.</summary>
     public async Task<RunResponse> StartAsync(long controlId, StartRunRequest? request, CancellationToken cancellationToken)
@@ -42,51 +43,61 @@ public sealed class RunService(
             throw ApiException.ControlArchived(control.Id);
         }
 
+        // From here on the run outlives its request: a closed tab must not leave a row `running`, so
+        // nothing below listens to the client. The engine is given up on only when the host is stopping,
+        // and every write of the row is allowed to finish, so the run is closed whichever way it ends.
         var context = requests.Current;
         var run = Run.Start(control.Id, control.Version, runDate, context.Language, context.CorrelationId, clock.Now);
         db.Runs.Add(run);
-        await db.SaveChangesAsync(cancellationToken);
+        await db.SaveChangesAsync(CancellationToken.None);
 
-        // The row exists, so the run now outlives its request: a closed tab must not leave it `running`.
-        // Only the host stopping cancels it.
         var stopping = lifetime.ApplicationStopping;
         var started = Stopwatch.GetTimestamp();
         try
         {
             var answer = await engine.RunAsync(control.Definition, runDate, options.Value.RowCap, stopping);
-            await StoreSnapshotAsync(run, control.RootEntity, answer, started, stopping);
+            var identifyingFields = await IdentifyingFieldsAsync(control.RootEntity, answer.GlossaryVersion, stopping);
+            await StoreSnapshotAsync(run, answer, identifyingFields, started);
         }
         catch (EngineException failure)
         {
             logger.LogWarning(failure, "Run {RunId} failed in the engine ({Failure}) {CorrelationId}", run.Id, failure.Failure, context.CorrelationId);
-            run.Fail(EngineErrorMap.ToRunFailure(failure), ElapsedMs(started), clock.Now);
-            await db.SaveChangesAsync(stopping);
+            await CloseFailedAsync(run, EngineErrorMap.ToRunFailure(failure), started);
+        }
+        catch (OperationCanceledException) when (stopping.IsCancellationRequested)
+        {
+            logger.LogWarning("Run {RunId} was cut off because the host is stopping {CorrelationId}", run.Id, context.CorrelationId);
+            await CloseFailedAsync(run, _notFinished, started);
         }
 
-        return await queries.GetAsync(run.Id, stopping);
+        return await queries.GetAsync(run.Id, CancellationToken.None);
     }
 
     /// <summary>
-    /// The rows and the closed run go in with one save. When that save fails the run is closed failed with
-    /// no rows, so only a crash can leave a run `running`.
+    /// The rows and the closed run go in with one save. When that save fails, whatever the reason, the run
+    /// is closed failed with no rows, so only a crash can leave a run `running`.
     /// </summary>
-    private async Task StoreSnapshotAsync(Run run, string rootEntity, EngineRunAnswer answer, long started, CancellationToken cancellationToken)
+    private async Task StoreSnapshotAsync(Run run, EngineRunAnswer answer, IReadOnlyList<string>? identifyingFields, long started)
     {
-        var identifyingFields = await IdentifyingFieldsAsync(rootEntity, answer.GlossaryVersion, cancellationToken);
         var rows = RunSnapshot.Rows(answer, identifyingFields, options.Value.RowCap);
         run.Succeed(new RunOutcome(answer.TotalCount, answer.DurationMs, RunSnapshot.Summary(answer), answer.EngineVersion), rows, clock.Now);
         try
         {
-            await db.SaveChangesAsync(cancellationToken);
+            await db.SaveChangesAsync(CancellationToken.None);
         }
-        catch (Exception failure) when (failure is DbUpdateException or InvalidOperationException)
+        catch (Exception failure)
         {
             logger.LogError(failure, "The snapshot of run {RunId} could not be stored {CorrelationId}", run.Id, run.CorrelationId);
             db.ChangeTracker.Clear();
-            var reopened = await db.Runs.SingleAsync(candidate => candidate.Id == run.Id, cancellationToken);
-            reopened.Fail(_snapshotNotStored, ElapsedMs(started), clock.Now);
-            await db.SaveChangesAsync(cancellationToken);
+            var reopened = await db.Runs.SingleAsync(candidate => candidate.Id == run.Id, CancellationToken.None);
+            await CloseFailedAsync(reopened, _notFinished, started);
         }
+    }
+
+    private async Task CloseFailedAsync(Run run, RunFailure failure, long started)
+    {
+        run.Fail(failure, ElapsedMs(started), clock.Now);
+        await db.SaveChangesAsync(CancellationToken.None);
     }
 
     private async Task<IReadOnlyList<string>?> IdentifyingFieldsAsync(string rootEntity, string glossaryVersion, CancellationToken cancellationToken)

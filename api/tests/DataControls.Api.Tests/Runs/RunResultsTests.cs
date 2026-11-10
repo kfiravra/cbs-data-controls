@@ -15,6 +15,7 @@ public sealed class RunResultsTests(ApiFixture fixture, ITestOutputHelper output
     private readonly HttpClient _client = fixture.CreateClient();
     private readonly EngineStub _engine = fixture.Factory.Engine;
     private readonly string _testId = TestData.NewTestId();
+    private readonly string _rootEntity = RunAnswers.AnyRootEntity;
 
     [Fact]
     public async Task Results_page_as_25_25_and_10_when_the_run_stored_60_violations()
@@ -48,10 +49,10 @@ public sealed class RunResultsTests(ApiFixture fixture, ITestOutputHelper output
     }
 
     [Fact]
-    public async Task Results_are_ordered_by_key_order_or_by_display_text_in_either_direction()
+    public async Task Results_are_ordered_by_key_order_or_by_display_text_with_seq_breaking_a_tie_when_two_rows_share_a_display()
     {
-        // display_text is the first name, the last name and the number, in the glossary's order.
-        var run = await RunAsync(RunAnswers.Build("employee", [Employee("1", "b"), Employee("2", "c"), Employee("3", "a"), Employee("4", "a")], 4));
+        // Rows 3 and 4 carry the same display values, so only seq can order them, in the direction asked for.
+        var run = await RunAsync(RunAnswers.Build(_rootEntity, [Row("1", "b"), Row("2", "c"), Row("3", "a"), Row("4", "a")], 4));
 
         var byDefault = await RunRequests.ResultsAsync(_client, run);
         var byKeyDescending = await RunRequests.ResultsAsync(_client, run, "?sort=key&dir=desc");
@@ -65,23 +66,27 @@ public sealed class RunResultsTests(ApiFixture fixture, ITestOutputHelper output
     }
 
     [Fact]
-    public async Task Results_search_reads_the_display_values_in_the_glossary_order_whatever_order_the_engine_wrote()
+    public async Task Results_search_reads_the_display_values_in_the_glossary_order_when_the_engine_wrote_them_in_another()
     {
         var violation = new RunAnswers.Violation("1051", ["c1"]);
-        var run = await RunAsync(RunAnswers.Build("employee", [violation, new RunAnswers.Violation("1052", ["c1"])], 2));
+        var tokens = RunAnswers.DisplayTokens(_rootEntity, violation);
+        var run = await RunAsync(RunAnswers.Build(_rootEntity, [violation, new RunAnswers.Violation("1052", ["c1"])], 2));
 
-        var found = await RunRequests.ResultsAsync(_client, run, $"?search={Uri.EscapeDataString(RunAnswers.DisplayTextOf("employee", violation))}");
+        var inGlossaryOrder = await RunRequests.ResultsAsync(_client, run, $"?search={Uri.EscapeDataString($"{tokens[0]} {tokens[1]}")}");
+        var inTheOrderWritten = await RunRequests.ResultsAsync(_client, run, $"?search={Uri.EscapeDataString($"{tokens[1]} {tokens[0]}")}");
 
-        Assert.Equal(["1051"], RunRequests.Keys(found));
+        Assert.True(tokens.Count >= 2, "The test needs an entity with two identifying fields.");
+        Assert.Equal(["1051"], RunRequests.Keys(inGlossaryOrder));
+        Assert.Empty(RunRequests.Keys(inTheOrderWritten));
     }
 
     [Fact]
     public async Task Results_search_finds_hebrew_in_the_display_text_and_in_the_reason_text()
     {
         var hebrew = TestData.HebrewText;
-        var inDisplay = new RunAnswers.Violation("1", ["c1"], new Dictionary<string, string> { ["first_name"] = hebrew });
+        var inDisplay = RunAnswers.Uniform(_rootEntity, "1", hebrew);
         var inReason = new RunAnswers.Violation("2", ["c1"], ReasonText: $"reason {hebrew}");
-        var run = await RunAsync(RunAnswers.Build("employee", [inDisplay, inReason, new RunAnswers.Violation("3", ["c1"])], 3));
+        var run = await RunAsync(RunAnswers.Build(_rootEntity, [inDisplay, inReason, new RunAnswers.Violation("3", ["c1"])], 3));
 
         var found = await RunRequests.ResultsAsync(_client, run, $"?search={Uri.EscapeDataString($"  {hebrew}  ")}");
         var emptySearch = await RunRequests.ResultsAsync(_client, run, "?search=%20%20");
@@ -89,7 +94,7 @@ public sealed class RunResultsTests(ApiFixture fixture, ITestOutputHelper output
         Assert.Equal(["1", "2"], RunRequests.Keys(found));
         Assert.Equal(2, found.GetProperty("total").GetInt32());
         Assert.Equal(3, emptySearch.GetProperty("total").GetInt32());
-        Assert.Contains(hebrew, found.GetProperty("items")[0].GetProperty("display").GetProperty("first_name").GetString());
+        Assert.Contains(hebrew, found.GetProperty("items")[0].GetProperty("display").GetRawText());
     }
 
     [Theory]
@@ -100,7 +105,7 @@ public sealed class RunResultsTests(ApiFixture fixture, ITestOutputHelper output
     public async Task Results_search_takes_wildcard_characters_literally_and_ignores_case(string search, string expectedKey)
     {
         var run = await RunAsync(RunAnswers.Build(
-            "employee",
+            _rootEntity,
             [
                 new RunAnswers.Violation("percent", ["c1"], ReasonText: "raise of 50% given"),
                 new RunAnswers.Violation("underscore", ["c1"], ReasonText: "code a_b used"),
@@ -118,7 +123,7 @@ public sealed class RunResultsTests(ApiFixture fixture, ITestOutputHelper output
     public async Task Results_keep_only_the_violations_that_matched_the_condition_asked_for()
     {
         var run = await RunAsync(RunAnswers.Build(
-            "employee",
+            _rootEntity,
             [new RunAnswers.Violation("1", ["c1", "c2"]), new RunAnswers.Violation("2", ["c1"]), new RunAnswers.Violation("3", ["c2", "c3"])],
             3));
 
@@ -184,8 +189,7 @@ public sealed class RunResultsTests(ApiFixture fixture, ITestOutputHelper output
         return run.GetProperty("id").GetInt32();
     }
 
-    private static RunAnswers.Violation Employee(string key, string firstName) =>
-        new(key, ["c1"], new Dictionary<string, string> { ["first_name"] = firstName, ["last_name"] = "same" });
+    private RunAnswers.Violation Row(string key, string text) => RunAnswers.Uniform(_rootEntity, key, text);
 
     private static IEnumerable<string> Numbers(int from, int count) => Enumerable.Range(from, count).Select(number => number.ToString());
 }

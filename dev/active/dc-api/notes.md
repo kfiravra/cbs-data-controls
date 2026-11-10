@@ -113,8 +113,13 @@ wait for a merge: commit, no push.
     version longer than its column makes the save fail, which is the "snapshot cannot be stored" case: `failed`,
     `INTERNAL_ERROR`, no rows.
 
+26. **A run that the host cuts off is closed, not left `running`.** Decision 12 lets the host's stop cancel the
+    engine call; the row is then closed `failed` with `INTERNAL_ERROR` and the request is still answered 201.
+    After the row exists no write of it takes a cancellation token, the client's or the host's, so a run stays
+    `running` only when the process dies or the database is gone at the moment of closing.
+
 ## Last reviewed
-`96bc1e9` (Phase 3), fixes in `a619323`; `b89bd0b` (Phase 2), fixes in `638787d`; `8e80f74` (Phase 1), fixes in `a781c91`
+`f54d6c2` (Phase 4), fixes in the commit after it; `96bc1e9` (Phase 3), fixes in `a619323`; `b89bd0b` (Phase 2), fixes in `638787d`; `8e80f74` (Phase 1), fixes in `a781c91`
 
 ## Docs for dc-delivery
 Kept as the work goes (plan.md decision 26) and copied into the PR body under this heading at `/ship`. The
@@ -143,9 +148,15 @@ happen, add what did.
   document, and a health probe is neither retried nor counted (unattended decision 12); the response body has
   a limit of one more attempt timeout (decision 14); after a failed glossary refresh the engine is not asked
   again for 30 seconds (decision 13).
+- `docs/architecture.md` §7 and §9, runs: the row is opened and closed without any cancellation token; a host
+  that stops during the engine call closes the run `failed` with `INTERNAL_ERROR` (decision 26). The limitation
+  for `docs/assumptions-limitations-extensions.md` narrows to: a run stays `running` only after a crash, or
+  when `dq` cannot be reached at the moment the run is closed.
 - `docs/ai-usage.md`: the Log below.
 
 ## Log
+The times of 2026-11-11 are the times of the commits (`git log`): a first draft of these lines carried
+estimated times that ran up to two hours ahead of the clock, and they were corrected at 01:15.
 A review's line follows plan.md decision 27: the diff range, findings per axis and severity, each critical and
 warning by file, what the fix changed, what was left and why, what Kfir rejected or rewrote.
 
@@ -213,7 +224,7 @@ warning by file, what the fix changed, what was left and why, what Kfir rejected
 - 2026-11-11 00:20 Phase 1 gate green: build with `-warnaserror`, format, 64 tests, print guard
   (`gates/phase-1.txt`). NuGet on 2026-11-11: the three Microsoft packages at 10.0.15 (11.0.0 exists),
   Resilience 10.11.0, SwaggerUI 10.3.1 (11.0.0 exists), JsonSchema.Net 8.0.5 pinned (9.6.0 exists).
-- 2026-11-11 00:50 Phase 1 review (diff `f9928bf..8e80f74`, one reviewer on opus): standards 0 critical, 2
+- 2026-11-11 00:30 Phase 1 review (diff `f9928bf..8e80f74`, one reviewer on opus): standards 0 critical, 2
   warning, 4 info; plan 0, 2, 2. Warnings: `Errors/ModelStateErrors.cs` passes a key without `$` as a query
   name, so MVC's implicit `[Required]` on a non-nullable member would answer `MALFORMED` under the C# name;
   `Errors/ProblemShapeTests.cs` shows decision 3 against the contract's "a body that is not JSON 415";
@@ -228,14 +239,14 @@ warning by file, what the fix changed, what was left and why, what Kfir rejected
   Hebrew name read from `contracts/examples/`. Left: `SupportedLanguages` copies its set to a local (info),
   because Phase 2 makes the set replaceable; decision 1 (Fable for execution, info) cannot be changed from
   inside the session. Kfir rejected or rewrote: nothing; he was not present.
-- 2026-11-11 00:55 schema probe repeated on the real schema before Phase 2 (`research/schema-probe.md`): the two
+- 2026-11-11 00:27 schema probe repeated on the real schema before Phase 2 (`research/schema-probe.md`): the two
   corrections put all five schema-layer fixtures on their expected path. Two facts found on the way:
   `JsonSchema.FromText` refuses to register the same `$id` twice in one process ("Overwriting registered schemas
   is not permitted"), so the built schema is held statically; and 40,000 evaluations of one schema instance on
   16 threads gave no mismatch and no exception, so evaluation is not locked.
-- 2026-11-11 01:35 Phase 2 gate green: build, format, 159 tests, print guard (`gates/phase-2.txt`). Transitive
+- 2026-11-11 00:36 Phase 2 gate green: build, format, 159 tests, print guard (`gates/phase-2.txt`). Transitive
   packages as pinned: JsonSchema.Net 8.0.5, JsonPointer.Net 6.0.1, Json.More.Net 2.2.0, Resilience 10.11.0.
-- 2026-11-11 02:10 Phase 2 review (diff `a781c91..b89bd0b`, one reviewer on opus): plan 1 critical, 3 warning, 0
+- 2026-11-11 00:50 Phase 2 review (diff `a781c91..b89bd0b`, one reviewer on opus): plan 1 critical, 3 warning, 0
   info; standards 0 critical, 1 warning, 4 info. Critical: `Engine/EngineModule.cs` retried and counted every
   503, so the engine's own `DATABASE_UNAVAILABLE` and three `/health` polls would open the one breaker and
   `/validate` would answer `ENGINE_UNAVAILABLE` from an engine that was up. Warnings: `Glossary/GlossaryService.cs`
@@ -251,8 +262,8 @@ warning by file, what the fix changed, what was left and why, what Kfir rejected
   correlation id in its warning, the startup probe's filter on the stopping token. Left: `EngineErrorMap` knows
   `RunStatus` and `RunFailure` and its run column has no caller until Phase 4 (info), because the plan asks for
   one table. Kfir rejected or rewrote: nothing; he was not present.
-- 2026-11-11 02:25 Phase 3 gate green: build, format, 239 tests, print guard (`gates/phase-3.txt`).
-- 2026-11-11 03:05 Phase 3 review (diff `638787d..96bc1e9`, one reviewer on opus): standards 0 critical, 3
+- 2026-11-11 00:52 Phase 3 gate green: build, format, 239 tests, print guard (`gates/phase-3.txt`).
+- 2026-11-11 01:03 Phase 3 review (diff `638787d..96bc1e9`, one reviewer on opus): standards 0 critical, 3
   warning, 3 info; plan 0, 2, 2. Warnings: `Controls/ControlUpdateTests.cs` a hand-typed copy of an example's
   definition and hard-coded entity keys in three test files (genericity); `Controls/DefinitionHasherTests.cs` no
   case with a string spelled by an escape; `Controls/ControlService.cs` `ListAsync` 61 lines in five phases;
@@ -271,6 +282,26 @@ warning by file, what the fix changed, what was left and why, what Kfir rejected
   `LastRunResponse` uses `Persistence.RunStatus` on the wire (info), because the enum's four names are the
   contract's and the column's, and a second enum would only be converted to and from the first. Kfir rejected
   or rewrote: nothing; he was not present.
-- 2026-11-11 03:20 Phase 4 gate green: build, format, 290 tests, print guard (`gates/phase-4.txt`). One run of
+- 2026-11-11 01:06 Phase 4 gate green: build, format, 290 tests, print guard (`gates/phase-4.txt`). One run of
   5,000 violations (the stub's answer of about 3 MB, parsed, 5,000 rows inserted with the provider's default
   batch size, the run read back): 2011 ms, 1813 ms and 1880 ms in three runs of the test alone.
+- 2026-11-11 01:35 Phase 4 review (diff `a619323..f54d6c2`, one reviewer on opus): plan 0 critical, 2 warning, 1
+  info; standards 0 critical, 3 warning, 1 info. Warnings: `Runs/RunService.cs` a host that stops during the
+  engine call left the run `running` and answered 500; `RunService.cs` the catch around the snapshot save took
+  only two exception types, so a raw `SqlException` skipped the close; `Runs/RunResultsTests.cs` the display
+  sort never tied (the tie-break was not exercised) and one "not the contract" case failed before the check it
+  named; `Runs/DisplayText.cs` and five behaviours without a test (the value rules, the glossary version drop,
+  the no-glossary order, the client's disconnect, the row cap, the same-millisecond order);
+  `Support/RunAnswers.cs` chose a value's type by a field name's ending and the tests named two fields. Fixed in
+  the commit `fix(api): review fixes` after `f54d6c2`: the run is closed on a host stop and no write of the row
+  takes a token (decision 26); any failed snapshot save tries the close; `RunAnswers` reads the identifying
+  fields and their types from the glossary fixture and takes display values by position; six `DisplayText`
+  unit tests with literal expectations; `RunLifetimeTests` (client leaves, host stops, cap below the answer,
+  another glossary version, no glossary); a tie in the display sort; three answers outside the contract, each
+  failing on the check it names; three runs at one pinned instant. Info fixed: the insert of the run row no
+  longer listens to the client (found on the implementer's own re-read before the review arrived, as was the
+  wider catch); `DisplayTextOf`, which repeated the join, is gone: the order test now searches for two
+  adjacent values in the glossary's order and in the order written. Found without a finding: two fake
+  passwords in `ConfigurationTests` tripped the secrets scan of `/ship` and became one named placeholder; the
+  host-stop test goes through `RunService` with a lifetime the test signals, because the test server is torn
+  down at once where Kestrel drains its requests. Kfir rejected or rewrote: nothing; he was not present.

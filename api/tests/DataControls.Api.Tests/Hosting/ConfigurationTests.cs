@@ -10,25 +10,28 @@ namespace DataControls.Api.Tests.Hosting;
 
 public sealed class ConfigurationTests
 {
+    // Not a credential: a value to follow through the connection string.
+    private const string PlaceholderPassword = "placeholder-not-a-secret";
+
     [Fact]
     public void Connection_string_is_built_from_the_database_block_when_no_override_is_set()
     {
         var options = Options<DatabaseOptions>(
             services => services.AddPersistence(),
-            ("DB_HOST", "db"), ("DB_PORT", "14330"), ("DQ_APP_PASSWORD", "Secret123"));
+            ("DB_HOST", "db"), ("DB_PORT", "14330"), ("DQ_APP_PASSWORD", PlaceholderPassword));
 
         var resolved = options.Value.Resolve();
 
         Assert.Contains("Data Source=tcp:db,14330", resolved);
         Assert.Contains("Initial Catalog=DataControls", resolved);
         Assert.Contains("User ID=dq_app", resolved);
-        Assert.Contains("Password=Secret123", resolved);
+        Assert.Contains($"Password={PlaceholderPassword}", resolved);
     }
 
     [Fact]
     public void Connection_string_override_replaces_the_built_one_and_needs_no_password()
     {
-        const string named = @"Server=.\SQLEXPRESS;Database=DataControls;User ID=dq_app;Password=x";
+        var named = $@"Server=.\SQLEXPRESS;Database=DataControls;User ID=dq_app;Password={PlaceholderPassword}";
         var options = Options<DatabaseOptions>(services => services.AddPersistence(), ("ConnectionStrings:Dq", named));
 
         Assert.Equal(named, options.Value.Resolve());
