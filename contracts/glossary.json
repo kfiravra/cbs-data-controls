@@ -76,20 +76,20 @@
       "types": ["number", "date"],
       "fieldComparable": true,
       "label": {
-        "default": { "he": "קטן מ־" },
-        "date": { "he": "מוקדם מ־" }
+        "default": { "he": "מתחת ל־" },
+        "date": { "he": "לפני" }
       },
       "sentence": {
-        "default": { "he": "{field} קטן מ־{value}" },
-        "date": { "he": "{field} מוקדם מ־{value}" },
-        "field": { "he": "{field} קטן מ{other}" },
-        "date.field": { "he": "{field} מוקדם מ{other}" }
+        "default": { "he": "{field} מתחת ל־{value}" },
+        "date": { "he": "{field} לפני {value}" },
+        "field": { "he": "{field} מתחת ל{other}" },
+        "date.field": { "he": "{field} לפני {other}" }
       },
       "reason": {
-        "default": { "he": "{field}: {actual} (קטן מ־{value})" },
-        "date": { "he": "{field}: {actual} (מוקדם מ־{value})" },
-        "field": { "he": "{field}: {actual} (קטן מ{other}: {otherActual})" },
-        "date.field": { "he": "{field}: {actual} (מוקדם מ{other}: {otherActual})" }
+        "default": { "he": "{field}: {actual} (מתחת ל־{value})" },
+        "date": { "he": "{field}: {actual} (לפני {value})" },
+        "field": { "he": "{field}: {actual} (מתחת ל{other}: {otherActual})" },
+        "date.field": { "he": "{field}: {actual} (לפני {other}: {otherActual})" }
       }
     },
     {
@@ -98,20 +98,20 @@
       "types": ["number", "date"],
       "fieldComparable": true,
       "label": {
-        "default": { "he": "לא גדול מ־" },
-        "date": { "he": "לא מאוחר מ־" }
+        "default": { "he": "לכל היותר" },
+        "date": { "he": "לא אחרי" }
       },
       "sentence": {
-        "default": { "he": "{field} לא גדול מ־{value}" },
-        "date": { "he": "{field} לא מאוחר מ־{value}" },
-        "field": { "he": "{field} לא גדול מ{other}" },
-        "date.field": { "he": "{field} לא מאוחר מ{other}" }
+        "default": { "he": "{field} לכל היותר {value}" },
+        "date": { "he": "{field} לא אחרי {value}" },
+        "field": { "he": "{field} לכל היותר {other}" },
+        "date.field": { "he": "{field} לא אחרי {other}" }
       },
       "reason": {
-        "default": { "he": "{field}: {actual} (לא גדול מ־{value})" },
-        "date": { "he": "{field}: {actual} (לא מאוחר מ־{value})" },
-        "field": { "he": "{field}: {actual} (לא גדול מ{other}: {otherActual})" },
-        "date.field": { "he": "{field}: {actual} (לא מאוחר מ{other}: {otherActual})" }
+        "default": { "he": "{field}: {actual} (לכל היותר {value})" },
+        "date": { "he": "{field}: {actual} (לא אחרי {value})" },
+        "field": { "he": "{field}: {actual} (לכל היותר {other}: {otherActual})" },
+        "date.field": { "he": "{field}: {actual} (לא אחרי {other}: {otherActual})" }
       }
     },
     {
@@ -120,20 +120,20 @@
       "types": ["number", "date"],
       "fieldComparable": true,
       "label": {
-        "default": { "he": "גדול מ־" },
-        "date": { "he": "מאוחר מ־" }
+        "default": { "he": "מעל" },
+        "date": { "he": "אחרי" }
       },
       "sentence": {
-        "default": { "he": "{field} גדול מ־{value}" },
-        "date": { "he": "{field} מאוחר מ־{value}" },
-        "field": { "he": "{field} גדול מ{other}" },
-        "date.field": { "he": "{field} מאוחר מ{other}" }
+        "default": { "he": "{field} מעל {value}" },
+        "date": { "he": "{field} אחרי {value}" },
+        "field": { "he": "{field} מעל {other}" },
+        "date.field": { "he": "{field} אחרי {other}" }
       },
       "reason": {
-        "default": { "he": "{field}: {actual} (גדול מ־{value})" },
-        "date": { "he": "{field}: {actual} (מאוחר מ־{value})" },
-        "field": { "he": "{field}: {actual} (גדול מ{other}: {otherActual})" },
-        "date.field": { "he": "{field}: {actual} (מאוחר מ{other}: {otherActual})" }
+        "default": { "he": "{field}: {actual} (מעל {value})" },
+        "date": { "he": "{field}: {actual} (אחרי {value})" },
+        "field": { "he": "{field}: {actual} (מעל {other}: {otherActual})" },
+        "date.field": { "he": "{field}: {actual} (אחרי {other}: {otherActual})" }
       }
     },
     {
@@ -142,20 +142,20 @@
       "types": ["number", "date"],
       "fieldComparable": true,
       "label": {
-        "default": { "he": "לא קטן מ־" },
-        "date": { "he": "לא מוקדם מ־" }
+        "default": { "he": "לפחות" },
+        "date": { "he": "לא לפני" }
       },
       "sentence": {
-        "default": { "he": "{field} לא קטן מ־{value}" },
-        "date": { "he": "{field} לא מוקדם מ־{value}" },
-        "field": { "he": "{field} לא קטן מ{other}" },
-        "date.field": { "he": "{field} לא מוקדם מ{other}" }
+        "default": { "he": "{field} לפחות {value}" },
+        "date": { "he": "{field} לא לפני {value}" },
+        "field": { "he": "{field} לפחות {other}" },
+        "date.field": { "he": "{field} לא לפני {other}" }
       },
       "reason": {
-        "default": { "he": "{field}: {actual} (לא קטן מ־{value})" },
-        "date": { "he": "{field}: {actual} (לא מוקדם מ־{value})" },
-        "field": { "he": "{field}: {actual} (לא קטן מ{other}: {otherActual})" },
-        "date.field": { "he": "{field}: {actual} (לא מוקדם מ{other}: {otherActual})" }
+        "default": { "he": "{field}: {actual} (לפחות {value})" },
+        "date": { "he": "{field}: {actual} (לא לפני {value})" },
+        "field": { "he": "{field}: {actual} (לפחות {other}: {otherActual})" },
+        "date.field": { "he": "{field}: {actual} (לא לפני {other}: {otherActual})" }
       }
     },
     {
@@ -194,13 +194,13 @@
       "types": ["number", "text", "enum"],
       "fieldComparable": false,
       "label": {
-        "default": { "he": "אחד מהערכים" }
+        "default": { "he": "ברשימה" }
       },
       "sentence": {
-        "default": { "he": "{field} אחד מהערכים: {values}" }
+        "default": { "he": "{field} ברשימה: {values}" }
       },
       "reason": {
-        "default": { "he": "{field}: {actual} (אחד מהערכים)" }
+        "default": { "he": "{field}: {actual} (ברשימה)" }
       }
     },
     {
@@ -209,13 +209,13 @@
       "types": ["number", "text", "enum"],
       "fieldComparable": false,
       "label": {
-        "default": { "he": "לא אחד מהערכים" }
+        "default": { "he": "לא ברשימה" }
       },
       "sentence": {
-        "default": { "he": "{field} לא אחד מהערכים: {values}" }
+        "default": { "he": "{field} לא ברשימה: {values}" }
       },
       "reason": {
-        "default": { "he": "{field}: {actual} (לא אחד מהערכים)" }
+        "default": { "he": "{field}: {actual} (לא ברשימה)" }
       }
     },
     {
@@ -227,7 +227,7 @@
         "default": { "he": "מכיל" }
       },
       "sentence": {
-        "default": { "he": "{field} מכיל ”{value}”" }
+        "default": { "he": "{field}: מכיל ”{value}”" }
       },
       "reason": {
         "default": { "he": "{field}: {actual} (מכיל ”{value}”)" }
@@ -242,7 +242,7 @@
         "default": { "he": "לא מכיל" }
       },
       "sentence": {
-        "default": { "he": "{field} לא מכיל ”{value}”" }
+        "default": { "he": "{field}: לא מכיל ”{value}”" }
       },
       "reason": {
         "default": { "he": "{field}: {actual} (לא מכיל ”{value}”)" }
@@ -257,7 +257,7 @@
         "default": { "he": "מתחיל ב־" }
       },
       "sentence": {
-        "default": { "he": "{field} מתחיל ב־”{value}”" }
+        "default": { "he": "{field}: מתחיל ב־”{value}”" }
       },
       "reason": {
         "default": { "he": "{field}: {actual} (מתחיל ב־”{value}”)" }
@@ -272,7 +272,7 @@
         "default": { "he": "מסתיים ב־" }
       },
       "sentence": {
-        "default": { "he": "{field} מסתיים ב־”{value}”" }
+        "default": { "he": "{field}: מסתיים ב־”{value}”" }
       },
       "reason": {
         "default": { "he": "{field}: {actual} (מסתיים ב־”{value}”)" }
@@ -287,7 +287,7 @@
         "default": { "he": "חסר" }
       },
       "sentence": {
-        "default": { "he": "{field} חסר" }
+        "default": { "he": "{field}: חסר" }
       },
       "reason": {
         "default": { "he": "{field}: חסר" }
@@ -302,7 +302,7 @@
         "default": { "he": "לא חסר" }
       },
       "sentence": {
-        "default": { "he": "{field} לא חסר" }
+        "default": { "he": "{field}: לא חסר" }
       },
       "reason": {
         "default": { "he": "{field}: {actual}" }
@@ -317,7 +317,7 @@
         "default": { "he": "ריק" }
       },
       "sentence": {
-        "default": { "he": "{field} ריק" }
+        "default": { "he": "{field}: ריק" }
       },
       "reason": {
         "default": { "he": "{field}: ריק" }
@@ -332,7 +332,7 @@
         "default": { "he": "לא ריק" }
       },
       "sentence": {
-        "default": { "he": "{field} לא ריק" }
+        "default": { "he": "{field}: לא ריק" }
       },
       "reason": {
         "default": { "he": "{field}: {actual}" }
@@ -619,9 +619,9 @@
         "rationale": { "he": "השדות מסומנים במילון המונחים כשדות חובה, בהתאם למצב הרשומה." }
       },
       "date_order": {
-        "name": { "he": "{later} מוקדם מ{earlier}" },
-        "description": { "he": "איתור {entity} עם {later} מוקדם מ{earlier}." },
-        "rationale": { "he": "ברוב הרשומות שבהן שני התאריכים קיימים, {later} אינו מוקדם מ{earlier}; הרשומות בסדר ההפוך מוצגות לבדיקה." }
+        "name": { "he": "{later} לפני {earlier}" },
+        "description": { "he": "איתור {entity} עם {later} לפני {earlier}." },
+        "rationale": { "he": "ברוב הרשומות שבהן שני התאריכים קיימים, {later} לא לפני {earlier}; הרשומות בסדר ההפוך מוצגות לבדיקה." }
       },
       "active_under_inactive": {
         "name": { "he": "{entity} במצב פעיל כש{relationship} במצב לא פעיל" },

@@ -624,33 +624,33 @@ Answer: 200, three violations found and two returned, the counts over all three.
   "durationMs": 41,
   "engineVersion": "0.1.0",
   "glossaryVersion": "1.0.0",
-  "sentence": "גיל קטן מ־18 וגם שכר גדול מ־15,000 ₪",
+  "sentence": "גיל מתחת ל־18 וגם שכר מעל 15,000 ₪",
   "sentenceParts": [
     { "text": "גיל", "nodeId": "c1", "role": "field" },
-    { "text": " קטן מ־", "nodeId": "c1" },
+    { "text": " מתחת ל־", "nodeId": "c1" },
     { "text": "18", "nodeId": "c1", "role": "value" },
     { "text": " וגם " },
     { "text": "שכר", "nodeId": "c2", "role": "field" },
-    { "text": " גדול מ־", "nodeId": "c2" },
+    { "text": " מעל ", "nodeId": "c2" },
     { "text": "15,000 ₪", "nodeId": "c2", "role": "value" }
   ],
   "conditions": [
     {
       "id": "c1",
-      "sentence": "גיל קטן מ־18",
+      "sentence": "גיל מתחת ל־18",
       "sentenceParts": [
         { "text": "גיל", "nodeId": "c1", "role": "field" },
-        { "text": " קטן מ־", "nodeId": "c1" },
+        { "text": " מתחת ל־", "nodeId": "c1" },
         { "text": "18", "nodeId": "c1", "role": "value" }
       ],
       "count": 3
     },
     {
       "id": "c2",
-      "sentence": "שכר גדול מ־15,000 ₪",
+      "sentence": "שכר מעל 15,000 ₪",
       "sentenceParts": [
         { "text": "שכר", "nodeId": "c2", "role": "field" },
-        { "text": " גדול מ־", "nodeId": "c2" },
+        { "text": " מעל ", "nodeId": "c2" },
         { "text": "15,000 ₪", "nodeId": "c2", "role": "value" }
       ],
       "count": 3
@@ -666,12 +666,12 @@ Answer: 200, three violations found and two returned, the counts over all three.
           "conditionId": "c1",
           "reasonKey": "lt",
           "params": { "left": { "field": "age" }, "actual": 16, "value": 18 },
-          "text": "גיל: 16 (קטן מ־18)",
+          "text": "גיל: 16 (מתחת ל־18)",
           "textParts": [
             { "text": "גיל", "nodeId": "c1", "role": "field" },
             { "text": ": ", "nodeId": "c1" },
             { "text": "16", "nodeId": "c1", "role": "actual" },
-            { "text": " (קטן מ־", "nodeId": "c1" },
+            { "text": " (מתחת ל־", "nodeId": "c1" },
             { "text": "18", "nodeId": "c1", "role": "value" },
             { "text": ")", "nodeId": "c1" }
           ]
@@ -680,18 +680,18 @@ Answer: 200, three violations found and two returned, the counts over all three.
           "conditionId": "c2",
           "reasonKey": "gt",
           "params": { "left": { "field": "salary" }, "actual": 16500, "value": 15000 },
-          "text": "שכר: 16,500 ₪ (גדול מ־15,000 ₪)",
+          "text": "שכר: 16,500 ₪ (מעל 15,000 ₪)",
           "textParts": [
             { "text": "שכר", "nodeId": "c2", "role": "field" },
             { "text": ": ", "nodeId": "c2" },
             { "text": "16,500 ₪", "nodeId": "c2", "role": "actual" },
-            { "text": " (גדול מ־", "nodeId": "c2" },
+            { "text": " (מעל ", "nodeId": "c2" },
             { "text": "15,000 ₪", "nodeId": "c2", "role": "value" },
             { "text": ")", "nodeId": "c2" }
           ]
         }
       ],
-      "reasonText": "גיל: 16 (קטן מ־18); שכר: 16,500 ₪ (גדול מ־15,000 ₪)"
+      "reasonText": "גיל: 16 (מתחת ל־18); שכר: 16,500 ₪ (מעל 15,000 ₪)"
     },
     {
       "key": "1052",
@@ -702,12 +702,12 @@ Answer: 200, three violations found and two returned, the counts over all three.
           "conditionId": "c1",
           "reasonKey": "lt",
           "params": { "left": { "field": "age" }, "actual": 15, "value": 18 },
-          "text": "גיל: 15 (קטן מ־18)",
+          "text": "גיל: 15 (מתחת ל־18)",
           "textParts": [
             { "text": "גיל", "nodeId": "c1", "role": "field" },
             { "text": ": ", "nodeId": "c1" },
             { "text": "15", "nodeId": "c1", "role": "actual" },
-            { "text": " (קטן מ־", "nodeId": "c1" },
+            { "text": " (מתחת ל־", "nodeId": "c1" },
             { "text": "18", "nodeId": "c1", "role": "value" },
             { "text": ")", "nodeId": "c1" }
           ]
@@ -716,18 +716,18 @@ Answer: 200, three violations found and two returned, the counts over all three.
           "conditionId": "c2",
           "reasonKey": "gt",
           "params": { "left": { "field": "salary" }, "actual": 22000, "value": 15000 },
-          "text": "שכר: 22,000 ₪ (גדול מ־15,000 ₪)",
+          "text": "שכר: 22,000 ₪ (מעל 15,000 ₪)",
           "textParts": [
             { "text": "שכר", "nodeId": "c2", "role": "field" },
             { "text": ": ", "nodeId": "c2" },
             { "text": "22,000 ₪", "nodeId": "c2", "role": "actual" },
-            { "text": " (גדול מ־", "nodeId": "c2" },
+            { "text": " (מעל ", "nodeId": "c2" },
             { "text": "15,000 ₪", "nodeId": "c2", "role": "value" },
             { "text": ")", "nodeId": "c2" }
           ]
         }
       ],
-      "reasonText": "גיל: 15 (קטן מ־18); שכר: 22,000 ₪ (גדול מ־15,000 ₪)"
+      "reasonText": "גיל: 15 (מתחת ל־18); שכר: 22,000 ₪ (מעל 15,000 ₪)"
     }
   ]
 }

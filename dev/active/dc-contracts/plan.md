@@ -256,7 +256,7 @@ Commit: `feat(contracts): http api and error catalogue`
 - [x] From a clean container: `docker compose down -v`, `docker compose up -d db && scripts/db-init.sh`,
       `scripts/db-init.sh` again, `scripts/db-check.sh`, `uv run scripts/contracts-check.py`,
       `node --test .claude/hooks/tests/*.test.mjs`. Save the output as `gates/final.txt`.
-- [ ] Kfir reads `uv run scripts/contracts-check.py --render`: the rule sentence and the reasons of the six
+- [x] Kfir reads `uv run scripts/contracts-check.py --render`: the rule sentence and the reasons of the six
       examples, in Hebrew. This is the last moment a wording change is free.
 - [ ] `/ship`, then the PR and the merge on Kfir's word.
 - [ ] After the merge, on main: `scripts/db-init.sh --reset` if the seed changed since the last init, then the

@@ -9,9 +9,8 @@ commit, with rotated local passwords: `gates/final.txt`, db-check 27 passed, con
 226 pass. The branch is pushed and the PR to main is open, on Kfir's word. Not merged.
 
 ## Next
-1. Kfir reads `uv run scripts/contracts-check.py --render` (Hebrew only now): the last moment a wording change is
-   free. Open wording questions are in the Log: the gender of the predicates, "קטן מ" against the assignment's
-   "נמוך מ", the brackets around related conditions.
+1. Kfir read the `--render` output on 2026-11-10 and settled the wording (the last Log line). A wording change
+   from here on is a contract change: one commit to `contracts/` on main and one line to each session.
 2. The merge, on Kfir's word. Then on main: `scripts/db-init.sh --reset` (the seed is new there), and the three
    worktrees of kickoff §5 with `.env` copied into each. The local `.env` holds new passwords since the rotation.
 3. The lines for the engine, api, web and delivery sessions are written into their plans ("Lines from dc-contracts
@@ -176,3 +175,15 @@ commit, with rotated local passwords: `gates/final.txt`, db-check 27 passed, con
 - 2026-11-10 the local database passwords were rotated (`.env`, ignored by git) and the Gate ran again from a
   clean container on the final tree: `gates/final.txt`, init twice with 7 scripts, db-check 27 passed 0 failed,
   contracts-check 5 checks passed, hook tests 226 pass 0 fail.
+- 2026-11-10 Kfir read the `--render` output and gave the final wording, applied in one commit to
+  `contracts/glossary.json` (57 texts) and to the `/run` example of `contracts/api.md`, which is rendered from it.
+  His rules: every operator text reads correctly for a field of either gender; numbers say "מתחת ל־" and "מעל",
+  dates "לפני" and "אחרי"; missing and empty use the colon style in the sentence too ("שכר: חסר"), as in the
+  reason; the brackets around related conditions stay; the department's value labels stay; the example
+  descriptions stay as written; no rebase, `43745cc` stays as it is. Chosen by the session inside those rules: "at
+  most" and "at least" are "לכל היותר" and "לפחות", for dates "לא אחרי" and "לא לפני"; `in` and `not_in` say
+  "ברשימה" and "לא ברשימה"; the four text operators use the colon style ("שם: מכיל ”…”") and keep their picker
+  labels; the three texts of the `date_order` suggestion say "לפני" as the operator now does. Not edited, on his
+  "nothing else": the lines that quote the old words in `docs/architecture.md` §4.3, in plan decisions 12 and 34's
+  neighbours, and in the web plan's contract lines ("קטן מ־18"). Checks after the change: contracts-check 5
+  checks passed, db-check 27 passed, hook tests 226 pass.
