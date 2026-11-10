@@ -1,0 +1,51 @@
+<app-page-head [title]="(id() ? 'editor.titleEdit' : 'editor.titleNew') | translate" [back]="true" />
+
+@if (store.glossaryError(); as error) {
+  <app-error-banner class="page-banner" [error]="error" (retry)="retry()" />
+}
+
+<div class="editor">
+  <div class="editor__main">
+    <section aria-labelledby="s-root">
+      <div class="section__head">
+        <h2 class="t-title" id="s-root">{{ 'editor.root.title' | translate }}</h2>
+        <p class="muted t-small">{{ 'editor.root.hint' | translate }}</p>
+      </div>
+      @if (store.map(); as map) {
+        <app-relationship-map [map]="map" labelledBy="s-root" (choose)="store.chooseRoot($event)" />
+        @if (rootSummary(); as summary) {
+          <p class="t-small" data-testid="root-summary">
+            {{ 'editor.root.returns' | translate: { entity: summary.entity } }}
+            @if (summary.also) {
+              {{ 'editor.root.also' | translate: { list: summary.also } }}
+            }
+          </p>
+        }
+      } @else {
+        <app-skeleton width="60%" />
+      }
+    </section>
+
+    <section aria-labelledby="s-conditions">
+      <div class="section__head">
+        <h2 class="t-title" id="s-conditions">{{ 'editor.conditions.title' | translate }}</h2>
+        <p class="muted t-small">{{ 'editor.conditions.hint' | translate }}</p>
+      </div>
+      @if (store.view(); as view) {
+        <app-condition-builder
+          [draft]="store.draft()"
+          [rootEntity]="store.rootEntity()!"
+          [view]="view"
+          [focus]="store.focus()"
+          (edit)="store.apply($event)"
+          (trace)="store.traced.set($event)"
+        />
+      } @else {
+        <div class="builder" aria-hidden="true">
+          <app-skeleton width="70%" />
+          <app-skeleton width="52%" />
+        </div>
+      }
+    </section>
+  </div>
+</div>

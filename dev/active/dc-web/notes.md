@@ -1,13 +1,14 @@
 # dc-web notes
 
 ## State
-Phase 2 done and committed (2026-11-11, unattended night run on Kfir's word); its review is next, then phase 3,
-the condition builder. The dev server for the mocked specs runs on :4200 from this worktree.
+Phase 3 done and committed (2026-11-11, unattended night run on Kfir's word). The fixes of the phase 2 review
+are the next commit, then the phase 3 review, then phase 4. Reviews run in the background while the next phase
+is built, so a review-fix commit lands after the next phase's commit. The dev server runs on :4200.
 
 ## Next
-1. `/phase-review web` on the phase 2 commit, one `fix(web): review fixes` commit.
-2. Phase 3: the builder components, `EditorStore` with the draft, the builder driver and `builder.spec.ts`.
-3. Phases 4 to 6 in order; phase 7 writes the gate specs and runs them only when the api and the engine are on main.
+1. `fix(web): review fixes` for the phase 2 review (findings in the Log), then `/phase-review web` on phase 3.
+2. Phase 4: the sentence field and the validate loop, load, save, save and run, archive, errors.
+3. Phases 5 and 6; phase 7 writes the gate specs and runs them only when the api and the engine are on main.
 
 ## Blockers
 - Phase 7 runs (the gate on the real stack, the pre-load, the hosted build): the api and the engine are not on
@@ -48,6 +49,19 @@ the condition builder. The dev server for the mocked specs runs on :4200 from th
     no renderer (decision 1 of the plan). If Kfir would rather have canned JSON, the fake is one file to replace.
 15. The api layer follows errors.md where the plan differs: a failed response that is not a problem is
     `NETWORK_ERROR` (Design E said `INTERNAL_ERROR`).
+
+16. Reviews run in the background while the next phase is built (nobody is waiting on a gate tonight), so the
+    order of commits is: phase N, phase N+1, the fixes of the review of N. Each fix commit holds fixes only.
+17. The relationship map handles its four arrow keys itself (next follows the reading direction), without the
+    CDK key manager Design B names: the group is a handful of buttons with one tab stop.
+18. The related-records head reads `[mark] אין אף | יש  [relationship]  עם  [כל התנאים | אחד התנאים לפחות]`:
+    Design I asks for wording without gender, and the mock's "יש לפחות אחד ... שמקיים" has two gendered words.
+19. The builder's note on missing values names no comparison ("... בהשוואה שבודקת אם הערך חסר או ריק"): the
+    labels of the comparisons are the glossary's, and the mock's "ריק" would be a second copy of one of them.
+20. The numbering of the six examples follows `sql/README.md` (1 minor-high-salary, 2 termination-before-hire,
+    3 active-in-inactive-department, 4 missing-mandatory-data, 5 department-without-active-employees,
+    6 inactive-ministry-salary-out-of-range): it is the one order in which "examples 2 to 5" are the heuristic
+    ones. `e2e/fixtures/examples.ts` holds it as `exampleNumber(n)`.
 
 ## Reconciliation with `contracts/` (phase 2, 2026-11-11)
 Read: `api.md`, `errors.md`, `glossary.json`, `control-definition.schema.json`, the six examples and the thirteen
@@ -178,3 +192,9 @@ rewrote. A review that found nothing, or did not run, is logged as that.
   rules, the pointer and the text parts the specs were written and seen red before the code, one module at a
   time; for the draft, the marks and the lookups spec and code were written in one step. No screen draws a
   themed Material field yet.
+- 2026-11-11 phase 3 on Fable 5.2: gate `gates/phase-3.txt` (ngc, ng lint, e2e type check, 162 unit tests in 22
+  files, ng build, print guard, `e2e/mocked` on mobile and desktop: 26 passed). `builder.spec.ts` builds examples
+  4, 5 and 6 through `e2e/support/builder-driver.ts`, example 5 with the keyboard alone. Screenshots in
+  `screenshots/phase-3/` (`builder-example-5`, `builder-example-6`, `builder-deep-tree` at 390 and 1440): the
+  first screens that draw themed Material fields. `docs/design.md` updated for the related node's letter and
+  head, the map's link labels and the note. No cut taken.

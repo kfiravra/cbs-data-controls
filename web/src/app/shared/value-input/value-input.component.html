@@ -1,0 +1,139 @@
+@switch (kind()) {
+  @case ('none') {
+    <span class="novalue" data-testid="value-none">{{ 'editor.value.none' | translate }}</span>
+  }
+  @case ('idle') {
+    <span class="novalue"></span>
+  }
+  @case ('field') {
+    <app-field-picker
+      testId="value-field"
+      [groups]="comparable()"
+      [value]="condition().right"
+      [label]="'editor.value.otherField' | translate"
+      [invalid]="invalid('right')"
+      (pick)="rightChange.emit($event)"
+    />
+  }
+  @case ('choice') {
+    <mat-form-field appearance="outline" subscriptSizing="dynamic" [class.field--invalid]="invalid('value')">
+      <mat-select
+        data-testid="value-choice"
+        [attr.aria-invalid]="invalid('value')"
+        [aria-label]="'editor.value.label' | translate"
+        [placeholder]="'editor.value.choose' | translate"
+        [value]="condition().value ?? null"
+        (selectionChange)="valueChange.emit($event.value)"
+      >
+        @for (choice of choices(); track choice.value) {
+          <mat-option [value]="choice.value">{{ choice.label }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  }
+  @case ('choices') {
+    <mat-form-field appearance="outline" subscriptSizing="dynamic" [class.field--invalid]="invalid('values')">
+      <mat-select
+        multiple
+        data-testid="value-choices"
+        [attr.aria-invalid]="invalid('values')"
+        [aria-label]="'editor.value.listLabel' | translate"
+        [placeholder]="'editor.value.choose' | translate"
+        [value]="values()"
+        (selectionChange)="valuesChange.emit($event.value)"
+      >
+        @for (choice of choices(); track choice.value) {
+          <mat-option [value]="choice.value">{{ choice.label }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  }
+  @case ('chips') {
+    <mat-form-field appearance="outline" subscriptSizing="dynamic" [class.field--invalid]="invalid('values')">
+      <mat-chip-grid #grid [attr.aria-label]="'editor.value.listLabel' | translate">
+        @for (value of values(); track value) {
+          <mat-chip-row data-testid="value-chip" (removed)="removeChip(value)">
+            <bdi>{{ value }}</bdi>
+            <button matChipRemove [attr.aria-label]="'editor.value.removeItem' | translate: { value }">
+              <app-icon name="close" size="sm" />
+            </button>
+          </mat-chip-row>
+        }
+        <input
+          data-testid="value-chip-input"
+          [attr.inputmode]="inputMode()"
+          [attr.aria-label]="'editor.value.addItem' | translate"
+          [attr.aria-invalid]="invalid('values')"
+          [placeholder]="'editor.value.addItem' | translate"
+          [matChipInputFor]="grid"
+          [matChipInputSeparatorKeyCodes]="separators"
+          [matChipInputAddOnBlur]="true"
+          (matChipInputTokenEnd)="addChip($event)"
+        />
+      </mat-chip-grid>
+    </mat-form-field>
+  }
+  @case ('range') {
+    <div class="range">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" [class.field--invalid]="invalid('values', 0)">
+        <input
+          matInput
+          data-testid="value-from"
+          [type]="inputType()"
+          [attr.inputmode]="inputMode()"
+          [attr.aria-label]="'editor.value.from' | translate"
+          [attr.aria-invalid]="invalid('values', 0)"
+          [value]="text(values()[0])"
+          (input)="typedEnd(0, $event)"
+        />
+      </mat-form-field>
+      <span class="range__word">{{ 'editor.value.to' | translate }}</span>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" [class.field--invalid]="invalid('values', 1)">
+        <input
+          matInput
+          data-testid="value-to"
+          [type]="inputType()"
+          [attr.inputmode]="inputMode()"
+          [attr.aria-label]="'editor.value.until' | translate"
+          [attr.aria-invalid]="invalid('values', 1)"
+          [value]="text(values()[1])"
+          (input)="typedEnd(1, $event)"
+        />
+        @if (unit(); as text) {
+          <span matTextSuffix class="field__unit">{{ text }}</span>
+        }
+      </mat-form-field>
+    </div>
+  }
+  @case ('single') {
+    <mat-form-field appearance="outline" subscriptSizing="dynamic" [class.field--invalid]="invalid('value')">
+      <input
+        matInput
+        data-testid="value-single"
+        [type]="inputType()"
+        [attr.inputmode]="inputMode()"
+        [attr.aria-label]="'editor.value.label' | translate"
+        [attr.aria-invalid]="invalid('value')"
+        [value]="text(condition().value)"
+        (input)="typed($event)"
+      />
+      @if (unit(); as text) {
+        <span matTextSuffix class="field__unit">{{ text }}</span>
+      }
+    </mat-form-field>
+  }
+}
+@if (canCompare()) {
+  <button
+    class="toggle"
+    type="button"
+    data-testid="compare-toggle"
+    [attr.aria-pressed]="condition().mode === 'field'"
+    [attr.aria-label]="'editor.value.compareNamed' | translate: { row: rowName() }"
+    [matTooltip]="'editor.value.compare' | translate"
+    (click)="toggleMode()"
+  >
+    <app-icon name="swap_horiz" />
+    <span class="toggle__words">{{ 'editor.value.compare' | translate }}</span>
+  </button>
+}

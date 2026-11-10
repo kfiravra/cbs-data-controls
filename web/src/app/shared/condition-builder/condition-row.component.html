@@ -1,0 +1,51 @@
+<div class="cond">
+  <app-mark [label]="mark()" [state]="markState()" />
+  <span class="cond__name">{{ 'common.condition' | translate: { mark: mark() } }}</span>
+  <button
+    class="icon-btn cond__remove"
+    type="button"
+    data-testid="remove-row"
+    [attr.aria-label]="'editor.row.remove' | translate: { mark: mark() }"
+    [matTooltip]="'editor.row.remove' | translate: { mark: mark() }"
+    (click)="emit({ kind: 'remove', target: condition().id })"
+  >
+    <app-icon name="delete" />
+  </button>
+  <app-field-picker
+    class="cond__field"
+    data-focus="first"
+    [groups]="groups()"
+    [value]="condition().left"
+    [label]="'editor.field.label' | translate"
+    [invalid]="hasFault('left')"
+    (pick)="emit({ kind: 'field', id: condition().id, left: $event, scope: scope() ?? '' })"
+  />
+  <app-operator-picker
+    class="cond__op"
+    [operators]="operators()"
+    [fieldType]="field()?.type"
+    [rightIsField]="condition().mode === 'field'"
+    [value]="condition().operator"
+    [invalid]="hasFault('operator')"
+    (pick)="emit({ kind: 'operator', id: condition().id, operator: $event })"
+  />
+  <div class="cond__value" [class.cond__value--bare]="comparable().length === 0">
+    <app-value-input
+      [condition]="condition()"
+      [field]="field()"
+      [arity]="arity()"
+      [comparable]="comparable()"
+      [faults]="faults()"
+      [rowName]="'common.condition' | translate: { mark: mark() }"
+      (valueChange)="emit({ kind: 'value', id: condition().id, value: $event })"
+      (valuesChange)="emit({ kind: 'values', id: condition().id, values: $event })"
+      (rightChange)="emit({ kind: 'right', id: condition().id, right: $event })"
+      (modeChange)="emit({ kind: 'mode', id: condition().id, mode: $event })"
+    />
+  </div>
+  @for (message of messages(); track $index) {
+    <p class="field__error cond__error" role="alert" data-testid="row-error">
+      <app-icon name="error" size="sm" />{{ message.key | translate: message.params }}
+    </p>
+  }
+</div>

@@ -29,6 +29,24 @@ export const examples: readonly Example[] = readdirSync(DIR)
   .sort()
   .map((name) => JSON.parse(readFileSync(join(DIR, name), 'utf8')) as Example);
 
+/**
+ * The six examples in the order the documents number them (sql/README.md): 1 to 4 are the assignment's own,
+ * 5 has a related-records node, 6 a two-hop path and a nested group.
+ */
+const NUMBERED = [
+  'minor-high-salary',
+  'termination-before-hire',
+  'active-in-inactive-department',
+  'missing-mandatory-data',
+  'department-without-active-employees',
+  'inactive-ministry-salary-out-of-range',
+] as const;
+
+/** Example `number` of the documents, from 1. */
+export function exampleNumber(number: 1 | 2 | 3 | 4 | 5 | 6): Example {
+  return exampleById(NUMBERED[number - 1]);
+}
+
 export function exampleById(id: string): Example {
   const example = examples.find((candidate) => candidate.id === id);
   if (!example) {

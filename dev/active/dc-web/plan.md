@@ -254,22 +254,22 @@ Review: `/phase-review web`
 Commit: `feat(web): definition draft, glossary and api layer`
 
 ### Phase 3: condition builder
-- [ ] Impeccable setup once per session (`.claude/skills/impeccable/scripts/impeccable context --target
+- [x] Impeccable setup once per session (`.claude/skills/impeccable/scripts/impeccable context --target
       web/src/app`), and `reference/craft-floor.md` before the first UI edit, as that skill requires.
-- [ ] Components of Design I: relationship map, condition group (recursive), condition row, field picker, operator
+- [x] Components of Design I: relationship map, condition group (recursive), condition row, field picker, operator
       picker, value input in every kind, related-records node, adders, the note on missing values.
-- [ ] `EditorStore` (Design J) with the draft only: root entity, tree, issues, traced node. The editor route renders
+- [x] `EditorStore` (Design J) with the draft only: root entity, tree, issues, traced node. The editor route renders
       the builder for a new control over the glossary fixture.
-- [ ] The rules of Design G in the UI: the operator kept or reset when the field changes, the operand reset when its
+- [x] The rules of Design G in the UI: the operator kept or reset when the field changes, the operand reset when its
       kind changes, limits disable the adders, the last row of a nested group removes the group, focus moves to a
       new row and back after a removal.
-- [ ] The row's container query (one line from 560px of its group, stacked below), the rail, the joiner, the
+- [x] The row's container query (one line from 560px of its group, stacked below), the rail, the joiner, the
       nesting indents.
-- [ ] Component specs: adding and removing conditions and groups (the §13 test), the operator list follows the
+- [x] Component specs: adding and removing conditions and groups (the §13 test), the operator list follows the
       field, the value input follows the type and the arity, the comparison toggle.
-- [ ] `e2e/support/builder-driver.ts`, first version, and `e2e/mocked/builder.spec.ts`: examples 5 and 6 built
+- [x] `e2e/support/builder-driver.ts`, first version, and `e2e/mocked/builder.spec.ts`: examples 5 and 6 built
       through the driver, one of them by keyboard only; screenshots of a deep tree at 390 and 1440.
-- [ ] `docs/design.md`: the related-records node carries its own letter (decision 4), and its head as built.
+- [x] `docs/design.md`: the related-records node carries its own letter (decision 4), and its head as built.
 
 Verify: `/check --tests` · `cd web && npx playwright test e2e/mocked/builder.spec.ts`
 Review: `/phase-review web`

@@ -545,8 +545,10 @@ The signature of the system.
 
 - **Mark:** 22px square (wider for two letters), 4px radius, Action tint ground, Action letter at weight 600.
   Letters follow the order of the conditions in the definition, top to bottom, and are recomputed on every edit:
-  Hebrew numerals (א to י, then יא, יב and on). The mark is display only: it is derived
-  from the condition's stable id and never stored. On a run, the marks are those of the version that ran.
+  Hebrew numerals (א to י, then יא, יב and on). A condition on related records has a letter of its own, given
+  before the letters of the conditions inside it: a run matches that node as a whole, so its letter is the one a
+  reason and the breakdown show. The mark is display only: it is derived from the order of the definition and
+  never stored. On a run, the marks are those of the version that ran.
 - **States:** resting; **traced**, filled with Action while its condition is under the pointer or in focus
   anywhere on the screen; **active**, filled while it is the current filter; **open**, an outline in Danger while
   its condition is incomplete or invalid. On the sentence field the same four read in On action.
@@ -569,18 +571,22 @@ never ends on a mark. Two forms:
 ### Relationship map
 
 The root entity picker. The entities the glossary allows as a root are options of one radio group, 44px, joined by
-their relationships, each link labelled as the user would say it from the chosen root (`המשרד של המחלקה`). The
-chosen entity is filled with Ink and says `ישות ראשית`. One sentence under the map states what the control will
-return and what else it may ask about. It is drawn from the glossary and assumes no number of entities.
+their relationships. A link carries the glossary's label of the relationship that leads away from the chosen
+root, so it reads as the user would say it from there (`המשרד`, `עובד במחלקה`); two neighbours that no
+relationship joins have no link. The chosen entity is filled with Ink and says `ישות ראשית`. One sentence under
+the map states what the control will return and lists what else it may ask about (`הבקרה תחזיר מחלקות. אפשר
+להתנות גם על: המשרד ועובד במחלקה.`). It is drawn from the glossary and assumes no number of entities. Arrow
+keys move the choice, and the chosen entity is the group's one tab stop.
 
 ### Condition builder
 
 One Surface panel. Inside it:
 
-- **Group:** a head with the segmented control (`כל התנאים` / `אחד התנאים לפחות`) and, for a nested group, a
-  remove button; under it a body indented behind a **rail**, a 1px Line strong line down its start edge.
+- **Group:** a head with a lead word (`מתקיימים`, `מתקיים`), the segmented control (`כל התנאים` / `אחד התנאים
+  לפחות`) and, for a nested group, a remove button; under it a body indented behind a **rail**, a 1px Line
+  strong line down its start edge.
 - **Joiner:** between two neighbours of a group, the group's joining word (`וגם` or `או`) in Label, Muted, sitting
-  on the rail. It is the same word the sentence uses.
+  on the rail. It is the same word the sentence uses: both come from the glossary.
 - **Condition row:** the mark, a field picker, a comparison picker, a value input and a remove button. The field
   picker shows the path before the field, in Muted, when the field belongs to a related entity (`המשרד של המחלקה
   / פעיל`); its list is grouped by entity and relationship label. The comparison list holds only what the field's
@@ -588,11 +594,14 @@ One Surface panel. Inside it:
 - **Value input:** by the field's type, as under Fields. Beside it, a toggle to compare with another field
   instead of a value: an icon alone when the row is one line, the icon and its words when the row is stacked;
   filled with Ink while on, and the value input then becomes a field picker.
-- **Related records:** a group whose head reads as the start of a sentence: an icon, a quantity (`אין אף` / `יש
-  לפחות אחד`), the relationship (`עובד במחלקה`) and `שמקיים את כל התנאים`. Its rows are about the related entity.
+- **Related records:** a group whose head reads as the start of a sentence: its mark, a quantity (`אין אף` /
+  `יש`), the relationship (`עובד במחלקה`), the word `עם` and the segmented control of its own rows (`כל התנאים` /
+  `אחד התנאים לפחות`), then a remove button. The wording carries no gender. Its rows are about the related
+  entity, and their letters continue after the node's own.
 - **Adders:** at the foot of each group, text buttons with a plus: condition, group, condition on related records.
 - **Note:** once, at the foot of the panel, the rule about missing values (a comparison does not match a missing
-  value; to find missing values choose `ריק`).
+  value; missing values are found with the comparisons that ask whether a value is missing or empty). The note
+  names no comparison: their labels are the glossary's.
 - **Validation:** a server error is placed by its path on the row it names: the row's mark turns open, the
   offending input takes the error state, the reason stands under the row, and the sentence field's status line
   names the condition.
