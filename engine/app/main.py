@@ -43,6 +43,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         docs_url=None,
         redoc_url=None,
         openapi_url=None,
+        # Off: the default answers `/health/` with a 307 that has no problem body.
+        redirect_slashes=False,
     )
     app.state.services = services
     install_error_handlers(app)

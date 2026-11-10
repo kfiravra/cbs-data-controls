@@ -137,7 +137,8 @@ def test_password_is_in_no_repr_and_no_log_line(
 
 
 def test_env_file_is_read_as_utf8(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
-    name = "בקרות"  # a Hebrew database name, written as escapes: the source stays English
+    # A Hebrew database name, built from code points so that the test source stays English.
+    name = "".join(chr(code) for code in (0x05D1, 0x05E7, 0x05E8, 0x05D5, 0x05EA))
     env_file = tmp_path / ".env"
     env_file.write_bytes(f"ENGINE_DB_NAME={name}\nDQ_ENGINE_RO_PASSWORD={PASSWORD}\n".encode())
     settings = load_settings(env_file)

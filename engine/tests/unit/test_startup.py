@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 import pytest
@@ -11,8 +12,7 @@ from sqlalchemy.exc import DBAPIError
 
 from app.compiler import ReadQuery, catalog_query
 from app.errors import DatabaseUnavailable, GlossaryMismatch, InternalError, QueryTimeout
-from app.executor import Executor, translate_driver_error
-from app.executor.database import _guard  # pyright: ignore[reportPrivateUsage]
+from app.executor import Executor, ensure_single_select, translate_driver_error
 from app.glossary import Glossary, public_view
 from app.glossary.tables import physical_columns
 from app.services import HEALTH_RECHECK_SECONDS, GlossaryGuard, Services, start_services
@@ -48,6 +48,11 @@ class FakeExecutor:
         self.start_error = start_error
         self.queries: list[ReadQuery] = []
         self.started = False
+
+    driver = "ODBC Driver 99 for SQL Server"
+
+    def installed_drivers(self) -> tuple[str, ...]:
+        return ("SQLite3",)
 
     def start(self) -> None:
         if self.start_error is not None:
@@ -106,25 +111,21 @@ def test_error_without_a_sqlstate_is_internal() -> None:
 # --- the guard in front of every statement --------------------------------------------------------------------
 
 
-class FakeConnection:
-    dialect = mssql.dialect()
+DIALECT = mssql.dialect()
 
 
 def test_guard_lets_a_select_through() -> None:
-    connection: Any = FakeConnection()
-    _guard(connection, catalog_query(["hr"]).statement)
+    ensure_single_select(DIALECT, catalog_query(["hr"]).statement)
 
 
 def test_guard_refuses_what_is_not_a_select() -> None:
-    connection: Any = FakeConnection()
     with pytest.raises(InternalError):
-        _guard(connection, text("DELETE FROM hr.Employee"))
+        ensure_single_select(DIALECT, text("DELETE FROM hr.Employee"))
 
 
 def test_guard_refuses_a_select_that_holds_a_statement_separator() -> None:
-    connection: Any = FakeConnection()
     with pytest.raises(InternalError):
-        _guard(connection, select(text("1; DROP TABLE hr.Employee")))
+        ensure_single_select(DIALECT, select(text("1; DROP TABLE hr.Employee")))
 
 
 def test_nothing_is_sent_before_the_executor_is_started(offline_settings: Settings) -> None:
@@ -175,19 +176,28 @@ def test_start_gives_up_when_the_wait_is_over(glossary: Glossary) -> None:
     assert slept == []
 
 
-def test_missing_driver_ends_the_start_at_once(glossary: Glossary) -> None:
+def test_missing_driver_ends_the_start_at_once_and_names_the_installed_ones(
+    glossary: Glossary, caplog: pytest.LogCaptureFixture
+) -> None:
     executor = FakeExecutor([DatabaseUnavailable("IM002")])
     slept: list[float] = []
-    with pytest.raises(DatabaseUnavailable):
+    with caplog.at_level(logging.CRITICAL), pytest.raises(DatabaseUnavailable):
         start_services(services_with(glossary, executor), sleep=slept.append)
     assert slept == []
+    (record,) = caplog.records
+    context = vars(record)
+    assert (context["asked"], context["driver"], context["installed"]) == (None, FakeExecutor.driver, ("SQLite3",))
 
 
-def test_no_known_driver_ends_the_start_before_any_connection(glossary: Glossary) -> None:
+def test_no_known_driver_ends_the_start_before_any_connection(
+    glossary: Glossary, caplog: pytest.LogCaptureFixture
+) -> None:
     executor = FakeExecutor([catalog_rows(glossary)], start_error=DriverNotFound(None, ["SQLite3"]))
-    with pytest.raises(DriverNotFound):
+    with caplog.at_level(logging.CRITICAL), pytest.raises(DriverNotFound):
         start_services(services_with(glossary, executor), sleep=lambda _seconds: None)
     assert executor.queries == []
+    (record,) = caplog.records
+    assert (vars(record)["asked"], vars(record)["installed"]) == (None, ("SQLite3",))
 
 
 # --- the health check -----------------------------------------------------------------------------------------
@@ -220,11 +230,13 @@ def test_health_reports_a_mismatch_that_appears_after_startup(glossary: Glossary
 
     guard.verify()
     now[0] += HEALTH_RECHECK_SECONDS + 1
-    with pytest.raises(GlossaryMismatch):
+    with pytest.raises(GlossaryMismatch) as found:
         guard.check_health()
-    # Within the minute the cheap ping still answers with the mismatch found last.
-    with pytest.raises(GlossaryMismatch):
+    # Within the minute the cheap ping still answers with the mismatch found last, as a new exception each time.
+    with pytest.raises(GlossaryMismatch) as repeated:
         guard.check_health()
+    assert repeated.value.params == found.value.params
+    assert repeated.value is not found.value
 
 
 def test_health_is_database_unavailable_when_the_ping_fails(glossary: Glossary) -> None:

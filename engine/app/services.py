@@ -9,10 +9,10 @@ from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from typing import Any
 
-from app.compiler import catalog_query, ping_query
+from app.compiler import CATALOG_COLUMN, CATALOG_SCHEMA, CATALOG_TABLE, CATALOG_TYPE, catalog_query, ping_query
 from app.errors import DatabaseUnavailable, GlossaryMismatch
 from app.executor import Executor
-from app.glossary import CatalogColumn, Glossary, find_mismatches, load_glossary, public_view
+from app.glossary import CatalogColumn, Glossary, Mismatch, find_mismatches, load_glossary, public_view
 from app.settings import DriverNotFound, Settings
 
 logger = logging.getLogger(__name__)
@@ -32,14 +32,15 @@ class GlossaryGuard:
         self._clock = clock
         self._lock = threading.Lock()
         self._checked_at: float | None = None
-        self._mismatch: GlossaryMismatch | None = None
+        self._mismatch: Mismatch | None = None
 
     def verify(self) -> None:
         """Read the catalog and compare. Raises `DatabaseUnavailable` or `GlossaryMismatch`."""
         schemas = {entity.schema for entity in self._glossary.entities.values()}
         rows = self._executor.fetch_all(catalog_query(schemas))
         catalog = [
-            CatalogColumn(row["table_schema"], row["table_name"], row["column_name"], row["data_type"]) for row in rows
+            CatalogColumn(row[CATALOG_SCHEMA], row[CATALOG_TABLE], row[CATALOG_COLUMN], row[CATALOG_TYPE])
+            for row in rows
         ]
         mismatches = find_mismatches(self._glossary, catalog)
         for mismatch in mismatches:
@@ -50,9 +51,9 @@ class GlossaryGuard:
         first = mismatches[0] if mismatches else None
         with self._lock:
             self._checked_at = self._clock()
-            self._mismatch = None if first is None else GlossaryMismatch(first.table, first.column)
-        if self._mismatch is not None:
-            raise self._mismatch
+            self._mismatch = first
+        if first is not None:
+            raise GlossaryMismatch(first.table, first.column)
 
     def check_health(self) -> None:
         """The database answers and the glossary still fits; the catalog is read again when the last read is old."""
@@ -64,7 +65,8 @@ class GlossaryGuard:
             return
         self._executor.fetch_all(ping_query())
         if mismatch is not None:
-            raise mismatch
+            # A new exception per answer: an instance shared between threads would share its traceback too.
+            raise GlossaryMismatch(mismatch.table, mismatch.column)
 
 
 @dataclass(frozen=True, slots=True)
@@ -97,7 +99,10 @@ def start_services(services: Services, sleep: Callable[[float], None] = time.sle
     try:
         services.executor.start()
     except DriverNotFound as error:
-        logger.critical("startup failed: %s", error)
+        logger.critical(
+            "startup failed: no usable ODBC driver is installed",
+            extra={"asked": error.asked, "installed": error.installed},
+        )
         raise
     deadline = time.monotonic() + services.settings.startup_db_wait_seconds
     while True:
@@ -109,9 +114,14 @@ def start_services(services: Services, sleep: Callable[[float], None] = time.sle
             raise
         except DatabaseUnavailable as error:
             if error.sqlstate == _DRIVER_MISSING_STATE:
+                # One line with what a wrong ENGINE_DB_DRIVER needs: the name asked for and the names installed.
                 logger.critical(
                     "startup failed: the ODBC driver is not installed",
-                    extra={"asked": services.settings.db_driver},
+                    extra={
+                        "asked": services.settings.db_driver,
+                        "driver": services.executor.driver,
+                        "installed": services.executor.installed_drivers(),
+                    },
                 )
                 raise
             if time.monotonic() >= deadline:

@@ -20,6 +20,13 @@ _CATALOG_COLUMNS = Table(
 )
 
 
+# The labels of the catalog read; whoever reads its rows uses these names.
+CATALOG_SCHEMA = "table_schema"
+CATALOG_TABLE = "table_name"
+CATALOG_COLUMN = "column_name"
+CATALOG_TYPE = "data_type"
+
+
 @dataclass(frozen=True, slots=True)
 class ReadQuery:
     """One SELECT with its parameters, built here and run by the executor."""
@@ -32,10 +39,10 @@ def catalog_query(schemas: Collection[str]) -> ReadQuery:
     """Every column of the given schemas with its type name; the schema names are bound."""
     catalog = _CATALOG_COLUMNS.c
     statement = select(
-        catalog.TABLE_SCHEMA.label("table_schema"),
-        catalog.TABLE_NAME.label("table_name"),
-        catalog.COLUMN_NAME.label("column_name"),
-        catalog.DATA_TYPE.label("data_type"),
+        catalog.TABLE_SCHEMA.label(CATALOG_SCHEMA),
+        catalog.TABLE_NAME.label(CATALOG_TABLE),
+        catalog.COLUMN_NAME.label(CATALOG_COLUMN),
+        catalog.DATA_TYPE.label(CATALOG_TYPE),
     ).where(catalog.TABLE_SCHEMA.in_(bindparam("schemas", expanding=True, type_=Unicode())))
     return ReadQuery(statement, {"schemas": sorted(set(schemas))})
 

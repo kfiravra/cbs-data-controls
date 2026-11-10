@@ -65,6 +65,11 @@ def test_method_the_path_does_not_serve_is_not_found(client: TestClient) -> None
     assert_problem(client.delete("/glossary"), 404, "NOT_FOUND")
 
 
+def test_path_with_a_trailing_slash_is_not_found_and_not_a_redirect(client: TestClient) -> None:
+    for path in ("/health/", "/glossary/"):
+        assert_problem(client.get(path, follow_redirects=False), 404, "NOT_FOUND")
+
+
 def test_interactive_docs_are_not_served(client: TestClient) -> None:
     for path in ("/docs", "/redoc", "/openapi.json"):
         assert_problem(client.get(path), 404, "NOT_FOUND")
@@ -173,6 +178,11 @@ def test_request_without_a_body_is_judged_by_its_path_not_its_media_type(probe: 
     assert_problem(probe.post("/no/such/path"), 404, "NOT_FOUND")
     problem = assert_problem(probe.post("/probe/run"), 400, "REQUEST_INVALID", with_errors=True)
     assert problem["errors"] == [{"path": "", "code": "REQUIRED", "params": {}}]
+
+
+def test_unknown_path_is_not_found_whatever_the_body_says_it_is(probe: TestClient) -> None:
+    response = probe.post("/no/such/path", content=b"plain text", headers={"content-type": "text/plain"})
+    assert_problem(response, 404, "NOT_FOUND")
 
 
 def test_body_over_the_size_limit_is_413(probe: TestClient) -> None:

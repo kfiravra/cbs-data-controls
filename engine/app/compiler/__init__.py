@@ -2,6 +2,22 @@
 
 from __future__ import annotations
 
-from app.compiler.queries import ReadQuery, catalog_query, ping_query
+from app.compiler.queries import (
+    CATALOG_COLUMN,
+    CATALOG_SCHEMA,
+    CATALOG_TABLE,
+    CATALOG_TYPE,
+    ReadQuery,
+    catalog_query,
+    ping_query,
+)
 
-__all__ = ["ReadQuery", "catalog_query", "ping_query"]
+__all__ = [
+    "CATALOG_COLUMN",
+    "CATALOG_SCHEMA",
+    "CATALOG_TABLE",
+    "CATALOG_TYPE",
+    "ReadQuery",
+    "catalog_query",
+    "ping_query",
+]

@@ -128,6 +128,14 @@ def request_invalid(errors: Sequence[Mapping[str, Any]]) -> RequestInvalid:
     return RequestInvalid([_request_error(error) for error in errors])
 
 
+def _has_body_of_another_media_type(headers: Headers) -> bool:
+    """A body that does not say it is JSON. FastAPI leaves such a body unparsed, so its route cannot read it."""
+    declared = headers.get("content-length", "")
+    has_body = "transfer-encoding" in headers or (declared.isdigit() and int(declared) > 0)
+    media_type = headers.get("content-type", "").split(";", 1)[0].strip().lower()
+    return has_body and media_type != "application/json" and not media_type.endswith("+json")
+
+
 def _from_http_exception(error: HTTPException) -> EngineError:
     if error.status_code in (404, 405):
         return NotFound()
@@ -159,9 +167,11 @@ def install_error_handlers(app: FastAPI) -> None:
             raise error
         return problem_response(error)
 
-    def validation_error(_request: Request, error: Exception) -> Response:
+    def validation_error(request: Request, error: Exception) -> Response:
         if not isinstance(error, RequestValidationError):
             raise error
+        if _has_body_of_another_media_type(request.headers):
+            return problem_response(RequestInvalid(status=415))
         return problem_response(request_invalid(error.errors()))
 
     def http_error(_request: Request, error: Exception) -> Response:
@@ -185,17 +195,10 @@ class _BodyTooLarge(HTTPException):
 
 
 def _refusal(scope: Scope) -> RequestInvalid | None:
-    """What can be refused from the headers alone: a body that is too long, or one that is not JSON."""
-    if scope["method"] not in _BODY_METHODS:
-        return None
-    headers = Headers(scope=scope)
-    declared = headers.get("content-length", "")
-    if declared.isdigit() and int(declared) > MAX_BODY_BYTES:
+    """What must be refused before anything is read: a body whose declared length is over the limit."""
+    declared = Headers(scope=scope).get("content-length", "")
+    if scope["method"] in _BODY_METHODS and declared.isdigit() and int(declared) > MAX_BODY_BYTES:
         return RequestInvalid(status=413)
-    has_body = "transfer-encoding" in headers or (declared.isdigit() and int(declared) > 0)
-    media_type = headers.get("content-type", "").split(";", 1)[0].strip().lower()
-    if has_body and media_type != "application/json" and not media_type.endswith("+json"):
-        return RequestInvalid(status=415)
     return None
 
 

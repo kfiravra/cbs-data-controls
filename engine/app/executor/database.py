@@ -8,7 +8,7 @@ from contextlib import contextmanager
 from typing import Any
 
 import pyodbc
-from sqlalchemy import Connection, Engine, Select, create_engine, event
+from sqlalchemy import Connection, Dialect, Engine, Select, create_engine, event
 from sqlalchemy.exc import DBAPIError
 
 from app.compiler import ReadQuery
@@ -49,6 +49,15 @@ class Executor:
         self._settings = settings
         self._list_drivers = list_drivers
         self._engine: Engine | None = None
+        self._driver: str | None = None
+
+    @property
+    def driver(self) -> str | None:
+        """The ODBC driver in use, once `start` has chosen one."""
+        return self._driver
+
+    def installed_drivers(self) -> tuple[str, ...]:
+        return tuple(self._list_drivers())
 
     def start(self) -> None:
         """Choose the driver and build the engine; no connection is opened yet. `DriverNotFound` ends the start."""
@@ -62,6 +71,7 @@ class Executor:
         )
         event.listen(engine, "connect", self._set_statement_timeout)
         self._engine = engine
+        self._driver = driver
 
     def dispose(self) -> None:
         if self._engine is not None:
@@ -91,7 +101,7 @@ class Executor:
             connection.close()
 
     def _select(self, connection: Connection, statement: Select[Any], parameters: Mapping[str, Any]) -> list[Row]:
-        _guard(connection, statement)
+        ensure_single_select(connection.dialect, statement)
         try:
             result = connection.execute(statement, dict(parameters))
             return [dict(row) for row in result.mappings()]
@@ -108,12 +118,15 @@ class Executor:
         return translated
 
 
-def _guard(connection: Connection, statement: object) -> None:
-    """Layer 3 of architecture §10: exactly one SELECT is ever sent, whatever the compiler did."""
+def ensure_single_select(dialect: Dialect, statement: object) -> None:
+    """Layer 3 of architecture §10: exactly one SELECT is ever sent, whatever the compiler did.
+
+    Raises `InternalError`, and nothing runs, for anything that is not a `Select` or whose text holds a `;`.
+    """
     if not isinstance(statement, Select):
         logger.error("refused a statement that is not a SELECT", extra={"statement_type": type(statement).__name__})
         raise InternalError()
-    text = str(statement.compile(dialect=connection.dialect))
+    text = str(statement.compile(dialect=dialect))
     if ";" in text:
         logger.error("refused a statement that holds a statement separator")
         raise InternalError()

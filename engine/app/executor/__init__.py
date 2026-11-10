@@ -2,6 +2,6 @@
 
 from __future__ import annotations
 
-from app.executor.database import Executor, translate_driver_error
+from app.executor.database import Executor, ensure_single_select, translate_driver_error
 
-__all__ = ["Executor", "translate_driver_error"]
+__all__ = ["Executor", "ensure_single_select", "translate_driver_error"]

@@ -98,7 +98,7 @@ says, what is true now. The list goes into the PR body under this heading at `/s
   the engine takes no connection string. It reads `ENGINE_DB_HOST`, `ENGINE_DB_PORT`, `ENGINE_DB_NAME`,
   `ENGINE_DB_DRIVER` and `DQ_ENGINE_RO_PASSWORD`; the full list is the engine block of `.env.example`.
 - `README.md`, Configuration table ("The engine and api blocks are filled by dc-engine and dc-api"): the
-  engine's rows are the fourteen `ENGINE_*` keys of `.env.example`, with the meanings written there.
+  engine's rows are the thirteen `ENGINE_*` keys of `.env.example`, with the meanings written there.
 - `docker-compose.yml`, the engine service (dc-delivery's): it must set `ENGINE_DB_HOST=db` (and may leave
   `ENGINE_DB_PORT=1433`); the `.env` value `127.0.0.1` is for a host run and does not reach `db` from inside
   compose. The image's start command binds `0.0.0.0:8000`.
@@ -107,7 +107,7 @@ says, what is true now. The list goes into the PR body under this heading at `/s
 - Still to come: architecture §19 and §6 on suggestions, when phase 5 lands.
 
 ## Last reviewed
-(none)
+`a426451` (phase 1), report in `reviews/phase-1.md`. Phase 2 (`c96bc1d`) is with the reviewer.
 
 ## Log
 - 2026-11-10 created plan. Interview in two rounds (plan.md Decisions 1 to 5). Kfir chose `lifecycle` and
@@ -159,3 +159,17 @@ says, what is true now. The list goes into the PR body under this heading at `/s
   exactly, not without regard to case (rendering is where the contract asks for that); literals are typed
   against the left field even when the operator is not allowed for it. A related node whose relationship is
   known but starts elsewhere still has its `where` checked in the entity the relationship reaches.
+- 2026-11-11 review of phase 1 (`05369a6..a426451`, one reviewer on opus, `reviews/phase-1.md`): 0 critical,
+  3 warnings, 7 info. Warnings: `tests/unit/test_settings.py:140` a raw Hebrew literal in a test (the Write
+  tool had turned the escapes into characters), fixed: the name is built from code points; `app/main.py:39`
+  `/health/` answered a bodiless 307, fixed: `redirect_slashes=False` and a test; `app/services.py:112` the
+  missing-driver line named only the driver asked for, fixed: it now carries the driver asked for, the one
+  chosen and the installed ones (the executor's own "database error" line before it stays: it holds the
+  SQLSTATE). Info, fixed: `tests/unit/test_startup.py:15` imported the private `_guard`, now the public
+  `ensure_single_select`; `services.py:100` context in the message, now in `extra=`; `services.py:42` catalog
+  labels spelled in two modules, now constants of `compiler.queries`; `services.py:54,67` one exception
+  instance shared between threads, now the finding is kept and a new exception raised per answer;
+  `web.py:236` the media-type refusal ran before routing, now 415 is decided after routing (413 by declared
+  length stays in front: such a body must not be read); `notes.md:97` "fourteen" keys, corrected to thirteen.
+  Info, rejected by the session: `web.py:76,91` `ValidateRequest` and `DebugCompileRequest` unused: phases 3
+  and 4 use them. All of it in the review-fix commit that follows this line.
