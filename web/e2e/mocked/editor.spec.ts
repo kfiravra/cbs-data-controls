@@ -40,7 +40,7 @@ test.describe('control editor', () => {
 
     const rendered = engine.sentenceOf(example.definition);
     await expect(sentence(page)).toHaveAttribute('data-stale', 'false');
-    await expect(sentence(page).locator('app-mark')).toHaveText(letters.slice(0, rendered.conditions.length));
+    await expect(sentence(page).getByTestId('mark')).toHaveText(letters.slice(0, rendered.conditions.length));
     await expect(sentence(page)).toContainText(rendered.conditions[1].sentence.split(' ').slice(1).join(' '));
     await expect(page.getByTestId('sentence-status')).toHaveCount(0);
     await shot(page, testInfo, 'editor-new');
@@ -61,7 +61,7 @@ test.describe('control editor', () => {
 
     await expect(page.getByTestId('control-description')).toHaveValue(control.description!);
     await expect(page.getByTestId('page-meta')).toContainText(String(control.version));
-    await expect(sentence(page).locator('app-mark')).toHaveText(letters.slice(0, 2));
+    await expect(sentence(page).getByTestId('mark')).toHaveText(letters.slice(0, 2));
     for (const [index, child] of control.definition.where.children.entries()) {
       const field = glossary.entities
         .find((entity) => entity.key === control.rootEntity)!
@@ -98,13 +98,15 @@ test.describe('control editor', () => {
     await expect(page.getByTestId('sentence-status')).toHaveText(
       t('editor.status.incomplete', { mark: letters[1], reason: t('editor.issueWhat.missingValue') }),
     );
-    await expect(sentence(page).locator('app-mark').nth(1)).toHaveAttribute('data-state', 'open');
+    await expect(sentence(page).getByTestId('mark').nth(1)).toHaveAttribute('data-state', 'open');
     await expect(page.getByTestId('row-error')).toHaveCount(0);
 
     await page.getByTestId('save').click();
 
     await expect(row(page, 1).getByTestId('row-error')).toHaveText(t('editor.issues.missingValue'));
     await expect(row(page, 1).getByTestId('value-single')).toBeFocused();
+    await expect(row(page, 1).getByTestId('value-single')).toHaveAttribute('aria-invalid', 'true');
+    await expect(row(page, 0).getByTestId('value-single')).toHaveAttribute('aria-invalid', 'false');
     expect(api.callsTo(`PUT /controls/${control.id}`)).toHaveLength(0);
     await shot(page, testInfo, 'editor-incomplete');
   });
@@ -136,7 +138,7 @@ test.describe('control editor', () => {
 
     await expect(row(page, 1).getByTestId('row-error')).toHaveText(t('errors.definition.VALUE_TYPE_MISMATCH'));
     await expect(row(page, 0).getByTestId('row-error')).toHaveCount(0);
-    await expect(row(page, 1).locator('app-mark').first()).toHaveAttribute('data-state', 'open');
+    await expect(row(page, 1).getByTestId('mark')).toHaveAttribute('data-state', 'open');
     await expect(page.getByTestId('error-banner')).toHaveCount(0);
     await shot(page, testInfo, 'editor-row-error');
   });
@@ -249,15 +251,15 @@ test.describe('control editor', () => {
 
   test('the condition under the pointer fills its mark on its clause in the sentence', async ({ page, api }) => {
     await openStored(page, stored(api));
-    const marks = sentence(page).locator('app-mark');
+    const marks = sentence(page).getByTestId('mark');
     await expect(marks.nth(1)).toHaveAttribute('data-state', 'resting');
 
     await row(page, 1).hover();
     await expect(marks.nth(1)).toHaveAttribute('data-state', 'traced');
     await expect(marks.nth(0)).toHaveAttribute('data-state', 'resting');
 
-    await sentence(page).locator('.clause').first().hover();
-    await expect(row(page, 0).locator('app-mark').first()).toHaveAttribute('data-state', 'traced');
+    await sentence(page).getByTestId('clause').first().hover();
+    await expect(row(page, 0).getByTestId('mark')).toHaveAttribute('data-state', 'traced');
   });
 
   test('archiving asks first, then leaves for the list', async ({ page, api }, testInfo) => {

@@ -10,6 +10,7 @@ import { DraftEdit } from '../../core/definition/draft.edit';
 import { findRelationship, relatedOptions } from '../../core/glossary/glossary.lookups';
 import { LanguageService } from '../../core/i18n/language.service';
 import { IconComponent } from '../icon/icon.component';
+import { InvalidDirective } from '../invalid/invalid.directive';
 import { MarkComponent, MarkState } from '../mark/mark.component';
 import { BuilderView } from './builder-view';
 import { ConditionGroupComponent } from './condition-group.component';
@@ -24,6 +25,7 @@ import { ConditionGroupComponent } from './condition-group.component';
   selector: 'app-related-node',
   imports: [
     IconComponent,
+    InvalidDirective,
     MarkComponent,
     MatButtonToggle,
     MatButtonToggleGroup,

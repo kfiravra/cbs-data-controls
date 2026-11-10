@@ -1,5 +1,5 @@
 import { GroupOp } from './definition.types';
-import { DraftCondition, DraftGroup, DraftNode, DraftRelated } from './draft';
+import { DraftCondition, DraftGroup, DraftNode, DraftRelated, nodeName } from './draft';
 
 /**
  * Edits of the draft tree. Each is pure and returns a new tree that shares its unchanged branches, so
@@ -11,8 +11,7 @@ type Edit = (node: DraftNode) => DraftNode | null;
 
 /** Applies `edit` to the node named `target`; null from `edit` removes it. A group left empty is removed. */
 function editNode(node: DraftNode, target: string, edit: Edit): DraftNode | null {
-  const name = node.type === 'group' ? node.key : node.id;
-  if (name === target) {
+  if (nodeName(node) === target) {
     return edit(node);
   }
   if (node.type === 'condition') {

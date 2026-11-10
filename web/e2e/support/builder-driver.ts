@@ -13,8 +13,6 @@ import {
 import { glossary, label } from '../fixtures/glossary';
 import { t } from './i18n';
 
-const NODES = ':scope > .group > .group__body > :is(app-condition-row, app-condition-group, app-related-node)';
-
 interface Resolved {
   readonly field: GlossaryField;
   /** The label of the picker group the field stands in: the entity, or the path read from its far end. */
@@ -59,10 +57,19 @@ export class BuilderDriver {
     private readonly keyboard = false,
   ) {}
 
+  private get builder(): Locator {
+    return this.page.getByTestId('condition-builder');
+  }
+
   async build(definition: Definition): Promise<void> {
     await this.chooseRoot(definition.rootEntity);
-    const root = this.page.getByTestId('condition-builder').locator(':scope > app-condition-group');
-    await this.fillGroup(root, root, definition.where, definition.rootEntity);
+    const root = this.builder.getByTestId('condition-group').first();
+    await this.fillGroup(await this.keyOf(root), definition.where, definition.rootEntity);
+  }
+
+  /** The key the builder gave a group: its rows, its adders and its all/any control are named by it. */
+  private async keyOf(group: Locator): Promise<string> {
+    return (await group.getAttribute('data-group'))!;
   }
 
   // ---------------------------------------------------------------- the root entity
@@ -88,24 +95,23 @@ export class BuilderDriver {
 
   // ---------------------------------------------------------------- groups
 
-  /** `head` holds the all/any toggle: the group itself, or the related node whose rows these are. */
-  private async fillGroup(group: Locator, head: Locator, definition: GroupNode, scope: string): Promise<void> {
-    const toggle = head.locator(':scope > .group > .group__head').getByTestId('group-op');
+  private async fillGroup(key: string, definition: GroupNode, scope: string): Promise<void> {
+    const toggle = this.builder.locator(`[data-op-of="${key}"]`);
     await this.press(toggle.getByRole('radio', { name: t(definition.op === 'and' ? 'editor.group.all' : 'editor.group.any') }));
-    const nodes = group.locator(NODES);
+    const nodes = this.builder.locator(`[data-parent="${key}"]`);
     // a new group holds one empty row: the first condition takes it, anything else replaces it
     for (const [index, child] of definition.children.entries()) {
       const takesBlank = index === 0 && child.type === 'condition';
       if (!takesBlank) {
         const adder = { condition: 'condition', group: 'group', related: 'related' }[child.type];
-        await this.press(group.locator(`:scope > .group > .group__body > .adders > [data-adder="${adder}"]`));
+        await this.press(this.builder.locator(`[data-adder-of="${key}"][data-adder="${adder}"]`));
         await expect(nodes).toHaveCount(index === 0 ? 2 : index + 1);
       }
       const node = nodes.last();
       if (child.type === 'condition') {
         await this.fillCondition(node, child, scope);
       } else if (child.type === 'group') {
-        await this.fillGroup(node, node, child, scope);
+        await this.fillGroup(await this.keyOf(node), child, scope);
       } else {
         await this.fillRelated(node, child);
       }
@@ -125,8 +131,8 @@ export class BuilderDriver {
       node.getByTestId('related-relationship').first(),
       this.page.getByRole('option', { name: label(relationship(definition.relationship).label), exact: true }),
     );
-    const rows = node.locator(':scope > .group > app-condition-group');
-    await this.fillGroup(rows, node, definition.where, relationship(definition.relationship).to);
+    const rows = node.getByTestId('condition-group').first();
+    await this.fillGroup(await this.keyOf(rows), definition.where, relationship(definition.relationship).to);
   }
 
   // ---------------------------------------------------------------- one condition
@@ -169,9 +175,19 @@ export class BuilderDriver {
   private async enterList(row: Locator, field: GlossaryField, values: readonly ListValue[]): Promise<void> {
     if (field.type === 'enum') {
       const select = row.getByTestId('value-choices');
-      await select.click();
-      for (const value of values) {
-        await this.page.getByRole('option', { name: valueLabel(field, value), exact: true }).click();
+      const options = values.map((value) => this.page.getByRole('option', { name: valueLabel(field, value), exact: true }));
+      if (this.keyboard) {
+        await select.focus();
+        await this.page.keyboard.press('Enter');
+        for (const option of options) {
+          await this.walkTo(option);
+          await this.page.keyboard.press('Space');
+        }
+      } else {
+        await select.click();
+        for (const option of options) {
+          await option.click();
+        }
       }
       await this.page.keyboard.press('Escape');
       return;
@@ -212,6 +228,13 @@ export class BuilderDriver {
     }
     await select.focus();
     await this.page.keyboard.press('Enter');
+    await this.walkTo(option);
+    await this.page.keyboard.press('Enter');
+    await expect(option).toBeHidden();
+  }
+
+  /** Moves the active option of an open list to `option` with Home and the down arrow. */
+  private async walkTo(option: Locator): Promise<void> {
     await expect(option).toBeVisible();
     const position = await option.evaluate((element) => {
       const enabled = [...element.closest('[role="listbox"]')!.querySelectorAll('[role="option"]')].filter(
@@ -223,7 +246,5 @@ export class BuilderDriver {
     for (let step = 0; step < position; step++) {
       await this.page.keyboard.press('ArrowDown');
     }
-    await this.page.keyboard.press('Enter');
-    await expect(option).toBeHidden();
   }
 }

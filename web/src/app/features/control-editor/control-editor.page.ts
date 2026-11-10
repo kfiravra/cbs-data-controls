@@ -25,6 +25,7 @@ import { ErrorBannerComponent } from '../../shared/banner/error-banner.component
 import { ConditionBuilderComponent } from '../../shared/condition-builder/condition-builder.component';
 import { confirm } from '../../shared/confirm-dialog/confirm-dialog.component';
 import { IconComponent } from '../../shared/icon/icon.component';
+import { InvalidDirective } from '../../shared/invalid/invalid.directive';
 import { NotFoundComponent } from '../../shared/not-found/not-found.component';
 import { PageHeadComponent } from '../../shared/page-head/page-head.component';
 import { RelationshipMapComponent } from '../../shared/relationship-map/relationship-map.component';
@@ -50,6 +51,7 @@ const DESCRIPTION_MAX = 1000;
     ConditionBuilderComponent,
     ErrorBannerComponent,
     IconComponent,
+    InvalidDirective,
     MatFormField,
     MatInput,
     NotFoundComponent,

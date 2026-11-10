@@ -85,6 +85,12 @@
   min-inline-size: 0;
 }
 
+// remove is the row's last control in reading order and stands at the end of its first line
+.cond__remove {
+  grid-column: 3;
+  grid-row: 1;
+}
+
 .cond__value {
   display: grid;
   gap: var(--space-1);
@@ -330,6 +336,11 @@
       white-space: nowrap;
     }
   }
+}
+
+// two neighbours that no relationship joins: a gap, no line (after the wide layout, whose border it removes)
+.relmap__link.relmap__link--none {
+  border-color: transparent;
 }
 
 // editor layout

@@ -21,6 +21,7 @@ import { FieldGroup } from '../../core/glossary/glossary.lookups';
 import { LanguageService } from '../../core/i18n/language.service';
 import { FieldPickerComponent } from '../field-picker/field-picker.component';
 import { IconComponent } from '../icon/icon.component';
+import { InvalidDirective } from '../invalid/invalid.directive';
 
 /** Which input of the operand is wrong: the whole operand, or one end of a range. */
 export interface OperandFault {
@@ -40,6 +41,7 @@ type Kind = 'none' | 'field' | 'choice' | 'choices' | 'chips' | 'range' | 'singl
   imports: [
     FieldPickerComponent,
     IconComponent,
+    InvalidDirective,
     MatChipGrid,
     MatChipInput,
     MatChipRemove,
@@ -129,15 +131,36 @@ export class ValueInputComponent {
     return value === undefined ? '' : String(value);
   }
 
+  /**
+   * A date input reports an empty value while only part of a date is typed. That is not an edit: the draft
+   * keeps the last whole date, so nothing is written back over the part being typed.
+   */
+  private isPartial(event: Event): boolean {
+    return (event.target as HTMLInputElement).validity.badInput;
+  }
+
   protected typed(event: Event): void {
+    if (this.isPartial(event)) {
+      return;
+    }
     const text = (event.target as HTMLInputElement).value;
     this.valueChange.emit(text === '' ? undefined : text);
   }
 
   protected typedEnd(index: 0 | 1, event: Event): void {
+    if (this.isPartial(event)) {
+      return;
+    }
     const ends: ListValue[] = [this.values()[0] ?? '', this.values()[1] ?? ''];
     ends[index] = (event.target as HTMLInputElement).value;
     this.valuesChange.emit(ends);
+  }
+
+  /** A date left half typed goes back to the last whole date: what the field shows is what the draft holds. */
+  protected restore(event: Event, value: string): void {
+    if (this.isPartial(event)) {
+      (event.target as HTMLInputElement).value = value;
+    }
   }
 
   protected addChip(event: MatChipInputEvent): void {

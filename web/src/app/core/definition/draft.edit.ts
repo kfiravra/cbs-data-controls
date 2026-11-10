@@ -12,6 +12,7 @@ import {
   emptyCondition,
   emptyGroup,
   emptyRelated,
+  nodeName,
 } from './draft';
 import {
   appendChild,
@@ -62,16 +63,22 @@ export function newDraft(ids: IdSource): DraftGroup {
   return emptyGroup(ids);
 }
 
-const nameOf = (node: DraftNode) => (node.type === 'group' ? node.key : node.id);
-
 /** The first row of a node: itself, or the first row inside a group. */
 function firstRow(node: DraftNode): string {
   return node.type === 'group' ? firstRow(node.children[0]) : node.id;
 }
 
+/** The last row a node draws: itself, or the last row inside a group or a related node. */
+function lastRow(node: DraftNode): string {
+  if (node.type === 'condition') {
+    return node.id;
+  }
+  return lastRow(node.type === 'group' ? node.children.at(-1)! : node.where);
+}
+
 /** The names of the groups and nodes from the root down to the target, the target last. */
 function trail(node: DraftNode, target: string): DraftNode[] | null {
-  if (nameOf(node) === target) {
+  if (nodeName(node) === target) {
     return [node];
   }
   const children = node.type === 'group' ? node.children : node.type === 'related' ? [node.where] : [];
@@ -85,9 +92,9 @@ function trail(node: DraftNode, target: string): DraftNode[] | null {
 }
 
 /**
- * The row to focus once `target` is gone: the row before it, or the adders of its group when it was the
- * first. A removal that empties its group takes the group with it, so the search starts from the highest
- * node that disappears.
+ * The row to focus once `target` is gone: the row just above it, else the row that takes its place, else
+ * the adders of its group. A removal that empties its group takes the group with it, so the search starts
+ * from the highest node that disappears.
  */
 function focusAfterRemoval(root: DraftGroup, target: string): FocusTarget | undefined {
   const path = trail(root, target);
@@ -108,15 +115,20 @@ function focusAfterRemoval(root: DraftGroup, target: string): FocusTarget | unde
     return undefined;
   }
   const position = parent.children.indexOf(path[index]);
-  return position > 0 ? { node: firstRow(parent.children[position - 1]) } : { group: parent.key };
+  if (position > 0) {
+    return { node: lastRow(parent.children[position - 1]) };
+  }
+  const next = parent.children[1];
+  return next ? { node: firstRow(next) } : { group: parent.key };
 }
 
 function changeRelationship(root: DraftGroup, related: DraftRelated | undefined, key: string, context: EditContext) {
   const before = related?.relationship ? findRelationship(context.glossary, related.relationship)?.to : undefined;
   const after = findRelationship(context.glossary, key)?.to;
   const moved = patchRelated(root, related?.id ?? '', { relationship: key });
-  // conditions about another entity mean nothing here: the node starts over with one empty row
-  return related && before !== undefined && before !== after
+  // conditions about another entity mean nothing here, also when the old relationship has left the
+  // glossary: the node starts over with one empty row
+  return related?.relationship !== undefined && before !== after
     ? replaceRelatedWhere(moved, related.id, emptyGroup(context.ids))
     : moved;
 }

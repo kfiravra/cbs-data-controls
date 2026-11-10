@@ -4,7 +4,7 @@ import { MatTooltip } from '@angular/material/tooltip';
 import { TranslatePipe } from '@ngx-translate/core';
 
 import { GroupOp } from '../../core/definition/definition.types';
-import { DraftGroup, DraftNode } from '../../core/definition/draft';
+import { DraftGroup, nodeName } from '../../core/definition/draft';
 import { canAddCondition, canAddGroup, canAddRelated } from '../../core/definition/draft.check';
 import { DraftEdit } from '../../core/definition/draft.edit';
 import { relatedOptions } from '../../core/glossary/glossary.lookups';
@@ -68,9 +68,7 @@ export class ConditionGroupComponent {
     return scope !== undefined && relatedOptions(this.view().glossary, scope).length > 0;
   });
 
-  protected nameOf(node: DraftNode): string {
-    return node.type === 'group' ? node.key : node.id;
-  }
+  protected readonly nodeName = nodeName;
 
   protected setOp(op: GroupOp): void {
     this.edit.emit({ kind: 'op', group: this.group().key, op });

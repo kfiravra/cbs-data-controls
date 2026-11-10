@@ -44,13 +44,31 @@ describe('applyEdit', () => {
     expect(withRelated.focus).toEqual({ node: related.id });
   });
 
-  it('points the focus at the row before a removed row, or at the group when it was the first', () => {
+  it('points the focus at the row above a removed row, or at the row that takes the place of a first row', () => {
     const { draft, first, context } = start();
     const two = applyEdit(draft, { kind: 'addCondition', group: draft.key }, context).draft;
     const second = two.children[1] as DraftCondition;
 
     expect(applyEdit(two, { kind: 'remove', target: second.id }, context).focus).toEqual({ node: first.id });
-    expect(applyEdit(two, { kind: 'remove', target: first.id }, context).focus).toEqual({ group: draft.key });
+    expect(applyEdit(two, { kind: 'remove', target: first.id }, context).focus).toEqual({ node: second.id });
+  });
+
+  it('points the focus at the adders when the only row of the control is removed', () => {
+    const { draft, first, context } = start();
+
+    expect(applyEdit(draft, { kind: 'remove', target: first.id }, context).focus).toEqual({ group: draft.key });
+  });
+
+  it('points the focus at the last row of a group that stands above the removed row', () => {
+    const { draft, context } = start();
+    let next = applyEdit(draft, { kind: 'addGroup', group: draft.key }, context).draft;
+    const group = next.children[1] as DraftGroup;
+    next = applyEdit(next, { kind: 'addCondition', group: group.key }, context).draft;
+    next = applyEdit(next, { kind: 'addCondition', group: draft.key }, context).draft;
+    const lastInGroup = (next.children[1] as DraftGroup).children[1] as DraftCondition;
+    const below = next.children[2] as DraftCondition;
+
+    expect(applyEdit(next, { kind: 'remove', target: below.id }, context).focus).toEqual({ node: lastInGroup.id });
   });
 
   it('points the focus at the group above when a removal takes its whole group with it', () => {
@@ -102,6 +120,22 @@ describe('applyEdit', () => {
     expect(rows).toHaveLength(1);
     expect(rows[0].left).toBeUndefined();
     expect(rows[0].id).not.toBe(inner.id);
+  });
+
+  it('gives a related node new conditions when the relationship it had has left the glossary', () => {
+    const { draft, context } = start();
+    const withRelated = applyEdit(draft, { kind: 'addRelated', group: draft.key }, context).draft;
+    const related = withRelated.children[1] as DraftRelated;
+    const inner = related.where.children[0] as DraftCondition;
+    const gone = applyEdit(
+      applyEdit(withRelated, { kind: 'relationship', id: related.id, relationship: 'order.gone' }, context).draft,
+      { kind: 'field', id: inner.id, left: { field: 'old_field' }, scope: 'nothing' },
+      context,
+    ).draft;
+
+    const chosen = applyEdit(gone, { kind: 'relationship', id: related.id, relationship: 'order.lines' }, context).draft;
+
+    expect(((chosen.children[1] as DraftRelated).where.children[0] as DraftCondition).left).toBeUndefined();
   });
 
   it('sets the quantity of a related node and the joining word of a group', () => {

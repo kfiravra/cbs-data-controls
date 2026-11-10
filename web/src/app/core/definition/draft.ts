@@ -50,6 +50,11 @@ export interface DraftGroup {
 
 export type DraftNode = DraftGroup | DraftCondition | DraftRelated;
 
+/** What a node is named by in an edit: a group by its key, a condition or a related node by its id. */
+export function nodeName(node: DraftNode): string {
+  return node.type === 'group' ? node.key : node.id;
+}
+
 const NUMBERED_ID = /^[crg](\d+)$/;
 
 /**

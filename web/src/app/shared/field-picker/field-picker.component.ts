@@ -7,6 +7,7 @@ import { FieldRef } from '../../core/definition/definition.types';
 import { GlossaryLabelsService } from '../../core/glossary/glossary-labels.service';
 import { FieldGroup } from '../../core/glossary/glossary.lookups';
 import { LanguageService } from '../../core/i18n/language.service';
+import { InvalidDirective } from '../invalid/invalid.directive';
 
 interface FieldOption {
   readonly key: string;
@@ -25,12 +26,12 @@ const keyOf = (ref: FieldRef) => `${(ref.path ?? []).join('>')}|${ref.field}`;
  */
 @Component({
   selector: 'app-field-picker',
-  imports: [MatFormField, MatOptgroup, MatOption, MatSelect, MatSelectTrigger, TranslatePipe],
+  imports: [InvalidDirective, MatFormField, MatOptgroup, MatOption, MatSelect, MatSelectTrigger, TranslatePipe],
   template: `
     <mat-form-field appearance="outline" subscriptSizing="dynamic" [class.field--invalid]="invalid()">
       <mat-select
         [attr.data-testid]="testId()"
-        [attr.aria-invalid]="invalid()"
+        [appInvalid]="invalid()"
         [aria-label]="label()"
         [placeholder]="'editor.field.placeholder' | translate"
         [value]="selectedKey()"

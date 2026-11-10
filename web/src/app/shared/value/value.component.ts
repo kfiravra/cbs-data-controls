@@ -4,7 +4,7 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 @Component({
   selector: 'app-value',
   template: '<bdi>{{ text() }}</bdi>',
-  host: { class: 'value' },
+  host: { class: 'value', 'data-testid': 'value' },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ValueComponent {

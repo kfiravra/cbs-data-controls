@@ -70,9 +70,7 @@ export class ConditionBuilderComponent {
   private moveFocus(target: FocusTarget): void {
     const root = this.host.nativeElement;
     if (!target.node) {
-      root
-        .querySelector<HTMLElement>(`[data-group="${target.group}"] > .group > .group__body > .adders > [data-adder]`)
-        ?.focus();
+      root.querySelector<HTMLElement>(`[data-adder-of="${target.group}"]`)?.focus();
       return;
     }
     const row = root.querySelector<HTMLElement>(`[data-node="${target.node}"]`);

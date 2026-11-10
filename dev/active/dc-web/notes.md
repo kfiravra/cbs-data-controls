@@ -93,7 +93,7 @@ invalid fixtures, as merged in `f9928bf`. Where they differ from Design E to M o
 - Nothing in `contracts/` looked wrong, and nothing blocks a screen: no line for Kfir from this step.
 
 ## Last reviewed
-d57b922 (phase 2), fixed in the `fix(web): review fixes` commit after e517490. Phase 3 (e517490) is under review.
+e517490 (phase 3), fixed in the `fix(web): review fixes` commit after 5a57791. Phase 4 (5a57791) is under review.
 
 ## Hand-over to dc-delivery
 Read by its phase B0 (plan.md Design Q). Filled as the work goes and complete before `/ship`.
@@ -239,3 +239,30 @@ rewrote. A review that found nothing, or did not run, is logged as that.
   root change with its undo, the trace and `beforeunload`. From here `builder.spec.ts` compares the definition
   the editor validates with the example's, node for node. Screenshots in `screenshots/phase-4/`. The stale
   token is white at 72% (`#ffffffb8`), measured 4.86:1 on Action. No cut taken: the settle is built.
+- 2026-11-11 /phase-review web, phase 3 (one reviewer agent, opus; cost line: about 175k tokens, started without
+  waiting), diff d57b922..e517490: standards 3 warnings, 3 info; plan 1 critical, 3 warnings, 3 info.
+  `condition-group.component.html`: the related-records adder was allowed at one node under the limit (critical;
+  the same defect the phase 2 review found in `canAddNested`, already fixed in a1682ae before this review was
+  read). `field-picker`, `operator-picker`, `related-node`, `value-input`: `[attr.aria-invalid]` on a Material
+  control loses to Material's own host binding when the control is drawn already invalid (warning).
+  `builder-driver.ts`, `builder.spec.ts`, `condition-builder.component.ts`: elements found by chains of CSS
+  classes, against "by role and test id" (warning). `condition-row.component.html`: the remove button came
+  before the field in the DOM though it is last on the line, and the three inputs had the same name in every row
+  (warning). `value-input`: a date input emptied the draft and wiped the half-typed date while one part of it was
+  being changed (warning). `builder-driver.ts`: keyboard mode clicked for a list of enum values, and no test
+  tabbed through a row or typed by keyboard (warning). `builder.spec.ts`: `expectBuilt` would pass with a wrong
+  operator, value or nesting (warning). Info: the traced node in the view object rebuilt every row's lists on
+  hover; a third copy of the key-or-id lookup; `sentence-field` unused at that commit; focus after a removal
+  went to the first row of a group above, and to the adders when a first row was removed; a related node kept
+  its rows when its old relationship had left the glossary; the map drew a connector where design.md says there
+  is no link; spec gaps (chips, the enum multi-select, an emptied input). Fixed in the review-fix commit: the
+  `appInvalid` directive sets Material's error state, so `aria-invalid` and the outline follow; rows, adders
+  and the all/any control carry the key of their group (`data-parent`, `data-adder-of`, `data-op-of`) and marks
+  a test id and their state, and the driver, the specs and the focus code use them; the row reads field,
+  comparison, value, remove and is a named group; a half-typed date is not an edit and goes back to the last
+  whole date on blur; the driver fills an enum list with keys, `builder.spec.ts` builds examples 1 and 2 by
+  keyboard and tabs through a row; `nodeName` is one function; focus goes to the row just above, else to the
+  row that takes the place; the relationship reset and the map connector; the unit tests named. `expectBuilt`
+  had already been strengthened in phase 4 (the validated definition equals the example's, node for node).
+  Left: the driver still focuses a control before working it with keys (it proves each control works by
+  keyboard; the tab order of a row has its own test, and the pass through the whole flow is phase 8).

@@ -59,6 +59,9 @@ export class ConditionRowComponent {
   readonly edit = output<DraftEdit>();
   readonly trace = output<string | null>();
 
+  /** The glossary alone: tracing a row changes the view on every hover, and must not rebuild every list. */
+  private readonly glossary = computed(() => this.view().glossary);
+
   protected readonly mark = computed(() => this.view().marks.get(this.condition().id) ?? '');
   protected readonly messages = computed(() => this.view().messages.get(this.condition().id) ?? []);
   protected readonly faults = computed<OperandFault[]>(() =>
@@ -75,29 +78,29 @@ export class ConditionRowComponent {
 
   protected readonly groups = computed(() => {
     const scope = this.scope();
-    return scope ? fieldGroups(this.view().glossary, scope) : [];
+    return scope ? fieldGroups(this.glossary(), scope) : [];
   });
 
   protected readonly field = computed(() => {
     const scope = this.scope();
     const left = this.condition().left;
-    return scope && left ? resolveField(this.view().glossary, scope, left)?.field : undefined;
+    return scope && left ? resolveField(this.glossary(), scope, left)?.field : undefined;
   });
 
   protected readonly operators = computed(() => {
     const field = this.field();
-    return field ? operatorsOf(this.view().glossary, field) : [];
+    return field ? operatorsOf(this.glossary(), field) : [];
   });
 
   protected readonly arity = computed(() => {
     const operator = this.condition().operator;
-    return operator ? findOperator(this.view().glossary, operator)?.arity : undefined;
+    return operator ? findOperator(this.glossary(), operator)?.arity : undefined;
   });
 
   protected readonly comparable = computed(() => {
     const { left, operator } = this.condition();
     const scope = this.scope();
-    return scope && left && operator ? comparableFields(this.view().glossary, scope, left, operator) : [];
+    return scope && left && operator ? comparableFields(this.glossary(), scope, left, operator) : [];
   });
 
   protected hasFault(input: 'left' | 'operator'): boolean {

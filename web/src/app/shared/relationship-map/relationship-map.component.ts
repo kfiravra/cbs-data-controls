@@ -31,7 +31,7 @@ import { LanguageService } from '../../core/i18n/language.service';
           }
         </button>
         @if (!last) {
-          <span class="relmap__link">
+          <span class="relmap__link" [class.relmap__link--none]="!map().links[index]">
             @if (map().links[index]; as link) {
               <span>{{ language.text(link.label) }}</span>
             }

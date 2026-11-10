@@ -5,6 +5,7 @@
         <span class="group__lead">{{ (group().op === 'and' ? 'editor.group.leadAll' : 'editor.group.leadAny') | translate }}</span>
         <mat-button-toggle-group
           data-testid="group-op"
+          [attr.data-op-of]="group().key"
           [attr.aria-label]="'editor.group.how' | translate"
           [value]="group().op"
           (change)="setOp($event.value)"
@@ -28,13 +29,14 @@
     </div>
   }
   <div class="group__body">
-    @for (child of group().children; track nameOf(child); let first = $first) {
+    @for (child of group().children; track nodeName(child); let first = $first) {
       @if (!first) {
         <span class="joiner" data-testid="joiner">{{ joiner() }}</span>
       }
       @switch (child.type) {
         @case ('condition') {
           <app-condition-row
+            [attr.data-parent]="group().key"
             [condition]="child"
             [scope]="scope()"
             [view]="view()"
@@ -44,6 +46,7 @@
         }
         @case ('group') {
           <app-condition-group
+            [attr.data-parent]="group().key"
             [group]="child"
             [scope]="scope()"
             [view]="view()"
@@ -53,6 +56,7 @@
         }
         @case ('related') {
           <app-related-node
+            [attr.data-parent]="group().key"
             [node]="child"
             [scope]="scope()"
             [view]="view()"
@@ -63,14 +67,35 @@
       }
     }
     <div class="adders">
-      <button class="adder" type="button" data-adder="condition" [disabled]="!canAdd()" (click)="add('addCondition')">
+      <button
+        class="adder"
+        type="button"
+        data-adder="condition"
+        [attr.data-adder-of]="group().key"
+        [disabled]="!canAdd()"
+        (click)="add('addCondition')"
+      >
         <app-icon name="add" size="sm" /><span>{{ 'editor.add.condition' | translate }}</span>
       </button>
-      <button class="adder" type="button" data-adder="group" [disabled]="!canGroup()" (click)="add('addGroup')">
+      <button
+        class="adder"
+        type="button"
+        data-adder="group"
+        [attr.data-adder-of]="group().key"
+        [disabled]="!canGroup()"
+        (click)="add('addGroup')"
+      >
         <app-icon name="add" size="sm" /><span>{{ 'editor.add.group' | translate }}</span>
       </button>
       @if (hasRelated()) {
-        <button class="adder" type="button" data-adder="related" [disabled]="!canRelate()" (click)="add('addRelated')">
+        <button
+          class="adder"
+          type="button"
+          data-adder="related"
+          [attr.data-adder-of]="group().key"
+          [disabled]="!canRelate()"
+          (click)="add('addRelated')"
+        >
           <app-icon name="add" size="sm" /><span>{{ 'editor.add.related' | translate }}</span>
         </button>
       }

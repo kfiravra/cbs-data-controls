@@ -35,7 +35,7 @@ const NONE: ReadonlySet<string> = new Set();
   selector: 'app-text-parts',
   imports: [MarkComponent, TranslatePipe, ValueComponent],
   // one line per block: white space between elements would add spaces the engine did not write
-  template: `@for (clause of clauses(); track $index) {@if (clause.nodeId; as id) {<span class="clause" [attr.data-node]="id" (pointerenter)="trace.emit(id)" (pointerleave)="trace.emit(null)">@if (clause.mark; as mark) {<span class="nb"><app-mark [label]="mark" [state]="stateOf(id)" [changed]="changed().has(id)" [name]="'common.condition' | translate: { mark }" /> {{ clause.lead }}</span>}@for (piece of clause.pieces; track $index) {@if (piece.value) {<app-value [text]="piece.text" />} @else if (piece.whole) {<span class="nb">{{ piece.text }}</span>} @else {{{ piece.text }}}}</span>} @else {@for (piece of clause.pieces; track $index) {{{ piece.text }}}}}`,
+  template: `@for (clause of clauses(); track $index) {@if (clause.nodeId; as id) {<span class="clause" data-testid="clause" [attr.data-node]="id" (pointerenter)="trace.emit(id)" (pointerleave)="trace.emit(null)">@if (clause.mark; as mark) {<span class="nb"><app-mark [label]="mark" [state]="stateOf(id)" [changed]="changed().has(id)" [name]="'common.condition' | translate: { mark }" /> {{ clause.lead }}</span>}@for (piece of clause.pieces; track $index) {@if (piece.value) {<app-value [text]="piece.text" />} @else if (piece.whole) {<span class="nb">{{ piece.text }}</span>} @else {{{ piece.text }}}}</span>} @else {@for (piece of clause.pieces; track $index) {{{ piece.text }}}}}`,
   styles: `
     :host {
       display: inline;

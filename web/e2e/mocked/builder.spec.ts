@@ -37,7 +37,7 @@ async function expectBuilt(page: Page, api: FakeApi, example: Example): Promise<
   const rows = builder.locator('[data-testid="condition-row"], [data-testid="related-node"]');
   await expect(rows).toHaveCount(nodes.length);
 
-  const marks = await builder.locator('.cond > app-mark, .group__how > app-mark').allTextContents();
+  const marks = await builder.getByTestId('mark').allTextContents();
   expect(marks).toEqual(letters.slice(0, nodes.length));
 
   let scope = example.definition.rootEntity;
@@ -50,7 +50,7 @@ async function expectBuilt(page: Page, api: FakeApi, example: Example): Promise<
       scope = relationship.to;
     } else {
       await expect(row.getByTestId('field-picker')).toContainText(fieldLabel(scope, node.left.field, node.left.path));
-      await expect(row.locator('.mark--open')).toHaveCount(0);
+      await expect(row.getByTestId('mark')).not.toHaveAttribute('data-state', 'open');
     }
   }
 }
@@ -83,6 +83,30 @@ test.describe('condition builder', () => {
     await shot(page, testInfo, 'builder-example-5');
   });
 
+  for (const number of [1, 2] as const) {
+    test(`builds example ${number} with the keyboard alone: ${number === 1 ? 'typed numbers' : 'a comparison of two fields'}`, async ({ page, api }) => {
+      const example = exampleNumber(number);
+      await open(page);
+
+      await new BuilderDriver(page, true).build(example.definition);
+
+      await expectBuilt(page, api, example);
+    });
+  }
+
+  test('walks a row with Tab in the order it reads: field, comparison, value, compare, remove', async ({ page }) => {
+    const builder = await open(page);
+    await new BuilderDriver(page).build(exampleNumber(1).definition);
+    const row = builder.getByTestId('condition-row').nth(1);
+
+    await row.getByTestId('field-picker').focus();
+    const order = ['operator-picker', 'value-single', 'compare-toggle', 'remove-row'];
+    for (const testId of order) {
+      await page.keyboard.press('Tab');
+      await expect(row.getByTestId(testId)).toBeFocused();
+    }
+  });
+
   test('builds example 4, a tree three groups deep', async ({ page, api }, testInfo) => {
     const example = exampleNumber(4);
     await open(page);
@@ -100,8 +124,8 @@ test.describe('condition builder', () => {
     await expect(page.getByTestId('root-entity').and(page.locator('[aria-checked="true"]'))).toContainText(
       label(first.label.plural),
     );
-    await expect(builder.locator('.cond > app-mark')).toHaveText(letters[0]);
-    await expect(builder.locator('.cond > app-mark')).toHaveClass(/mark--open/);
+    await expect(builder.getByTestId('mark')).toHaveText(letters[0]);
+    await expect(builder.getByTestId('mark')).toHaveAttribute('data-state', 'open');
     await expect(builder.getByTestId('row-error')).toHaveCount(0);
   });
 
@@ -133,18 +157,23 @@ test.describe('condition builder', () => {
   test('disables the adders the limits of the glossary no longer allow', async ({ page, api }) => {
     api.glossary = { ...glossary, limits: { ...glossary.limits, maxConditions: 2, maxDepth: 2 } };
     const builder = await open(page);
-    const adder = (kind: string, group = 0) =>
-      builder.getByTestId('condition-group').nth(group).locator(`:scope > .group > .group__body > .adders > [data-adder="${kind}"]`);
+    // a root entity that has related records, so the builder offers all three adders
+    const withRelated = glossary.relationships.find((relationship) => relationship.cardinality === 'one_to_many')!.from;
+    await page.getByRole('radio', { name: label(glossary.entities.find((entity) => entity.key === withRelated)!.label.plural) }).click();
+    const keys = () => builder.getByTestId('condition-group').evaluateAll((groups) => groups.map((group) => group.getAttribute('data-group')));
+    const adder = async (kind: string, group = 0) => builder.locator(`[data-adder-of="${(await keys())[group]}"][data-adder="${kind}"]`);
 
-    await expect(adder('condition')).toBeEnabled();
-    await adder('group').click();
-    await expect(adder('condition')).toBeDisabled();
-    await expect(adder('group')).toBeDisabled();
-    await expect(adder('group', 1)).toBeDisabled();
+    await expect(await adder('condition')).toBeEnabled();
+    // one more node fits, and a related-records node brings two: itself and its first row
+    await expect(await adder('related')).toBeDisabled();
+    await (await adder('group')).click();
+    await expect(await adder('condition')).toBeDisabled();
+    await expect(await adder('group')).toBeDisabled();
+    await expect(await adder('group', 1)).toBeDisabled();
 
     await builder.getByTestId('remove-group').click();
-    await expect(adder('condition')).toBeEnabled();
-    await expect(adder('group')).toBeEnabled();
+    await expect(await adder('condition')).toBeEnabled();
+    await expect(await adder('group')).toBeEnabled();
   });
 
   test('says in words what the control returns and what else it may ask about', async ({ page }) => {

@@ -12,6 +12,7 @@ export type MarkState = 'resting' | 'traced' | 'active' | 'open';
   template: '{{ label() }}',
   host: {
     class: 'mark',
+    'data-testid': 'mark',
     '[class.mark--traced]': 'state() === "traced"',
     '[class.mark--active]': 'state() === "active"',
     '[class.mark--open]': 'state() === "open"',

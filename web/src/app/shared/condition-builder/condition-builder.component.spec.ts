@@ -9,7 +9,7 @@ import { provideTestIcons } from '../../../testing/icons';
 import { SYNTHETIC_GLOSSARY } from '../../../testing/synthetic-glossary';
 import { provideTestTranslations, t } from '../../../testing/translate';
 import { Glossary } from '../../core/api/api.types';
-import { DraftGroup, IdSource } from '../../core/definition/draft';
+import { DraftCondition, DraftGroup, IdSource } from '../../core/definition/draft';
 import { checkDraft } from '../../core/definition/draft.check';
 import { DraftEdit, FocusTarget, applyEdit, newDraft } from '../../core/definition/draft.edit';
 import { marksOf } from '../../core/definition/marks';
@@ -69,9 +69,11 @@ describe('ConditionBuilderComponent', () => {
   const all = (selector: string) => [...host().querySelectorAll<HTMLElement>(selector)];
   const rows = () => all('[data-testid="condition-row"]');
   const groups = () => all('[data-testid="condition-group"]');
-  const marks = () => all('.cond > app-mark, .group__how > app-mark').map((mark) => mark.textContent);
+  const marks = () => all('[data-testid="mark"]').map((mark) => mark.textContent);
   const adder = (kind: string, group = 0) =>
-    groups()[group].querySelector<HTMLButtonElement>(`:scope > .group > .group__body > .adders > [data-adder="${kind}"]`)!;
+    host().querySelector<HTMLButtonElement>(
+      `[data-adder-of="${groups()[group].getAttribute('data-group')}"][data-adder="${kind}"]`,
+    )!;
 
   async function click(element: HTMLElement): Promise<void> {
     element.click();
@@ -161,7 +163,7 @@ describe('ConditionBuilderComponent', () => {
 
       expect(all('[data-testid="related-node"]')).toHaveLength(1);
       expect(marks()).toEqual(['A', 'B', 'C']);
-      expect(all('[data-testid="related-node"] .group__how > app-mark')[0].textContent).toBe('B');
+      expect(all('[data-testid="related-node"] [data-testid="mark"]')[0].textContent).toBe('B');
     });
 
     it('shows the joining word of the group between two rows, in the words of the glossary', async () => {
@@ -264,6 +266,54 @@ describe('ConditionBuilderComponent', () => {
       expect(input('value-single')).toBeNull();
     });
 
+    it('takes an emptied input as no value at all', async () => {
+      await row('reference', 'same');
+      const field = input('value-single')!;
+      field.value = 'north';
+      field.dispatchEvent(new Event('input'));
+      await fixture.whenStable();
+
+      field.value = '';
+      field.dispatchEvent(new Event('input'));
+      await fixture.whenStable();
+
+      expect((fixture.componentInstance.draft().children[0] as DraftCondition).value).toBeUndefined();
+    });
+
+    it('adds a value to a list on Enter, once however often it is typed, and removes it by its button', async () => {
+      await row('reference', 'among');
+      const chips = () => all('[data-testid="value-chip"]').map((chip) => chip.querySelector('bdi')!.textContent);
+      const add = async (text: string) => {
+        const field = input('value-chip-input')!;
+        field.value = text;
+        field.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', keyCode: 13, bubbles: true }));
+        await fixture.whenStable();
+      };
+
+      await add('north');
+      await add(' south ');
+      await add('north');
+      expect(chips()).toEqual(['north', 'south']);
+      expect(input('value-chip-input')!.value).toBe('');
+
+      await click(all('[data-testid="value-chip"] button')[0]);
+      expect(chips()).toEqual(['south']);
+    });
+
+    it('is a choice of several glossary values for a list on an enum', async () => {
+      await row('state', 'among');
+
+      const harness = await select('value-choices');
+      expect(await harness.isMultiple()).toBe(true);
+      await harness.open();
+      await harness.clickOptions({ text: 'open label' });
+      await harness.clickOptions({ text: 'closed label' });
+      await harness.close();
+      await fixture.whenStable();
+
+      expect(JSON.stringify(fixture.componentInstance.draft())).toContain('"values":["open","closed"]');
+    });
+
     it('sends what is typed to the draft and shows it back', async () => {
       await row('total', 'above');
       const field = input('value-single')!;
@@ -318,7 +368,7 @@ describe('ConditionBuilderComponent', () => {
 
   describe('messages', () => {
     it('opens the mark of an unfinished row and says nothing under it until a message is given', async () => {
-      expect(host().querySelector('.cond > app-mark')!.className).toContain('mark--open');
+      expect(host().querySelector('[data-testid="mark"]')!.getAttribute('data-state')).toBe('open');
       expect(all('[data-testid="row-error"]')).toHaveLength(0);
     });
 
@@ -335,6 +385,26 @@ describe('ConditionBuilderComponent', () => {
       ]);
       expect(host().querySelector('[data-testid="value-single"]')!.getAttribute('aria-invalid')).toBe('true');
       expect(host().querySelector('[data-testid="field-picker"]')!.getAttribute('aria-invalid')).toBe('false');
+    });
+
+    it('says a row is invalid also when the row is drawn already refused', async () => {
+      await pick('field-picker', labelOf('order', 'total'));
+      const id = rows()[0].getAttribute('data-node')!;
+      fixture.componentInstance.messages.set(new Map([[id, [{ key: 'editor.issues.missingValue', input: 'value' }]]]));
+
+      // choosing the comparison draws the value input for the first time, with the message already there
+      await pick('operator-picker', operatorLabels(['above'])[0]);
+
+      expect(host().querySelector('[data-testid="value-single"]')!.getAttribute('aria-invalid')).toBe('true');
+    });
+
+    it('names each row as a group, so its three inputs are told apart from those of the next row', async () => {
+      await click(adder('condition'));
+
+      const names = all('[data-testid="condition-row"] [role="group"]').map(
+        (group) => host().querySelector(`#${group.getAttribute('aria-labelledby')}`)!.textContent,
+      );
+      expect(names).toEqual([t('common.condition', { mark: 'A' }), t('common.condition', { mark: 'B' })]);
     });
 
     it('says which row is in focus, so its mark can fill wherever it stands', async () => {

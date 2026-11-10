@@ -1,4 +1,4 @@
-<div class="group related">
+<div class="group related" role="group" [attr.aria-label]="'common.condition' | translate: { mark: mark() }">
   <div
     class="group__head"
     (focusin)="trace.emit(node().id)"
@@ -8,7 +8,6 @@
   >
     <div class="group__how">
       <app-mark [label]="mark()" [state]="markState()" />
-      <span class="sr-only">{{ 'common.condition' | translate: { mark: mark() } }}</span>
       <mat-form-field class="field--sm group__pick" appearance="outline" subscriptSizing="dynamic">
         <mat-select
           data-testid="related-quantity"
@@ -30,7 +29,7 @@
         <mat-select
           data-testid="related-relationship"
           data-input="relationship"
-          [attr.aria-invalid]="invalid()"
+          [appInvalid]="invalid()"
           [aria-label]="'editor.related.records' | translate"
           [placeholder]="'editor.related.records' | translate"
           [value]="node().relationship ?? null"
@@ -44,6 +43,7 @@
       <span class="group__lead">{{ 'editor.related.lead' | translate }}</span>
       <mat-button-toggle-group
         data-testid="group-op"
+        [attr.data-op-of]="node().where.key"
         [attr.aria-label]="'editor.group.how' | translate"
         [value]="node().where.op"
         (change)="emit({ kind: 'op', group: node().where.key, op: $event.value })"

@@ -6,6 +6,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { FieldType, GlossaryOperator } from '../../core/api/api.types';
 import { operatorLabel } from '../../core/glossary/glossary.lookups';
 import { LanguageService } from '../../core/i18n/language.service';
+import { InvalidDirective } from '../invalid/invalid.directive';
 
 /**
  * Picks a comparison. The list holds only what the glossary allows for the field, each under the label
@@ -13,12 +14,12 @@ import { LanguageService } from '../../core/i18n/language.service';
  */
 @Component({
   selector: 'app-operator-picker',
-  imports: [MatFormField, MatOption, MatSelect, TranslatePipe],
+  imports: [InvalidDirective, MatFormField, MatOption, MatSelect, TranslatePipe],
   template: `
     <mat-form-field appearance="outline" subscriptSizing="dynamic" [class.field--invalid]="invalid()">
       <mat-select
         data-testid="operator-picker"
-        [attr.aria-invalid]="invalid()"
+        [appInvalid]="invalid()"
         [aria-label]="'editor.operator.label' | translate"
         [placeholder]="'editor.operator.placeholder' | translate"
         [disabled]="options().length === 0"
