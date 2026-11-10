@@ -19,11 +19,15 @@ public sealed class DefinitionChecker(IDefinitionSchemaValidator schema, EngineC
         return ValidateAsync(definition, cancellationToken);
     }
 
+    /// <summary>Both layers, for the one definition of a request.</summary>
+    public Task<byte[]> ValidateAsync(JsonElement definition, CancellationToken cancellationToken) =>
+        ValidateAsync(definition, index: null, cancellationToken);
+
     /// <summary>
     /// Both layers. A rejection by either is a 422 problem; when the definition is one of several in the
     /// request, <paramref name="index"/> says which. Any other engine failure is an <see cref="EngineException"/>.
     /// </summary>
-    public async Task<byte[]> ValidateAsync(JsonElement definition, CancellationToken cancellationToken, int? index = null)
+    public async Task<byte[]> ValidateAsync(JsonElement definition, int? index, CancellationToken cancellationToken)
     {
         CheckSchema(definition, index);
         try

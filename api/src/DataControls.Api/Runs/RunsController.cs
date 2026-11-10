@@ -15,6 +15,8 @@ public sealed class RunsController(RunService runs, RunQueries queries) : Contro
     [Problem(StatusCodes.Status404NotFound)]
     [Problem(StatusCodes.Status409Conflict)]
     [Problem(StatusCodes.Status503ServiceUnavailable)]
+    [Problem(StatusCodes.Status413PayloadTooLarge)]
+    [Problem(StatusCodes.Status415UnsupportedMediaType)]
     [HttpPost("api/v1/controls/{id:long:min(1)}/runs")]
     public async Task<IActionResult> Start(
         long id,

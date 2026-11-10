@@ -123,10 +123,13 @@ dotnet run --project src/DataControls.Api    # http://localhost:5000
 ```
 
 - The api starts whether or not the database and the engine answer. `GET /api/v1/health` is always 200 and says
-  which of the two is `ok`; a call that needs the one that is down answers 503 with `DATABASE_UNAVAILABLE` or
-  `ENGINE_UNAVAILABLE`.
+  which of the two is `ok`. While the database is down, a call that needs it answers 503
+  `DATABASE_UNAVAILABLE`. While the engine is down, validating, saving a changed definition, the glossary (when
+  none is cached) and suggestions answer 503 `ENGINE_UNAVAILABLE`; a run is still answered 201, as a run that
+  failed with that code.
 - `http://localhost:5000/api/docs` is Swagger UI over `/openapi/v1.json`, in every environment.
-- [`api/requests.http`](api/requests.http) holds one request per endpoint, in the contract's order.
+- [`api/requests.http`](api/requests.http) holds one request per endpoint, in the contract's order except for
+  the archive, which comes last because an archived control cannot be run.
 - Every error is a problem with a `code` and `params` and no prose; the codes are in
   [contracts/errors.md](contracts/errors.md).
 

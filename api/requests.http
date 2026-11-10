@@ -1,4 +1,5 @@
-# One request per row of the application table in contracts/api.md (§4), in the table's order.
+# One request per row of the application table in contracts/api.md (§4), in the table's order except for the
+# archive, which comes last because an archived control cannot be run.
 # Works in VS Code (REST Client), Rider and Visual Studio. Start the api first:
 #   cd api && dotnet run --project src/DataControls.Api
 # Run "Create a control" before the requests that use {{controlId}}, and "Start a run" before the ones that

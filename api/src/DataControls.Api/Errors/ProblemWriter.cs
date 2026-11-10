@@ -10,28 +10,20 @@ namespace DataControls.Api.Errors;
 internal sealed class ProblemWriter(RequestContextAccessor requests)
 {
     private const string ContentType = "application/problem+json";
+    private const string ProblemType = "about:blank";
 
-    public async Task WriteAsync(HttpContext context, ApiException problem, CancellationToken cancellationToken)
+    public Task WriteAsync(HttpContext context, ApiException problem, CancellationToken cancellationToken)
     {
         context.Response.StatusCode = problem.Status;
         context.Response.ContentType = ContentType;
-
-        await using var writer = new Utf8JsonWriter(context.Response.BodyWriter, JsonDefaults.WriterOptions);
-        writer.WriteStartObject();
-        writer.WriteString("type", "about:blank");
-        writer.WriteString("title", problem.Code);
-        writer.WriteNumber("status", problem.Status);
-        writer.WriteString("code", problem.Code);
-        writer.WritePropertyName("params");
-        problem.Params.WriteTo(writer);
-        if (problem.Errors is { } errors)
-        {
-            writer.WritePropertyName("errors");
-            errors.WriteTo(writer);
-        }
-
-        writer.WriteString("correlationId", requests.Current.CorrelationId);
-        writer.WriteEndObject();
-        await writer.FlushAsync(cancellationToken);
+        var body = new ProblemResponse(
+            ProblemType,
+            problem.Code,
+            problem.Status,
+            problem.Code,
+            problem.Params,
+            problem.Errors,
+            requests.Current.CorrelationId);
+        return JsonSerializer.SerializeAsync(context.Response.Body, body, JsonDefaults.Options, cancellationToken);
     }
 }

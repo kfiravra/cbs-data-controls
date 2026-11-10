@@ -17,6 +17,8 @@ public sealed class SuggestionsController(SuggestionService suggestions) : Contr
     [ProducesResponseType<JsonElement>(StatusCodes.Status200OK, "application/json")]
     [Problem(StatusCodes.Status503ServiceUnavailable)]
     [Problem(StatusCodes.Status504GatewayTimeout)]
+    [Problem(StatusCodes.Status413PayloadTooLarge)]
+    [Problem(StatusCodes.Status415UnsupportedMediaType)]
     [HttpPost]
     public async Task<IResult> Suggest(
         [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] SuggestionsRequest? request,
@@ -27,12 +29,14 @@ public sealed class SuggestionsController(SuggestionService suggestions) : Contr
     [ProducesResponseType<AcceptedControlsResponse>(StatusCodes.Status201Created)]
     [Problem(StatusCodes.Status422UnprocessableEntity)]
     [Problem(StatusCodes.Status503ServiceUnavailable)]
+    [Problem(StatusCodes.Status413PayloadTooLarge)]
+    [Problem(StatusCodes.Status415UnsupportedMediaType)]
     [HttpPost("accept")]
     public async Task<IActionResult> Accept(
         [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] AcceptSuggestionsRequest? request,
         CancellationToken cancellationToken)
     {
         var accepted = await suggestions.AcceptAsync(request, cancellationToken);
-        return Created(ControlsController.Location(accepted.Items[0].Id), accepted);
+        return Created(ControlLocation.Of(accepted.Items[0].Id), accepted);
     }
 }

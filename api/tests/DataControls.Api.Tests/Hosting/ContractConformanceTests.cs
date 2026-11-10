@@ -17,6 +17,7 @@ public sealed partial class ContractConformanceTests(ApiFixture fixture)
     private const string ApplicationPrefix = "/api/v1";
 
     private static readonly int[] _everywhere = [400, 500];
+    private static readonly int[] _withABody = [413, 415];
 
     [Fact]
     public void Mapped_endpoints_are_exactly_the_contract_table_when_only_api_v1_is_counted()
@@ -26,7 +27,8 @@ public sealed partial class ContractConformanceTests(ApiFixture fixture)
         var mapped = fixture.Factory.Services.GetServices<EndpointDataSource>()
             .SelectMany(source => source.Endpoints)
             .OfType<RouteEndpoint>()
-            .Select(endpoint => (Path: Normalise(endpoint.RoutePattern.RawText), Methods: endpoint.Metadata.GetMetadata<HttpMethodMetadata>()?.HttpMethods ?? []))
+            // An endpoint mapped for every method carries no method metadata: it is listed as ANY, so it cannot hide.
+            .Select(endpoint => (Path: Normalise(endpoint.RoutePattern.RawText), Methods: endpoint.Metadata.GetMetadata<HttpMethodMetadata>()?.HttpMethods ?? ["ANY"]))
             .Where(endpoint => endpoint.Path.StartsWith(ApplicationPrefix, StringComparison.Ordinal))
             .SelectMany(endpoint => endpoint.Methods.Select(method => $"{method} {endpoint.Path}"))
             .Order();
@@ -59,10 +61,15 @@ public sealed partial class ContractConformanceTests(ApiFixture fixture)
         {
             var documented = paths.GetProperty(endpoint.Path).GetProperty(endpoint.Method.ToLowerInvariant()).GetProperty("responses")
                 .EnumerateObject().Select(response => int.Parse(response.Name)).Order();
-            // Every endpoint may also answer 400 and 500, except the health check, which is always 200.
+            // Every endpoint may also answer 400 and 500, except the health check, which is always 200; one
+            // that takes a body may answer 413 and 415 as well (contracts/api.md §1, Format).
             IEnumerable<int> expected = endpoint.ErrorStatuses.Count == 0
                 ? [endpoint.SuccessStatus]
-                : endpoint.ErrorStatuses.Append(endpoint.SuccessStatus).Concat(_everywhere).Distinct();
+                : endpoint.ErrorStatuses
+                    .Append(endpoint.SuccessStatus)
+                    .Concat(_everywhere)
+                    .Concat(endpoint.Method is "POST" or "PUT" ? _withABody : [])
+                    .Distinct();
 
             Assert.True(expected.Order().SequenceEqual(documented), $"{endpoint}: expected {string.Join(",", expected.Order())}, documented {string.Join(",", documented)}");
         }
@@ -83,13 +90,19 @@ public sealed partial class ContractConformanceTests(ApiFixture fixture)
     }
 
     [Fact]
-    public async Task Docs_page_answers_with_the_swagger_ui_over_the_open_api_document()
+    public async Task Docs_page_is_the_swagger_ui_and_it_is_pointed_at_the_open_api_document()
     {
-        var response = await fixture.CreateClient().GetAsync("/api/docs");
+        var client = fixture.CreateClient();
 
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Equal("text/html", response.Content.Headers.ContentType?.MediaType);
-        Assert.Contains("swagger-ui", await response.Content.ReadAsStringAsync());
+        var page = await client.GetAsync("/api/docs");
+        var pageText = await page.Content.ReadAsStringAsync();
+        // The page loads its settings from the script beside it.
+        var settings = await client.GetStringAsync("/api/docs/index.js");
+
+        Assert.Equal(HttpStatusCode.OK, page.StatusCode);
+        Assert.Equal("text/html", page.Content.Headers.ContentType?.MediaType);
+        Assert.Contains("swagger-ui", pageText);
+        Assert.Contains("/openapi/v1.json", pageText + settings);
     }
 
     private async Task<JsonElement> DocumentAsync()

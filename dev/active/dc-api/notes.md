@@ -1,21 +1,33 @@
 # dc-api notes
 
 ## State
-All five phases are built; 1 to 4 are reviewed and fixed, Phase 5 is green (344 tests pass, the 3 live tests are
-skipped without `DC_LIVE=1`) and its review is next. Phase 5 added suggestions and accept, the OpenAPI document
-with a response per status, Swagger UI at `/api/docs`, static hosting with the fallback to `index.html`, CORS
-from configuration, `api/requests.http`, the conformance tests against the contract's table, the live tests,
-the api section of the README, and the one start of the published app from another directory. The run is
-unattended (Kfir's word of 2026-11-11, below).
+All five phases are built, reviewed and fixed (344 tests pass; the 3 live tests are skipped without
+`DC_LIVE=1`). The gate is green in everything this worktree can run: `/check all --tests`, the package pins,
+the secrets scan, the docs list. One gate step is open, the live pass against the real engine, and it waits for
+the merge of `feat/engine`. Nothing was pushed and no PR is open: Kfir's word for the unattended run was "gate
+blocked only by steps waiting for a merge: commit, no push".
 
 ## Next
-1. Phase 5 review, one `fix(api): review fixes` commit, the Log line.
-2. The gate: `/check all --tests`, the package list, the `/ship` steps that need no other task.
-3. Waiting for the merge of `feat/engine` (no engine answers on this machine): the live pass, then push and PR.
+1. When the engine is on main and runs with the seeded database (dc-delivery's compose, or the engine started
+   from the main tree): say how many minutes it takes, then `cd api && DC_LIVE=1 dotnet test --filter
+   Category=Live` and one walk through `api/requests.http`. Set `Engine__BaseUrl` if the engine is not on 8000.
+2. Live pass green: push `feat/api` and open the PR with `dev/active/dc-api/pr-body.md` as its body. Kfir's word
+   of 2026-11-11 covered both for a passed gate; ask again if the day has changed. No merge without his word.
+3. After the merge: `/ship` step 5, the move of this folder to `dev/completed/`.
 
 ## Blockers
-- None for the build. The live pass of the gate needs the engine (`feat/engine`, not merged): it waits, and this
-  session starts no service from another worktree.
+- The live pass needs a running engine; none answers on this machine (`curl localhost:8000/health` gave no
+  connection at 01:08 on 2026-11-11) and this session starts no service from another worktree.
+
+## Hand-off: the live pass
+The three tests of `tests/DataControls.Api.Tests/Live/LiveEngineTests.cs` run the real app with its real engine
+client: the glossary is served; each of the six examples is created, run on its `runDate` and on each of its
+`alternateRuns`, every page of results is read, and the keys and matched ids must equal the example's
+`expected`; each semantic-layer fixture of `contracts/examples/invalid/` must come back 422 with its code and
+path. They need the database up and the engine answering at `Engine:BaseUrl`, and they leave marked controls
+that the suite's sweep deletes. If one fails, the difference is between the engine and the contract's examples,
+or between the stub's fixtures and the real engine: `Fixtures/engine/` was generated from `contracts/`, never
+recorded (decision 9). Until they have run, every claim about the real engine in this task is unproven.
 
 ## Unattended run (Kfir, 2026-11-11, pasted before going to sleep)
 Run the task to its final gate without questions. At each phase end: review, fix, commit, tick, continue. A
@@ -134,47 +146,55 @@ wait for a merge: commit, no push.
     endpoints and the OpenAPI document.
 
 ## Last reviewed
-`f54d6c2` (Phase 4), fixes in `90a5db1`; `96bc1e9` (Phase 3), fixes in `a619323`; `b89bd0b` (Phase 2), fixes in `638787d`; `8e80f74` (Phase 1), fixes in `a781c91`
+`0129a3b` (Phase 5), fixes in the commit that carries this line (`fix(api): review fixes`, the last on the
+branch); `f54d6c2` (Phase 4), fixes in `90a5db1`; `96bc1e9` (Phase 3), fixes in `a619323`; `b89bd0b` (Phase 2), fixes in `638787d`; `8e80f74` (Phase 1), fixes in `a781c91`
 
 ## Docs for dc-delivery
-Kept as the work goes (plan.md decision 26) and copied into the PR body under this heading at `/ship`. The
-entries below come from the plan, before any code: confirm each against what was built, drop what did not
-happen, add what did.
+Kept as the work went (plan.md decision 26) and confirmed against what was built at the gate; it is copied into
+the PR body under this heading. Each entry is something a document this task does not own should say.
 
-- `docs/architecture.md` §7, EngineClient: one retry, and only after a connection error or a 408, 429, 502 or
-  503; the breaker opens at 5 calls with half of them failed and does not count a 504 (decisions 10 and 11).
-- `docs/architecture.md` §7 and §9, runs: a run ignores the client's disconnect once its row exists, and a run
-  cut by a crash of the api stays `running` (decision 12). The second is also a limitation for
-  `docs/assumptions-limitations-extensions.md`.
-- `docs/architecture.md` §13: the api's persistence tests run against the shared database, with rows marked
-  `zz-dc-api-test-` that the suite deletes; the tests against the real engine are opt-in (`DC_LIVE=1`).
-- `docs/architecture.md` §14 and the README's configuration part: the api's variables are those of plan.md
-  Design B; its connection string is built from `DB_HOST`, `DB_PORT` and `DQ_APP_PASSWORD` unless
-  `ConnectionStrings__Dq` is set; the published api reads no `.env`, and its content root is its own folder.
-- `docs/assumptions-limitations-extensions.md`: no un-archive (an extension); control names are not unique; the
-  JSON Schema validator is JsonSchema.Net 8.0.5, pinned as its last MIT release; a synchronous run waits for the
-  engine for at most the attempt timeout (75 s by default).
-- README outside the api section: `/api/docs` and `/openapi/v1.json` are served in every environment; `dotnet
-  test` in `api/` needs the database up, and writes and deletes marked rows in `dq`.
+- `docs/architecture.md` §7, EngineClient: one retry after 500 ms, only for a connection error or a 408, 429,
+  502 or 503, and never for a health probe. The breaker opens at 5 calls with half of them failed inside two
+  attempt timeouts; it counts a refused connection, an attempt timeout, a 502 and a 503 that is not a problem
+  document, and does not count a 504, the engine's own 503 problem (its database is down) or a health probe
+  (plan decisions 10 and 11, unattended decision 12). The response body has a limit of one more attempt timeout
+  (decision 14). After a failed glossary refresh the engine is not asked again for 30 seconds (decision 13).
+- `docs/architecture.md` §7 and §9, runs: once the control is found, nothing listens to the client; the row is
+  opened and closed without a cancellation token, and the snapshot and the closed run go in with one save. A
+  host that stops during the engine call, and a snapshot that cannot be stored, both close the run `failed`
+  with `INTERNAL_ERROR` (decisions 25 and 26). The limitation for
+  `docs/assumptions-limitations-extensions.md`: a run stays `running` only after a crash, or when `dq` cannot
+  be reached at the moment the run is closed; there is no sweeper.
+- `docs/architecture.md` §7, controls: `lastRun` of the list is read in a second query for the page's controls
+  (decision 20); two saves that race are a 409 whether the row version or the version number collides
+  (decision 21); an archive that meets a concurrent save is applied to the row as it is now (decision 17).
 - `docs/architecture.md` §12 or `contracts/api.md` §1, wording only: "a body that is not JSON 415" is built as
-  both a media type that is not JSON and JSON text that does not parse (decision 3 of the unattended run). If
-  the engine reads it differently, the two services disagree on one status and the line needs a second sentence.
-- `docs/architecture.md` §7, EngineClient: the breaker does not count a 503 that is the engine's own problem
-  document, and a health probe is neither retried nor counted (unattended decision 12); the response body has
-  a limit of one more attempt timeout (decision 14); after a failed glossary refresh the engine is not asked
-  again for 30 seconds (decision 13).
-- `docs/architecture.md` §7 and §9, runs: the row is opened and closed without any cancellation token; a host
-  that stops during the engine call closes the run `failed` with `INTERNAL_ERROR` (decision 26). The limitation
-  for `docs/assumptions-limitations-extensions.md` narrows to: a run stays `running` only after a crash, or
-  when `dq` cannot be reached at the moment the run is closed.
-- `README.md`, Configuration and Running the tests: the two sentences "filled by dc-engine and dc-api" and
-  "one command each, filled by ..." can now point to the section "The api (.NET 10)", which holds the api's
-  variables, its test command and the publish command.
+  both a media type that is not JSON and JSON text that does not parse (decision 3). If the engine reads it
+  differently the two services disagree on one status and the line needs a second sentence. In the same
+  place: an id or a version in the path may be any positive integer up to 64 bits, and one beyond 32 bits is
+  `CONTROL_NOT_FOUND`, `VERSION_NOT_FOUND` or `RUN_NOT_FOUND`, not `NOT_FOUND` (decision 19).
+- `docs/architecture.md` §13: the api's tests run the real app against the shared database as `dq_app`, with
+  rows marked `zz-dc-api-test-` that the suite deletes before and after; the engine is a stub at the HTTP
+  handler whose fixtures are generated from `contracts/` (decision 9); three tests against the real engine are
+  opt-in (`DC_LIVE=1`) and have not run yet.
 - `docs/architecture.md` §8 and §14: the api serves the client's build from the `wwwroot` beside the published
   app, which must be there before the start (a folder added later is not seen until a restart); a path with a
   file extension that names no file is a 404 problem, every other path outside `/api` is `index.html`, served
-  with `Cache-Control: no-cache`. Swagger UI is at `/api/docs` (its page is `/api/docs/index.html`).
-- `docs/ai-usage.md`: the Log below.
+  with `Cache-Control: no-cache`. Swagger UI is at `/api/docs` (its page is `/api/docs/index.html`) and the
+  document at `/openapi/v1.json`, in every environment.
+- `docs/architecture.md` §14 and the README's Configuration: the api's variables are the table of the README
+  section "The api (.NET 10)"; the connection string is built from `DB_HOST`, `DB_PORT` and `DQ_APP_PASSWORD`
+  unless `ConnectionStrings__Dq` is set; in Development the api reads only its own keys from `.env`; the
+  published app reads no `.env` and its content root is its own folder (started once from another directory,
+  Log of 2026-11-11 01:21).
+- `README.md`, Configuration and Running the tests: the two sentences "filled by dc-engine and dc-api" and
+  "one command each, filled by ..." can now point to the section "The api (.NET 10)".
+- `docs/assumptions-limitations-extensions.md`: no un-archive (an extension); control names are not unique; the
+  JSON Schema validator is JsonSchema.Net 8.0.5, pinned as its last MIT release; a synchronous run waits for
+  the engine for at most the attempt timeout (75 s by default) and one more for the body; a run of 5,000
+  violations is stored and answered in about 2 s on the development machine.
+- `docs/ai-usage.md`: the Log below, and "Decisions taken unattended" above. The night of 2026-11-11 ran on
+  Fable where the plan names Opus for execution (decision 1); the five phase reviews ran on opus.
 
 ## Log
 The times of 2026-11-11 are the times of the commits (`git log`): a first draft of these lines carried
@@ -344,3 +364,31 @@ warning by file, what the fix changed, what was left and why, what Kfir rejected
   been tried once before on a scratch copy of `api/` at 01:13, with the same answers.
 - 2026-11-11 01:22 Phase 5 gate green: build, format, 344 tests passed and 3 skipped (the live tests), print
   guard (`gates/phase-5.txt`).
+- 2026-11-11 01:27 two suites at once, against the rule. To look for flaky tests while the Phase 5 review ran,
+  this session ran `dotnet test` twice (both 344 passed) while the web session's `playwright test e2e/mocked`
+  was running: the loop printed the other run and did not wait for it. The web session was told in one message
+  to distrust and repeat that Playwright run. From then on every test run here waited for a clear machine (a
+  guard script in the scratchpad); the last run before the gate waited 10 s for another Playwright run.
+- 2026-11-11 01:33 Phase 5 review (diff `90a5db1..0129a3b`, one reviewer on opus): standards 0 critical, 1
+  warning, 5 info; plan 0 critical, 1 warning, 1 info. Warnings: `Controls/DefinitionChecker.cs` the new
+  `index` parameter sat after the cancellation token; `Hosting/ContractConformanceTests.cs` an endpoint mapped
+  for every method carries no method metadata and would not have shown in "nothing else is under `/api/v1`".
+  Fixed in the commit that carries this line (`fix(api): review fixes` after `0129a3b`): `index` before the
+  token; an endpoint without method metadata is listed as `ANY`. Info fixed in the same commit:
+  `ControlLocation` holds the path both controllers put in `Location`; the problem writer serialises
+  `ProblemResponse`, the type the OpenAPI document describes, with `errors` left out when there are none, so
+  the two cannot drift; every action that takes a body documents 413 and 415, and the status test expects them
+  (the contract's §1 gives them to every request with a body); the docs test checks that Swagger UI is pointed
+  at `/openapi/v1.json`; two sentences of the README section and the header of `requests.http` corrected (with
+  the engine down a run is 201 with a failed run, not 503; the archive request is last, out of the table's
+  order). Left: nothing. Kfir rejected or rewrote: nothing; he was not present.
+- 2026-11-11 01:35 the gate. `/check all --tests` from the worktree, green (`gates/final.txt`): `db-check.sh`,
+  `contracts-check.py`, build with `-warnaserror`, format, 344 tests passed and 3 skipped (the live tests),
+  the print guard over all sources, the hook tests; `sql-init` skipped, as in every worktree. Packages:
+  JsonSchema.Net 8.0.5, JsonPointer.Net 6.0.1, Json.More.Net 2.2.0, no Microsoft package at 11.x. `/ship` as
+  far as it goes without another task: checks green, the secrets scan of `git diff main...HEAD` without a hit
+  (two fake passwords in a test had tripped it earlier and were replaced), docs drift written as the list
+  above, the PR body drafted in `pr-body.md`. Not done: the live pass (no engine on this machine,
+  `feat/engine` not merged), and therefore no push and no PR, by Kfir's rule for the night. Not run because the
+  plan does not ask for it: the `security-auditor` agent that `CLAUDE.md` names for work on error responses
+  and a network boundary; it is a candidate before the merge.

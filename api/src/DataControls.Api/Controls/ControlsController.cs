@@ -29,13 +29,15 @@ public sealed class ControlsController(ControlService controls, DefinitionChecke
     [ProducesResponseType<ControlResponse>(StatusCodes.Status201Created)]
     [Problem(StatusCodes.Status422UnprocessableEntity)]
     [Problem(StatusCodes.Status503ServiceUnavailable)]
+    [Problem(StatusCodes.Status413PayloadTooLarge)]
+    [Problem(StatusCodes.Status415UnsupportedMediaType)]
     [HttpPost]
     public async Task<IActionResult> Create(
         [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] CreateControlRequest? request,
         CancellationToken cancellationToken)
     {
         var control = await controls.CreateAsync(request, cancellationToken);
-        return Created(Location(control.Id), control);
+        return Created(ControlLocation.Of(control.Id), control);
     }
 
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -51,6 +53,8 @@ public sealed class ControlsController(ControlService controls, DefinitionChecke
     [Problem(StatusCodes.Status409Conflict)]
     [Problem(StatusCodes.Status422UnprocessableEntity)]
     [Problem(StatusCodes.Status503ServiceUnavailable)]
+    [Problem(StatusCodes.Status413PayloadTooLarge)]
+    [Problem(StatusCodes.Status415UnsupportedMediaType)]
     [HttpPut("{id:long:min(1)}")]
     public Task<ControlResponse> Update(
         long id,
@@ -87,11 +91,11 @@ public sealed class ControlsController(ControlService controls, DefinitionChecke
     [ProducesResponseType<JsonElement>(StatusCodes.Status200OK, "application/json")]
     [Problem(StatusCodes.Status422UnprocessableEntity)]
     [Problem(StatusCodes.Status503ServiceUnavailable)]
+    [Problem(StatusCodes.Status413PayloadTooLarge)]
+    [Problem(StatusCodes.Status415UnsupportedMediaType)]
     [HttpPost("validate")]
     public async Task<IResult> Validate(
         [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] ValidateDefinitionRequest? request,
         CancellationToken cancellationToken) =>
         RawJson.Ok(await definitions.ValidateAsync(request, cancellationToken));
-
-    internal static string Location(int id) => $"/api/v1/controls/{id}";
 }

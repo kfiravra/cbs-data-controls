@@ -262,17 +262,21 @@ Review: `/phase-review api`
 Commit: `feat(api): suggestions, openapi and static hosting`
 
 ### Gate
-- [ ] `/check all --tests` from the worktree; the output saved as `gates/final.txt`.
-- [ ] `dotnet list api package --include-transitive` shows JsonSchema.Net 8.0.5, JsonPointer.Net 6.0.1 and
+- [x] `/check all --tests` from the worktree; the output saved as `gates/final.txt`.
+- [x] `dotnet list api package --include-transitive` shows JsonSchema.Net 8.0.5, JsonPointer.Net 6.0.1 and
       Json.More.Net 2.2.0, and no Microsoft package at 11.x.
 - [ ] Live pass, if the engine worktree answers `GET /health`: state the minutes and wait, then
       `DC_LIVE=1 dotnet test --filter Category=Live`, and walk `api/requests.http` once. If the engine is not up,
       write the hand-off to dc-delivery into `notes.md`; the tests are ready to run there.
-- [ ] `notes.md` holds the Log line of the start from another directory (Design I) and a Log line per review in
+      (2026-11-11: no engine answers on this machine and `feat/engine` is not merged. The hand-off is in
+      `notes.md`; by Kfir's word for the unattended run this step waits for the merge and holds the push.)
+- [x] `notes.md` holds the Log line of the start from another directory (Design I) and a Log line per review in
       the form of decision 27.
 - [ ] `/ship`. In its docs-drift step, edit only what decision 26 gives this task; everything else goes, item by
       item, into the PR body under a fifth heading, "Docs for dc-delivery", taken from the list in `notes.md`
       and from the step's own table. Then the PR and the merge on Kfir's word.
+      (2026-11-11: checks, secrets and docs drift are done and the PR body is `pr-body.md` in this folder. The
+      push and the PR wait for the live pass.)
 
 ## Design
 

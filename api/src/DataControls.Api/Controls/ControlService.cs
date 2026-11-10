@@ -46,7 +46,7 @@ public sealed class ControlService(DqDbContext db, DefinitionChecker definitions
         var created = new List<(Control Control, StoredDefinition Definition)>();
         for (var index = 0; index < inputs.Count; index++)
         {
-            await definitions.ValidateAsync(inputs[index].Definition, cancellationToken, index);
+            await definitions.ValidateAsync(inputs[index].Definition, index, cancellationToken);
             var stored = DefinitionHasher.ToStored(inputs[index].Definition);
             created.Add((Control.Create(inputs[index].Name, inputs[index].Description, stored, now), stored));
         }
