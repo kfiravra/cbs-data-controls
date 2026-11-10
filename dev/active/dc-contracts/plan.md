@@ -97,6 +97,16 @@ From the planning of dc-engine (Kfir, 2026-11-10; the shapes are in Design H, wh
 29. **Four clarifications**: node types by `if`/`then` instead of `oneOf`; depth and condition count defined; which
     nodes `conditions[]` lists; `/debug/compile` returns both statements.
 
+From the planning of dc-web (Kfir, 2026-11-10, given with the word to execute):
+
+30. **The Hebrew date pattern is `dd.MM.yyyy`** (`formats.he.date`); English stays `yyyy-MM-dd`.
+31. **Identifying fields are name first**: employee `first_name`, `last_name`, `employee_number`; department `name`,
+    `department_number`. `display_text` is those values joined by one space, in that order.
+
+Execution (Kfir, 2026-11-10): the whole task in one run on Fable, three Opus lanes (phase 1; phase 2; the phase 4
+documents) beside the orchestrator's phase 3, no per-phase review, one review over the whole branch at the end,
+then the Gate, the push and the PR. No merge.
+
 ## Phases
 
 Every phase ends the same way: tick the steps as they finish, `/check --tests`, save the verify output under
@@ -105,28 +115,28 @@ Every phase ends the same way: tick the steps as they finish, `/check --tests`, 
 costs minutes, then wait for the word. The Design section below is the specification each step builds from.
 
 ### Phase 0: path-scoped skills in the harness
-- [ ] `.claude/skills/task-plan/SKILL.md` line 20: replace "Call the Skill tool with the matching domain skill" by
+- [x] `.claude/skills/task-plan/SKILL.md` line 20: replace "Call the Skill tool with the matching domain skill" by
       an instruction to read `.claude/skills/dc-<area>/SKILL.md` with the Read tool, and say why (a skill with
       `paths:` cannot be loaded through the Skill tool before a file of its area is touched).
-- [ ] `.claude/README.md` line 18: "or on demand" becomes "or by reading the file".
+- [x] `.claude/README.md` line 18: "or on demand" becomes "or by reading the file".
 
 Verify: `node --test .claude/hooks/tests/*.test.mjs`
 Commit: `chore(claude): read path-scoped dc skills by file in task-plan` (no review: two lines of text)
 
 ### Phase 1: skeleton and database structure
-- [ ] Root files: `.gitattributes` (`* text=auto eol=lf`, so `.sh` and `.sql` survive a Windows checkout),
+- [x] Root files: `.gitattributes` (`* text=auto eol=lf`, so `.sh` and `.sql` survive a Windows checkout),
       `.editorconfig` (UTF-8, LF, final newline; 2 spaces, 4 for `.py`, `.sql`, `.cs`), and the build and cache
       folders of all three stacks in `.gitignore`, so the parallel tasks do not each edit it.
-- [ ] `.env.example` per Design A, and a local `.env` copied from it (ignored by git).
-- [ ] `docker-compose.yml` per Design A.
-- [ ] `scripts/db-init.sh` per Design A (executable).
-- [ ] `sql/00_database.sql`, `10_schemas.sql`, `20_hr_tables.sql`, `30_dq_tables.sql`, `40_logins.sql`,
+- [x] `.env.example` per Design A, and a local `.env` copied from it (ignored by git).
+- [x] `docker-compose.yml` per Design A.
+- [x] `scripts/db-init.sh` per Design A (executable).
+- [x] `sql/00_database.sql`, `10_schemas.sql`, `20_hr_tables.sql`, `30_dq_tables.sql`, `40_logins.sql`,
       `50_indexes.sql` and `sql/cleanup_runs.sql` per Design A and `.claude/rules/sql.md`.
-- [ ] `scripts/db-check.sh` with the sections `structure` and `permissions` per Design A (executable).
-- [ ] `README.md` skeleton: the §17 headings, the database quick start, the repository map, and one line per later
+- [x] `scripts/db-check.sh` with the sections `structure` and `permissions` per Design A (executable).
+- [x] `README.md` skeleton: the §17 headings, the database quick start, the repository map, and one line per later
       section naming the task that fills it. `sql/README.md`: script order, what each script creates, the two
       logins, `--reset`, and running the scripts by hand in SSMS (SQLCMD Mode for the password variables).
-- [ ] `.claude/skills/dc-sql/SKILL.md`: correct the facts this phase changed (the fixed compose project name,
+- [x] `.claude/skills/dc-sql/SKILL.md`: correct the facts this phase changed (the fixed compose project name,
       `--reset`, the worktree refusal inside the script).
 
 Verify:
@@ -279,7 +289,7 @@ error 229 on a read of `dq.Control`, on an UPDATE of `hr.Employee` and on a CREA
 
 Top-level keys: `glossaryVersion` (`"1.0.0"`), `languages`, `defaultLanguage` (`"he"`), `limits`
 (`maxDepth 4`, `maxConditions 30`, `maxListValues 100`, `maxPathHops 2`, `maxTotalValues 500`: Design H3), `formats` (per language: the date pattern,
-`dd/MM/yyyy` for he and `yyyy-MM-dd` for en; numbers with `,` grouping and trailing zeros trimmed), `phrases`,
+`dd.MM.yyyy` for he (decision 30) and `yyyy-MM-dd` for en; numbers with `,` grouping and trailing zeros trimmed), `phrases`,
 `operators`, `entities`, `relationships`, `suggestions` (Design H1). Every label is `{ "he": …, "en": … }`.
 
 **Entities** (each: `key`, `table { schema, name }`, `keyColumn`, `label { singular, plural }`, `description`,
@@ -287,7 +297,7 @@ Top-level keys: `glossaryVersion` (`"1.0.0"`), `languages`, `defaultLanguage` (`
 
 | Entity | Field key | Type | Column | Nullable | Notes |
 |---|---|---|---|---|---|
-| `employee` (hr.Employee, rootable; identifying: `employee_number`, `first_name`, `last_name`) | `employee_number` | number | `id` | no | |
+| `employee` (hr.Employee, rootable; identifying: `first_name`, `last_name`, `employee_number`: decision 31) | `employee_number` | number | `id` | no | |
 | | `national_id` | text | `national_id` | no | |
 | | `first_name`, `last_name` | text | same name | no | |
 | | `email` | text | `email` | yes | |
@@ -298,7 +308,7 @@ Top-level keys: `glossaryVersion` (`"1.0.0"`), `languages`, `defaultLanguage` (`
 | | `salary` | number | `salary` | yes | unit ₪ / ILS |
 | | `status` | enum | `status` | no | values `active`, `inactive` with labels |
 | | `department_assignment` | number | `department_id` | yes | operators `is_null`, `is_not_null` only; label "שיוך למחלקה" |
-| `department` (hr.Department, rootable; identifying: `department_number`, `name`) | `department_number` | number | `id` | no | |
+| `department` (hr.Department, rootable; identifying: `name`, `department_number`) | `department_number` | number | `id` | no | |
 | | `name` | text | `name` | no | |
 | | `is_active` | bool | `is_active` | no | value labels for true and false |
 | | `manager_assignment` | number | `manager_employee_id` | yes | operators `is_null`, `is_not_null` only |

@@ -1,0 +1,52 @@
+# SQL Server for Data Controls and the one-shot container that initialises it.
+#   docker compose up -d db && scripts/db-init.sh
+# The project name is fixed, so compose run from any checkout addresses the same container.
+# The engine and api services arrive with the dc-delivery task.
+name: data-controls
+
+services:
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    # The image is x86-64 only; on Apple Silicon Docker Desktop runs it under emulation.
+    platform: linux/amd64
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:?copy .env.example to .env (cp .env.example .env) and set it}
+      # Server collation too, so tempdb and #temp tables agree with the database.
+      MSSQL_COLLATION: Hebrew_CI_AS
+      MSSQL_PID: Developer
+    ports:
+      - "127.0.0.1:${DB_PORT:-1433}:1433"
+    volumes:
+      - db-data:/var/opt/mssql
+    healthcheck:
+      # $$ defers expansion to the container's shell, where the password lives.
+      test: ["CMD-SHELL", "SQLCMDPASSWORD=\"$$MSSQL_SA_PASSWORD\" /opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -l 3 -b -Q 'SELECT 1' -o /dev/null"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
+  db-init:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    platform: linux/amd64
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST: db
+      DB_PORT: "1433"
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:?copy .env.example to .env (cp .env.example .env) and set it}
+      DQ_APP_PASSWORD: ${DQ_APP_PASSWORD:?copy .env.example to .env (cp .env.example .env) and set it}
+      DQ_ENGINE_RO_PASSWORD: ${DQ_ENGINE_RO_PASSWORD:?copy .env.example to .env (cp .env.example .env) and set it}
+    volumes:
+      - ./sql:/work/sql:ro
+      - ./scripts:/work/scripts:ro
+    working_dir: /work
+    # Arguments of `docker compose run --rm db-init ...` (such as --reset) are appended to the script.
+    entrypoint: ["bash", "/work/scripts/db-init.sh"]
+    command: []
+    restart: "no"
+
+volumes:
+  db-data:

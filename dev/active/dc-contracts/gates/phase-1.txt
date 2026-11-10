@@ -1,0 +1,47 @@
+# phase 1 verify, 2026-11-10T20:24Z, branch feat/contracts at bce225b
+$ docker compose up -d db && scripts/db-init.sh
+ Container data-controls-db-1 Running 
+ Container data-controls-db-1 Running 
+ Container data-controls-db-1 Waiting 
+ Container data-controls-db-1 Healthy 
+ Container data-controls-db-init-run-d8164744a793 Creating 
+ Container data-controls-db-init-run-d8164744a793 Created 
+db-init: sql/00_database.sql
+db-init: sql/10_schemas.sql
+db-init: sql/20_hr_tables.sql
+db-init: sql/30_dq_tables.sql
+db-init: sql/40_logins.sql
+db-init: sql/50_indexes.sql
+db-init: DataControls is ready on db,1433 (6 scripts)
+exit=0
+$ scripts/db-init.sh
+ Container data-controls-db-1 Running 
+ Container data-controls-db-1 Waiting 
+ Container data-controls-db-1 Healthy 
+ Container data-controls-db-init-run-d34fbdd75fee Creating 
+ Container data-controls-db-init-run-d34fbdd75fee Created 
+db-init: sql/00_database.sql
+db-init: sql/10_schemas.sql
+db-init: sql/20_hr_tables.sql
+db-init: sql/30_dq_tables.sql
+db-init: sql/40_logins.sql
+db-init: sql/50_indexes.sql
+db-init: DataControls is ready on db,1433 (6 scripts)
+exit=0
+$ scripts/db-check.sh
+PASS structure: database collation
+PASS structure: server collation, which tempdb and #temp tables share
+PASS structure: schemas hr and dq
+PASS structure: the seven tables of hr and dq, and no other
+PASS structure: the indexes of 50_indexes.sql
+PASS permissions: dq_engine_ro reads hr.Employee
+PASS permissions: dq_engine_ro is refused a read of dq.Control (error 229)
+PASS permissions: dq_engine_ro is refused an UPDATE of hr.Employee (error 229)
+PASS permissions: dq_engine_ro is refused CREATE TABLE (error 262)
+PASS permissions: dq_app inserts into dq.Control (rolled back)
+PASS permissions: dq_app is refused a read of hr.Employee (error 229)
+PASS permissions: dq_app is refused CREATE TABLE (error 262)
+PASS permissions: public holds no permission on hr or dq
+db-check: 13 passed, 0 failed (structure permissions)
+exit=0
+overall=0
