@@ -20,7 +20,7 @@ the api writes, and only to `dq`; only the engine reads `hr`.
 - api (`cd api`): `dotnet build -warnaserror` · `dotnet test` · `dotnet format --verify-no-changes`
 - web (`cd web`): `npx ng lint` · `npx ng test --watch=false` · `npx ng build` · Playwright e2e (`npx playwright test`) with screenshots at 390 and 1440
 - harness: `node --test .claude/hooks/tests/*.test.mjs`
-- Never two suites at once, across every session and worktree: `pgrep -fa "pytest|dotnet test|ng test|vitest|playwright"` first.
+- Never two suites at once, across every session and worktree: `pgrep -fa "pytest|dotnet test|ng test|vitest|playwright test"` first.
 - One SQL Server container per machine, started and initialised from the main tree. Worktrees connect to localhost:1433
   and never run `db-init.sh` (pkgmap skips it there); a database change lands on main and is re-initialised from there.
 
@@ -54,15 +54,15 @@ the api writes, and only to `dq`; only the engine reads `hr`.
 - push, PR create/merge and rebase happen only on Kfir's word: an explicit verb in the current turn ("push", "ship", "rebase").
   "Continue", "go ahead" and "finish it" are not that word; the hook and the ask rules enforce it.
 - stash, reset --hard, checkout --, restore and clean are blocked by the hook; `git stash` is banned outright (2026-05-28 near-loss). `/guard off` is the user's switch, not yours.
-- `dev/active/` is untracked and is never staged: no `git add dev/active`, no `-A` or `.` while a task folder is dirty.
-  Task folders are local working memory, not history; `.gitignore` covers them but the rule holds even where it does not.
+- Task folders under `dev/active/` are tracked and committed with their own task's commits, never mixed across tasks:
+  stage `dev/active/<task>` by name, no `-A` or `.` while another task's folder is dirty. `dev/**/screenshots/` is ignored.
 - No docs-only commits: documentation rides with the code commit it describes.
   If only docs changed, leave them uncommitted for the next code commit, or ask.
 - Conventional commits (`type(scope): description`), one logical change per commit, one green phase = one commit. Attribution trailers are disabled by setting; never add them by hand.
 
 ## Working conventions
 
-- Task state lives in `dev/active/<task>/plan.md` + `notes.md`; it is local and never committed (`/task-plan`, `/resume`, `/handoff`).
+- Task state lives in `dev/active/<task>/plan.md` + `notes.md` and rides in that task's commits (`/task-plan`, `/resume`, `/handoff`).
 - After every completed plan step, tick its checkbox in `plan.md` and update `notes.md` State/Next; at every phase end add a Log line and the gate path. Never batch these to the end of a phase.
 - Phase end: `/phase-review` by area, then one review-fix commit.
 - Spend is stated before any run that costs money or minutes: `/suggest` runs with an LLM key (model), agent fan-outs (count, model), e2e against live services.

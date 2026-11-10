@@ -1,5 +1,4 @@
-dev/active/
-dev/completed/
+dev/**/screenshots/
 .env
 **/.venv/
 **/node_modules/

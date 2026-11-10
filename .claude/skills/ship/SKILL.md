@@ -51,7 +51,8 @@ Draft it from the commits and the plan, in this shape, with no attribution line:
 ## 5. Archive the task
 
 If `dev/active/<task>/` exists and every phase is ticked, offer to move it to `dev/completed/<task>/` and append
-`ARCHIVED <date>: <reason>` to `notes.md`. Task folders are local; this is a filesystem move, not a commit.
+`ARCHIVED <date>: <reason>` to `notes.md`. Task folders are tracked: move it with `git mv`, and the move rides in
+that task's own commit, never in another task's.
 
 ## 6. Hand back
 

@@ -18,7 +18,7 @@ Arguments: $ARGUMENTS
    lint, format, print guard), because the suites take minutes.
 2. Get the command list, one check per line (`label`, `cwd`, `command`):
    `bash .claude/hooks/lib/pkgmap.sh [--all] [--tests] <paths...>`
-3. Before the first test label, `pgrep -fa "pytest|dotnet test|ng test|vitest|playwright"`: if another session or
+3. Before the first test label, `pgrep -fa "pytest|dotnet test|ng test|vitest|playwright test"`: if another session or
    worktree is running a suite, wait or say so. Never two suites at once.
 4. Run the checks one at a time from their `cwd`, in the order given. Stop early only when `sql-init` fails:
    everything after it reads the database.

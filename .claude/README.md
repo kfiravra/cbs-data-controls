@@ -15,7 +15,7 @@ failure; no dependencies beyond bash, jq, git and node.
 | `CLAUDE.md` | map, verify matrix, gotchas, git policy, doc pointers (at most 100 lines) | every session, as [.claude/CLAUDE.md](CLAUDE.md) |
 | `settings.json` | hooks, `deny`/`ask` rules, `attribution: false`, subagent model default | every session |
 | `rules/csharp.md`, `typescript.md`, `python.md`, `sql.md` | judgment conventions per language, path-scoped | when a matching file is read or edited |
-| `skills/dc-sql`, `dc-engine`, `dc-api`, `dc-web` | repo facts per area (stack, verify, facts that bite, what to read), `paths:` triggered | when a file of the area is touched, or on demand |
+| `skills/dc-sql`, `dc-engine`, `dc-api`, `dc-web` | repo facts per area (stack, verify, facts that bite, what to read), `paths:` triggered | when a file of the area is touched, or by reading the file |
 | `skills/task-plan`, `resume`, `handoff` | task lifecycle on `dev/active/<task>/plan.md` + `notes.md` | user-invoked |
 | `skills/check` | the verify matrix for the touched parts, through `hooks/lib/pkgmap.sh` | model or user |
 | `skills/phase-review`, `ship` | by-area review on two axes; pre-PR gate | user-invoked |

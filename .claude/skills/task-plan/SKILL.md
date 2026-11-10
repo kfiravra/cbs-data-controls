@@ -17,8 +17,9 @@ exists, stop and tell the user to run `/resume <slug>` instead.
 - Read the sections of [docs/architecture.md](../../../docs/architecture.md) the task names (§19 gives each
   task's scope, gate and parallel rules) and the task's step in [dev/briefs/cbs-kickoff.md](../../../dev/briefs/cbs-kickoff.md).
   Where the architecture already decides a question, cite the section instead of asking it.
-- Call the Skill tool with the matching domain skill (`dc-sql`, `dc-engine`, `dc-api`, `dc-web`) so its
-  gotchas are in context.
+- Read `.claude/skills/dc-<area>/SKILL.md` (`dc-sql`, `dc-engine`, `dc-api`, `dc-web`) with the Read tool so its
+  gotchas are in context. Do not call the Skill tool for it: a skill with `paths:` cannot be loaded that way
+  before a file of its area is touched.
 - For anything else you need to know (current code paths, existing helpers, test layout), dispatch
   up to three Explore agents with `model: opus`. Do not block the interview on them: ask the
   questions that do not depend on their findings now.
@@ -82,8 +83,9 @@ Phase 1 not started.
 - YYYY-MM-DD created plan
 ```
 
-Task folders are local (gitignored by convention) and never committed. Keep research, screenshots
-and tool output in subfolders (`research/`, `screenshots/`) so `/resume` can skip them.
+Task folders are tracked: a folder is committed with its own task's commits and never mixed into
+another task's commit. Keep research, screenshots and tool output in subfolders (`research/`,
+`screenshots/`) so `/resume` can skip them; git ignores `dev/**/screenshots/`.
 
 ## 5. Finish
 
