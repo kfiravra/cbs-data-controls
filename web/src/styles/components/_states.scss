@@ -102,6 +102,16 @@
   padding: var(--space-5);
 }
 
+// a dialog with a list keeps its head and its buttons in view and scrolls the list between them
+.dialog--tall {
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  max-block-size: calc(100dvh - 2 * var(--space-6));
+}
+
+.stack--tight {
+  gap: var(--space-1);
+}
+
 .dialog__head {
   display: flex;
   align-items: flex-start;

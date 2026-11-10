@@ -1,0 +1,108 @@
+<div class="table-bleed">
+  <table class="table" data-testid="controls-table" [attr.aria-busy]="loading()">
+    <thead>
+      <tr>
+        <th scope="col" class="col-40">{{ 'list.columns.control' | translate }}</th>
+        <th scope="col" class="col-16">{{ 'list.columns.entity' | translate }}</th>
+        <th scope="col" class="col-18">{{ 'list.columns.lastRun' | translate }}</th>
+        <th scope="col" class="col-16">{{ 'list.columns.result' | translate }}</th>
+        <th scope="col"><span class="sr-only">{{ 'list.columns.actions' | translate }}</span></th>
+      </tr>
+    </thead>
+    <tbody>
+      @if (loading()) {
+        @for (width of skeletons; track $index) {
+          <tr aria-hidden="true" data-testid="skeleton-row">
+            <td class="cell-main"><app-skeleton [width]="width" /></td>
+            <td class="cell-meta"><app-skeleton width="var(--space-8)" /></td>
+            <td class="cell-meta cell-end"><app-skeleton width="var(--space-8)" /></td>
+            <td class="cell-result"><app-skeleton width="var(--space-7)" /></td>
+            <td class="cell-actions"></td>
+          </tr>
+        }
+      } @else {
+        @for (row of rows(); track row.control.id) {
+          <tr data-testid="control-row" [attr.data-id]="row.control.id">
+            <td class="cell-main">
+              <a class="cell-title" data-testid="control-name" [routerLink]="['/controls', row.control.id]">
+                <bdi>{{ row.control.name }}</bdi>
+              </a>
+              @if (!row.control.isActive) {
+                <span class="chip" data-testid="archived-chip">{{ 'list.archived' | translate }}</span>
+              }
+              @if (row.control.description; as description) {
+                <p class="cell-desc"><bdi>{{ description }}</bdi></p>
+              }
+            </td>
+            <td class="cell-meta cell-nowrap">{{ row.entity || ('common.none' | translate) }}</td>
+            <td class="cell-meta cell-nowrap cell-end num" data-testid="last-run">
+              {{ row.lastRun ?? ('list.neverRun' | translate) }}
+            </td>
+            <td class="cell-result cell-nowrap" data-testid="result" [attr.data-result]="row.result">
+              @switch (row.result) {
+                @case ('violations') {
+                  <a class="link num" [routerLink]="['/runs', row.control.lastRun!.id]">
+                    {{ 'results.violations' | plural: row.control.lastRun!.totalCount! }}
+                  </a>
+                }
+                @case ('none') {
+                  <span class="status status--success">
+                    <app-icon name="check_circle" size="sm" />{{ 'list.result.none' | translate }}
+                  </span>
+                }
+                @case ('stopped') {
+                  <a class="status status--danger" [routerLink]="['/runs', row.control.lastRun!.id]">
+                    <app-icon name="error" size="sm" />{{ 'list.result.stopped' | translate }}
+                  </a>
+                }
+                @case ('running') {
+                  <span class="status status--quiet">{{ 'list.result.running' | translate }}</span>
+                }
+                @default {
+                  <span aria-hidden="true">{{ 'common.none' | translate }}</span>
+                  <span class="sr-only">{{ 'list.result.never' | translate }}</span>
+                }
+              }
+            </td>
+            <td class="cell-actions">
+              @if (row.control.isActive) {
+                <button
+                  class="btn btn--tonal btn--sm"
+                  type="button"
+                  data-testid="run"
+                  [disabled]="row.running"
+                  (click)="run.emit(row.control)"
+                >
+                  @if (row.running) {
+                    <span class="spinner" aria-hidden="true"></span>{{ 'list.actions.running' | translate }}
+                  } @else {
+                    <app-icon name="play_arrow" />{{ 'list.actions.run' | translate }}
+                  }
+                </button>
+                <a
+                  class="icon-btn"
+                  data-testid="edit"
+                  [routerLink]="['/controls', row.control.id]"
+                  [attr.aria-label]="'list.actions.editNamed' | translate: { name: row.control.name }"
+                  [matTooltip]="'list.actions.edit' | translate"
+                >
+                  <app-icon name="edit" />
+                </a>
+              }
+              <a
+                class="icon-btn"
+                data-testid="duplicate"
+                routerLink="/controls/new"
+                [queryParams]="{ from: row.control.id }"
+                [attr.aria-label]="'list.actions.duplicateNamed' | translate: { name: row.control.name }"
+                [matTooltip]="'list.actions.duplicate' | translate"
+              >
+                <app-icon name="content_copy" />
+              </a>
+            </td>
+          </tr>
+        }
+      }
+    </tbody>
+  </table>
+</div>

@@ -1,14 +1,15 @@
 # dc-web notes
 
 ## State
-Phase 5 done and committed (2026-11-11, unattended night run on Kfir's word). The fixes of the phase 4 review
-are the next commit, then the phase 5 review runs in the background while phase 6 is built. The dev server
-runs on :4200.
+Phase 6 done and committed (2026-11-11, unattended night run on Kfir's word): the four screens are built on
+the mocked api. The fixes of the phase 5 review are the next commit, then the phase 6 review runs in the
+background while the gate specs of phase 7 are written. The dev server runs on :4200.
 
 ## Next
-1. `fix(web): review fixes` for the phase 4 review (findings in the Log), then `/phase-review web` on phase 5.
-2. Phase 6: the controls list and the suggestions dialog.
-3. Phase 7 writes the gate specs and runs them only when the api and the engine are on main.
+1. `fix(web): review fixes` for the phase 5 review (findings in the Log), then `/phase-review web` on phase 6.
+2. Phase 7: write `e2e/support/gate.ts` and the three gate specs. They run only when the api and the engine are
+   on main (`git log main`); tonight they are written and type-checked, not run.
+3. Phase 8: the design pass on the mocked screens, `web/README.md`, the hand-over.
 
 ## Blockers
 - Phase 7 runs (the gate on the real stack, the pre-load, the hosted build): the api and the engine are not on
@@ -83,6 +84,16 @@ runs on :4200.
     rules put 0.4 in the same category as 1, which gave "שנייה אחת" for 412 ms before the phase gate.
 28. The sort is offered on the first identifying column only (the api sorts by the whole identifying text,
     `sort=display`), and on a phone from a select behind the toolbar's filter button.
+
+29. The list asks for the suggestions dialog through a token (`core/suggestions/suggestions-opener.ts`) that
+    the application provides from `features/suggestions`: Design A forbids one feature importing another, and
+    Design M opens the dialog from the list. The dialog is loaded when it is first opened.
+30. The list has a fixed page of 25 with previous and next, no page-size select (Design K says "paging").
+31. `e2e/preview.ts` is a Playwright test that skips itself unless `PREVIEW=1` (`npm run preview`): it shares
+    the in-memory api of the mocked specs, which a plain node script cannot import.
+32. The dev server Playwright starts runs with `--prebundle=false`: with prebundling, the first time a lazy
+    screen brings a dependency the server has not bundled, it reloads the page in the middle of a test (seen
+    once here, on the first run after the suggestions dialog was added: four mobile tests lost their dialog).
 
 ## Reconciliation with `contracts/` (phase 2, 2026-11-11)
 Read: `api.md`, `errors.md`, `glossary.json`, `control-definition.schema.json`, the six examples and the thirteen
@@ -305,3 +316,12 @@ rewrote. A review that found nothing, or did not run, is logged as that.
   address is replaced before the results are opened; a save keeps what was typed during it and stays dirty;
   the store's types and its messages moved to `editor.types.ts` and `editor.messages.ts`, and its spec was
   split in two over `src/testing/editor-store.ts`. Nine tests added for these cases (unit and mocked e2e).
+- 2026-11-11 phase 6 on Fable 5.2: gate `gates/phase-6.txt` (ngc, ng lint, e2e type check, 275 unit tests in 30
+  files, ng build, print guard, `e2e/mocked` on mobile and desktop: 134 passed, 2 skipped by project on
+  purpose). `list.spec.ts`: the first screen of the delivered system (six examples, none run), a run in place,
+  the result cell in its forms, search and its no-match state, the entity and state filters with the archived
+  view, edit and duplicate, first use, paging, loading, and failures. `suggestions.spec.ts`: the drafts with
+  marks and nothing saved or run, create selected, open in editor, a refused draft, empty and failed, focus
+  kept inside and returned. Screenshots in `screenshots/phase-6/` (`list-delivered` is the first screen of the
+  delivered system). `docs/design.md`: the archive confirmation without a restore, and the suggestions dialog
+  as built. No cut taken: the archived view and "open in editor" are built.

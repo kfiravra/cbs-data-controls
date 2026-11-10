@@ -313,15 +313,15 @@ Review: `/phase-review web`
 Commit: `feat(web): run results with reasons, breakdown and states`
 
 ### Phase 6: controls list and suggestions
-- [ ] `ListStore`, the table and card rows, the toolbar (search; entity and state filters; the phone's filter
+- [x] `ListStore`, the table and card rows, the toolbar (search; entity and state filters; the phone's filter
       button), the result cell, run in place (decision 8), edit, duplicate, paging, the two empty states, loading.
-- [ ] The archived view (cut 1): the state filter and archived rows with duplicate only.
-- [ ] The suggestions dialog per Design M: request, drafts with marks, selection, create selected, open in editor
+- [x] The archived view (cut 1): the state filter and archived rows with duplicate only.
+- [x] The suggestions dialog per Design M: request, drafts with marks, selection, create selected, open in editor
       (cut 3), its empty and failed states.
-- [ ] Specs: the result cell from `lastRun`, run in place, the dialog's selection count.
-- [ ] `e2e/mocked/list.spec.ts` and `suggestions.spec.ts`; screenshots, among them the first screen of the
+- [x] Specs: the result cell from `lastRun`, run in place, the dialog's selection count.
+- [x] `e2e/mocked/list.spec.ts` and `suggestions.spec.ts`; screenshots, among them the first screen of the
       delivered system (six examples, none of them run: Design K). `e2e/preview.ts`.
-- [ ] `docs/design.md`: the archive dialog's text (no restore).
+- [x] `docs/design.md`: the archive dialog's text (no restore).
 
 Verify: `/check --tests` · `cd web && npx playwright test e2e/mocked`
 Review: `/phase-review web`

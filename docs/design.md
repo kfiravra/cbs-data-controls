@@ -690,9 +690,16 @@ in the shape of the rows to come.
 - **Dialog:** Ground, Line strong edge, 8px radius, 24px padding, the Overlay shadow, over the Scrim. A title and
   a close button; the buttons at the end edge with the main one last. Used for two things only: to confirm
   archiving a control, and for suggestions. Everything else happens in the page.
-- **Suggestions dialog:** a list of drafts, each a checkbox, a name, its sentence in the plain form with marks,
-  one line of rationale in Small Muted, the evidence as chips, and a text button to open it in the editor. The
-  main button counts what will be created (`יצירת 2 הבקרות שנבחרו`). Nothing is saved or run by opening it.
+- **Archive confirmation:** says what archiving does and what it does not: the control leaves the list, its
+  runs and results are kept, and it can be duplicated into a new control (`הבקרה ”…” תוסר מהרשימה. ההרצות
+  והתוצאות שלה יישמרו, ואפשר יהיה לשכפל אותה לבקרה חדשה.`). There is no restore in this version, so the text
+  promises none. Archiving is an action of the editor's page head; the list shows archived controls under its
+  state filter, marked with a chip, with duplicate as their one action.
+- **Suggestions dialog:** a list of drafts, each a checkbox (none ticked at first), a name, its sentence in the
+  plain form with marks, one line of rationale in Small Muted, the evidence as chips, and a text button to open
+  it in the editor. The main button counts what will be created (`יצירת 2 הבקרות שנבחרו`) and is disabled while
+  nothing is ticked. Nothing is saved or run by opening it. The head and the buttons stay in view and the list
+  scrolls between them.
 - **Toast:** Bar ground, On bar text, 6px radius, the Overlay shadow; one line and at most one text button; at the
   bottom, at the start edge. Never for an error.
 

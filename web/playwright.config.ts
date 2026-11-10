@@ -9,7 +9,8 @@ const externalBaseUrl = process.env['E2E_BASE_URL'];
 
 export default defineConfig({
   testDir: 'e2e',
-  testMatch: ['mocked/**/*.spec.ts', 'gate/**/*.spec.ts'],
+  // preview.ts is the headed look at the app (`npm run preview`); it skips itself in any other run
+  testMatch: ['mocked/**/*.spec.ts', 'gate/**/*.spec.ts', 'preview.ts'],
   outputDir: 'test-results',
   fullyParallel: true,
   forbidOnly: true,
@@ -29,7 +30,9 @@ export default defineConfig({
   webServer: externalBaseUrl
     ? undefined
     : {
-        command: 'npx ng serve --port 4200',
+        // without prebundling: the dev server would otherwise reload the page mid-test the first time a
+        // lazy screen brings a dependency it has not bundled yet
+        command: 'npx ng serve --port 4200 --prebundle=false',
         url: 'http://localhost:4200',
         reuseExistingServer: true,
         timeout: 180_000,

@@ -20,6 +20,7 @@ import { problemInterceptor } from './core/http/problem.interceptor';
 import { DEFAULT_LANGUAGE } from './core/i18n/language';
 import { TranslatedTitleStrategy } from './core/i18n/title.strategy';
 import { provideIcons } from './core/icons/icons';
+import { provideSuggestions } from './features/suggestions/provide-suggestions';
 
 registerLocaleData(localeHe);
 
@@ -38,6 +39,7 @@ export const appConfig: ApplicationConfig = {
     // the first screen never renders its keys: the translations are in before the first render
     provideAppInitializer(() => firstValueFrom(inject(TranslateService).use(DEFAULT_LANGUAGE))),
     provideIcons(),
+    provideSuggestions(),
     // ink selects: the filled option is the signal, no check mark beside it
     {
       provide: MAT_BUTTON_TOGGLE_DEFAULT_OPTIONS,

@@ -34,6 +34,12 @@
     flex: 0 1 380px;
   }
 
+  // beside the search, as wide as its text asks: a field is full width only where it stands alone
+  .toolbar__filter {
+    inline-size: auto;
+    flex: 0 1 220px;
+  }
+
   .toolbar__filters,
   .toolbar__filters.is-open {
     display: contents;
