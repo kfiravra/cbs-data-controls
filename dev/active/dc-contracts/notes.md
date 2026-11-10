@@ -1,24 +1,20 @@
 # dc-contracts notes
 
 ## State
-Every phase is done and committed on `feat/contracts`: `43745cc` (phase 1), `b0d3015` (phase 2), `16824ce`
-(phase 3), `aafe9ca` (phase 4), `dd6eb34` (the review fixes), then one commit for Kfir's scope decision of
-2026-11-10 (plan decisions 37 to 40: Hebrew only, heuristic suggestions only, two delivery paths, screenshots at
-390 and 1440) with the fixes of its own review. The Gate ran from a clean container on the tree of that last
-commit, with rotated local passwords: `gates/final.txt`, db-check 27 passed, contracts-check 5 checks, hook tests
-226 pass. The branch is pushed and the PR to main is open, on Kfir's word. Not merged.
+The task is done up to its merge. Every phase, the review fixes, Kfir's scope decision and his final wording are
+committed on `feat/contracts` and pushed; the PR to main is open (pull 1) and not merged. The Gate ran from a clean
+container on `9b01a4b` (`gates/final.txt`); the two wording commits after it changed text only, and the checks
+passed again on each.
 
 ## Next
-1. Kfir read the `--render` output on 2026-11-10 and settled the wording (the last Log line). A wording change
-   from here on is a contract change: one commit to `contracts/` on main and one line to each session.
-2. The merge, on Kfir's word. Then on main: `scripts/db-init.sh --reset` (the seed is new there), and the three
+1. The merge, on Kfir's word. Then on main: `scripts/db-init.sh --reset` (the seed is new there), and the three
    worktrees of kickoff §5 with `.env` copied into each. The local `.env` holds new passwords since the rotation.
-3. The lines for the engine, api, web and delivery sessions are written into their plans ("Lines from dc-contracts
-   as it merges"); nothing more has to be carried by hand.
-4. `README.md` was left as it is by the scope decision: its `--render` comment still says "he and en".
-5. History: `43745cc` shows three former local dev passwords in `.env.example` (removed in `dd6eb34`, rotated
-   locally before the push, so they open nothing). Taking them out of the branch's history is a rebase, which
-   needs Kfir's word.
+2. A wording change from here on is a contract change: one commit to `contracts/` on main and one line to each
+   session. The lines for the engine, api, web and delivery sessions are already in their plans.
+3. `README.md` was left as it is by the scope decision: its `--render` comment still says "he and en"
+   (dc-delivery rewrites the README in its phase B4).
+4. `43745cc` keeps three former local dev passwords in `.env.example` in its history, by Kfir's decision: no
+   rebase. They were rotated before the push and open nothing.
 
 ## Blockers
 (none)
@@ -187,3 +183,6 @@ commit, with rotated local passwords: `gates/final.txt`, db-check 27 passed, con
   "nothing else": the lines that quote the old words in `docs/architecture.md` §4.3, in plan decisions 12 and 34's
   neighbours, and in the web plan's contract lines ("קטן מ־18"). Checks after the change: contracts-check 5
   checks passed, db-check 27 passed, hook tests 226 pass.
+- 2026-11-10 on Kfir's word, the three places that still quoted the first wording were updated to the final one:
+  `docs/architecture.md` §4.3, decision 12 of this plan, and the rendered-text line of the web plan's contract
+  section. Kfir closed the task with that commit; the merge is his.

@@ -154,9 +154,10 @@ Hebrew letters only, the check is at 390 and 1440). It stays this task's documen
   for digit. `display` values of such a field are drawn without a thousands separator, which is how
   `display_text`, and so the search, holds them.
 - **Rendered text.** A value part carries its unit after a plain space: keep a value part on one line. A NULL
-  renders as nothing. The engine's reason reads "גיל: 15 (קטן מ־18)"; `docs/design.md` draws "גיל [15] נמוך
-  מ־16", and its related-records head words the node differently from the engine's "אין … עם (…)". Kfir reads the
-  wording at the dc-contracts gate.
+  renders as nothing. The engine's reason reads "גיל: 15 (מתחת ל־18)"; `docs/design.md` draws "גיל [15] נמוך
+  מ־16", and its related-records head words the node differently from the engine's "אין … עם (…)". Kfir settled
+  the engine's wording at the dc-contracts gate: numbers "מתחת ל־" and "מעל", dates "לפני" and "אחרי", and the
+  colon style for the rest ("שכר: חסר"), so no text agrees with the gender of a field.
 - **The public glossary** has a shape table in `api.md`: `operators` resolved per field, `comparable`,
   `identifier`, `visible`, `arity` as 0, 1, 2 or `"list"`.
 - **Requests**: `page` is 1 to 1,000,000; the results `search` is trimmed and an empty one filters nothing; a body

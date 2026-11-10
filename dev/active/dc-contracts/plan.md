@@ -48,8 +48,9 @@ Contract design settled here, inside the architecture:
     total count cannot be expressed in the schema. The schema repeats the two it can express and the contracts check
     asserts they agree.
 12. **Operator text model**: each operator has `label`, `sentence` and `reason`, each with variants (`default`,
-    `<type>`, `field`, `<type>.field`), so Hebrew can say "מוקדם מ" for dates and "קטן מ" for numbers. Templates use
-    a colon-neutral style ("{field}: {value}") wherever gender agreement would break.
+    `<type>`, `field`, `<type>.field`), so Hebrew can say "לפני" for dates and "מתחת ל־" for numbers. No text
+    agrees with the gender of the field: comparisons use prepositions, the rest a colon style ("{field}: {value}",
+    "שכר: חסר"). (Kfir's final wording at the Gate read; the first version said "מוקדם מ" and "קטן מ".)
 13. **The engine returns everything rendered** (rule `sentence`, a `sentence` per condition, a `text` per reason,
     `reasonText`), so no client has to render. Re-rendering from the served templates is allowed, never required.
 14. **`hr` carries structural constraints only** (keys, FKs, the status domain) and explicit ids without IDENTITY.
