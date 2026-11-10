@@ -104,7 +104,7 @@ invalid fixtures, as merged in `f9928bf`. Where they differ from Design E to M o
 - Nothing in `contracts/` looked wrong, and nothing blocks a screen: no line for Kfir from this step.
 
 ## Last reviewed
-e517490 (phase 3), fixed in the `fix(web): review fixes` commit after 5a57791. Phase 4 (5a57791) is under review.
+5a57791 (phase 4), fixed in the `fix(web): review fixes` commit after 3474145. Phase 5 (3474145) is under review.
 
 ## Hand-over to dc-delivery
 Read by its phase B0 (plan.md Design Q). Filled as the work goes and complete before `/ship`.
@@ -277,7 +277,7 @@ rewrote. A review that found nothing, or did not run, is logged as that.
   had already been strengthened in phase 4 (the validated definition equals the example's, node for node).
   Left: the driver still focuses a control before working it with keys (it proves each control works by
   keyboard; the tab order of a row has its own test, and the pass through the whole flow is phase 8).
-- 2026-11-11 phase 5 on Fable 5.2: gate `gates/phase-5.txt` (ngc, ng lint, e2e type check, 239 unit tests in 26
+- 2026-11-11 phase 5 on Fable 5.2: gate `gates/phase-5.txt` (ngc, ng lint, e2e type check, 238 unit tests in 26
   files, ng build, print guard, `e2e/mocked` on mobile and desktop: 94 passed, 2 skipped by project on purpose:
   the header sort is a desktop test and the sort select a phone test). `results.spec.ts` covers a run with
   violations (marks per record against each example's `matched`), the breakdown filter, search and its
@@ -286,3 +286,22 @@ rewrote. A review that found nothing, or did not run, is logged as that.
   control. Screenshots in `screenshots/phase-5/`. `docs/design.md`: the States table now has the rows of
   decisions 15 and 16, and rows for a run that failed otherwise, a run in progress, an archived control and
   not found. No cut taken: the sort is built.
+- 2026-11-11 /phase-review web, phase 4 (one reviewer agent, opus; cost line: about 170k tokens, started without
+  waiting), diff a1682ae..5a57791: standards 3 info; plan 2 critical, 5 warnings, 2 info.
+  `control-editor.page.ts` with `editor.store.ts`: "try again" after a failed glossary read did nothing for a
+  stored control, because `open` returned early for the control it already held (critical). `editor.store.ts`:
+  removing a row left the server's error for it in place, and the status line kept naming it (critical). A
+  sentence that came back did not take the engine banner away (warning). The first-sentence flag was cleared by
+  a 503, so a retry never flagged an outdated control, and it survived an unfinished draft, so the user's own
+  422 could show as "outdated" (warning). A first save and run navigated to the results before the address was
+  replaced, leaving `/controls/new?from=` in the history (warning). `open` had no guard against an older call
+  landing after a newer one (warning). Edits typed while a save was on its way were overwritten and lost their
+  `beforeunload` guard (warning). Info: live errors did not open their mark, and design.md said a refused draft
+  is not asked about; a description-only issue focused the name; a test read its expected mark from the store;
+  the store was over 500 lines and packed its validate key into a string. Fixed in the review-fix commit: all
+  of them. `open(target, again)` reads everything once more on a retry and on a reload, and counts its turns;
+  an edit drops the errors of the row it edits and of rows that are gone; `sentenceFailure` is its own signal,
+  cleared by the next sentence; the first-sentence flag ends on a sentence, a 422 or the first edit; the
+  address is replaced before the results are opened; a save keeps what was typed during it and stays dirty;
+  the store's types and its messages moved to `editor.types.ts` and `editor.messages.ts`, and its spec was
+  split in two over `src/testing/editor-store.ts`. Nine tests added for these cases (unit and mocked e2e).

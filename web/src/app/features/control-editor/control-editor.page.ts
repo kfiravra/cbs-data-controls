@@ -33,7 +33,8 @@ import { SentenceFieldComponent } from '../../shared/sentence-field/sentence-fie
 import { SkeletonComponent } from '../../shared/skeleton/skeleton.component';
 import { TextPartsComponent } from '../../shared/text-parts/text-parts.component';
 import { ToastService } from '../../shared/toast/toast.service';
-import { EditorStore, EditorTarget } from './editor.store';
+import { EditorStore } from './editor.store';
+import { EditorTarget } from './editor.types';
 
 const NEW = 'new';
 const NAME_MAX = 200;
@@ -78,6 +79,7 @@ export class ControlEditorPage {
   private readonly dialog = inject(MatDialog);
   private readonly toast = inject(ToastService);
   private readonly nameInput = viewChild<ElementRef<HTMLInputElement>>('nameInput');
+  private readonly descriptionInput = viewChild<ElementRef<HTMLTextAreaElement>>('descriptionInput');
 
   protected readonly nameMax = NAME_MAX;
   protected readonly descriptionMax = DESCRIPTION_MAX;
@@ -190,21 +192,23 @@ export class ControlEditorPage {
 
   protected async save(run: boolean): Promise<void> {
     const outcome = await this.store.save(run);
-    if (outcome.kind === 'invalid' && (this.store.nameIssue() || this.store.descriptionIssue())) {
-      this.nameInput()?.nativeElement.focus();
-    }
-    if (outcome.kind === 'ran') {
-      await this.router.navigate(['/runs', outcome.run.id]);
-      return;
+    if (outcome.kind === 'invalid') {
+      // the first offending input: a detail before a row (the store points the builder at the row)
+      const detail = this.store.nameIssue() ? this.nameInput() : this.store.descriptionIssue() ? this.descriptionInput() : null;
+      detail?.nativeElement.focus();
     }
     if (outcome.kind === 'saved') {
       const { control, newVersion } = outcome;
       this.toast.show(newVersion ? 'editor.toast.savedVersion' : 'editor.toast.saved', { version: control.version });
     }
-    // a first save gives the control its address, also when the run after it did not start
+    // a first save gives the control its address, before anything else: the address of an unsaved control
+    // (with its `from` or its suggestion) must not stay in the history, where Back would build a second copy
     const saved = this.store.control();
     if (saved && this.id() === NEW) {
       await this.router.navigate(['/controls', saved.id], { replaceUrl: true });
+    }
+    if (outcome.kind === 'ran') {
+      await this.router.navigate(['/runs', outcome.run.id]);
     }
   }
 
@@ -236,13 +240,11 @@ export class ControlEditorPage {
     void this.router.navigate(['/controls', NEW], { queryParams: { from: this.store.control()?.id } });
   }
 
-  /** "Try again" on a failure: read again what could not be read, else ask the engine for the sentence again. */
-  protected retry(): void {
+  /** "Try again" on what could not be read: the control, a copy's source or the glossary are read once more. */
+  protected reopen(): void {
     const target = this.target(this.id(), this.from());
-    if (target && (this.store.loadState() === 'failed' || !this.store.glossary())) {
-      void this.store.open(target);
-    } else {
-      this.store.revalidate();
+    if (target) {
+      void this.store.open(target, true);
     }
   }
 

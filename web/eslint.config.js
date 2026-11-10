@@ -42,8 +42,8 @@ module.exports = defineConfig([
     },
   },
   {
-    // describe blocks and Playwright flows are long by design
-    files: ['**/*.spec.ts', 'e2e/**/*.ts'],
+    // describe blocks, Playwright flows and test harnesses are long by design
+    files: ['**/*.spec.ts', 'e2e/**/*.ts', 'src/testing/**/*.ts'],
     rules: { 'max-lines-per-function': 'off' },
   },
   {

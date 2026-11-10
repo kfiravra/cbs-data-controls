@@ -1,23 +1,35 @@
 import { DestroyRef, Injectable, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
-import { catchError, distinctUntilChanged, firstValueFrom, map, of, switchMap, timer } from 'rxjs';
+import { catchError, firstValueFrom, map, of, switchMap, timer } from 'rxjs';
 
 import { ApiError, toApiError } from '../../core/api/api-error';
-import { Control, DefinitionError, Run, TextPart } from '../../core/api/api.types';
+import { Control } from '../../core/api/api.types';
 import { ControlsApi } from '../../core/api/controls.api';
 import { RunsApi } from '../../core/api/runs.api';
 import { Definition } from '../../core/definition/definition.types';
 import { DraftGroup, IdSource, fromDefinition, highestId, toDefinition } from '../../core/definition/draft';
-import { DraftCheck, DraftIssue, checkDraft } from '../../core/definition/draft.check';
+import { DraftCheck, checkDraft } from '../../core/definition/draft.check';
 import { DraftEdit, FocusTarget, applyEdit, newDraft } from '../../core/definition/draft.edit';
 import { orderedNodeIds } from '../../core/definition/marks';
 import { MarksService } from '../../core/definition/marks.service';
-import { ErrorLocation, locateError } from '../../core/definition/pointer';
 import { mapFor, rootEntities } from '../../core/glossary/glossary.lookups';
 import { GlossaryService } from '../../core/glossary/glossary.service';
 import { LanguageService } from '../../core/i18n/language.service';
 import { changedNodes } from '../../core/text/text-parts';
 import { BuilderView, RowMessage } from '../../shared/condition-builder/builder-view';
+import { LocatedError, errorMessage, issueMessage, locateErrors, statusOf } from './editor.messages';
+import {
+  DetailIssue,
+  EditorTarget,
+  LoadState,
+  Question,
+  SaveOutcome,
+  SaveState,
+  Sent,
+  Sentence,
+  StatusLine,
+  Validation,
+} from './editor.types';
 
 /** The sentence asks the engine this long after the last edit. */
 export const VALIDATE_DEBOUNCE_MS = 400;
@@ -26,63 +38,7 @@ const SETTLE_MS = 700;
 const NAME_MAX = 200;
 const DESCRIPTION_MAX = 1000;
 
-export type LoadState = 'loading' | 'ready' | 'notFound' | 'failed';
-export type SaveState = 'idle' | 'saving' | 'running';
-export type DetailIssue = 'required' | 'tooLong';
-
-/** What the page is asked to open: a stored control, a copy of one, a suggestion, or a blank control. */
-export interface EditorTarget {
-  readonly id: number | null;
-  /** The control to copy into a new one (duplicate). */
-  readonly from?: number | null;
-  /** A suggested control to start from. */
-  readonly draft?: { readonly name: string; readonly description: string; readonly definition: Definition } | null;
-  /** The name a copy starts with, from the name of its source. */
-  readonly copyName?: (name: string) => string;
-}
-
-export type SaveOutcome =
-  | { readonly kind: 'invalid' | 'failed' }
-  | { readonly kind: 'saved'; readonly control: Control; readonly created: boolean; readonly newVersion: boolean }
-  | { readonly kind: 'ran'; readonly control: Control; readonly run: Run };
-
-/** What the sentence field says under the sentence when something is unfinished. */
-export type StatusLine =
-  | { readonly kind: 'incomplete'; readonly mark: string; readonly issue: DraftIssue }
-  | { readonly kind: 'invalid'; readonly mark: string | null; readonly error: DefinitionError }
-  | { readonly kind: 'tooManyValues' };
-
-interface LocatedError {
-  readonly error: DefinitionError;
-  readonly location: ErrorLocation;
-}
-
-interface Sentence {
-  /** The parts of the last valid sentence; null until the engine has answered once. */
-  readonly parts: readonly TextPart[] | null;
-  /** True while the draft is unfinished or invalid: the last valid sentence stays, dimmed. */
-  readonly stale: boolean;
-}
-
-type Validation =
-  | { readonly kind: 'incomplete' }
-  | { readonly kind: 'valid'; readonly parts: readonly TextPart[] }
-  | { readonly kind: 'failed'; readonly error: ApiError; readonly definition: Definition };
-
 const NO_MESSAGES: ReadonlyMap<string, readonly RowMessage[]> = new Map();
-
-function issueMessage(issue: DraftIssue, check: DraftCheck): RowMessage {
-  return {
-    key: `editor.issues.${issue.kind}`,
-    params: { max: check.limits.maxListValues },
-    input: issue.input,
-    index: issue.index,
-  };
-}
-
-function errorMessage({ error, location }: LocatedError): RowMessage {
-  return { key: `errors.definition.${error.code}`, params: error.params, input: location.input, index: location.index };
-}
 
 /**
  * The state of the control editor, provided by its page: the loaded control and its token, the details, the
@@ -98,8 +54,13 @@ export class EditorStore {
   private readonly marksService = inject(MarksService);
   private readonly destroyRef = inject(DestroyRef);
   private ids = new IdSource();
-  /** True from the load of a stored control until its first sentence: a 422 then means it is outdated. */
+  /**
+   * True from the load of a stored control until the engine has spoken about it or the user has edited it:
+   * a 422 then means the stored definition is outdated. An engine that does not answer leaves it set.
+   */
   private awaitingFirstSentence = false;
+  /** Counts the calls of `open`: an older one that lands after a newer one changes nothing. */
+  private turn = 0;
   private settleTimer: ReturnType<typeof setTimeout> | undefined;
 
   readonly glossary = this.glossaryService.glossary;
@@ -122,8 +83,10 @@ export class EditorStore {
   readonly descriptionIssue = signal<DetailIssue | null>(null);
 
   readonly saveState = signal<SaveState>('idle');
-  /** A failed load, save, run or archive, or an engine that does not answer the sentence. */
+  /** A failed load, save, run or archive. */
   readonly failure = signal<ApiError | null>(null);
+  /** An engine that does not answer the sentence; gone as soon as a sentence comes back. */
+  readonly sentenceFailure = signal<ApiError | null>(null);
   readonly conflict = signal(false);
   /** The stored definition no longer validates: a glossary key it uses has gone or changed. */
   readonly outdated = signal(false);
@@ -180,27 +143,19 @@ export class EditorStore {
 
   /** The nodes whose mark is open: unfinished, or refused by the server. */
   readonly openNodes = computed<ReadonlySet<string>>(
-    () => new Set([...(this.check()?.issues.keys() ?? []), ...this.messages().keys()]),
+    () =>
+      new Set([
+        ...(this.check()?.issues.keys() ?? []),
+        ...this.messages().keys(),
+        ...this.liveErrors().flatMap((entry) => entry.location.nodeId ?? []),
+      ]),
   );
 
   readonly status = computed<StatusLine | null>(() => {
     const check = this.check();
-    if (!check) {
-      return null;
-    }
-    const firstOpen = orderedNodeIds(this.draft()).find((id) => check.issues.has(id));
-    if (firstOpen !== undefined) {
-      return { kind: 'incomplete', mark: this.marks().get(firstOpen) ?? '', issue: check.issues.get(firstOpen)![0] };
-    }
-    if (check.tooManyValuesInAll) {
-      return { kind: 'tooManyValues' };
-    }
-    const refused = this.liveErrors()[0] ?? this.serverErrors()[0];
-    if (refused) {
-      const id = refused.location.nodeId;
-      return { kind: 'invalid', mark: id ? (this.marks().get(id) ?? null) : null, error: refused.error };
-    }
-    return null;
+    return check
+      ? statusOf(this.draft(), check, this.marks(), [...this.liveErrors(), ...this.serverErrors()])
+      : null;
   });
 
   readonly view = computed<BuilderView | null>(() => {
@@ -224,19 +179,28 @@ export class EditorStore {
 
   // ---------------------------------------------------------------- opening
 
-  async open(target: EditorTarget): Promise<void> {
-    if (target.id !== null && this.control()?.id === target.id) {
-      return; // just saved under this id: the screen already shows it
+  /**
+   * Opens what the address names. A control the screen already holds (it was just saved under this id) is
+   * left as it is, unless `again` asks to read everything once more: the glossary too.
+   */
+  async open(target: EditorTarget, again = false): Promise<void> {
+    if (!again && target.id !== null && this.control()?.id === target.id) {
+      return;
     }
+    const turn = ++this.turn;
     this.reset();
     const glossary = await this.glossaryService.load();
     try {
-      if (target.id !== null) {
-        this.adopt(await firstValueFrom(this.controlsApi.get(target.id)));
+      const stored = target.id ?? target.from ?? null;
+      const control = stored !== null ? await firstValueFrom(this.controlsApi.get(stored)) : null;
+      if (turn !== this.turn) {
+        return;
+      }
+      if (control && target.id !== null) {
+        this.adopt(control);
         this.awaitingFirstSentence = true;
-      } else if (target.from) {
-        const source = await firstValueFrom(this.controlsApi.get(target.from));
-        this.startFrom(target.copyName?.(source.name) ?? source.name, source.description ?? '', source.definition);
+      } else if (control) {
+        this.startFrom(target.copyName?.(control.name) ?? control.name, control.description ?? '', control.definition);
       } else if (target.draft) {
         this.startFrom(target.draft.name, target.draft.description, target.draft.definition);
       } else {
@@ -244,6 +208,9 @@ export class EditorStore {
       }
       this.loadState.set('ready');
     } catch (error) {
+      if (turn !== this.turn) {
+        return;
+      }
       const failure = toApiError(error);
       this.loadState.set(failure.status === 404 ? 'notFound' : 'failed');
       this.failure.set(failure.status === 404 ? null : failure);
@@ -254,8 +221,7 @@ export class EditorStore {
   async reload(): Promise<void> {
     const id = this.control()?.id;
     if (id !== undefined) {
-      this.control.set(null);
-      await this.open({ id });
+      await this.open({ id }, true);
     }
   }
 
@@ -274,6 +240,7 @@ export class EditorStore {
     this.nameIssue.set(null);
     this.descriptionIssue.set(null);
     this.failure.set(null);
+    this.sentenceFailure.set(null);
     this.conflict.set(false);
     this.outdated.set(false);
     this.serverErrors.set([]);
@@ -330,6 +297,8 @@ export class EditorStore {
     this.rootEntity.set(key);
     this.draft.set(newDraft(this.ids));
     this.serverErrors.set([]);
+    this.liveErrors.set([]);
+    this.awaitingFirstSentence = false;
     this.focus.set(null);
     this.dirty.set(true);
     return () => {
@@ -350,18 +319,21 @@ export class EditorStore {
     if (result.focus) {
       this.focus.set(result.focus);
     }
-    // what the server said about a row stands until the row is edited
+    this.awaitingFirstSentence = false;
+    // what the server said about a row stands until the row is edited or is gone
+    const present = new Set(orderedNodeIds(result.draft));
     const edited = 'id' in edit ? edit.id : null;
-    if (edited !== null) {
-      this.serverErrors.update((errors) => errors.filter((entry) => entry.location.nodeId !== edited));
-    }
+    const stands = ({ location }: LocatedError) =>
+      location.nodeId === undefined || (present.has(location.nodeId) && location.nodeId !== edited);
+    this.serverErrors.update((errors) => errors.filter(stands));
+    this.liveErrors.update((errors) => errors.filter(stands));
   }
 
   // ---------------------------------------------------------------- the sentence
 
   /** Asks the engine again for the sentence of the same draft: the way out of an engine that did not answer. */
   revalidate(): void {
-    this.failure.set(null);
+    this.sentenceFailure.set(null);
     this.validateAgain.update((count) => count + 1);
   }
 
@@ -372,18 +344,21 @@ export class EditorStore {
    * dimmed, so typing does not make it flicker.
    */
   private watchSentence(): void {
-    const asked = computed(() => {
-      const definition = this.definition();
-      return definition ? `${this.validateAgain()}\n${JSON.stringify(definition)}` : null;
-    });
+    // one question per definition and per "ask again": an edit that leaves the rule as it was asks nothing
+    const asked = computed<Question | null>(
+      () => {
+        const definition = this.definition();
+        return definition ? { definition, text: JSON.stringify(definition), again: this.validateAgain() } : null;
+      },
+      { equal: (a, b) => a?.text === b?.text && a?.again === b?.again },
+    );
     toObservable(asked)
       .pipe(
-        distinctUntilChanged(),
-        switchMap((key) => {
-          if (key === null) {
+        switchMap((question) => {
+          if (question === null) {
             return of<Validation>({ kind: 'incomplete' });
           }
-          const definition = JSON.parse(key.slice(key.indexOf('\n') + 1)) as Definition;
+          const { definition } = question;
           return timer(VALIDATE_DEBOUNCE_MS).pipe(
             switchMap(() => this.controlsApi.validate(definition)),
             map((answer): Validation => ({ kind: 'valid', parts: answer.sentenceParts })),
@@ -400,6 +375,7 @@ export class EditorStore {
       this.settle(changedNodes(this.sentence().parts, validation.parts));
       this.sentence.set({ parts: validation.parts, stale: false });
       this.liveErrors.set([]);
+      this.sentenceFailure.set(null);
       this.awaitingFirstSentence = false;
       return;
     }
@@ -408,10 +384,14 @@ export class EditorStore {
       this.liveErrors.set([]);
       return;
     }
-    const located = this.locate(validation.error, validation.definition);
     if (validation.error.code !== 'DEFINITION_INVALID') {
-      this.failure.set(validation.error);
-    } else if (this.awaitingFirstSentence) {
+      // the engine did not answer: nothing is known yet about the definition
+      this.sentenceFailure.set(validation.error);
+      return;
+    }
+    const located = locateErrors(validation.error, validation.definition);
+    this.sentenceFailure.set(null);
+    if (this.awaitingFirstSentence) {
       // a stored control that no longer validates: said at once, on its rows
       this.outdated.set(true);
       this.serverErrors.set(located);
@@ -429,10 +409,6 @@ export class EditorStore {
     }
   }
 
-  private locate(error: ApiError, definition: Definition): LocatedError[] {
-    return error.definitionErrors.map((entry) => ({ error: entry, location: locateError(entry, definition) }));
-  }
-
   // ---------------------------------------------------------------- saving
 
   /** Saves the control, and with `run` runs it. Nothing is sent while a detail or a row is unfinished. */
@@ -443,8 +419,12 @@ export class EditorStore {
       this.focusFirstIssue();
       return { kind: 'invalid' };
     }
+    if (this.saveState() !== 'idle') {
+      return { kind: 'failed' };
+    }
     const before = this.control();
-    const body = { name: this.name().trim(), description: this.description().trim() || null, definition };
+    const sent: Sent = { name: this.name(), description: this.description(), draft: this.draft(), rootEntity: this.rootEntity() };
+    const body = { name: sent.name.trim(), description: sent.description.trim() || null, definition };
     this.saveState.set('saving');
     this.failure.set(null);
     this.conflict.set(false);
@@ -454,7 +434,7 @@ export class EditorStore {
             this.controlsApi.update(before.id, { ...body, concurrencyToken: before.concurrencyToken }),
           )
         : await firstValueFrom(this.controlsApi.create(body));
-      this.onSaved(saved);
+      this.onSaved(saved, sent);
       if (!run) {
         return { kind: 'saved', control: saved, created: !before, newVersion: !!before && saved.version !== before.version };
       }
@@ -499,11 +479,19 @@ export class EditorStore {
     }
   }
 
-  private onSaved(saved: Control): void {
+  private onSaved(saved: Control, sent: Sent): void {
     this.control.set(saved);
-    this.name.set(saved.name);
-    this.description.set(saved.description ?? '');
-    this.dirty.set(false);
+    // what was edited while the request was on its way is still unsaved, and stays as typed
+    const untouched =
+      this.name() === sent.name &&
+      this.description() === sent.description &&
+      this.draft() === sent.draft &&
+      this.rootEntity() === sent.rootEntity;
+    if (untouched) {
+      this.name.set(saved.name);
+      this.description.set(saved.description ?? '');
+    }
+    this.dirty.set(!untouched);
     this.showErrors.set(false);
     this.outdated.set(false);
     this.serverErrors.set([]);
@@ -512,7 +500,7 @@ export class EditorStore {
   private onSaveFailed(error: ApiError, definition: Definition): void {
     switch (error.code) {
       case 'DEFINITION_INVALID': {
-        const located = this.locate(error, definition);
+        const located = locateErrors(error, definition);
         this.serverErrors.set(located);
         const first = located.find((entry) => entry.location.nodeId !== undefined)?.location;
         if (first) {

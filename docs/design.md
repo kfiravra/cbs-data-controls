@@ -569,8 +569,9 @@ never ends on a mark. Two forms:
   (`הבקרה במילים`), the sentence, under a divider one line of status when something is unfinished (`תנאי ה לא
   הושלם: חסר ערך להשוואה.`), then save and run, save, and cancel. The sentence is the engine's: the editor asks
   for it 400ms after the last edit of a complete draft and draws what comes back. While a condition is
-  unfinished or refused nothing is asked: the last valid sentence stays, in On action stale, the mark of the
-  open condition is outlined, and the status line names it. Marks are those of the current draft, so a clause
+  unfinished nothing is asked; a complete draft the engine refuses is asked about again on its next edit. In
+  both cases the last valid sentence stays, in On action stale, the mark of the open condition is outlined,
+  and the status line names it. Marks are those of the current draft, so a clause
   whose condition was removed stands without one. Before the first valid sentence the field holds one line of
   hint. A sentence that is waiting for its answer is not dimmed, so typing does not make it flicker. Changes of
   the sentence and of the status line are announced politely.

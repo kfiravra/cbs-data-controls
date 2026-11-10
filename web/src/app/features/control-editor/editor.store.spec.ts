@@ -1,256 +1,34 @@
-import { provideHttpClient, withInterceptors } from '@angular/common/http';
-import { HttpTestingController, TestRequest, provideHttpClientTesting } from '@angular/common/http/testing';
-import { TestBed } from '@angular/core/testing';
-
+import {
+  STORED,
+  VALIDATE,
+  control,
+  editorHarness,
+  letters,
+  problem,
+  sentenceOf,
+} from '../../../testing/editor-store';
 import { SYNTHETIC_GLOSSARY } from '../../../testing/synthetic-glossary';
-import { provideTestTranslations } from '../../../testing/translate';
-import { Control, DefinitionError, TextPart } from '../../core/api/api.types';
-import { Definition } from '../../core/definition/definition.types';
 import { DraftCondition } from '../../core/definition/draft';
-import { problemInterceptor } from '../../core/http/problem.interceptor';
-import { EditorStore, VALIDATE_DEBOUNCE_MS } from './editor.store';
-
-const VALIDATE = '/api/v1/controls/validate';
-
-const STORED: Definition = {
-  schemaVersion: 1,
-  rootEntity: 'order',
-  where: {
-    type: 'group',
-    op: 'and',
-    children: [
-      { type: 'condition', id: 'c1', left: { field: 'total' }, operator: 'above', value: 100 },
-      { type: 'condition', id: 'c2', left: { field: 'reference' }, operator: 'same', value: 'x' },
-    ],
-  },
-};
-
-function control(overrides: Partial<Control> = {}): Control {
-  return {
-    id: 7,
-    name: 'stored control',
-    description: 'what it finds',
-    rootEntity: 'order',
-    version: 3,
-    isActive: true,
-    createdAt: '2026-11-01T07:00:00.000Z',
-    updatedAt: '2026-11-09T14:40:00.000Z',
-    concurrencyToken: 'token-3',
-    definition: STORED,
-    ...overrides,
-  };
-}
-
-function problem(status: number, code: string, errors?: DefinitionError[]) {
-  return { type: 'about:blank', title: code, status, code, params: {}, ...(errors ? { errors } : {}), correlationId: 'x' };
-}
-
-const sentenceOf = (...clauses: [string, string][]): TextPart[] =>
-  clauses.map(([nodeId, text]) => ({ text, nodeId }));
+import { VALIDATE_DEBOUNCE_MS } from './editor.store';
 
 describe('EditorStore', () => {
-  let http: HttpTestingController;
-  let store: EditorStore;
-
-  /** Runs the effects, so the validate loop sees the last edit. */
-  const settle = () => TestBed.tick();
-  const wait = (milliseconds: number) => vi.advanceTimersByTime(milliseconds);
-  const firstRow = () => store.draft().children[0] as DraftCondition;
-
-  /** The request the store makes next, once the promises before it have run. */
-  async function next(url: string): Promise<TestRequest> {
-    for (let turn = 0; turn < 50; turn++) {
-      const [found] = http.match(url);
-      if (found) {
-        return found;
-      }
-      await Promise.resolve();
-    }
-    throw new Error(`no request to ${url}`);
-  }
-
-  async function open(target: Parameters<EditorStore['open']>[0], stored?: Control): Promise<void> {
-    const opening = store.open(target);
-    (await next('/api/v1/glossary')).flush(SYNTHETIC_GLOSSARY);
-    if (stored) {
-      (await next(`/api/v1/controls/${stored.id}`)).flush(stored);
-    }
-    await opening;
-    settle();
-  }
-
-  /** A new control with one finished row: total above 5. */
-  async function openComplete(): Promise<string> {
-    await open({ id: null });
-    const id = firstRow().id;
-    store.apply({ kind: 'field', id, left: { field: 'total' }, scope: 'order' });
-    store.apply({ kind: 'operator', id, operator: 'above' });
-    store.apply({ kind: 'value', id, value: '5' });
-    settle();
-    return id;
-  }
-
-  function answerValidate(parts: TextPart[]): TestRequest {
-    wait(VALIDATE_DEBOUNCE_MS);
-    const request = http.expectOne(VALIDATE);
-    request.flush({ valid: true, sentence: '', sentenceParts: parts, conditions: [] });
-    return request;
-  }
+  let h: ReturnType<typeof editorHarness>;
+  let http: ReturnType<typeof editorHarness>['http'];
+  let store: ReturnType<typeof editorHarness>['store'];
+  const settle = () => h.settle();
+  const wait = (milliseconds: number) => h.wait(milliseconds);
+  const firstRow = () => h.firstRow();
+  const next = (url: string) => h.next(url);
+  const open = (...args: Parameters<typeof h.open>) => h.open(...args);
+  const openComplete = () => h.openComplete();
+  const answerValidate = (...args: Parameters<typeof h.answerValidate>) => h.answerValidate(...args);
 
   beforeEach(() => {
-    vi.useFakeTimers();
-    TestBed.configureTestingModule({
-      providers: [
-        provideHttpClient(withInterceptors([problemInterceptor])),
-        provideHttpClientTesting(),
-        provideTestTranslations(),
-        EditorStore,
-      ],
-    });
-    http = TestBed.inject(HttpTestingController);
-    store = TestBed.inject(EditorStore);
+    h = editorHarness();
+    ({ http, store } = h);
   });
 
-  afterEach(() => {
-    http.verify();
-    vi.useRealTimers();
-  });
-
-  describe('the validate loop', () => {
-    it('sends nothing for an unfinished draft', async () => {
-      await open({ id: null });
-      store.apply({ kind: 'field', id: firstRow().id, left: { field: 'total' }, scope: 'order' });
-      settle();
-
-      wait(5 * VALIDATE_DEBOUNCE_MS);
-
-      http.expectNone(VALIDATE);
-      expect(store.sentence().parts).toBeNull();
-    });
-
-    it('asks for the sentence of a complete draft 400ms after the last edit, and not before', async () => {
-      const id = await openComplete();
-
-      wait(VALIDATE_DEBOUNCE_MS - 1);
-      http.expectNone(VALIDATE);
-      wait(1);
-      const request = http.expectOne(VALIDATE);
-
-      expect(request.request.body).toEqual({
-        definition: {
-          schemaVersion: 1,
-          rootEntity: 'order',
-          where: {
-            type: 'group',
-            op: 'and',
-            children: [{ type: 'condition', id, left: { field: 'total' }, operator: 'above', value: 5 }],
-          },
-        },
-      });
-      request.flush({ valid: true, sentence: '', sentenceParts: sentenceOf([id, 'total above 5']), conditions: [] });
-      expect(store.sentence()).toEqual({ parts: sentenceOf([id, 'total above 5']), stale: false });
-    });
-
-    it('keeps the last valid sentence, dimmed at once, when the draft becomes unfinished again', async () => {
-      const id = await openComplete();
-      answerValidate(sentenceOf([id, 'total above 5']));
-
-      store.apply({ kind: 'value', id, value: undefined });
-      settle();
-
-      expect(store.sentence()).toEqual({ parts: sentenceOf([id, 'total above 5']), stale: true });
-      wait(5 * VALIDATE_DEBOUNCE_MS);
-      http.expectNone(VALIDATE);
-    });
-
-    it('does not dim the sentence while a complete draft waits for its answer', async () => {
-      const id = await openComplete();
-      answerValidate(sentenceOf([id, 'total above 5']));
-
-      store.apply({ kind: 'value', id, value: '6' });
-      settle();
-      wait(VALIDATE_DEBOUNCE_MS);
-
-      expect(store.sentence().stale).toBe(false);
-      http.expectOne(VALIDATE).flush({ valid: true, sentence: '', sentenceParts: [], conditions: [] });
-    });
-
-    it('cancels the request of an older draft, so its answer never replaces a newer one', async () => {
-      const id = await openComplete();
-      wait(VALIDATE_DEBOUNCE_MS);
-      const older = http.expectOne(VALIDATE);
-
-      store.apply({ kind: 'value', id, value: '6' });
-      settle();
-      expect(older.cancelled).toBe(true);
-
-      const newer = answerValidate(sentenceOf([id, 'total above 6']));
-      expect(newer.request.body.definition.where.children[0].value).toBe(6);
-      expect(store.sentence().parts).toEqual(sentenceOf([id, 'total above 6']));
-    });
-
-    it('restarts the wait on every edit, so typing sends one request', async () => {
-      const id = await openComplete();
-
-      wait(VALIDATE_DEBOUNCE_MS - 50);
-      store.apply({ kind: 'value', id, value: '55' });
-      settle();
-      wait(VALIDATE_DEBOUNCE_MS - 50);
-      http.expectNone(VALIDATE);
-
-      wait(50);
-      expect(http.expectOne(VALIDATE).request.body.definition.where.children[0].value).toBe(55);
-    });
-
-    it('dims the sentence and names the refused condition by its mark, with no error on its row', async () => {
-      const id = await openComplete();
-      answerValidate(sentenceOf([id, 'total above 5']));
-      store.apply({ kind: 'value', id, value: '7' });
-      settle();
-      wait(VALIDATE_DEBOUNCE_MS);
-
-      http
-        .expectOne(VALIDATE)
-        .flush(problem(422, 'DEFINITION_INVALID', [{ code: 'VALUE_TYPE_MISMATCH', path: '/where/children/0/value', nodeId: id, params: {} }]), {
-          status: 422,
-          statusText: 'Unprocessable',
-        });
-
-      expect(store.sentence().stale).toBe(true);
-      expect(store.status()).toMatchObject({ kind: 'invalid', mark: store.marks().get(id) });
-      expect(store.messages().size).toBe(0);
-      expect(store.failure()).toBeNull();
-    });
-
-    it('shows the failure when the engine does not answer, and asks again on retry', async () => {
-      const id = await openComplete();
-      wait(VALIDATE_DEBOUNCE_MS);
-      http.expectOne(VALIDATE).flush(problem(503, 'ENGINE_UNAVAILABLE'), { status: 503, statusText: 'Unavailable' });
-      expect(store.failure()?.code).toBe('ENGINE_UNAVAILABLE');
-      expect(store.sentence().stale).toBe(true);
-
-      store.revalidate();
-      settle();
-      answerValidate(sentenceOf([id, 'total above 5']));
-
-      expect(store.failure()).toBeNull();
-      expect(store.sentence().stale).toBe(false);
-    });
-
-    it('flags the conditions whose clause was rewritten, once, for the settle', async () => {
-      const id = await openComplete();
-      answerValidate(sentenceOf([id, 'total above 5']));
-      expect(store.settling().size).toBe(0);
-
-      store.apply({ kind: 'value', id, value: '6' });
-      settle();
-      answerValidate(sentenceOf([id, 'total above 6']));
-      expect([...store.settling()]).toEqual([id]);
-
-      wait(1000);
-      expect(store.settling().size).toBe(0);
-    });
-  });
+  afterEach(() => h.finish());
 
   describe('opening', () => {
     it('starts a new control on the first root entity, with nothing to lose yet', async () => {
@@ -314,6 +92,72 @@ describe('EditorStore', () => {
       expect(store.messages().get('c2')).toEqual([
         { key: 'errors.definition.UNKNOWN_FIELD', params: {}, input: 'left', index: undefined },
       ]);
+    });
+
+    it('still says a stored control is outdated when the engine answers only on a second try', async () => {
+      await open({ id: 7 }, control());
+      wait(VALIDATE_DEBOUNCE_MS);
+      http.expectOne(VALIDATE).flush(problem(503, 'ENGINE_UNAVAILABLE'), { status: 503, statusText: 'Unavailable' });
+      expect(store.outdated()).toBe(false);
+
+      store.revalidate();
+      settle();
+      wait(VALIDATE_DEBOUNCE_MS);
+      http
+        .expectOne(VALIDATE)
+        .flush(problem(422, 'DEFINITION_INVALID', [{ code: 'UNKNOWN_FIELD', path: '/where/children/1/left', nodeId: 'c2', params: {} }]), {
+          status: 422,
+          statusText: 'Unprocessable',
+        });
+
+      expect(store.outdated()).toBe(true);
+      expect([...store.messages().keys()]).toEqual(['c2']);
+    });
+
+    it('takes a 422 as an error of the edit once the stored control was edited before its first sentence', async () => {
+      await open({ id: 7 }, control());
+      store.apply({ kind: 'value', id: 'c1', value: '250' });
+      settle();
+      wait(VALIDATE_DEBOUNCE_MS);
+
+      http
+        .expectOne(VALIDATE)
+        .flush(problem(422, 'DEFINITION_INVALID', [{ code: 'VALUE_TYPE_MISMATCH', path: '/where/children/0/value', nodeId: 'c1', params: {} }]), {
+          status: 422,
+          statusText: 'Unprocessable',
+        });
+
+      expect(store.outdated()).toBe(false);
+      expect(store.messages().size).toBe(0);
+    });
+
+    it('reads the glossary and the control again when asked to, also for the control it already holds', async () => {
+      await open({ id: 7 }, control());
+      answerValidate([]);
+
+      const again = store.open({ id: 7 }, true);
+      (await next('/api/v1/controls/7')).flush(control({ name: 'read again' }));
+      await again;
+
+      expect(store.name()).toBe('read again');
+      settle();
+      answerValidate([]);
+    });
+
+    it('leaves the screen to the newer of two opens when the older one answers last', async () => {
+      const older = store.open({ id: 7 });
+      (await next('/api/v1/glossary')).flush(SYNTHETIC_GLOSSARY);
+      const first = await next('/api/v1/controls/7');
+      const newer = store.open({ id: 8 });
+      (await next('/api/v1/controls/8')).flush(control({ id: 8, name: 'the newer one' }));
+      await newer;
+
+      first.flush(control({ name: 'the older one' }));
+      await older;
+
+      expect([store.control()?.id, store.name()]).toEqual([8, 'the newer one']);
+      settle();
+      answerValidate([]);
     });
 
     it('is not found when no control has the id', async () => {
@@ -446,6 +290,53 @@ describe('EditorStore', () => {
       expect([...store.messages().keys()]).toEqual(['c2']);
       settle();
       answerValidate([]);
+    });
+
+    it('forgets what the server said about a row when that row is removed', async () => {
+      await open({ id: 7 }, control());
+      answerValidate([]);
+      const saving = store.save();
+      (await next('/api/v1/controls/7')).flush(
+        problem(422, 'DEFINITION_INVALID', [{ code: 'UNKNOWN_FIELD', path: '/where/children/1/left', nodeId: 'c2', params: {} }]),
+        { status: 422, statusText: 'Unprocessable' },
+      );
+      await saving;
+      expect(store.status()).toMatchObject({ kind: 'invalid', mark: letters[1] });
+
+      store.apply({ kind: 'remove', target: 'c2' });
+
+      expect(store.messages().size).toBe(0);
+      expect(store.status()).toBeNull();
+      settle();
+      answerValidate([]);
+    });
+
+    it('keeps what was typed while a save was on its way, and keeps it guarded', async () => {
+      await open({ id: 7 }, control());
+      answerValidate([]);
+      store.setName('first name');
+
+      const saving = store.save();
+      const request = await next('/api/v1/controls/7');
+      store.setName('typed during the save');
+      request.flush(control({ name: 'first name', concurrencyToken: 'token-3b' }));
+      await saving;
+
+      expect(store.name()).toBe('typed during the save');
+      expect(store.dirty()).toBe(true);
+      expect(store.control()?.concurrencyToken).toBe('token-3b');
+    });
+
+    it('sends one request when save is asked twice in a row', async () => {
+      await open({ id: 7 }, control());
+      answerValidate([]);
+
+      const first = store.save();
+      const second = store.save();
+      (await next('/api/v1/controls/7')).flush(control());
+
+      expect(await second).toEqual({ kind: 'failed' });
+      expect(await first).toMatchObject({ kind: 'saved' });
     });
 
     it('says that the control was saved elsewhere, and reads it again when asked', async () => {

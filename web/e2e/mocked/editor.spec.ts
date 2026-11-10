@@ -223,6 +223,56 @@ test.describe('control editor', () => {
     await expect(banner).toHaveCount(0);
   });
 
+  test('a stored control whose glossary could not be read is built once the glossary is read again', async ({ page, api }) => {
+    const control = stored(api);
+    api.fail('GET /glossary', problem(503, 'ENGINE_UNAVAILABLE'));
+    await page.goto(`/controls/${control.id}`);
+    await expect(page.getByTestId('control-name')).toHaveValue(control.name);
+    await expect(page.getByTestId('condition-builder')).toHaveCount(0);
+
+    api.heal('GET /glossary');
+    await page.getByTestId('error-banner').getByRole('button', { name: t('common.retry'), exact: true }).click();
+
+    await expect(page.getByTestId('condition-row')).toHaveCount(control.definition.where.children.length);
+    await expect(page.getByTestId('error-banner')).toHaveCount(0);
+    await expect(sentence(page)).toHaveAttribute('data-stale', 'false');
+  });
+
+  test('removing a row the server refused takes its error and its status line away', async ({ page, api }) => {
+    const control = stored(api);
+    const second = control.definition.where.children[1] as ConditionNode;
+    api.fail(
+      `PUT /controls/${control.id}`,
+      problem(422, 'DEFINITION_INVALID', {}, [
+        { code: 'VALUE_TYPE_MISMATCH', path: '/where/children/1/value', nodeId: second.id, params: {} },
+      ]),
+    );
+    await openStored(page, control);
+    await page.getByTestId('control-name').fill(`${control.name} 2`);
+    await page.getByTestId('save').click();
+    await expect(page.getByTestId('row-error')).toHaveCount(1);
+
+    await row(page, 1).getByTestId('remove-row').click();
+
+    await expect(page.getByTestId('row-error')).toHaveCount(0);
+    await expect(page.getByTestId('sentence-status')).toHaveCount(0);
+  });
+
+  test('a first save and run leaves the saved control, not the unsaved one, behind in the history', async ({ page, api }) => {
+    const source = stored(api);
+    await page.goto(`/controls/new?from=${source.id}`);
+    await expect(page.getByTestId('condition-row')).toHaveCount(source.definition.where.children.length);
+
+    await page.getByTestId('save-run').click();
+    await expect(page).toHaveURL(/\/runs\/\d+$/);
+    await page.goBack();
+
+    const created = api.controls.at(-1)!;
+    await expect(page).toHaveURL(new RegExp(`/controls/${created.id}$`));
+    await expect(page.getByTestId('control-name')).toHaveValue(created.name);
+    expect(api.callsTo('POST /controls')).toHaveLength(1);
+  });
+
   test('save and run goes to the results of the new run', async ({ page, api }) => {
     const control = stored(api);
     await openStored(page, control);

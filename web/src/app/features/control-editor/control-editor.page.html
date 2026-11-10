@@ -11,10 +11,18 @@
 
   <div class="stack page-banners">
     @if (store.glossaryError(); as error) {
-      <app-error-banner [error]="error" (retry)="retry()" />
+      <app-error-banner data-source="glossary" [error]="error" (retry)="reopen()" />
     }
     @if (store.failure(); as error) {
-      <app-error-banner [error]="error" (retry)="retry()" />
+      <!-- a failed read is tried again here; a failed save, run or archive is tried again with its own button -->
+      <app-error-banner
+        data-source="action"
+        [error]="error"
+        [retryable]="store.loadState() === 'failed'"
+        (retry)="reopen()"
+      />
+    } @else if (store.sentenceFailure(); as error) {
+      <app-error-banner data-source="sentence" [error]="error" (retry)="store.revalidate()" />
     }
     @if (store.archived()) {
       <app-banner
@@ -107,6 +115,7 @@
               [class.field--invalid]="!!store.descriptionIssue()"
             >
               <textarea
+                #descriptionInput
                 matInput
                 id="control-description"
                 rows="2"
