@@ -1,19 +1,23 @@
 # dc-engine notes
 
 ## State
-Phase 1 done on 2026-11-11 (gate: `gates/phase-1.txt`, 137 tests); phase 2, the validator, is next. The run is
+Phases 1 and 2 done on 2026-11-11 (gates: `gates/phase-1.txt`, `gates/phase-2.txt`, 220 tests); phase 3, the
+compiler, is next. The phase 1 review is running; its fixes land as one commit when it reports. The run is
 unattended on Kfir's word of 2026-11-11 (the night brief, see "Decisions taken unattended"): no questions, no
 stop at a phase gate, push and PR allowed once the gate passes, no merge.
 
 What exists: `engine/` with `pyproject.toml`, `uv.lock`, `.python-version` (3.12) and `requirements.txt`; the
 settings and the connection URL; problem details for every error; the correlation id; the glossary package
 (model, loader, tables, public view, catalog comparison); the executor with its guards; the startup check;
-`GET /health` and `GET /glossary`. Start: `cd engine && .venv/bin/python -m uvicorn app.main:create_app
---factory --host 127.0.0.1 --port 8000`.
+`GET /health` and `GET /glossary`; the validator (`validate_definition(document, glossary, schema)`: schema
+layer, semantic layer, `ValidatedDefinition`), not yet behind an endpoint. Start: `cd engine &&
+.venv/bin/python -m uvicorn app.main:create_app --factory --host 127.0.0.1 --port 8000`.
 
 ## Next
-1. Phase 2: the schema layer and the semantic layer of the validator, `ValidatedDefinition`, the fixtures.
-2. Then phases 3 to 5 and 7 in order, each closed by `/check --tests`, a reviewer on opus, one review-fix commit
+1. Phase 3: operators and the LIKE escape, `age_years`, the builder (joins, EXISTS, truth columns, the page and
+   count statements), the plan with parameter recipes, the cache, `POST /debug/compile`, the goldens, the
+   harness lines.
+2. Then phases 4, 5 and 7 in order, each closed by `/check --tests`, a reviewer on opus, one review-fix commit
    and a Log line here.
 3. The gate, then push and PR (Kfir's word is in the night brief). No merge.
 
@@ -147,3 +151,11 @@ says, what is true now. The list goes into the PR body under this heading at `/s
   (`e2e/mocked/shell.spec.ts`): the `pgrep` line printed the other suite and the command went on anyway. Since
   then every suite here starts through a wrapper that waits until no other suite runs (scratchpad
   `wait-suite.sh`, 30 minutes at most); it waited once already, at 00:27.
+- 2026-11-11 phase 2, unattended, `gates/phase-2.txt`: ruff, pyright, 220 tests, print guard. The validator
+  rejects each of the thirteen fixtures with exactly one error at the fixture's code and path, and jsonschema
+  4.26.0 does report a member forbidden with `false` at its object, as errors.md says. Choices inside the
+  contract: a path fault does not stop the walk when the entity it reaches is still known (a one-to-many hop, a
+  path over the limit), so the field, the operator and the values are checked too; an enum literal is matched
+  exactly, not without regard to case (rendering is where the contract asks for that); literals are typed
+  against the left field even when the operator is not allowed for it. A related node whose relationship is
+  known but starts elsewhere still has its `where` checked in the entity the relationship reaches.

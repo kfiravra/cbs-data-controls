@@ -218,11 +218,11 @@ Verify: `/check --tests` · the wheel check prints `exit=0` for each of the thre
 Commit: `feat(engine): service skeleton, glossary loader and startup check`
 
 ### Phase 2: validator (about 1.5 h)
-- [ ] The schema layer per Design C.
-- [ ] The semantic layer per Design C: scopes and paths, operators and operands, limits, ids; one check per
+- [x] The schema layer per Design C.
+- [x] The semantic layer per Design C: scopes and paths, operators and operands, limits, ids; one check per
       definition error code of `contracts/errors.md`.
-- [ ] `ValidatedDefinition` per Design C, the only input of the compiler and the explainer.
-- [ ] Tests: every `contracts/examples/*.json` is valid; every `contracts/examples/invalid/*.json` yields its
+- [x] `ValidatedDefinition` per Design C, the only input of the compiler and the explainer.
+- [x] Tests: every `contracts/examples/*.json` is valid; every `contracts/examples/invalid/*.json` yields its
       expected code and path; one more test for each definition error code the fixtures do not cover; every limit
       is read from the glossary and exceeded by one; a hidden field through a doctored glossary; `true` is not a
       number; two errors in one definition come back together, in document order.

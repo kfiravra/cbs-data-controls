@@ -10,9 +10,11 @@ from typing import Any
 import pytest
 from starlette.testclient import TestClient
 
-from app.glossary import Glossary, load_glossary
+from app.glossary import Glossary, load_glossary, parse_glossary
 from app.main import create_app
 from app.settings import Settings, load_settings
+from app.validator import DefinitionSchema, load_schema
+from tests.synthetic import synthetic_document
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
 CONTRACTS_DIR = REPOSITORY_ROOT / "contracts"
@@ -50,6 +52,17 @@ def glossary_document() -> dict[str, Any]:
 @pytest.fixture(scope="session")
 def glossary() -> Glossary:
     return load_glossary(CONTRACTS_DIR / "glossary.json")
+
+
+@pytest.fixture(scope="session")
+def synthetic_glossary(glossary_document: dict[str, Any]) -> Glossary:
+    """A glossary about tickets and queues: what a test uses to stay clear of the real entity keys."""
+    return parse_glossary(synthetic_document(glossary_document))
+
+
+@pytest.fixture(scope="session")
+def schema() -> DefinitionSchema:
+    return load_schema(CONTRACTS_DIR)
 
 
 @pytest.fixture
