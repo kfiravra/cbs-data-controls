@@ -1,0 +1,35 @@
+{
+  "layer": "semantic",
+  "expected": {
+    "code": "UNKNOWN_FIELD",
+    "path": "/where/children/1/left"
+  },
+  "definition": {
+    "schemaVersion": 1,
+    "rootEntity": "employee",
+    "where": {
+      "type": "group",
+      "op": "and",
+      "children": [
+        {
+          "type": "condition",
+          "id": "c1",
+          "left": {
+            "field": "status"
+          },
+          "operator": "eq",
+          "value": "active"
+        },
+        {
+          "type": "condition",
+          "id": "c2",
+          "left": {
+            "field": "nickname"
+          },
+          "operator": "eq",
+          "value": "x"
+        }
+      ]
+    }
+  }
+}

@@ -80,8 +80,29 @@ Create a control, run it, read the results and their reasons, try the suggestion
 
 ## Contracts
 
-<!-- dc-contracts phase 4 fills this section: what each file in contracts/ fixes and how a contract change is made. -->
-To be written in dc-contracts.
+`contracts/` is the only channel between the three services. No service imports another's code and no SQL text
+crosses a boundary: the engine, the api and the client were each built against these files alone.
+
+| File | What it fixes |
+|---|---|
+| [`control-definition.schema.json`](contracts/control-definition.schema.json) | The JSON of a control: a root entity and a tree of groups, conditions and related-record nodes; the eighteen operators and the shape of each one's operand. The api and the engine validate with this very file |
+| [`glossary.json`](contracts/glossary.json) | The business language: entities, fields, relationships and operators with Hebrew and English labels, the sentence and reason templates, the limits, the formats, and the texts of suggestions. Table and column names appear only here, and the engine never sends them out |
+| [`examples/*.json`](contracts/examples) | Six controls (the four of the assignment and two more), each with the records it must flag in the seed data and the condition ids that match per record |
+| [`examples/invalid/*.json`](contracts/examples/invalid) | Definitions that must be rejected, each with the layer that rejects it, the error code and the JSON pointer |
+| [`api.md`](contracts/api.md) | Both HTTP APIs: the engine's and the application's (`/api/v1`), every request, response and error |
+| [`errors.md`](contracts/errors.md) | The closed lists: error codes, definition error codes, reason keys, evidence keys and part roles, with their parameters, and the rules they share (what "matched" means, NULL, depth and count, rendering) |
+
+Two checks keep the folder honest:
+
+```sh
+uv run scripts/contracts-check.py            # the schema, the glossary, the examples and the fixtures agree
+uv run scripts/contracts-check.py --render   # the rule sentence and the reasons of each example, he and en
+scripts/db-check.sh examples                 # each example flags exactly its expected records in the database
+```
+
+A contract change is one commit to `contracts/` on `main`, with both checks green, and one line to every session
+that builds against it. Adding a field, an entity or a relationship is a change to `glossary.json` (and to `sql/`
+when the column is new) and to nothing else: no service code names a table, a column or a business term.
 
 ## Repository map
 
@@ -90,7 +111,7 @@ To be written in dc-contracts.
 contracts/            definition schema, glossary, examples, api.md, errors.md: the only channel between services
 docs/                 architecture, design and the documents listed below
 sql/                  database scripts, run in order by scripts/db-init.sh
-scripts/              db-init.sh and db-check.sh; the run-all scripts arrive with dc-delivery
+scripts/              db-init.sh, db-check.sh and contracts-check.py; the run-all scripts arrive with dc-delivery
 engine/               Python FastAPI control engine (dc-engine)
 api/                  .NET 10 Web API, which also serves the built client (dc-api)
 web/                  Angular client (dc-web)

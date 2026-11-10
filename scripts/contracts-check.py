@@ -16,7 +16,8 @@ Paths resolve from this script's location (or --root), so the working directory 
 3. agreement         the schema and the glossary agree on operators, arities, limits and key patterns.
 4. examples          contracts/examples/*.json: the wrapper, the definition against the schema and the
                      glossary, the expected sets (Design D and G).
-5. invalid fixtures  contracts/examples/invalid/*.json and contracts/errors.md (arrives with phase 4).
+5. invalid fixtures  contracts/examples/invalid/*.json are rejected where they say, by the layer they say, with
+                     a code of contracts/errors.md; the keys of errors.md equal the glossary's (Design F and G).
 
 Output: one line per failure, each starting with the file path, printed after everything else (the Stop
 hook shows the last lines of a failed check). Exit 1 on any failure, else 0 with a one-line summary.
@@ -112,6 +113,15 @@ ISO_DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 EXAMPLE_MEMBERS = ("id", "name", "description", "runDate", "definition", "expected")
 EXAMPLE_OPTIONAL = ("heuristic", "alternateRuns")
 EXAMPLE_ID = re.compile(r"^[a-z][a-z0-9-]{0,63}$")
+
+# Design F: the invalid fixtures and the catalogue they name. A catalogue row starts with its code or key in
+# backticks (errors.md states the same pattern); a table runs from its "## " heading to the next one.
+FIXTURE_LAYERS = ("schema", "semantic")
+CATALOGUE_ROW = re.compile(r"^\| `([A-Za-z_]+)` \|")
+DEFINITION_CODES_HEADING = "Definition error codes"
+REASON_KEYS_HEADING = "Reason keys"
+EVIDENCE_KEYS_HEADING = "Evidence keys"
+RELATED_REASON_KEYS = ("related_any", "related_none")
 
 
 # ---------------------------------------------------------------------------------------------------------
@@ -911,8 +921,6 @@ class DefinitionWalk:
             self.c.add(self.where + "/rootEntity", f"entity {root.get('key')!r} may not be a root entity")
         tree = self.where + "/where"
         self.group(tree, root, definition["where"], 1, False)
-        for node_id in sorted({i for i in self.ids if self.ids.count(i) > 1}):
-            self.c.add(tree, f"node id {node_id!r} is used more than once")
         limits = self.g.get("limits", {})
         for actual, key, what in ((self.depth, "maxDepth", "groups deep"), (len(self.ids), "maxConditions", "nodes"),
                                   (self.values, "maxTotalValues", "literal values")):
@@ -931,8 +939,11 @@ class DefinitionWalk:
             else:
                 self.related(child_where, scope, child, depth, in_related)
 
-    def note_id(self, node: dict[str, Any], in_related: bool) -> None:
-        """Records a node id; a node inside a related sub-tree is never matched."""
+    def note_id(self, where: str, node: dict[str, Any], in_related: bool) -> None:
+        """Records a node id, and a failure when an earlier node already carries it; a node inside a related
+        sub-tree is never matched."""
+        if node["id"] in self.ids:
+            self.c.add(where + "/id", f"node id {node['id']!r} is already used by an earlier node")
         self.ids.append(node["id"])
         if not in_related:
             self.matchable.append(node["id"])
@@ -963,9 +974,9 @@ class DefinitionWalk:
 
     def condition(self, where: str, scope: dict[str, Any], node: dict[str, Any], in_related: bool) -> None:
         """A condition: the left field, the operator for its type, and the operand against that type."""
-        self.note_id(node, in_related)
-        literals = [("/value", node["value"])] if "value" in node else []
-        literals += [(pointer("values", i), v) for i, v in enumerate(node.get("values", []))]
+        self.note_id(where, node, in_related)
+        literals = [("/value", "", node["value"])] if "value" in node else []
+        literals += [("/values", f"item {i}: ", v) for i, v in enumerate(node.get("values", []))]
         self.values += len(literals)
         left = self.field(where + "/left", scope, node["left"])
         op = operator(self.g, node["operator"])
@@ -985,17 +996,17 @@ class DefinitionWalk:
                         self.c.add(where + pointer(side), f"field {fld.get('key')!r} is not comparable with another field")
                 if left.get("type") != right.get("type"):
                     self.c.add(where + "/right", f"compares a {left.get('type')} field with a {right.get('type')} field")
-        problems = [(w, literal_problem(left, v)) for w, v in literals]
-        for literal_where, problem in problems:
+        problems = [(member, prefix, literal_problem(left, v)) for member, prefix, v in literals]
+        for member, prefix, problem in problems:
             if problem:
-                self.c.add(where + literal_where, problem)
-        if op.get("arity") == 2 and len(literals) == 2 and not any(problem for _, problem in problems):
-            if literals[0][1] > literals[1][1]:
+                self.c.add(where + member, prefix + problem)
+        if op.get("arity") == 2 and len(literals) == 2 and not any(problem for _, _, problem in problems):
+            if literals[0][2] > literals[1][2]:
                 self.c.add(where + "/values", "the first value is above the second")
 
     def related(self, where: str, scope: dict[str, Any], node: dict[str, Any], depth: int, in_related: bool) -> None:
         """A related node: a one-to-many relationship that starts at the scope entity, and its sub-tree."""
-        self.note_id(node, in_related)
+        self.note_id(where, node, in_related)
         rel = relationship(self.g, node["relationship"])
         if rel is None:
             self.c.add(where + "/relationship", f"unknown relationship {node['relationship']!r}")
@@ -1129,13 +1140,129 @@ def check_examples(ctx: Context) -> CheckResult:
 
 
 # ---------------------------------------------------------------------------------------------------------
-# Check 5: stub
+# Check 5: the invalid fixtures and the error catalogue
+
+
+def catalogue_tables(text: str) -> dict[str, list[tuple[str, list[str]]]]:
+    """The catalogue tables of errors.md by "## " heading: per row its code or key and its other cells."""
+    tables: dict[str, list[tuple[str, list[str]]]] = {}
+    heading = ""
+    for line in text.splitlines():
+        if line.startswith("## "):
+            heading = line[3:].strip()
+        match = CATALOGUE_ROW.match(line)
+        if match:
+            cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
+            tables.setdefault(heading, []).append((match.group(1), cells[1:]))
+    return tables
+
+
+def check_catalogue(c: Collector, glossary: dict[str, Any], tables: dict[str, list[tuple[str, list[str]]]]) -> None:
+    """errors.md against the glossary: no key leads two rows, the reason keys are the operator keys plus the
+    two related keys, and the evidence keys are the keys of suggestions.evidence."""
+    seen: set[str] = set()
+    for heading, rows in tables.items():
+        for key, _ in rows:
+            if key in seen:
+                c.add(heading, f"`{key}` leads more than one row of the file")
+            seen.add(key)
+    expectations = (
+        (REASON_KEYS_HEADING, {op.get("key") for op in glossary.get("operators", [])} | set(RELATED_REASON_KEYS),
+         "an operator key of the glossary, or related_any or related_none"),
+        (EVIDENCE_KEYS_HEADING, set(glossary.get("suggestions", {}).get("evidence", {})),
+         "a key of suggestions.evidence in the glossary"),
+    )
+    for heading, expected, what in expectations:
+        listed = {key for key, _ in tables.get(heading, [])}
+        for key in sorted(expected - listed, key=str):
+            c.add(heading, f"no row for `{key}`")
+        for key in sorted(listed - expected, key=str):
+            c.add(heading, f"`{key}` is not {what}")
+
+
+def check_fixture(c: Collector, glossary: dict[str, Any], validator: Draft202012Validator,
+                  codes: dict[str, str], doc: Any) -> None:
+    """One invalid fixture: the wrapper; a code of the catalogue whose layer is the fixture's; a schema-layer
+    definition fails the schema with one error, at the expected path; a semantic-layer definition passes the
+    schema and the glossary walk of check 4 finds a fault at the expected path."""
+    if not check_members(c, "", doc, ("layer", "expected", "definition")):
+        return
+    layer, expected = doc.get("layer"), doc.get("expected")
+    if layer not in FIXTURE_LAYERS:
+        c.add("/layer", f"must be one of {', '.join(FIXTURE_LAYERS)}")
+        return
+    if not check_members(c, "/expected", expected, ("code", "path")):
+        return
+    code, path = expected.get("code"), expected.get("path")
+    if code not in codes:
+        c.add("/expected/code", f"{code!r} is not a row of '{DEFINITION_CODES_HEADING}' in {ERRORS_FILE}")
+    elif codes[code] != layer:
+        c.add("/expected/code", f"{ERRORS_FILE} gives {code} the layer {codes[code]!r}; the fixture says {layer!r}")
+    if not isinstance(path, str) or (path and not path.startswith("/")):
+        c.add("/expected/path", "must be a JSON Pointer into the definition")
+        return
+
+    errors = schema_errors(validator, doc.get("definition"))
+    if layer == "schema":
+        found = [where for where, _ in errors]
+        if found != [path]:
+            c.add("/definition", f"the schema must report one error, at {path!r}; it reports "
+                  + (", ".join(repr(where) for where in found) if found else "none"))
+        return
+    if errors:
+        c.add("/definition", "a semantic-layer fixture must pass the schema; it fails at "
+              + ", ".join(repr(where) for where, _ in errors))
+        return
+    walked = Collector(c.path)
+    DefinitionWalk(walked, "", glossary).run(doc["definition"])
+    found = [failure.message.split(": ", 1)[0] for failure in walked.failures]
+    if path not in found:
+        c.add("/definition", f"the glossary must reject it at {path!r}; the walk finds "
+              + (", ".join(repr(where) for where in found) if found else "no fault"))
 
 
 def check_invalid_fixtures(ctx: Context) -> CheckResult:
-    """Check 5 (Design G): contracts/examples/invalid/*.json fail (schema layer) or pass (semantic layer) the
-    schema, and every expected code is a row of contracts/errors.md. Arrives with phase 4."""
-    return Skipped("arrives with phase 4")
+    """Check 5 (Design F and G): contracts/errors.md lists the keys the glossary defines, and every
+    contracts/examples/invalid/*.json is rejected by the layer it names, at the path it names, with a code of
+    the catalogue."""
+    schema, glossary = ctx.schema, ctx.glossary
+    if not isinstance(schema, dict) or not isinstance(glossary, dict):
+        return Skipped("the schema or the glossary did not load")
+    try:
+        text = ctx.file(ERRORS_FILE).read_text(encoding="utf-8")
+    except (FileNotFoundError, UnicodeDecodeError) as e:
+        return [fail(ERRORS_FILE, f"cannot be read: {e}")]
+    tables = catalogue_tables(text)
+    catalogue = Collector(ERRORS_FILE)
+    check_catalogue(catalogue, glossary, tables)
+    failures = list(catalogue.failures)
+    codes = {code: (cells[0] if cells else "") for code, cells in tables.get(DEFINITION_CODES_HEADING, [])}
+    if not codes:
+        failures.append(fail(ERRORS_FILE, f"no rows under '## {DEFINITION_CODES_HEADING}'"))
+
+    directory = ctx.file(INVALID_DIR)
+    files = sorted(directory.glob("*.json")) if directory.is_dir() else []
+    if not files:
+        failures.append(fail(INVALID_DIR, "no invalid fixtures"))
+    validator = schema_validator(schema)
+    layers: set[str] = set()
+    for path in files:
+        rel = f"{INVALID_DIR}/{path.name}"
+        doc, failure = load_json(path)
+        if failure:
+            failures.append(fail(rel, failure.message))
+            continue
+        if not EXAMPLE_ID.match(path.stem):
+            failures.append(fail(rel, "the file name must be lower-case letters, digits and hyphens"))
+        c = Collector(rel)
+        check_fixture(c, glossary, validator, codes, doc)
+        failures += c.failures
+        if isinstance(doc, dict) and doc.get("layer") in FIXTURE_LAYERS:
+            layers.add(doc["layer"])
+    for layer in FIXTURE_LAYERS:
+        if files and layer not in layers:
+            failures.append(fail(INVALID_DIR, f"no fixture of the {layer} layer"))
+    return failures
 
 
 CHECKS: list[tuple[str, Callable[[Context], CheckResult]]] = [
@@ -1377,7 +1504,7 @@ def load_context(root: Path) -> Context:
 def main(argv: list[str] | None = None) -> int:
     """Runs every check and prints the failures last; 1 on any failure, else 0."""
     parser = argparse.ArgumentParser(description="Check contracts/: the definition schema, the glossary, their "
-                                                 "agreement and the example controls.")
+                                                 "agreement, the example controls and the invalid fixtures.")
     parser.add_argument("--root", type=Path, default=DEFAULT_ROOT,
                         help="repository root holding contracts/ (default: the parent of scripts/)")
     parser.add_argument("--render", action="store_true",

@@ -18,8 +18,9 @@ through the Angular compiler, the angular-eslint rules, and `console.log` outsid
   condition id), never `$index` in an editable list.
 - Components never call `HttpClient`. Services do, return typed results and own the caching (the glossary).
 - Every user-facing string is a translation key: dot-separated English grouped by screen (`list.*`, `editor.*`,
-  `results.*`, `suggestions.*`), with `errors.<CODE>` and `reasons.<key>` mirroring `contracts/errors.md`. No Hebrew
-  and no English prose in `.ts` or `.html`.
+  `results.*`, `suggestions.*`), with `errors.<CODE>` mirroring `contracts/errors.md`. No Hebrew and no English
+  prose in `.ts` or `.html`. Rule sentences, reasons and suggestion texts are not keys: the engine renders them
+  from the glossary and the client draws the text and its parts as received.
 - API payload types mirror `contracts/api.md` in one place; `interface` for object shapes, `type` for unions; no
   `any`, and `unknown` plus narrowing at the boundary.
 - The condition tree is immutable: an edit returns a new tree that shares the unchanged branches, so `computed()` and

@@ -197,21 +197,21 @@ Review: `/phase-review sql engine`
 Commit: `feat(sql): hebrew seed with planted violations and six example controls`
 
 ### Phase 4: HTTP APIs and error catalogue
-- [ ] `contracts/errors.md` per Design F, in the strict table format the check parses.
-- [ ] `contracts/api.md` per Design E.
-- [ ] `contracts/examples/invalid/*.json` per Design F, and check 5 in `scripts/contracts-check.py`.
-- [ ] Harness lines for decision 3: `.claude/rules/typescript.md` line 21, `.claude/skills/dc-web/SKILL.md` lines
+- [x] `contracts/errors.md` per Design F, in the strict table format the check parses.
+- [x] `contracts/api.md` per Design E.
+- [x] `contracts/examples/invalid/*.json` per Design F, and check 5 in `scripts/contracts-check.py`.
+- [x] Harness lines for decision 3: `.claude/rules/typescript.md` line 21, `.claude/skills/dc-web/SKILL.md` lines
       45 and 68, `.claude/skills/ship/SKILL.md` line 29 (reason text comes from the glossary, not from i18n).
-- [ ] CLAUDE.md "Where to read": rows for `contracts/api.md`, `contracts/errors.md` and `sql/README.md`. The file
+- [x] CLAUDE.md "Where to read": rows for `contracts/api.md`, `contracts/errors.md` and `sql/README.md`. The file
       must stay at or under 100 lines (an infra test enforces it; it has 94 today).
-- [ ] Design H in `contracts/api.md` and `contracts/errors.md`: parts (H2), the evidence keys (H1), the params of
+- [x] Design H in `contracts/api.md` and `contracts/errors.md`: parts (H2), the evidence keys (H1), the params of
       `TOO_MANY_VALUES` and `FIELD_COMPARISON_NOT_ALLOWED` (H3), depth and count, `conditions[]` and
       `/debug/compile` (H4b to H4d).
-- [ ] Design I in `contracts/api.md`, `contracts/errors.md` and the fixtures: the two decisions, the three lines
+- [x] Design I in `contracts/api.md`, `contracts/errors.md` and the fixtures: the two decisions, the three lines
       of I1 for `errors.md` and the fixtures, and the pinned details I2 to I14.
-- [ ] `docs/architecture.md`: the lines of §4.2, §5.1, §6, §7 and §8 that decisions 3, 8, 15, 22 and 27 change.
+- [x] `docs/architecture.md`: the lines of §4.2, §5.1, §6, §7 and §8 that decisions 3, 8, 15, 22 and 27 change.
       (The dc-engine gate line of §19 changes in the engine task, with decision 26.)
-- [ ] `README.md`: the contracts section (what each file fixes, how a contract change is made).
+- [x] `README.md`: the contracts section (what each file fixes, how a contract change is made).
 
 Verify: `uv run scripts/contracts-check.py` · `node --test .claude/hooks/tests/*.test.mjs` · `/check all --tests`
 Review: `/phase-review api web engine`

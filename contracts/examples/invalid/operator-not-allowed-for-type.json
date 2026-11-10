@@ -1,0 +1,26 @@
+{
+  "layer": "semantic",
+  "expected": {
+    "code": "OPERATOR_NOT_ALLOWED",
+    "path": "/where/children/0/operator"
+  },
+  "definition": {
+    "schemaVersion": 1,
+    "rootEntity": "employee",
+    "where": {
+      "type": "group",
+      "op": "and",
+      "children": [
+        {
+          "type": "condition",
+          "id": "c1",
+          "left": {
+            "field": "status"
+          },
+          "operator": "gt",
+          "value": "active"
+        }
+      ]
+    }
+  }
+}

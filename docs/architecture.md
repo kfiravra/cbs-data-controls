@@ -110,9 +110,9 @@ Three related tables so that relationships of two hops can be demonstrated: **Mi
 
 ### 4.2 Schema `dq` — controls store (written only by .NET)
 - **Control**: id, name, description, root_entity_key, current_version, is_active, created/updated timestamps, concurrency token.
-- **ControlVersion**: control_id, version number, definition JSON, definition hash, created timestamp. Immutable; every edit creates a new version.
-- **Run**: id, control_id, control_version, run date, language, started/finished timestamps, status (succeeded / failed / timed out), total violation count, stored row count, duration, error code and parameters if failed, engine version, correlation id.
-- **RunResult**: run_id, record key, record display fields (JSON), matched condition ids, structured reasons (JSON: reason key + parameters per matched condition), rendered reason text in the run's language (`NVARCHAR`, searchable). One row per stored violation. Indexed by run_id.
+- **ControlVersion**: control_id, version number, definition JSON, definition hash, created timestamp. Immutable; an edit that changes the definition creates a new version, an edit of the name or the description alone does not.
+- **Run**: id, control_id, control_version, run date, language, started/finished timestamps, status (running / succeeded / failed / timed out), total violation count, stored row count, duration, a summary (JSON: the rule sentence and, per condition, its sentence and its count, so the results screen never needs the engine), error code and parameters if failed, engine version, correlation id.
+- **RunResult**: run_id, a sequence number (the stable page order), record key (a string, so a non-integer key needs no contract change), record display fields (JSON), display text (the identifying values joined by a space, for search and sort), matched condition ids, structured reasons (JSON: reason key, parameters and rendered text per matched condition), rendered reason text in the run's language (`NVARCHAR`, searchable). One row per stored violation. Indexed by run_id.
 - Retention policy (configurable): keep the last N runs per control or the last X days; implemented as a cleanup command, documented.
 
 ### 4.3 Business glossary — a versioned JSON file in the Python service
@@ -173,10 +173,10 @@ Written and committed **before** the engine, API and client tasks start; they ru
 | File | What it fixes |
 |---|---|
 | `contracts/control-definition.schema.json` | The definition JSON (§5): node types, operators, limits |
-| `contracts/glossary.json` | The glossary (§4.3): entity, field, relationship and operator **keys**, labels `{he, en}`, reason templates. The engine loads this very file |
-| `contracts/examples/*.json` | The four assignment controls plus two more, each with the record keys it must flag in the seed data (the engine's integration tests and the client's e2e both use them) |
-| `contracts/api.md` | Both HTTP APIs on one page: path, method, request JSON, response JSON, error codes with parameters. Engine endpoints (§6) and application API (§7) |
-| `contracts/errors.md` | The closed list of error codes and reason keys with their parameters; `he.json` and `en.json` carry the text for each |
+| `contracts/glossary.json` | The glossary (§4.3): entity, field, relationship and operator **keys**, labels `{he, en}`, the sentence and reason templates, limits, formats and suggestion texts. It is the one source of reason and rule-sentence text. The engine loads this very file |
+| `contracts/examples/*.json` | The four assignment controls plus two more, each with the record keys it must flag in the seed data and the condition ids matched per record (the engine's integration tests and the client's e2e both use them). `invalid/` holds definitions that must be rejected, each with its layer, expected code and JSON pointer |
+| `contracts/api.md` | Both HTTP APIs on one page: path, method, request JSON, response JSON, error codes with parameters. Engine endpoints (§6) and application API (§7). Where it differs from this document, `api.md` wins |
+| `contracts/errors.md` | The closed list of error codes, definition error codes, reason keys, evidence keys and part roles with their parameters, and the rules they share (what "matched" means, NULL, depth and count, rendering). `he.json` and `en.json` carry the text of the error codes only; reasons and sentences are rendered by the engine from the glossary |
 
 A change to any of these after the parallel tasks have started is one commit to `contracts/` plus one line pasted into the other sessions. No other coordination exists.
 
@@ -189,19 +189,19 @@ Modules (one service, clear internal boundaries):
 - **validator**: validates a definition against the schema and the glossary; returns errors as code + JSON path + parameters.
 - **compiler**: turns a validated definition into a parameterized SELECT using a SQL builder library (identifiers only from the glossary, values only as bound parameters); resolves relationship paths into joins (many-to-one) or EXISTS / NOT EXISTS sub-queries (one-to-many); emits one computed flag per condition for reasons; rewrites computed fields into index-friendly predicates (e.g. age thresholds become birth-date ranges based on the run date).
 - **executor**: runs two statements under the read-only login — an exact count and a capped, deterministically ordered page of rows — with a per-statement timeout.
-- **explainer**: produces, per violation, the structured reasons (reason key + parameters per matched condition) and the rendered reason text in the requested language, from the glossary's templates and labels and the actual values.
+- **explainer**: produces the rule sentence and, per violation, the structured reasons (reason key + parameters per matched condition) and the rendered reason text in the requested language, from the glossary's templates and labels and the actual values. A condition is matched for a record when it is true and every group above it up to the root is true, so a true condition on a failed branch is not a reason. Every rendered text also comes as parts that carry the node id and the role of each piece (field, value, actual value), so a client can mark the conditions without rendering anything itself: the engine is the only renderer.
 - **cache**: in-memory map from hash(definition JSON + glossary version + engine version) to the compiled statement. Saves validation and compilation for unchanged definitions. It never caches results; every run queries the database.
 - **suggestions**: computes aggregate statistics on `hr` (null rates, ranges, distinct counts, FK orphans, date-pair sanity), derives heuristic control suggestions, optionally asks an LLM (only glossary and aggregates are sent, never row values), validates every suggestion through the validator and compiler, and returns suggestions as control definitions with name, description, rationale and evidence in the requested language. Works without an LLM key (heuristics only). Built from the start, inside the engine task.
 
 Endpoints (all JSON, errors as problem details with stable codes; the language comes from `Accept-Language`, default `he`):
 - `GET /health` — service and database connectivity.
 - `GET /glossary` — the glossary for UI consumption (keys, labels in both languages, types, operators, relationships), and its version.
-- `POST /validate` — dry compile; returns validation errors or the preview sentence of the rule in the requested language.
-- `POST /run` — input: a definition, the run date (default today, Asia/Jerusalem), the row cap; output: total count, violations with display fields, matched condition ids, structured reasons and rendered reason text, duration. Stateless.
+- `POST /validate` — dry compile; returns validation errors, or the preview sentence of the rule and one sentence per condition in the requested language.
+- `POST /run` — input: a definition, the run date (default today, Asia/Jerusalem), the row cap; output: total count, the rule sentence, a sentence and a count per condition, violations with display fields, matched condition ids, structured reasons and rendered reason text, duration. Stateless.
 - `POST /suggest` — returns suggested definitions.
-- `GET /debug/compile` — developer-only: returns the SQL a definition would produce. Disabled by default, enabled by configuration. Nothing in the normal flow transfers SQL text.
+- `POST /debug/compile` — developer-only (a POST, because it carries a definition): returns the two statements a definition would produce, with placeholders in the text and the values beside it. Disabled by default, enabled by configuration. Nothing in the normal flow transfers SQL text.
 
-Engine error codes (mapped by .NET to HTTP statuses; text comes from the client's translation files): `DEFINITION_INVALID`, `GLOSSARY_MISMATCH`, `QUERY_TIMEOUT`, `ROW_CAP_EXCEEDED` (informational), `DATABASE_UNAVAILABLE`.
+Engine error codes (mapped by .NET to HTTP statuses; text comes from the client's translation files): `DEFINITION_INVALID`, `GLOSSARY_MISMATCH`, `QUERY_TIMEOUT`, `ROW_CAP_EXCEEDED` (informational), `DATABASE_UNAVAILABLE`. The closed list is `contracts/errors.md`.
 
 ---
 
@@ -209,8 +209,8 @@ Engine error codes (mapped by .NET to HTTP statuses; text comes from the client'
 
 Modules:
 - **Glossary**: fetches from the engine at startup and on demand, caches in memory, exposes it to the client.
-- **Controls**: CRUD with versions. Create and update validate structurally, then call the engine's validate endpoint, then persist a new immutable version. Delete archives (soft delete). Optimistic concurrency returns a conflict on stale edits.
-- **Runs**: starts a run record, loads the current definition version, calls the engine `run` with the client's language, persists the snapshot (count, rows, structured reasons, rendered text), closes the run with status and duration. Serves run history per control and the paged, filterable, searchable, sortable results of a run from the snapshot. Never calls the engine for paging.
+- **Controls**: CRUD with versions. Create and update validate structurally, then call the engine's validate endpoint, then persist a new immutable version when the definition changed. Delete archives (soft delete); an archived control is read-only. Optimistic concurrency returns a conflict on stale edits.
+- **Runs**: starts a run record, loads the current definition version, calls the engine `run` with the client's language, persists the snapshot (count, the summary with the rule sentence and the per-condition counts, rows, structured reasons, rendered text), closes the run with status and duration. Serves run history per control and the paged, filterable, searchable, sortable results of a run from the snapshot. Never calls the engine for paging.
 - **Suggestions**: proxies the engine's suggestions to the client; an "accept" creates ordinary controls through the Controls module.
 - **EngineClient**: typed HTTP client with timeouts longer than the engine's query timeout, a single retry (runs are read-only, so retry is safe), a circuit breaker, a correlation id and the language forwarded on every call, and mapping of engine error codes to application errors.
 - **Error handling**: one uniform problem-details response shape for all errors, with a stable code, parameters, and a JSON path for validation errors so the editor can highlight the offending condition. No user-facing prose in the API; the client renders the code through its translation files. Internal details (stack traces, SQL) never reach the client.
@@ -220,8 +220,8 @@ Modules:
 API surface (resource-oriented, versioned under `/api/v1`):
 - glossary: read.
 - controls: list (filter by name, entity, active), create, read, update, archive, versions.
-- controls/{id}/validate — dry validation with preview.
-- controls/{id}/runs — start a run; list runs.
+- controls/validate — dry validation with preview (no id in the path: a new control has none yet).
+- controls/{id}/runs — start a run (the answer is the run, also when it failed: the failure is its status and error); list runs.
 - runs/{id} — summary; runs/{id}/results — paged, filtered, searched, sorted snapshot.
 - suggestions — request; suggestions/accept — create controls from accepted suggestions.
 - health.
@@ -237,7 +237,7 @@ Screens:
 4. **Suggestions dialog**: list of suggested controls with rationale and evidence, select, open in editor, create selected.
 
 Design constraints:
-- **i18n**: a translation service with JSON files (`he.json` default and fallback, `en.json` beside it); every user-facing string is `t('key')`; glossary labels are read from the glossary in the active language; error codes and reason keys from the APIs resolve to text here. No Hebrew literal anywhere in code or templates.
+- **i18n**: a translation service with JSON files (`he.json` default and fallback, `en.json` beside it); every user-facing string is `t('key')`; glossary labels are read from the glossary in the active language; error codes from the APIs resolve to text here. Rule sentences, reasons and suggestion texts arrive rendered by the engine, as text and as parts, and the client only draws them. No Hebrew literal anywhere in code or templates.
 - **RTL**: document direction follows the language (`dir="rtl"` for Hebrew), logical CSS properties only, Hebrew locale for dates and numbers.
 - **Responsive, mobile first**: the three screens work at 390 px (results table as card rows, editor stacked), 1024 and 1440. Verified by screenshots at every gate.
 - Visual design (palette, type, components, motion) comes from `docs/design.md`, produced before the client task with the design skills; this document does not decide it.

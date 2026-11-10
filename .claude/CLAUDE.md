@@ -87,8 +87,12 @@ the api writes, and only to `dq`; only the engine reads `hr`.
 | Errors the user sees, testing strategy | [architecture.md §12–13](../docs/architecture.md) |
 | Compose, manual path, configuration | [architecture.md §14](../docs/architecture.md) |
 | Assignment checklist, the five tasks and their gates | [architecture.md §18–19](../docs/architecture.md), [kickoff](../dev/briefs/cbs-kickoff.md) |
+| Both HTTP APIs: paths, payloads, statuses | [contracts/api.md](../contracts/api.md) (it wins over the architecture) |
+| Error codes, reason keys, the matched, NULL and rendering rules | [contracts/errors.md](../contracts/errors.md) |
+| Scripts, logins, planted and boundary rows per example | [sql/README.md](../sql/README.md) |
+| Visual direction, tokens, screens | [docs/design.md](../docs/design.md) |
 
-As they land, `contracts/api.md`, `contracts/errors.md`, `docs/design.md` and the §17 documents get rows here.
+As they land, the §17 documents get rows here.
 
 ## Skills
 

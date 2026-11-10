@@ -1,0 +1,31 @@
+{
+  "layer": "schema",
+  "expected": {
+    "code": "SCHEMA_VIOLATION",
+    "path": "/where/children/0/left/path"
+  },
+  "definition": {
+    "schemaVersion": 1,
+    "rootEntity": "employee",
+    "where": {
+      "type": "group",
+      "op": "and",
+      "children": [
+        {
+          "type": "condition",
+          "id": "c1",
+          "left": {
+            "path": [
+              "employee.department",
+              "department.ministry",
+              "ministry.departments"
+            ],
+            "field": "name"
+          },
+          "operator": "eq",
+          "value": "x"
+        }
+      ]
+    }
+  }
+}

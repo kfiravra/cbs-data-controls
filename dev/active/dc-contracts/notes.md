@@ -20,8 +20,6 @@ Held for the review-fix commit (found by the orchestrator, not by a reviewer):
 - `.env.example` carries working passwords. `/ship` step 2 stops on `MSSQL_SA_PASSWORD=` with a value and the
   dc-delivery plan (decision at its line 44) wants placeholders: empty the three values, and say in the README quick
   start that they are set after the copy. The local `.env` keeps its values.
-- The `/run` example of `api.md` uses invented names and wording: align it with the seed (1051, 1052) and with the
-  glossary's real templates once lane 2's glossary is in.
 
 ## Blockers
 (none)
@@ -77,3 +75,21 @@ Held for the review-fix commit (found by the orchestrator, not by a reviewer):
   scope's own entity; `--render` takes the actual values of its reasons from a small table in the script (the
   first planted record per example). Check 4 was mutation-tested: 19 mutations of the examples, each reported.
   Phase 3's verify used `--reset` instead of `down -v`; the clean-container run is the Gate's.
+- 2026-11-10 phase 4 done (lane 3 on Opus wrote `api.md`, `errors.md` and 13 fixtures; check 5, the alignment
+  lines and the README section by the orchestrator): `gates/phase-4.txt`, db-check 27 passed, contracts-check 5
+  checks passed, hook tests 226 pass. Check 5 goes past Design G: a schema-layer fixture must give one schema error
+  at its path, a semantic-layer one must pass the schema and be rejected by check 4's glossary walk at its path, the
+  fixture's layer must be the catalogue's, and the reason and evidence keys of `errors.md` must equal the
+  glossary's; 12 mutations, each reported. The `/run` example of `api.md` now uses records 1051 and 1052 and the
+  glossary's wording. Pinned by lane 3 where the plan was silent, for Kfir to object to before the freeze: the
+  path per definition error code (a semantic error names the member the editor edits as one input; a duplicate id
+  is at `<node>/id` of every later node); a related node whose relationship does not start at the scope entity is
+  `PATH_NOT_REACHABLE`; a unit follows the value after one space, in the same part; a NULL value renders as
+  nothing; a child group is bracketed and a related node's `where` is not; a method the path does not serve is 404
+  `NOT_FOUND` in both services; the api sends the engine exactly `rootEntity` and `max` for suggestions; `/suggest`
+  defaults `max` to 10 with a ceiling of 20; on a run that did not succeed the counts, sentence and conditions are
+  null; `display_text` writes a number as in JSON and leaves a null out; an empty description is stored as null.
+  One fixture beyond the plan's list: `computed-field-in-field-comparison` (H3). Open for other sessions: the web
+  plan (line 531) assumes an error path ends in `left`, `operator`, `value`, `values`, `right` or `relationship`,
+  but schema-layer paths and `DUPLICATE_NODE_ID` end elsewhere; `docs/design.md` (lines 654, 657) still contradicts
+  the contract on breakdown counts and on `GLOSSARY_MISMATCH`.

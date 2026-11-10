@@ -42,7 +42,8 @@ playwright install --with-deps chromium` needs sudo on WSL: ask the user to run 
 - New CLI projects serve `public/` only. Add `{ "glob": "**/*", "input": "src/assets", "output": "assets" }` to the
   build `assets` in `angular.json`, or `/assets/i18n/he.json` 404s and every string renders as its key.
 - A missing key renders the key itself (`errors.QUERY_TIMEOUT`), silently. A unit test asserts that `he.json` and
-  `en.json` hold the same keys and cover every error code and reason key in `contracts/errors.md`.
+  `en.json` hold the same keys and cover every error code in `contracts/errors.md`. Reason and sentence text is
+  not in these files: it arrives rendered from the engine, whose one source is the glossary.
 - Language and direction are bootstrap-time: set `<html lang dir>` from the saved language before
   `bootstrapApplication` (`he` → `rtl`). `LOCALE_ID` is fixed for the app's lifetime, so a language switch stores
   the choice and reloads. Register the Hebrew locale data (`@angular/common/locales/he`) for dates and numbers.
@@ -65,4 +66,5 @@ playwright install --with-deps chromium` needs sudo on WSL: ask the user to run 
 ## Read before changing
 
 [architecture.md](../../../docs/architecture.md) §8 (client), §9 (flows), §12 (errors); `docs/design.md`;
-`contracts/api.md` for payloads; `contracts/errors.md` for codes and reason keys.
+`contracts/api.md` for payloads; `contracts/errors.md` for codes, reason keys and part roles (the text of a reason
+comes in the payload, never from i18n).
