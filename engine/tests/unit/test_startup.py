@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from dataclasses import replace
 from typing import Any
 
 import pytest
@@ -13,9 +14,9 @@ from sqlalchemy.exc import DBAPIError
 from app.compiler import ReadQuery, catalog_query
 from app.errors import DatabaseUnavailable, GlossaryMismatch, InternalError, QueryTimeout
 from app.executor import Executor, ensure_single_select, translate_driver_error
-from app.glossary import Glossary, public_view
+from app.glossary import Glossary
 from app.glossary.tables import physical_columns
-from app.services import HEALTH_RECHECK_SECONDS, GlossaryGuard, Services, start_services
+from app.services import HEALTH_RECHECK_SECONDS, GlossaryGuard, Services, build_services, start_services
 from app.settings import DriverNotFound, Settings, load_settings
 
 
@@ -69,8 +70,8 @@ class FakeExecutor:
 
 def services_with(glossary: Glossary, executor: FakeExecutor, wait_seconds: int = 30) -> Services:
     settings = load_settings(None).model_copy(update={"startup_db_wait_seconds": wait_seconds})
-    real: Any = executor
-    return Services(settings, glossary, public_view(glossary), real, GlossaryGuard(glossary, real))
+    stand_in: Any = executor
+    return replace(build_services(settings), executor=stand_in, glossary_guard=GlossaryGuard(glossary, stand_in))
 
 
 # --- driver errors --------------------------------------------------------------------------------------------

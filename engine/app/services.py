@@ -7,13 +7,36 @@ import threading
 import time
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
+from datetime import date, datetime
 from typing import Any
+from zoneinfo import ZoneInfo
 
-from app.compiler import CATALOG_COLUMN, CATALOG_SCHEMA, CATALOG_TABLE, CATALOG_TYPE, catalog_query, ping_query
+from app import ENGINE_VERSION
+from app.cache import BoundedCache, definition_key
+from app.compiler import (
+    CATALOG_COLUMN,
+    CATALOG_SCHEMA,
+    CATALOG_TABLE,
+    CATALOG_TYPE,
+    CompiledPlan,
+    catalog_query,
+    compile_definition,
+    ping_query,
+    unsupported,
+)
 from app.errors import DatabaseUnavailable, GlossaryMismatch
 from app.executor import Executor
-from app.glossary import CatalogColumn, Glossary, Mismatch, find_mismatches, load_glossary, public_view
+from app.glossary import (
+    CatalogColumn,
+    Glossary,
+    GlossaryInvalid,
+    Mismatch,
+    find_mismatches,
+    load_glossary,
+    public_view,
+)
 from app.settings import DriverNotFound, Settings
+from app.validator import DefinitionSchema, load_schema, validate_definition
 
 logger = logging.getLogger(__name__)
 
@@ -69,23 +92,51 @@ class GlossaryGuard:
             raise GlossaryMismatch(mismatch.table, mismatch.column)
 
 
+def today_in(time_zone: str, now: datetime | None = None) -> date:
+    """The current date in the given zone: the default run date. In UTC it is still yesterday when a day starts."""
+    zone = ZoneInfo(time_zone)
+    return (datetime.now(zone) if now is None else now.astimezone(zone)).date()
+
+
 @dataclass(frozen=True, slots=True)
 class Services:
     settings: Settings
     glossary: Glossary
     public_glossary: Mapping[str, Any]
+    schema: DefinitionSchema
+    plans: BoundedCache[CompiledPlan]
     executor: Executor
     glossary_guard: GlossaryGuard
 
+    def plan_for(self, document: Mapping[str, Any]) -> CompiledPlan:
+        """Validate and compile, or take the plan of an unchanged definition from the cache.
+
+        Raises `DefinitionInvalid`. Only a valid definition is cached, and never a result.
+        """
+        key = definition_key(document, self.glossary.version, ENGINE_VERSION)
+        plan = self.plans.get(key)
+        if plan is None:
+            plan = compile_definition(validate_definition(document, self.glossary, self.schema), self.glossary)
+            self.plans.put(key, plan)
+        return plan
+
+    def today(self) -> date:
+        return today_in(self.settings.time_zone)
+
 
 def build_services(settings: Settings) -> Services:
-    """Everything that needs no database: the glossary is read here, connections open in `start_services`."""
+    """Everything that needs no database: the glossary and the schema are read here, connections open later."""
     glossary = load_glossary(settings.contracts_dir / GLOSSARY_FILE)
+    gaps = unsupported(glossary)
+    if gaps:
+        raise GlossaryInvalid(f"glossary: the engine has no implementation for {'; '.join(gaps)}")
     executor = Executor(settings)
     return Services(
         settings=settings,
         glossary=glossary,
         public_glossary=public_view(glossary),
+        schema=load_schema(settings.contracts_dir),
+        plans=BoundedCache(),
         executor=executor,
         glossary_guard=GlossaryGuard(glossary, executor),
     )

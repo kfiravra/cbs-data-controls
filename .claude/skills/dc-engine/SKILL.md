@@ -34,20 +34,30 @@ PATH (the hook's fallback) still resolves the imports.
   never a fallback name.
 - Values: bind parameters only (`column < value`, `bindparam`, `in_`). Never an f-string, `%`, `.format()`,
   `text()` with interpolation, `literal_column()` or `literal_binds` around anything a caller sent, golden tests
-  and `/debug/compile` included. "Contains" filters use `col.contains(value, autoescape=True)`, so `%`, `_` and
-  `[` in the value stay literal.
+  and `/debug/compile` included. "Contains" filters bind an operand the compiler escaped itself (`escape_like`:
+  `/` doubled, then `%`, `_` and `[` prefixed with `/`) and pass `escape="/"`, so those characters stay literal.
+  `autoescape=True` is not enough: it leaves `[` alone, and `[` opens a character class in T-SQL.
 - Text columns are typed `Unicode` (NVARCHAR): the `mssql+pyodbc` dialect binds `String` as VARCHAR and `Unicode`
   as NVARCHAR (`use_setinputsizes`, on by default in SQLAlchemy 2), and a VARCHAR bind runs Hebrew through the
   database code page.
 - Operators come from a closed map (operator key → SQLAlchemy expression); computed fields from a closed list of
   kinds in code (`age_years` and the like). Neither is extended from data.
 - One `Select` per compile. Many-to-one paths (two hops at most) become joins; a one-to-many `related` node becomes
-  a correlated `exists()` or `~exists()`, so rows never multiply. Each condition adds a flag column
-  (`case((condition, 1), else_=0).label(condition_id)`) that the explainer reads.
+  a correlated `exists()` or `~exists()`, so rows never multiply. Each node that can be matched adds a flag
+  column under a generated label (`t0`, `t1`, ...); the plan maps the labels back to node ids. A node id is
+  caller text and never becomes a label or an alias.
 - Date math runs in Python against the run date and binds a date: `age < 18` becomes `birth_date > run_date − 18
   years`. `DATEDIFF(year, …)` counts year boundaries, not birthdays, and a function on the column defeats the index.
-- `/run` executes two statements derived from that one `Select`: the exact count, and a page capped at the row cap
-  and ordered by the root key, so the page is deterministic.
+- `/run` executes two statements derived from that one inner `Select` (the real WHERE and the flags): a page
+  ordered by the root key, with one "matched" flag per node computed over the inner flags, and a count with the
+  total and, per node, the number of violations it is matched in. The row cap is `.limit(int)`, which SQLAlchemy
+  renders as `TOP n`; a bound cap would turn the statement into a `ROW_NUMBER()` wrapper.
+- Every value is an explicit, typed `bindparam` with a generated name, and a compiled plan stores how to fill it
+  (a constant, or the run date minus n years), so one cached plan serves every run date and every cap. A Python
+  bool is never compared inline: SQLAlchemy would render `col == False` as `= 0`.
+- A statement may carry at most 2,000 parameters (SQL Server refuses 2,100). A definition that would pass that
+  (lists on a computed age at the limits) is compiled in a second shape that filters on the flags and sends
+  each value once.
 
 ## Facts that bite
 
@@ -59,6 +69,9 @@ PATH (the hook's fallback) still resolves the imports.
 - ODBC Driver 18 encrypts by default and the local container has a self-signed certificate, so the engine's
   connection string carries `TrustServerCertificate=yes`. Host runs need `unixodbc` and `msodbcsql18` (kickoff
   §1); the engine image installs them and builds from the repo root, because it reads `contracts/`.
+- Where `localhost` resolves to `::1` first (WSL with Docker Desktop does), ODBC Driver 18 never falls back to
+  IPv4 and the login times out. Compose publishes SQL Server on 127.0.0.1 only, so a host run against it needs
+  `ENGINE_DB_HOST=127.0.0.1`; `.env.example` says so.
 - The startup check reads `INFORMATION_SCHEMA` as `dq_engine_ro`, which sees only what it may read: `hr`. It runs
   in the FastAPI lifespan; raising there makes uvicorn exit non-zero ("Application startup failed"), which is the
   refuse-to-start. The log line names the missing table or column.

@@ -1,24 +1,26 @@
 # dc-engine notes
 
 ## State
-Phases 1 and 2 done on 2026-11-11 (gates: `gates/phase-1.txt`, `gates/phase-2.txt`, 220 tests); phase 3, the
-compiler, is next. The phase 1 review is running; its fixes land as one commit when it reports. The run is
-unattended on Kfir's word of 2026-11-11 (the night brief, see "Decisions taken unattended"): no questions, no
-stop at a phase gate, push and PR allowed once the gate passes, no merge.
+Phases 1 to 3 done on 2026-11-11 (gates: `gates/phase-1.txt` to `gates/phase-3.txt`, 343 tests); phase 4, the
+executor, the explainer and the `/validate` and `/run` endpoints, is next. Phases 1 and 2 are reviewed and
+their fixes committed; the phase 3 review is running. The run is unattended on Kfir's word of 2026-11-11 (the
+night brief, see "Decisions taken unattended"): no questions, no stop at a phase gate, push and PR allowed once
+the gate passes, no merge.
 
 What exists: `engine/` with `pyproject.toml`, `uv.lock`, `.python-version` (3.12) and `requirements.txt`; the
-settings and the connection URL; problem details for every error; the correlation id; the glossary package
-(model, loader, tables, public view, catalog comparison); the executor with its guards; the startup check;
-`GET /health` and `GET /glossary`; the validator (`validate_definition(document, glossary, schema)`: schema
-layer, semantic layer, `ValidatedDefinition`), not yet behind an endpoint. Start: `cd engine &&
+settings and the connection URL; problem details for every error; the correlation id; the glossary package; the
+executor with its guards (it runs the catalog read and the ping so far); the startup check; the validator; the
+compiler (`compile_definition`: operators, the age rewrite, joins, EXISTS, the page and count statements, a
+plan with parameter recipes); the compile cache; goldens for the six examples in `engine/tests/golden/`;
+`GET /health`, `GET /glossary`, `POST /debug/compile` (off by default). Start: `cd engine &&
 .venv/bin/python -m uvicorn app.main:create_app --factory --host 127.0.0.1 --port 8000`.
 
 ## Next
-1. Phase 3: operators and the LIKE escape, `age_years`, the builder (joins, EXISTS, truth columns, the page and
-   count statements), the plan with parameter recipes, the cache, `POST /debug/compile`, the goldens, the
-   harness lines.
-2. Then phases 4, 5 and 7 in order, each closed by `/check --tests`, a reviewer on opus, one review-fix commit
-   and a Log line here.
+1. Phase 4: the executor's count and page on one connection, the explainer (parts, formats, sentences, reasons),
+   `POST /validate` and `POST /run`, the integration tests against the seed, the text goldens, the README's
+   engine section and its commands run once in a scratch copy.
+2. Then phases 5 and 7, each closed by `/check --tests`, a reviewer on opus, one review-fix commit and a Log
+   line here.
 3. The gate, then push and PR (Kfir's word is in the night brief). No merge.
 
 ## Blockers
@@ -86,6 +88,25 @@ continue". He reads these first.
    in `.env.example` is the default path.
 9. The interactive docs of FastAPI (`/docs`, `/redoc`, `/openapi.json`) are switched off: one internal caller,
    and an unknown path must answer `NOT_FOUND`.
+
+10. A second statement shape, which the plan does not have. Design D counts a caller value as bound twice
+    (its flag and the WHERE). A value in a list on the computed age costs two dates, so four parameters: a
+    definition at `maxTotalValues` made of such lists needs 2,025 and more, past the 2,000 the compiler allows
+    (SQL Server refuses 2,100). Such a definition is valid, so it must run: when the normal shape passes 2,000
+    the compiler builds the statements without the inner WHERE and filters on the flags instead, which sends
+    every value once and gives up the index for that one definition. Everything else keeps the shape of Design D.
+11. "29 February becoming 28" (Design D) is applied only when the target year has no 29 February. Read
+    literally it would turn S(4) of 2028-02-29 into 2024-02-28 and make somebody born on 2024-02-29 three
+    years old on their fourth birthday; the contract's formula decides, and a test on real rows proves the
+    ranges against it (`tests/unit/test_age.py`).
+12. `eq` on an age with a fractional operand is "false" in Design D. SQLAlchemy renders `false()` as `CASE WHEN
+    0` on SQL Server, which is not valid there, so the compiler writes `c IS NULL AND c IS NOT NULL`.
+13. The engine refuses at startup a glossary it cannot serve (an operator with no expression, a computed field
+    with an operator its function lacks, or a computed field not marked `comparable: false`), instead of
+    failing on the first run that meets it.
+14. `/debug/compile` shows named placeholders (`:p0`), each parameter once in the order it first appears, with
+    an expanded list as `:p3_1, :p3_2`; `TOP n` is rendered by SQLAlchemy from the configured cap. When the
+    endpoint is off no body is read, so every call is the same 404.
 
 ## Waiting for a merge
 (none yet)
@@ -189,3 +210,14 @@ says, what is true now. The list goes into the PR body under this heading at `/s
   Info, left as it is by the session: `semantic.py:163,216,239` `pointer` and `node_id` travel together (a data
   clump): they are the two columns of every error record and a wrapper type would add a name without removing
   an argument. All of it in the review-fix commit that follows this line.
+- 2026-11-11 phase 3, unattended, `gates/phase-3.txt`: ruff, pyright, 343 tests, print guard, hook tests
+  226 of 226. The invariants of Design I hold on the six examples and on every definition generated from the
+  real glossary and from a synthetic one (tickets and queues): one SELECT, no `;`, no string or number literal
+  in the text but the LIKE wildcard, the escape character and the row cap, no node id, and only tables and
+  columns the glossary names. Verified on SQLAlchemy 2.0.57 before writing: an explicit `bindparam` keeps a
+  bool out of the text; `contains(..., escape="/")` renders `LIKE '%' + :p + '%' ESCAPE '/'`; `false()` renders
+  `CASE WHEN 0`; `render_postcompile` shows `TOP 5000` and `IN (:p3_1, :p3_2)`; a qmark compile's
+  `positiontup` counts the values a statement sends. Found while testing the limit: the parameter arithmetic of
+  the plan (decision 10 above). Harness lines corrected: three sentences of `dc-engine/SKILL.md` (autoescape,
+  the label, the two statements), the autoescape clause of `agents/security-auditor.md`, and a new fact in the
+  skill about `localhost` and `::1`.

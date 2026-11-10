@@ -10,7 +10,7 @@ from fastapi import FastAPI
 
 from app import ENGINE_VERSION
 from app.logs import configure_logging
-from app.routes import router
+from app.routes import create_router
 from app.services import build_services, start_services
 from app.settings import Settings, load_settings
 from app.web import BoundaryMiddleware, install_error_handlers
@@ -49,5 +49,5 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.services = services
     install_error_handlers(app)
     app.add_middleware(BoundaryMiddleware)
-    app.include_router(router)
+    app.include_router(create_router(debug_compile=settings.debug_compile))
     return app

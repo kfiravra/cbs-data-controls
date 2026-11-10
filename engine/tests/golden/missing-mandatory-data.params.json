@@ -1,0 +1,56 @@
+{
+  "page": [
+    {
+      "name": "one",
+      "type": "Integer",
+      "value": 1
+    },
+    {
+      "name": "zero",
+      "type": "Integer",
+      "value": 0
+    },
+    {
+      "name": "p0",
+      "type": "Unicode",
+      "value": "active"
+    },
+    {
+      "name": "p1",
+      "type": "Unicode",
+      "value": ""
+    },
+    {
+      "name": "p2",
+      "type": "Unicode",
+      "value": "inactive"
+    }
+  ],
+  "count": [
+    {
+      "name": "one",
+      "type": "Integer",
+      "value": 1
+    },
+    {
+      "name": "zero",
+      "type": "Integer",
+      "value": 0
+    },
+    {
+      "name": "p0",
+      "type": "Unicode",
+      "value": "active"
+    },
+    {
+      "name": "p1",
+      "type": "Unicode",
+      "value": ""
+    },
+    {
+      "name": "p2",
+      "type": "Unicode",
+      "value": "inactive"
+    }
+  ]
+}

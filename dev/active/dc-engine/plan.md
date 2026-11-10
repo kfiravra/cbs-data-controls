@@ -231,18 +231,18 @@ Verify: `/check --tests`
 Commit: `feat(engine): definition validator with the full rejection catalogue`
 
 ### Phase 3: compiler, cache, goldens (about 2.5 h)
-- [ ] `compiler/operators.py`: the closed map of the eighteen operators and the LIKE escape, per Design D.
-- [ ] `compiler/computed.py`: the `age_years` table of Design D and its Python `actual`.
-- [ ] `compiler/build.py`: aliases and LEFT joins, `related` nodes as correlated `exists()`, truth columns, the
+- [x] `compiler/operators.py`: the closed map of the eighteen operators and the LIKE escape, per Design D.
+- [x] `compiler/computed.py`: the `age_years` table of Design D and its Python `actual`.
+- [x] `compiler/build.py`: aliases and LEFT joins, `related` nodes as correlated `exists()`, truth columns, the
       inner select and the two derived statements; `CompiledPlan` with parameter recipes, per Design D.
-- [ ] `cache/`: bounded, thread-safe, keyed per Design D.
-- [ ] `POST /debug/compile` behind `ENGINE_DEBUG_COMPILE`; 404 `DEBUG_DISABLED` otherwise.
-- [ ] Goldens for the six examples and the `--update-goldens` flag, per Design I.
-- [ ] Tests: the invariants of Design I on every example and on generated definitions; injection strings in
+- [x] `cache/`: bounded, thread-safe, keyed per Design D.
+- [x] `POST /debug/compile` behind `ENGINE_DEBUG_COMPILE`; 404 `DEBUG_DISABLED` otherwise.
+- [x] Goldens for the six examples and the `--update-goldens` flag, per Design I.
+- [x] Tests: the invariants of Design I on every example and on generated definitions; injection strings in
       every operand position appear only in the parameters; the age table row by row, 29 February included; LIKE
       escaping; a definition at `maxTotalValues` stays under 2,100 parameters; one plan serves two run dates and
       two caps; the join to a parent is a LEFT OUTER JOIN.
-- [ ] Harness lines this phase makes wrong: in `.claude/skills/dc-engine/SKILL.md` the `autoescape` sentence, the
+- [x] Harness lines this phase makes wrong: in `.claude/skills/dc-engine/SKILL.md` the `autoescape` sentence, the
       `.label(condition_id)` sentence and the two-statements sentence; in `.claude/agents/security-auditor.md` the
       `autoescape` clause. Then `node --test .claude/hooks/tests/*.test.mjs`.
 
