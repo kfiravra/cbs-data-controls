@@ -12,7 +12,7 @@ from datetime import date
 from decimal import Decimal
 from typing import Any
 
-from app.errors import DefinitionError
+from app.errors import DefinitionError, InternalError
 from app.glossary import (
     QUANTIFIABLE_CARDINALITY,
     TRAVERSABLE_CARDINALITIES,
@@ -33,29 +33,33 @@ _WHERE = "/where"
 
 
 class SemanticWalk:
-    """One walk over one definition. Collects errors and, beside them, the resolved tree."""
+    """One walk over one definition: it collects the errors and builds the resolved tree beside them."""
 
     def __init__(self, glossary: Glossary) -> None:
         self._glossary = glossary
         self._limits = glossary.limits
-        self.errors: list[DefinitionError] = []
+        self._errors: list[DefinitionError] = []
         self._ids: list[tuple[str, str]] = []
         self._deepest = 0
         self._conditions = 0
         self._values = 0
 
-    def run(self, document: Mapping[str, Any]) -> ValidatedDefinition | None:
+    def run(self, document: Mapping[str, Any]) -> ValidatedDefinition | list[DefinitionError]:
+        """The resolved definition, or every error found (never an empty list)."""
         root = self._root_entity(document["rootEntity"])
         where = self._group(document["where"], _WHERE, root, depth=1)
         self._whole_tree()
-        if self.errors or root is None or where is None:
-            return None
+        if self._errors:
+            return self._errors
+        if root is None or where is None:
+            # Every key the walk cannot resolve records an error, so this is a fault of the walk itself.
+            raise InternalError()
         return ValidatedDefinition(root=root, where=where, document=document)
 
     # --- recording ------------------------------------------------------------------------------------------
 
     def _error(self, code: str, path: str, params: Mapping[str, Any], node_id: str | None = None) -> None:
-        self.errors.append(DefinitionError(code, path, params, node_id))
+        self._errors.append(DefinitionError(code, path, params, node_id))
 
     # --- the root and the whole tree ------------------------------------------------------------------------
 
@@ -135,6 +139,15 @@ class SemanticWalk:
         self._conditions += 1
         self._values += ("value" in node) + len(node.get("values", ()))
 
+        listed = len(node.get("values", ()))
+        if listed > self._limits.max_list_values:
+            self._error(
+                "TOO_MANY_VALUES",
+                f"{pointer}/values",
+                {"limit": "list", "max": self._limits.max_list_values, "actual": listed},
+                node_id,
+            )
+
         operator = self._glossary.operators.get(node["operator"])
         left = self._field_ref(node["left"], f"{pointer}/left", scope, node_id)
         right = self._field_ref(node["right"], f"{pointer}/right", scope, node_id) if "right" in node else None
@@ -175,8 +188,8 @@ class SemanticWalk:
                 self._error("UNKNOWN_RELATIONSHIP", pointer, {"relationship": key}, node_id)
                 return None
             if relationship.from_entity != entity.key:
+                # The hop is refused, yet the entity it reaches is known: the rest is checked against that one.
                 self._error("PATH_NOT_REACHABLE", pointer, {"relationship": key, "entity": entity.key}, node_id)
-                return None
             if relationship.cardinality not in TRAVERSABLE_CARDINALITIES:
                 self._error("PATH_NOT_TRAVERSABLE", pointer, {"relationship": key}, node_id)
             hops.append(relationship)
@@ -221,13 +234,6 @@ class SemanticWalk:
             return None
         raw: list[Any] = node["values"]
         at = f"{pointer}/values"
-        if len(raw) > self._limits.max_list_values:
-            self._error(
-                "TOO_MANY_VALUES",
-                at,
-                {"limit": "list", "max": self._limits.max_list_values, "actual": len(raw)},
-                node_id,
-            )
         typed = [self._literal(item, field, at, index, node_id) for index, item in enumerate(raw)]
         values = tuple(value for value in typed if value is not None)
         if len(values) != len(raw):

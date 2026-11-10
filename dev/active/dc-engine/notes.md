@@ -107,7 +107,7 @@ says, what is true now. The list goes into the PR body under this heading at `/s
 - Still to come: architecture §19 and §6 on suggestions, when phase 5 lands.
 
 ## Last reviewed
-`a426451` (phase 1), report in `reviews/phase-1.md`. Phase 2 (`c96bc1d`) is with the reviewer.
+`c96bc1d` (phase 2), report in `reviews/phase-2.md`; phase 1 (`a426451`) in `reviews/phase-1.md`.
 
 ## Log
 - 2026-11-10 created plan. Interview in two rounds (plan.md Decisions 1 to 5). Kfir chose `lifecycle` and
@@ -173,3 +173,19 @@ says, what is true now. The list goes into the PR body under this heading at `/s
   length stays in front: such a body must not be read); `notes.md:97` "fourteen" keys, corrected to thirteen.
   Info, rejected by the session: `web.py:76,91` `ValidateRequest` and `DebugCompileRequest` unused: phases 3
   and 4 use them. All of it in the review-fix commit that follows this line.
+- 2026-11-11 review of phase 2 (`a426451..c96bc1d`, one reviewer on opus, `reviews/phase-2.md`): 1 critical,
+  3 warnings, 2 info. Critical: `app/validator/schema.py:34` a definition of 170 nested groups ended in
+  `RecursionError` inside jsonschema and a 500; fixed: groups nested deeper than 32 levels (or the glossary's
+  limit, if higher) are answered `TOO_DEEP` at `/where` before the schema is asked, the document-order walk no
+  longer recurses, and the schema library is handed a copy cut at 72 JSON levels when the document is deeper.
+  Found by the session while reproducing it and fixed with it: two lists nested 900 levels deep inside `values`
+  crashed the same way. Tests at 33, 170, 400 and 5,000 levels. Consequence to know: for a tree deeper than 32
+  groups the answer is `TOO_DEEP` alone, also when the document has schema errors too; from 5 to 32 the order of
+  errors.md holds (schema errors first). Warnings: `tests/unit/test_validator.py` 752 lines, fixed: split into
+  two modules and a helper; `semantic.py:153,224` the per-list `TOO_MANY_VALUES` ran only when the left field
+  resolved, fixed: checked for every condition, with a test; `semantic.py:177` `PATH_NOT_REACHABLE` in a field
+  path stopped the walk, fixed: it goes on from the entity the relationship reaches, with a test. Info, fixed:
+  `semantic.py:51` the walk returned `None` beside a public error list, now it returns the tree or the errors.
+  Info, left as it is by the session: `semantic.py:163,216,239` `pointer` and `node_id` travel together (a data
+  clump): they are the two columns of every error record and a wrapper type would add a name without removing
+  an argument. All of it in the review-fix commit that follows this line.

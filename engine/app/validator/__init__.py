@@ -5,11 +5,11 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import Any
 
-from app.errors import DefinitionError, DefinitionInvalid, InternalError
+from app.errors import DefinitionError, DefinitionInvalid
 from app.glossary import Glossary
 from app.validator.model import ResolvedField, ValidatedDefinition, Value, VCondition, VGroup, VNode, VRelated
-from app.validator.pointers import document_positions
-from app.validator.schema import DefinitionSchema, load_schema
+from app.validator.pointers import document_positions, group_nesting
+from app.validator.schema import WALKABLE_GROUP_DEPTH, DefinitionSchema, load_schema
 from app.validator.semantic import SemanticWalk
 
 __all__ = [
@@ -60,17 +60,19 @@ def validate_definition(
     """The resolved definition, or `DefinitionInvalid` with every error found (errors.md, Order of checks)."""
     if _unsupported_version(document):
         raise DefinitionInvalid([DefinitionError("UNSUPPORTED_SCHEMA_VERSION", "/schemaVersion")])
+    # Far deeper than any limit could allow: answered before the recursive walks below could run out of stack.
+    nesting = group_nesting(document)
+    if nesting > max(WALKABLE_GROUP_DEPTH, glossary.limits.max_depth):
+        too_deep = DefinitionError("TOO_DEEP", "/where", {"max": glossary.limits.max_depth, "actual": nesting})
+        raise DefinitionInvalid([too_deep])
     violations = schema.violations(document)
     if violations:
         # Any schema error ends validation: the semantic layer reads members the schema guarantees.
         raise DefinitionInvalid(_in_document_order(violations, document))
-    walk = SemanticWalk(glossary)
-    validated = walk.run(document)
-    if walk.errors:
-        raise DefinitionInvalid(_in_document_order(walk.errors, document))
-    if validated is None:
-        raise InternalError()  # unreachable: every unresolved key records an error
-    return validated
+    outcome = SemanticWalk(glossary).run(document)
+    if isinstance(outcome, ValidatedDefinition):
+        return outcome
+    raise DefinitionInvalid(_in_document_order(outcome, document))
 
 
 def _unsupported_version(document: Mapping[str, Any]) -> bool:
