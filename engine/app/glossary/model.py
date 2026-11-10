@@ -26,6 +26,7 @@ OPERATOR_KEYS: frozenset[str] = frozenset({
 COMPUTED_FUNCTIONS: frozenset[str] = frozenset({"age_years"})
 TRAVERSABLE_CARDINALITIES: frozenset[str] = frozenset({"many_to_one", "one_to_one"})
 QUANTIFIABLE_CARDINALITY = "one_to_many"
+PARENT_CARDINALITY = "many_to_one"
 REQUIRED_STATES: frozenset[str] = frozenset({"always", "active", "inactive"})
 
 

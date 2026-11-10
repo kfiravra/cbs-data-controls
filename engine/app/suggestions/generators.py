@@ -8,10 +8,11 @@ threshold of a rule.
 from __future__ import annotations
 
 from collections.abc import Callable, Iterator, Mapping
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
+from types import MappingProxyType
 from typing import Any
 
-from app.glossary import QUANTIFIABLE_CARDINALITY, Entity, Glossary, Relationship
+from app.glossary import PARENT_CARDINALITY, QUANTIFIABLE_CARDINALITY, Entity, Field, Glossary, Relationship
 from app.suggestions import shape
 from app.suggestions.profile import DatePair, EntityProfile, date_fields, optional_fields
 
@@ -21,16 +22,6 @@ USUAL_ORDER_SHARE = 0.8
 # missing_optional: the field is filled in almost every row.
 MAX_MISSING_SHARE = 0.10
 
-# The kinds of contracts/glossary.json `suggestions.kinds`, in the order of the answer.
-KINDS = (
-    "missing_required",
-    "date_order",
-    "active_under_inactive",
-    "active_without_active_children",
-    "missing_optional",
-)
-
-PARENT_CARDINALITY = "many_to_one"
 MAX_PARENT_HOPS = 2
 
 
@@ -42,9 +33,10 @@ def _nothing() -> dict[str, str]:
 class Candidate:
     """A proposed definition, with what its texts and its evidence need."""
 
-    kind: str
     root: Entity
     definition: dict[str, Any]
+    # The kind of `suggestions.kinds` its texts come from; set by `candidates` from the generator's place below.
+    kind: str = ""
     # Placeholders of the kind's texts that name a field of the root entity (`field`, `earlier`, `later`).
     fields: Mapping[str, str] = field(default_factory=_nothing)
     # The relationship the rule goes through, when it does.
@@ -59,51 +51,44 @@ Profiles = Mapping[str, EntityProfile]
 Generator = Callable[[Glossary, Entity, Profiles], Iterator[Candidate]]
 
 
-def _missing_required(glossary: Glossary, entity: Entity, _profiles: Profiles) -> Iterator[Candidate]:
-    """OR(each `always` field missing, AND(active, OR(the `active` ones)), AND(inactive, OR(the `inactive` ones)))."""
-    by_state: dict[str, list[Any]] = {"always": [], "active": [], "inactive": []}
+def _missing_required(_glossary: Glossary, entity: Entity, _profiles: Profiles) -> Iterator[Candidate]:
+    """OR(each `always` field missing, AND(active, OR(the `active` ones)), AND(inactive, OR(the `inactive` ones))).
+
+    A required field that cannot be missing at all (the glossary gives it no test for that) asks for nothing.
+    """
+    missing: dict[str, list[shape.Node]] = {"always": [], "active": [], "inactive": []}
     for required in entity.fields.values():
-        if required.visible and required.required is not None:
-            by_state[required.required].append(required)
-    branches = [shape.is_missing(required) for required in by_state["always"]]
+        test = shape.is_missing(required) if required.visible and required.required is not None else None
+        if test is not None and required.required is not None:
+            missing[required.required].append(test)
+    branches = list(missing["always"])
     for state, guard in (("active", shape.is_active(entity)), ("inactive", shape.is_inactive(entity))):
-        if by_state[state] and guard is not None:
-            branches.append(shape.all_of(guard, shape.any_of([shape.is_missing(item) for item in by_state[state]])))
+        if missing[state] and guard is not None:
+            branches.append(shape.all_of(guard, shape.any_of(missing[state])))
     if not branches:
         return
     definition = shape.definition(entity, shape.any_of(branches))
-    yield Candidate("missing_required", entity, definition, missing_nodes=_missing_nodes(definition["where"]))
-
-
-def _missing_nodes(where: dict[str, Any]) -> dict[str, str]:
-    """Field key to node id, for every condition of the tree that tests a field for being missing."""
-    found: dict[str, str] = {}
-
-    def visit(node: dict[str, Any]) -> None:
-        if node["type"] == "condition" and node["operator"] in ("is_null", "is_empty"):
-            found[node["left"]["field"]] = node["id"]
-        for child in node.get("children", ()):
-            visit(child)
-
-    visit(where)
-    return found
+    tested = [test for tests in missing.values() for test in tests]
+    yield Candidate(entity, definition, missing_nodes={test["left"]["field"]: test["id"] for test in tested})
 
 
 def _date_order(_glossary: Glossary, entity: Entity, profiles: Profiles) -> Iterator[Candidate]:
-    """Two dates that are almost always in one order, and a few rows in the other: propose the rows in the other."""
-    stored = {item.key for item in date_fields(entity)}
+    """Two dates that are almost always in one order, and a few rows in the other: propose the rows in the other.
+
+    "Almost always" counts the rows that are strictly in the usual order, so two dates that are mostly equal
+    have no usual order and nothing is proposed for them.
+    """
+    comparable = {item.key for item in date_fields(entity)}
     for pair in profiles[entity.key].date_pairs:
-        if pair.both < MIN_ROWS_WITH_BOTH_DATES or not {pair.first, pair.second} <= stored:
+        if pair.both < MIN_ROWS_WITH_BOTH_DATES or not {pair.first, pair.second} <= comparable:
             continue
-        for later, earlier, reversed_rows in (
-            (pair.first, pair.second, pair.first_earlier),
-            (pair.second, pair.first, pair.second_earlier),
+        for later, earlier, usual_rows, reversed_rows in (
+            (pair.first, pair.second, pair.second_earlier, pair.first_earlier),
+            (pair.second, pair.first, pair.first_earlier, pair.second_earlier),
         ):
-            usual = (pair.both - reversed_rows) / pair.both
-            if reversed_rows >= 1 and usual >= USUAL_ORDER_SHARE:
+            if reversed_rows >= 1 and usual_rows >= USUAL_ORDER_SHARE * pair.both:
                 where = shape.all_of(shape.condition(later, "lt", right={"field": earlier}))
                 yield Candidate(
-                    "date_order",
                     entity,
                     shape.definition(entity, where),
                     fields={"later": later, "earlier": earlier},
@@ -138,7 +123,7 @@ def _active_under_inactive(glossary: Glossary, entity: Entity, _profiles: Profil
         if active is None or inactive is None:
             continue
         where = shape.all_of(active, inactive)
-        yield Candidate("active_under_inactive", entity, shape.definition(entity, where), relationship=path[-1])
+        yield Candidate(entity, shape.definition(entity, where), relationship=path[-1])
 
 
 def _active_without_active_children(glossary: Glossary, entity: Entity, _profiles: Profiles) -> Iterator[Candidate]:
@@ -153,33 +138,37 @@ def _active_without_active_children(glossary: Glossary, entity: Entity, _profile
         if active is None or child_active is None:
             continue
         where = shape.all_of(active, shape.related(relationship.key, "none", shape.all_of(child_active)))
-        yield Candidate(
-            "active_without_active_children", entity, shape.definition(entity, where), relationship=relationship
-        )
+        yield Candidate(entity, shape.definition(entity, where), relationship=relationship)
 
 
 def _missing_optional(_glossary: Glossary, entity: Entity, profiles: Profiles) -> Iterator[Candidate]:
     """A field nobody marked as required, filled in almost every row: propose the few rows without it."""
     profile = profiles[entity.key]
+    optional: Field
     for optional in optional_fields(entity):
         missing = profile.missing.get(optional.key, 0)
-        if profile.rows and 1 <= missing <= profile.rows * MAX_MISSING_SHARE:
-            where = shape.all_of(shape.is_missing(optional))
-            yield Candidate("missing_optional", entity, shape.definition(entity, where), fields={"field": optional.key})
+        test = shape.is_missing(optional)
+        if test is not None and 1 <= missing <= profile.rows * MAX_MISSING_SHARE:
+            yield Candidate(entity, shape.definition(entity, shape.all_of(test)), fields={"field": optional.key})
 
 
-# The order of the table of plan.md Design H: it is the order of the answer.
-GENERATORS: tuple[Generator, ...] = (
-    _missing_required,
-    _date_order,
-    _active_under_inactive,
-    _active_without_active_children,
-    _missing_optional,
+# Kind to generator, in the order of the table of plan.md Design H: it is the order of the answer. The keys are
+# the kinds of `suggestions.kinds` in the glossary.
+GENERATORS: Mapping[str, Generator] = MappingProxyType(
+    {
+        "missing_required": _missing_required,
+        "date_order": _date_order,
+        "active_under_inactive": _active_under_inactive,
+        "active_without_active_children": _active_without_active_children,
+        "missing_optional": _missing_optional,
+    }
 )
+KINDS = tuple(GENERATORS)
 
 
 def candidates(glossary: Glossary, roots: list[Entity], profiles: Profiles) -> Iterator[Candidate]:
     """Every proposal for the given root entities: by generator, then in glossary order."""
-    for generator in GENERATORS:
+    for kind, generator in GENERATORS.items():
         for entity in roots:
-            yield from generator(glossary, entity, profiles)
+            for candidate in generator(glossary, entity, profiles):
+                yield replace(candidate, kind=kind)

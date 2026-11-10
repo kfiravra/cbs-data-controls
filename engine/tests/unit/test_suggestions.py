@@ -5,16 +5,20 @@ by stand-ins. Nothing here names an entity, a field or a relationship of the rea
 
 from __future__ import annotations
 
+import json
 import logging
 import re
 from datetime import date
+from pathlib import Path
 from typing import Any
 
 import pytest
 
 from app.compiler import CompiledPlan, compile_definition, render_statement
 from app.executor import Counts
-from app.glossary import Glossary, parse_glossary
+from app.glossary import Glossary, GlossaryInvalid, parse_glossary
+from app.main import create_app
+from app.settings import Settings
 from app.suggestions import (
     DatePair,
     EntityProfile,
@@ -135,43 +139,64 @@ def test_nothing_is_proposed_for_an_entity_that_may_not_be_a_root(english_glossa
 def test_date_order_needs_enough_rows_a_usual_order_and_at_least_one_exception(english_glossary: Glossary) -> None:
     def proposals(pair: DatePair) -> list[Any]:
         profiles = {**PROFILES, "ticket": EntityProfile(40, {}, (pair,))}
-        return [
-            c.definition
-            for c in candidates(english_glossary, roots(english_glossary), profiles)
-            if c.kind == "date_order"
-        ]
+        proposed = candidates(english_glossary, roots(english_glossary), profiles)
+        return [candidate.definition for candidate in proposed if candidate.kind == "date_order"]
 
+    reversed_order = definition("ticket", all_of(cond("c1", "opened_on", "lt", right=ref("closed_on"))))
     assert proposals(DatePair("opened_on", "closed_on", 40, 37, 2)) == [DATE_ORDER]
-    assert proposals(DatePair("opened_on", "closed_on", 4, 3, 1)) == []  # too few rows hold both
+    assert proposals(DatePair("opened_on", "closed_on", 5, 4, 1)) == [DATE_ORDER]  # five rows hold both: enough
+    assert proposals(DatePair("opened_on", "closed_on", 4, 3, 1)) == []  # four: too few
+    assert proposals(DatePair("opened_on", "closed_on", 0, 0, 0)) == []  # none at all
     assert proposals(DatePair("opened_on", "closed_on", 40, 40, 0)) == []  # no row in the other order
     assert proposals(DatePair("opened_on", "closed_on", 40, 25, 15)) == []  # no usual order
-    assert proposals(DatePair("opened_on", "closed_on", 40, 31, 8)) == [DATE_ORDER]  # 80% on the dot
-    assert proposals(DatePair("opened_on", "closed_on", 40, 2, 37)) == [
-        definition("ticket", all_of(cond("c1", "opened_on", "lt", right=ref("closed_on"))))
-    ]
+    assert proposals(DatePair("opened_on", "closed_on", 40, 32, 8)) == [DATE_ORDER]  # 80% on the dot
+    assert proposals(DatePair("opened_on", "closed_on", 40, 31, 8)) == []  # just under, one row equal
+    assert proposals(DatePair("opened_on", "closed_on", 40, 2, 37)) == [reversed_order]
+    # Mostly equal dates have no usual order: neither rule is proposed, though each has two rows against it.
+    assert proposals(DatePair("opened_on", "closed_on", 40, 2, 2)) == []
+
+
+def test_date_field_that_may_not_be_compared_is_left_out_of_the_pairs(glossary_document: dict[str, Any]) -> None:
+    document = english_document(glossary_document)
+    next(field for field in document["entities"][0]["fields"] if field["key"] == "due_on")["comparable"] = False
+    glossary = parse_glossary(document)
+    assert list(query_for(glossary.entities["ticket"], glossary).pairs) == [("opened_on", "closed_on")]
 
 
 def test_optional_field_is_proposed_only_when_a_few_rows_lack_it(english_glossary: Glossary) -> None:
-    def proposals(missing: dict[str, int]) -> list[Any]:
-        profiles = {**PROFILES, "ticket": EntityProfile(40, missing, ())}
-        return [
-            c.fields["field"]
-            for c in candidates(english_glossary, roots(english_glossary), profiles)
-            if c.kind == "missing_optional"
-        ]
+    def proposals(missing: dict[str, int], rows: int = 40) -> list[Any]:
+        profiles = {**PROFILES, "ticket": EntityProfile(rows, missing, ())}
+        proposed = candidates(english_glossary, roots(english_glossary), profiles)
+        return [candidate.fields["field"] for candidate in proposed if candidate.kind == "missing_optional"]
 
     assert proposals({"due_on": 4, "owner_link": 1}) == ["due_on", "owner_link"]  # 10% on the dot, and one row
     assert proposals({"due_on": 5, "owner_link": 0}) == []
+    assert proposals({"due_on": 0, "owner_link": 0}, rows=0) == []  # an empty table proposes nothing
     # A field the glossary marks as required is never "optional", whatever the data says.
     assert proposals({"due_on": 0, "summary": 1, "priority": 1, "closed_on": 1}) == []
+
+
+def test_required_field_that_cannot_be_missing_is_left_out_and_the_others_stay(
+    glossary_document: dict[str, Any], schema: DefinitionSchema
+) -> None:
+    """A required number that is never NULL has no test for "missing": the proposal goes on without it."""
+    document = english_document(glossary_document)
+    fields = {field["key"]: field for field in document["entities"][0]["fields"]}
+    fields["priority"]["nullable"] = False
+    fields["closed_on"]["operators"] = ["lt", "gt"]  # its own list leaves the NULL test out
+    glossary = parse_glossary(document)
+
+    (required,) = [c for c in candidates(glossary, roots(glossary), PROFILES) if c.kind == "missing_required"]
+    assert required.definition == definition("ticket", all_of(cond("c1", "summary", "is_empty")))
+    assert required.missing_nodes == {"summary": "c1"}
+    validate_definition(required.definition, glossary, schema)
 
 
 def test_two_valued_lifecycle_is_inactive_by_its_other_value_and_a_wider_one_by_not_active(
     english_glossary: Glossary,
 ) -> None:
-    by_kind = {
-        (c.kind, c.root.key): c.definition for c in candidates(english_glossary, roots(english_glossary), PROFILES)
-    }
+    proposed = candidates(english_glossary, roots(english_glossary), PROFILES)
+    by_kind = {(candidate.kind, candidate.root.key): candidate.definition for candidate in proposed}
     inactive_ticket = by_kind[("missing_required", "ticket")]["where"]["children"][2]["children"][0]
     inactive_site = by_kind[("active_under_inactive", "queue")]["where"]["children"][1]
     assert (inactive_ticket["operator"], inactive_ticket["value"]) == ("ne", "open")  # three states
@@ -233,6 +258,16 @@ def test_numbers_of_an_evidence_text_follow_the_language_formats(
         "params": {"count": 12500, "total": 40},
         "text": "12 500 of 40 now",
     }
+
+
+def test_name_is_cut_to_the_length_the_contract_allows(
+    glossary_document: dict[str, Any], schema: DefinitionSchema
+) -> None:
+    document = english_document(glossary_document)
+    document["entities"][0]["label"]["plural"]["en"] = "tickets " * 60
+    (item,) = suggested(parse_glossary(document), schema, limit=1)
+    assert len(item["name"]) == 200
+    assert item["name"].startswith("tickets tickets ")
 
 
 def test_proposal_that_flags_nothing_today_is_dropped(english_glossary: Glossary, schema: DefinitionSchema) -> None:
@@ -335,3 +370,19 @@ def test_glossary_without_a_text_the_engine_writes_is_reported(glossary_document
         "suggestions.kinds.date_order",
         "suggestions.evidence.field_missing",
     ]
+
+
+def test_engine_does_not_start_on_a_glossary_it_cannot_serve(
+    glossary_document: dict[str, Any], offline_settings: Settings, tmp_path: Path
+) -> None:
+    document = english_document(glossary_document)
+    del document["suggestions"]["kinds"]["missing_optional"]
+    document["limits"]["maxTotalValues"] = 501
+    (tmp_path / "glossary.json").write_text(json.dumps(document), encoding="utf-8", newline="\n")
+    schema_text = (CONTRACTS_DIR / "control-definition.schema.json").read_text(encoding="utf-8")
+    (tmp_path / "control-definition.schema.json").write_text(schema_text, encoding="utf-8", newline="\n")
+
+    with pytest.raises(GlossaryInvalid) as refused:
+        create_app(offline_settings.model_copy(update={"contracts_dir": tmp_path}))
+    assert "limits.maxTotalValues above 500" in str(refused.value)
+    assert "suggestions.kinds.missing_optional" in str(refused.value)

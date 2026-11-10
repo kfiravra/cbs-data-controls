@@ -23,6 +23,8 @@ from app.suggestions.profile import EntityProfile
 logger = logging.getLogger(__name__)
 
 EVIDENCE_KEYS = ("violations_found", "field_missing", "date_order_split")
+# contracts/api.md, SuggestionItem: a name has at most this many characters (a control's name has the same limit).
+NAME_LIMIT = 200
 
 
 @dataclass(frozen=True, slots=True)
@@ -109,7 +111,7 @@ class _Writer:
             labels["relationship"] = candidate.relationship.label[self._language]
         sentence = explainer.sentence(plan.definition)
         return {
-            "name": fill_plain(texts.name[self._language], labels),
+            "name": fill_plain(texts.name[self._language], labels)[:NAME_LIMIT],
             "description": fill_plain(texts.description[self._language], labels),
             "rationale": fill_plain(texts.rationale[self._language], labels),
             "evidence": self._evidence(candidate, counts, profile),

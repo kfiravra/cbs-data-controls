@@ -603,6 +603,9 @@ with no parameter; the constants of a `CASE` are parameters.
 **Profile.** Per entity one aggregate SELECT: the row count and, per visible field, the null count, for text the
 empty count, the distinct count, and for number and date fields that are not identifying fields the minimum and
 maximum. The generators read typed `Profile` objects and the glossary, nothing else.
+(As built on 2026-11-11, notes.md decisions 17 and 19: the row count, the rows in which each optional field is
+missing, and for each pair of comparable date fields the rows that hold both and each strict order. No distinct
+count, minimum or maximum: no generator reads them.)
 
 **Generators** (each returns candidate definitions; ids are `c1..` and `r1..` in document order; fields in glossary
 order; a single-child OR collapses; the root is always a group). "Active" is `lifecycle.field eq lifecycle.active`;

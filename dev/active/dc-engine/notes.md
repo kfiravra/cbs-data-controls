@@ -129,9 +129,11 @@ continue". He reads these first.
     an inactive ministry (7 records), active departments under an inactive ministry (1), departments without
     a manager (1). Kfir may want fewer; `max` and `rootEntity` cut the answer, and removing a generator is one
     line of `GENERATORS`.
-19. `date_order` reads "one order holds in at least 80%" as: at most 20% of the rows that hold both dates
-    have the later one first, equal dates counting with the usual order (22 of 25 on the seed, the 88% of
-    sql/README.md).
+19. `date_order` reads "one order holds in at least 80% of them and the other in at least one row" strictly:
+    at least 80% of the rows that hold both dates have the later one after the earlier one, equal dates
+    counting for neither order (21 of 25 on the seed, 84%). First written the other way, with equal dates on
+    the side of the usual order; the phase 5 review showed that two dates that are mostly equal then get both
+    opposite rules proposed.
 20. The engine refuses at startup a glossary that lacks a suggestion text it writes (a kind or an evidence
     key), like the other "cannot serve" checks of decision 13.
 
@@ -179,8 +181,7 @@ says, what is true now. The list goes into the PR body under this heading at `/s
   seed), each under the statement timeout.
 
 ## Last reviewed
-`a49c710` (phase 4), report in `reviews/phase-4.md`; phases 1 to 3 in `reviews/phase-1.md` to `phase-3.md`.
-Phase 5 (`57e3e28`) is with the reviewer.
+`57e3e28` (phase 5), report in `reviews/phase-5.md`; phases 1 to 4 in `reviews/phase-1.md` to `phase-4.md`.
 
 ## Log
 - 2026-11-10 created plan. Interview in two rounds (plan.md Decisions 1 to 5). Kfir chose `lifecycle` and
@@ -330,3 +331,16 @@ Phase 5 (`57e3e28`) is with the reviewer.
   `render.py:195` the explainer builds the answer's dicts itself: the shapes of api.md are the renderer's
   output, and moving them to the routes would put rendering knowledge in two modules. All of it in the
   review-fix commit that follows this line.
+- 2026-11-11 review of phase 5 (`a49c710..57e3e28`, one reviewer on opus, `reviews/phase-5.md`): 0 critical,
+  2 warnings, 5 info. Warnings: `suggestions/generators.py:65-71` with `shape.py:64-70` a required field that
+  cannot be NULL (or whose own operator list has no NULL test) made the whole `missing_required` proposal of
+  its entity invalid and dropped; fixed: a field with no test for "missing" is left out and the others stay,
+  with a test on such a glossary; `generators.py:98-103` equal dates counted as the usual order in both
+  directions, so mostly-equal dates got both opposite rules; fixed: only rows strictly in the usual order
+  count (decision 19 as it now stands), with the reviewer's case as a test. Info, fixed: `profile.py:42-46`
+  a date field marked `comparable: false` is no longer paired; `generators.py:25-33` each kind is now written
+  once, as a key of `GENERATORS`, and the cardinality of a parent is a constant of the glossary module;
+  `pipeline.py:112` a name is cut to 200 characters; `compiler/profile.py:41-83` Design H in plan.md now says
+  what the profile holds as built; `tests/unit/test_suggestions.py:135-166` the gaps are tested: exactly five
+  rows, no rows at all, the startup refusal through `create_app`, and `/suggest` answering 504 on a fabricated
+  timeout. All of it in the review-fix commit that follows this line.

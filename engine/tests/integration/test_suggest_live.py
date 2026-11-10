@@ -10,6 +10,8 @@ import socket
 from typing import Any
 
 import pytest
+from sqlalchemy import Connection
+from sqlalchemy.exc import OperationalError
 from starlette.testclient import TestClient
 
 from app.main import create_app
@@ -149,6 +151,23 @@ def test_bad_request_member_is_refused(live_client: TestClient) -> None:
         ("/limit", "MALFORMED"),
         ("/max", "OUT_OF_RANGE"),
     ]
+
+
+def test_statement_that_runs_past_the_timeout_is_a_query_timeout(
+    live_client: TestClient, live_settings: Settings, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """As for `/run`: the driver's error is fabricated, everything around it is real."""
+
+    def times_out(_connection: Any, statement: Any, *_args: Any, **_kwargs: Any) -> Any:
+        raise OperationalError(str(statement), {}, Exception("HYT00", "[HYT00] Query timeout expired"))
+
+    monkeypatch.setattr(Connection, "execute", times_out)
+    response = live_client.post("/suggest", json={})
+    assert response.status_code == 504
+    assert (response.json()["code"], response.json()["params"]) == (
+        "QUERY_TIMEOUT",
+        {"timeoutSeconds": live_settings.query_timeout_seconds},
+    )
 
 
 def test_suggest_is_database_unavailable_when_the_port_is_closed(live_settings: Settings) -> None:

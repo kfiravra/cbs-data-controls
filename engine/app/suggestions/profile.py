@@ -31,18 +31,24 @@ class EntityProfile:
 
 
 def optional_fields(entity: Entity) -> list[Field]:
-    """Visible, stored, nullable fields the glossary does not mark as required."""
+    """Visible, stored, nullable fields the glossary does not mark as required and gives a test for "missing"."""
     return [
         field
         for field in entity.fields.values()
-        if field.visible and field.column is not None and field.nullable and field.required is None
+        if field.visible
+        and field.column is not None
+        and field.nullable
+        and field.required is None
+        and missing_operator(field) is not None
     ]
 
 
 def date_fields(entity: Entity) -> list[Field]:
-    """Visible, stored date fields; a computed field has no column to compare."""
+    """Visible, stored date fields that may be compared with another field (a computed one has no column)."""
     return [
-        field for field in entity.fields.values() if field.visible and field.column is not None and field.type == "date"
+        field
+        for field in entity.fields.values()
+        if field.visible and field.column is not None and field.type == "date" and field.comparable
     ]
 
 
@@ -50,7 +56,7 @@ def query_for(entity: Entity, glossary: Glossary) -> ProfileQuery:
     """The one SELECT that measures everything the generators ask about an entity."""
     dates = [field.key for field in date_fields(entity)]
     pairs = [(first, second) for index, first in enumerate(dates) for second in dates[index + 1 :]]
-    missing = {field.key: missing_operator(field) for field in optional_fields(entity)}
+    missing = {field.key: operator for field in optional_fields(entity) if (operator := missing_operator(field))}
     return profile_query(entity, glossary, missing, pairs)
 
 

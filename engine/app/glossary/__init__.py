@@ -7,6 +7,7 @@ from app.glossary.loader import load_glossary, parse_glossary
 from app.glossary.model import (
     COMPUTED_FUNCTIONS,
     OPERATOR_KEYS,
+    PARENT_CARDINALITY,
     QUANTIFIABLE_CARDINALITY,
     TRAVERSABLE_CARDINALITIES,
     Computed,
@@ -32,6 +33,7 @@ from app.glossary.public import public_view
 __all__ = [
     "COMPUTED_FUNCTIONS",
     "OPERATOR_KEYS",
+    "PARENT_CARDINALITY",
     "QUANTIFIABLE_CARDINALITY",
     "TRAVERSABLE_CARDINALITIES",
     "CatalogColumn",

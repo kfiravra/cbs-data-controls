@@ -61,13 +61,19 @@ def number_nodes(where: Node) -> Node:
     return where
 
 
-def missing_operator(field: Field) -> str:
-    """How a field is found missing: text can also be empty, everything else can only be NULL."""
-    return "is_empty" if field.type == "text" else "is_null"
+def missing_operator(field: Field) -> str | None:
+    """How a field is found missing: text can also be empty, everything else can only be NULL.
+
+    None when the glossary does not let the field be tested that way (a number that is never NULL, a field whose
+    own operator list leaves the test out): such a field cannot be missing, and no proposal asks whether it is.
+    """
+    operator = "is_empty" if field.type == "text" else "is_null"
+    return operator if operator in field.operators else None
 
 
-def is_missing(field: Field) -> Node:
-    return condition(field.key, missing_operator(field))
+def is_missing(field: Field) -> Node | None:
+    operator = missing_operator(field)
+    return None if operator is None else condition(field.key, operator)
 
 
 def is_active(entity: Entity, path: list[str] | None = None) -> Node | None:
