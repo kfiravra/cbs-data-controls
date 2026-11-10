@@ -59,6 +59,14 @@ public sealed class EngineStub : HttpMessageHandler
         };
     }
 
+    /// <summary>The route answers as something in front of the engine would: a status and text, no problem document.</summary>
+    public void AnswerPlain(string route, HttpStatusCode status) =>
+        _routes[route] = (_, _) => Task.FromResult(new HttpResponseMessage(status) { Content = new StringContent("upstream unavailable", Encoding.UTF8, "text/plain") });
+
+    /// <summary>The route sends its headers and then a body that never arrives.</summary>
+    public void StallBody(string route) =>
+        _routes[route] = (_, _) => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StreamContent(new StalledStream()) });
+
     public void RefuseEverything()
     {
         foreach (var route in new[] { Health, Glossary, Validate, Run, Suggest })
@@ -72,6 +80,41 @@ public sealed class EngineStub : HttpMessageHandler
         {
             Content = new StringContent(json, Encoding.UTF8, (int)status >= 400 ? ProblemContentType : "application/json"),
         };
+
+    private sealed class StalledStream : Stream
+    {
+        public override bool CanRead => true;
+
+        public override bool CanSeek => false;
+
+        public override bool CanWrite => false;
+
+        public override long Length => throw new NotSupportedException();
+
+        public override long Position
+        {
+            get => throw new NotSupportedException();
+            set => throw new NotSupportedException();
+        }
+
+        public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
+        {
+            await Task.Delay(Timeout.InfiniteTimeSpan, cancellationToken);
+            return 0;
+        }
+
+        public override int Read(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+
+        public override void Flush()
+        {
+        }
+
+        public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+
+        public override void SetLength(long value) => throw new NotSupportedException();
+
+        public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+    }
 
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {

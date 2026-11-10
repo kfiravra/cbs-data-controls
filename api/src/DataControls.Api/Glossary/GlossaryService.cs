@@ -11,20 +11,27 @@ public sealed class GlossaryService(
 {
     /// <summary>
     /// The glossary: the cached copy while it is fresh, else the engine's. When the engine fails, the held
-    /// copy is served stale; with no copy the failure goes to the caller.
+    /// copy is served stale; with no copy the failure goes to the caller. Either way the engine is not
+    /// asked again until a short while has passed.
     /// </summary>
     public async Task<EngineGlossary> GetAsync(CancellationToken cancellationToken)
     {
-        if (cache.Fresh is { } fresh)
+        if (Usable() is { } usable)
         {
-            return fresh;
+            return usable;
         }
 
         using (await cache.WaitForRefreshTurnAsync(cancellationToken))
         {
-            if (cache.Fresh is { } refreshedMeanwhile)
+            // Whoever held the turn before may have fetched it, or failed a moment ago.
+            if (Usable() is { } settledMeanwhile)
             {
-                return refreshedMeanwhile;
+                return settledMeanwhile;
+            }
+
+            if (cache.RecentFailure is { } recentFailure)
+            {
+                throw recentFailure;
             }
 
             try
@@ -33,8 +40,14 @@ public sealed class GlossaryService(
                 cache.Store(glossary);
                 return glossary;
             }
-            catch (EngineException failure) when (cache.Held is { } stale)
+            catch (EngineException failure)
             {
+                cache.RecordFailure(failure);
+                if (cache.Held is not { } stale)
+                {
+                    throw;
+                }
+
                 logger.LogWarning(
                     failure,
                     "The glossary could not be refreshed ({Failure}); serving the held version {GlossaryVersion} {CorrelationId}",
@@ -45,4 +58,7 @@ public sealed class GlossaryService(
             }
         }
     }
+
+    /// <summary>The fresh copy, or the held one while a failed refresh is too recent to repeat.</summary>
+    private EngineGlossary? Usable() => cache.Fresh ?? (cache.RecentFailure is null ? null : cache.Held);
 }

@@ -102,6 +102,19 @@ public sealed class EngineCallTests(ApiFixture fixture)
     }
 
     [Fact]
+    public async Task Validate_returns_503_engine_unavailable_within_one_more_attempt_timeout_when_the_body_never_arrives()
+    {
+        _engine.StallBody(EngineStub.Validate);
+        var watch = Stopwatch.StartNew();
+
+        var response = await ValidateAsync();
+
+        await HttpAssert.ProblemAsync(response, HttpStatusCode.ServiceUnavailable, "ENGINE_UNAVAILABLE");
+        Assert.Single(_engine.CallsTo(EngineStub.Validate));
+        Assert.InRange(watch.Elapsed, TimeSpan.FromMilliseconds(400), TimeSpan.FromSeconds(10));
+    }
+
+    [Fact]
     public async Task Engine_call_carries_the_request_correlation_id_and_the_resolved_language()
     {
         var request = new HttpRequestMessage(HttpMethod.Post, "/api/v1/controls/validate")

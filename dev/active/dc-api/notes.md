@@ -63,8 +63,24 @@ wait for a merge: commit, no push.
     included; beyond that the api checks only the members it reads (the glossary's version, languages and
     identifying fields).
 
+12. **The breaker does not count an answer from a living engine** (decision 11, narrowed after the Phase 2
+    review). A 503 with the engine's own problem document (`DATABASE_UNAVAILABLE`) is still retried once but is
+    not counted, and `/health` is a probe that is neither retried nor counted. As planned, three failed runs or
+    three health polls while `hr` was down would have opened the breaker and answered `ENGINE_UNAVAILABLE` for
+    `/validate` and every save, which need no database, from an engine that was up. What still counts: a refused
+    connection, an attempt timeout, a 502, and a 503 that is not a problem document (something in front of the
+    engine).
+13. **After a failed glossary refresh the engine is left alone for 30 seconds** (a constant, not a setting). In
+    that time the held copy is served, or the same failure is answered when there is none. Without it every
+    reader queued behind the one refresh made a full attempt of its own, one at a time.
+14. **The engine's body has a time limit of its own**, one more attempt timeout after the headers, because the
+    pipeline's limits end at the headers; a body that stalls is `ENGINE_UNAVAILABLE`.
+15. **A `nodeId` comes only from a node**: the root group, a child of a group, or the `where` of a related node.
+    An `id` on the definition itself or inside a field reference is ignored, as the engine's own rule has it
+    (the reviewer read it on `feat/engine`).
+
 ## Last reviewed
-`8e80f74` (Phase 1), fixes in `a781c91`
+`b89bd0b` (Phase 2), fixes in the commit after it; `8e80f74` (Phase 1), fixes in `a781c91`
 
 ## Docs for dc-delivery
 Kept as the work goes (plan.md decision 26) and copied into the PR body under this heading at `/ship`. The
@@ -89,6 +105,10 @@ happen, add what did.
 - `docs/architecture.md` §12 or `contracts/api.md` §1, wording only: "a body that is not JSON 415" is built as
   both a media type that is not JSON and JSON text that does not parse (decision 3 of the unattended run). If
   the engine reads it differently, the two services disagree on one status and the line needs a second sentence.
+- `docs/architecture.md` §7, EngineClient: the breaker does not count a 503 that is the engine's own problem
+  document, and a health probe is neither retried nor counted (unattended decision 12); the response body has
+  a limit of one more attempt timeout (decision 14); after a failed glossary refresh the engine is not asked
+  again for 30 seconds (decision 13).
 - `docs/ai-usage.md`: the Log below.
 
 ## Log
@@ -181,3 +201,19 @@ warning by file, what the fix changed, what was left and why, what Kfir rejected
   16 threads gave no mismatch and no exception, so evaluation is not locked.
 - 2026-11-11 01:35 Phase 2 gate green: build, format, 159 tests, print guard (`gates/phase-2.txt`). Transitive
   packages as pinned: JsonSchema.Net 8.0.5, JsonPointer.Net 6.0.1, Json.More.Net 2.2.0, Resilience 10.11.0.
+- 2026-11-11 02:10 Phase 2 review (diff `a781c91..b89bd0b`, one reviewer on opus): plan 1 critical, 3 warning, 0
+  info; standards 0 critical, 1 warning, 4 info. Critical: `Engine/EngineModule.cs` retried and counted every
+  503, so the engine's own `DATABASE_UNAVAILABLE` and three `/health` polls would open the one breaker and
+  `/validate` would answer `ENGINE_UNAVAILABLE` from an engine that was up. Warnings: `Glossary/GlossaryService.cs`
+  no back-off after a failed refresh, readers queue for an attempt each; `Controls/DefinitionDocument.cs` any
+  object on the path gave a `nodeId`, the definition and a field reference included; `Engine/EngineModule.cs` no
+  limit on the body read after the headers; `Health/HealthTests.cs` the 2-second probe limit and the 503 retry
+  were not actually tested. Fixed in the commit `fix(api): review fixes` after `b89bd0b`: probes marked and
+  skipped by both predicates, a problem-document 503 not counted (decision 12, plan decision 11 and Design E
+  amended); a 30-second back-off with the failure remembered (decision 13); `ResponseHeadersRead` with a body
+  limit of one attempt timeout (decision 14); node positions tracked along the pointer (decision 15); health
+  tests assert one call and the two seconds on a host with a one-minute attempt timeout; four breaker tests, four
+  glossary tests, a stalled-body test, node-id cases. Info fixed: the `!` in `DefinitionSchemaValidator`, the
+  correlation id in its warning, the startup probe's filter on the stopping token. Left: `EngineErrorMap` knows
+  `RunStatus` and `RunFailure` and its run column has no caller until Phase 4 (info), because the plan asks for
+  one table. Kfir rejected or rewrote: nothing; he was not present.

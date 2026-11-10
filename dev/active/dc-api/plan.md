@@ -48,7 +48,9 @@ Settled here, inside the architecture:
     for one attempt timeout at most. (§7 asks for "a single retry".)
 11. **The circuit breaker counts connection errors, attempt timeouts, 502 and 503**, and opens at 5 calls with
     half of them failed. A 504 is one control's slow query, not an unhealthy engine. (The library defaults need
-    100 calls in 30 seconds and would never open here.)
+    100 calls in 30 seconds and would never open here.) Narrowed in the Phase 2 review (notes, unattended
+    decision 12): a 503 that carries the engine's own problem document is not counted, and a health probe is
+    neither retried nor counted.
 12. **A run outlives its request.** Once the run row exists the engine call ignores the client's disconnect, so a
     closed tab does not leave a `running` row; host shutdown still cancels it. A run cut by a crash stays
     `running` and the next run of the control supersedes it in the list (a stated limitation, no sweeper).
@@ -432,8 +434,10 @@ One typed client, `EngineClient`: `GetHealthAsync`, `GetGlossaryAsync`, `Validat
 | anything else | 500 `INTERNAL_ERROR` | `failed`, `INTERNAL_ERROR` |
 
 - The breaker's state belongs to the host: a test that opens it uses a factory of its own.
-- `/health` asks the engine through the same client with a 2-second cancellation, which the pipeline neither
-  retries nor counts.
+- `/health` asks the engine through the same client with a 2-second cancellation. The call is marked as a
+  probe, and the pipeline neither retries nor counts a probe, whatever its outcome.
+- The body is read after the headers under a limit of its own, one more attempt timeout: the pipeline's limits
+  end when the headers arrive.
 
 ### F. Behaviour by module (what the contract's tables do not spell out)
 

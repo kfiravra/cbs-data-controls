@@ -47,6 +47,18 @@ public sealed class DefinitionDocumentTests
         Assert.Equal(expected, DefinitionDocument.NearestNodeId(_definition, path));
     }
 
+    [Theory]
+    [InlineData("/where/children/0/left")]
+    [InlineData("/where/children/0/left/field")]
+    [InlineData("/rootEntity")]
+    [InlineData("/where/op")]
+    public void Nearest_node_id_ignores_an_id_on_the_definition_or_inside_a_field_reference(string path)
+    {
+        var definition = Parse("""{"id":"root","rootEntity":"employee","where":{"type":"group","op":"and","children":[{"type":"condition","left":{"id":"fieldref","field":"age"}}]}}""");
+
+        Assert.Null(DefinitionDocument.NearestNodeId(definition, path));
+    }
+
     [Fact]
     public void Nearest_node_id_ignores_an_id_that_is_not_a_string()
     {

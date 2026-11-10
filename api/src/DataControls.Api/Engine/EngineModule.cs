@@ -45,6 +45,10 @@ internal static class EngineModule
         return services;
     }
 
+    /// <summary>A problem document is the engine's own answer; a gateway in front of it answers with something else.</summary>
+    private static bool IsEngineProblem(HttpResponseMessage? response) =>
+        response?.Content.Headers.ContentType?.MediaType == "application/problem+json";
+
     private static void ConfigureResilience(HttpStandardResilienceOptions resilience, EngineOptions engine)
     {
         resilience.AttemptTimeout.Timeout = engine.AttemptTimeout;
@@ -58,18 +62,23 @@ internal static class EngineModule
         resilience.Retry.UseJitter = false;
         resilience.Retry.ShouldRetryAfterHeader = false;
         resilience.Retry.ShouldHandle = arguments => ValueTask.FromResult(
-            arguments.Outcome.Exception is HttpRequestException
-            || (int?)arguments.Outcome.Result?.StatusCode is 408 or 429 or 502 or 503);
+            !EngineClient.IsProbe(arguments.Context.GetRequestMessage())
+            && (arguments.Outcome.Exception is HttpRequestException
+                || (int?)arguments.Outcome.Result?.StatusCode is 408 or 429 or 502 or 503));
 
-        // A 504 is one control's slow query, not an unhealthy engine, so it does not count. The library's
-        // defaults need 100 calls in 30 seconds and would never open here.
+        // The breaker protects against an engine that does not answer. A 504 is one control's slow query,
+        // and a 503 that carries the engine's own problem (its database is down) comes from an engine that
+        // is up: neither counts, or a few failed runs would cut off validation and saving, which need no
+        // database. A health probe never counts either. The library's defaults need 100 calls in 30
+        // seconds and would never open here.
         resilience.CircuitBreaker.MinimumThroughput = engine.BreakerMinimumThroughput;
         resilience.CircuitBreaker.FailureRatio = 0.5;
         resilience.CircuitBreaker.BreakDuration = engine.BreakerBreakDuration;
         var sampling = engine.AttemptTimeout * 2;
         resilience.CircuitBreaker.SamplingDuration = sampling > _minSamplingDuration ? sampling : _minSamplingDuration;
         resilience.CircuitBreaker.ShouldHandle = arguments => ValueTask.FromResult(
-            arguments.Outcome.Exception is HttpRequestException or TimeoutRejectedException
-            || (int?)arguments.Outcome.Result?.StatusCode is 502 or 503);
+            !EngineClient.IsProbe(arguments.Context.GetRequestMessage())
+            && (arguments.Outcome.Exception is HttpRequestException or TimeoutRejectedException
+                || ((int?)arguments.Outcome.Result?.StatusCode is 502 or 503 && !IsEngineProblem(arguments.Outcome.Result))));
     }
 }

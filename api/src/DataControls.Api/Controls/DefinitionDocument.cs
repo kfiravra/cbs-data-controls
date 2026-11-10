@@ -6,6 +6,8 @@ namespace DataControls.Api.Controls;
 internal static class DefinitionDocument
 {
     private const string NodeIdMember = "id";
+    private const string WhereMember = "where";
+    private const string ChildrenMember = "children";
 
     /// <summary>
     /// Every pointer of the document mapped to its position in the JSON text, an object before the members
@@ -18,23 +20,41 @@ internal static class DefinitionDocument
         return positions;
     }
 
-    /// <summary>The <c>id</c> of the nearest object at or above the path that has a string one, or null.</summary>
+    /// <summary>
+    /// The <c>id</c> of the nearest node at or above the path that has a string one, or null. A node is the
+    /// root group (<c>/where</c>), a child of a group, or the <c>where</c> of a related node; the definition
+    /// itself and a field reference are not nodes, whatever members they carry.
+    /// </summary>
     public static string? NearestNodeId(JsonElement definition, string pointer)
     {
         var current = definition;
-        var nearest = IdOf(current);
+        var position = Position.Definition;
+        string? nearest = null;
         foreach (var segment in pointer.Split('/', StringSplitOptions.RemoveEmptyEntries))
         {
-            if (!TryStep(current, Unescape(segment), out current))
+            var name = Unescape(segment);
+            if (!TryStep(current, name, out current))
             {
                 break;
             }
 
-            nearest = IdOf(current) ?? nearest;
+            position = Next(position, name);
+            if (position == Position.Node)
+            {
+                nearest = IdOf(current) ?? nearest;
+            }
         }
 
         return nearest;
     }
+
+    private static Position Next(Position position, string segment) => (position, segment) switch
+    {
+        (Position.Definition or Position.Node, WhereMember) => Position.Node,
+        (Position.Node, ChildrenMember) => Position.Children,
+        (Position.Children, _) => Position.Node,
+        _ => Position.Elsewhere,
+    };
 
     private static void Visit(JsonElement element, string pointer, Dictionary<string, int> positions)
     {
@@ -87,4 +107,13 @@ internal static class DefinitionDocument
     private static string Escape(string name) => name.Replace("~", "~0").Replace("/", "~1");
 
     private static string Unescape(string segment) => segment.Replace("~1", "/").Replace("~0", "~");
+
+    /// <summary>Where a step of the pointer stands in the tree of nodes.</summary>
+    private enum Position
+    {
+        Definition,
+        Node,
+        Children,
+        Elsewhere,
+    }
 }

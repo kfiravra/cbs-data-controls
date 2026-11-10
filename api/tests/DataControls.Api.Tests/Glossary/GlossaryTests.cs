@@ -61,13 +61,57 @@ public sealed class GlossaryTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Glossary_leaves_the_engine_alone_for_half_a_minute_when_a_refresh_has_just_failed()
+    {
+        var client = _factory.CreateClient();
+        await client.GetAsync(Path);
+        _factory.Clock.Advance(TimeSpan.FromMinutes(11));
+        _factory.Engine.Refuse(EngineStub.Glossary);
+
+        await client.GetAsync(Path);
+        var callsAfterTheFailedRefresh = _factory.Engine.CallsTo(EngineStub.Glossary).Count;
+        var servedStaleAgain = await client.GetAsync(Path);
+        var callsWhileBackingOff = _factory.Engine.CallsTo(EngineStub.Glossary).Count;
+        _factory.Clock.Advance(TimeSpan.FromSeconds(31));
+        await client.GetAsync(Path);
+
+        // One fetch, then a refresh that was refused twice (the one retry); nothing while backing off; then two more.
+        Assert.Equal(3, callsAfterTheFailedRefresh);
+        Assert.Equal(HttpStatusCode.OK, servedStaleAgain.StatusCode);
+        Assert.Equal(3, callsWhileBackingOff);
+        Assert.Equal(5, _factory.Engine.CallsTo(EngineStub.Glossary).Count);
+    }
+
+    [Fact]
     public async Task Glossary_returns_503_engine_unavailable_when_it_was_never_fetched_and_the_engine_is_down()
     {
         _factory.Engine.Refuse(EngineStub.Glossary);
+        var client = _factory.CreateClient();
 
-        var response = await _factory.CreateClient().GetAsync(Path);
+        var response = await client.GetAsync(Path);
+        var callsAfterTheFirstRead = _factory.Engine.CallsTo(EngineStub.Glossary).Count;
+        var again = await client.GetAsync(Path);
 
         await HttpAssert.ProblemAsync(response, HttpStatusCode.ServiceUnavailable, "ENGINE_UNAVAILABLE");
+        await HttpAssert.ProblemAsync(again, HttpStatusCode.ServiceUnavailable, "ENGINE_UNAVAILABLE");
+        Assert.Equal(2, callsAfterTheFirstRead);
+        Assert.Equal(2, _factory.Engine.CallsTo(EngineStub.Glossary).Count);
+    }
+
+    [Fact]
+    public async Task Glossary_is_fetched_as_soon_as_the_engine_is_back_when_the_back_off_has_passed()
+    {
+        _factory.Engine.Refuse(EngineStub.Glossary);
+        var client = _factory.CreateClient();
+        await client.GetAsync(Path);
+        _factory.Engine.Reset();
+
+        var whileBackingOff = await client.GetAsync(Path);
+        _factory.Clock.Advance(TimeSpan.FromSeconds(31));
+        var afterBackOff = await client.GetAsync(Path);
+
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, whileBackingOff.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, afterBackOff.StatusCode);
     }
 
     [Fact]

@@ -1,5 +1,6 @@
 using System.Text.Json;
 using DataControls.Api.Errors;
+using DataControls.Api.Hosting;
 using Json.Schema;
 
 namespace DataControls.Api.Controls;
@@ -9,7 +10,9 @@ namespace DataControls.Api.Controls;
 /// time, with JsonSchema.Net 8.0.5 (pinned: its last MIT release). The class is the only code that
 /// knows the library.
 /// </summary>
-internal sealed class DefinitionSchemaValidator(ILogger<DefinitionSchemaValidator> logger) : IDefinitionSchemaValidator
+internal sealed class DefinitionSchemaValidator(
+    RequestContextAccessor requests,
+    ILogger<DefinitionSchemaValidator> logger) : IDefinitionSchemaValidator
 {
     private const string ResourceName = "control-definition.schema.json";
     private const string VersionMember = "schemaVersion";
@@ -42,7 +45,9 @@ internal sealed class DefinitionSchemaValidator(ILogger<DefinitionSchemaValidato
         {
             // The schema promises a located error for every failure (no not, anyOf or oneOf). If it ever
             // breaks that promise the definition is still refused, at the root.
-            logger.LogWarning("The schema rejected a definition without a located error; reporting it at the root");
+            logger.LogWarning(
+                "The schema rejected a definition without a located error; reporting it at the root {CorrelationId}",
+                requests.Current.CorrelationId);
             paths = [string.Empty];
         }
 
@@ -61,13 +66,19 @@ internal sealed class DefinitionSchemaValidator(ILogger<DefinitionSchemaValidato
         && definition.TryGetProperty(VersionMember, out var version)
         && !(version.ValueKind == JsonValueKind.Number && version.TryGetDouble(out var number) && number == SupportedVersion);
 
-    private static IEnumerable<SchemaErrorUnit> ErrorUnits(EvaluationResults results) =>
-        (results.Details ?? [])
-            .Where(unit => unit.Errors is { Count: > 0 })
-            .Select(unit => new SchemaErrorUnit(
-                unit.InstanceLocation.ToString(),
-                unit.EvaluationPath.ToString(),
-                unit.Errors!.ContainsKey(FalseSchemaErrorKey)));
+    private static IEnumerable<SchemaErrorUnit> ErrorUnits(EvaluationResults results)
+    {
+        foreach (var unit in results.Details ?? [])
+        {
+            if (unit.Errors is { Count: > 0 } errors)
+            {
+                yield return new SchemaErrorUnit(
+                    unit.InstanceLocation.ToString(),
+                    unit.EvaluationPath.ToString(),
+                    errors.ContainsKey(FalseSchemaErrorKey));
+            }
+        }
+    }
 
     private static JsonSchema Load()
     {

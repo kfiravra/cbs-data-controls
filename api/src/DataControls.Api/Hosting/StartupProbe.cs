@@ -34,7 +34,7 @@ internal sealed class StartupProbe(
         {
             logger.LogWarning(failure, "Startup probe: the engine did not give a glossary ({Failure}); it is fetched on the first request that needs it", failure.Failure);
         }
-        catch (Exception failure) when (failure is not OperationCanceledException)
+        catch (Exception failure) when (!stoppingToken.IsCancellationRequested)
         {
             // A background service that throws stops the host, and this probe must never do that.
             logger.LogWarning(failure, "Startup probe failed");
