@@ -49,6 +49,15 @@ public sealed class GlossaryCache(TimeProvider time, IOptions<GlossaryOptions> o
         languages.Replace(glossary.Languages, glossary.DefaultLanguage);
     }
 
+    /// <summary>Forgets the held copy when the engine reports another version than the one held.</summary>
+    public void DropUnless(string version)
+    {
+        if (_entry is { } entry && entry.Glossary.Version != version)
+        {
+            _entry = null;
+        }
+    }
+
     public void RecordFailure(EngineException failure) => _failedRefresh = new FailedRefresh(failure, time.GetUtcNow());
 
     /// <summary>One refresh at a time: the caller holds the turn until it disposes the result.</summary>

@@ -1,14 +1,15 @@
 # dc-api notes
 
 ## State
-Phases 1 to 3 are built; 1 and 2 are reviewed and fixed (`8e80f74` + `a781c91`, `b89bd0b` + `638787d`), Phase 3
-is green (239 tests) and its review is next. Phase 3 added the definition hasher, controls with immutable
-versions, the concurrency token, archive, the list with its filters and paging, and the versions endpoints. The
-run is unattended (Kfir's word of 2026-11-11, below).
+Phases 1 to 4 are built; 1 to 3 are reviewed and fixed, Phase 4 is green (290 tests) and its review is next.
+Phase 4 added `EngineClient.RunAsync`, the run service (open, engine call, snapshot and close in one save, every
+failure kind closed with its code), run history, `GET /runs/{id}` with `previousRun`, and the results query
+(paging, search, condition filter, sort). The run is unattended (Kfir's word of 2026-11-11, below).
 
 ## Next
-1. Phase 3 review, one `fix(api): review fixes` commit, the Log line.
-2. Phase 4 (runs and the snapshot), Phase 5 (suggestions, OpenAPI, static hosting), the gate.
+1. Phase 4 review, one `fix(api): review fixes` commit, the Log line.
+2. Phase 5 (suggestions, OpenAPI, static hosting, `requests.http`, the conformance test, live tests, README, the
+   start of the published app from another directory), then the gate.
 
 ## Blockers
 - None for the build. The live pass of the gate needs the engine (`feat/engine`, not merged): it waits, and this
@@ -98,8 +99,22 @@ wait for a merge: commit, no push.
 21. **Two saves that race to add the same version number are a 409 as well**: the second insert meets the first
     one's key, and that is answered `CONCURRENCY_CONFLICT`, not 500.
 
+22. **A run's request is checked before its control is read**: a malformed `runDate` is 400 also for an unknown or
+    archived control, as the contract orders the checks of `PUT`. Design F named the control first.
+23. **The snapshot's rows reach the context through the run's own collection and one `SaveChanges`**, which is
+    one change-detection pass over them. Design F asks for "change detection off"; switched off, the context
+    would not see the run's own closing either. Measured: a run of 5,000 violations is stored and answered in
+    1.8 to 2.0 s (three runs, `gates/phase-4.txt`), so the batch size is the provider's default.
+24. **Without a glossary the display values keep the engine's order.** `display_text` is ordered by the root
+    entity's `identifyingFields`; if the glossary cannot be had right after a run (rare: the engine has just
+    answered) the rows are stored in the order the engine wrote the values, and a warning is logged.
+25. **A run answer outside the contract closes the run `INTERNAL_ERROR`**: a member missing or of another type, a
+    record key that is empty or longer than 64 characters, fewer violations counted than returned. An engine
+    version longer than its column makes the save fail, which is the "snapshot cannot be stored" case: `failed`,
+    `INTERNAL_ERROR`, no rows.
+
 ## Last reviewed
-`96bc1e9` (Phase 3), fixes in the commit after it; `b89bd0b` (Phase 2), fixes in `638787d`; `8e80f74` (Phase 1), fixes in `a781c91`
+`96bc1e9` (Phase 3), fixes in `a619323`; `b89bd0b` (Phase 2), fixes in `638787d`; `8e80f74` (Phase 1), fixes in `a781c91`
 
 ## Docs for dc-delivery
 Kept as the work goes (plan.md decision 26) and copied into the PR body under this heading at `/ship`. The
@@ -256,3 +271,6 @@ warning by file, what the fix changed, what was left and why, what Kfir rejected
   `LastRunResponse` uses `Persistence.RunStatus` on the wire (info), because the enum's four names are the
   contract's and the column's, and a second enum would only be converted to and from the first. Kfir rejected
   or rewrote: nothing; he was not present.
+- 2026-11-11 03:20 Phase 4 gate green: build, format, 290 tests, print guard (`gates/phase-4.txt`). One run of
+  5,000 violations (the stub's answer of about 3 MB, parsed, 5,000 rows inserted with the provider's default
+  batch size, the run read back): 2011 ms, 1813 ms and 1880 ms in three runs of the test alone.

@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using DataControls.Api.Hosting;
@@ -28,6 +29,21 @@ public sealed class EngineClient(HttpClient http, IOptions<EngineOptions> option
     /// <summary>The engine's <c>/validate</c> body: <c>{ valid, sentence, sentenceParts, conditions }</c>.</summary>
     public Task<byte[]> ValidateAsync(JsonElement definition, CancellationToken cancellationToken) =>
         SendAsync(HttpMethod.Post, "/validate", Body(writer => WriteDefinition(writer, definition)), cancellationToken);
+
+    /// <summary>
+    /// Runs a definition. The date and the cap are always sent: the api decides the date, because the run
+    /// row needs it before the engine answers.
+    /// </summary>
+    public async Task<EngineRunAnswer> RunAsync(JsonElement definition, DateOnly runDate, int rowCap, CancellationToken cancellationToken)
+    {
+        var body = Body(writer =>
+        {
+            WriteDefinition(writer, definition);
+            writer.WriteString("runDate", runDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture));
+            writer.WriteNumber("rowCap", rowCap);
+        });
+        return EngineRunAnswer.Parse(await SendAsync(HttpMethod.Post, "/run", body, cancellationToken));
+    }
 
     internal static bool IsProbe(HttpRequestMessage? request) =>
         request is not null && request.Options.TryGetValue(_probe, out var probe) && probe;

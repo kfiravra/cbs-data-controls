@@ -59,6 +59,17 @@ public sealed class GlossaryService(
         }
     }
 
+    /// <summary>
+    /// An entity's identifying field keys, in the glossary's order, or null when the glossary does not know
+    /// the entity. <paramref name="reportedVersion"/> is the version the engine just named in a run: a held
+    /// copy of another version is dropped first.
+    /// </summary>
+    public async Task<IReadOnlyList<string>?> IdentifyingFieldsAsync(string entity, string reportedVersion, CancellationToken cancellationToken)
+    {
+        cache.DropUnless(reportedVersion);
+        return (await GetAsync(cancellationToken)).IdentifyingFields.GetValueOrDefault(entity);
+    }
+
     /// <summary>The fresh copy, or the held one while a failed refresh is too recent to repeat.</summary>
     private EngineGlossary? Usable() => cache.Fresh ?? (cache.RecentFailure is null ? null : cache.Held);
 }

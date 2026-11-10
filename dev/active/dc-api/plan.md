@@ -221,10 +221,10 @@ Review: `/phase-review api`
 Commit: `feat(api): controls with versions, optimistic concurrency and archive`
 
 ### Phase 4: runs and the snapshot
-- [ ] `Run` and `RunResult` behaviour, `RunService.StartAsync` (Design F): the run row, the engine call, the
+- [x] `Run` and `RunResult` behaviour, `RunService.StartAsync` (Design F): the run row, the engine call, the
       snapshot and the close in one `SaveChanges`, each failure kind closed with its code.
-- [ ] The results query, run history, `GET /runs/{id}` with `previousRun`, and `lastRun` in the controls list.
-- [ ] Tests: a run answers 201 with `Location`, counts and summary; `sentenceParts` and each reason's
+- [x] The results query, run history, `GET /runs/{id}` with `previousRun`, and `lastRun` in the controls list.
+- [x] Tests: a run answers 201 with `Location`, counts and summary; `sentenceParts` and each reason's
       `textParts` come back exactly as the stub sent them; for each of the six examples the keys and matched
       ids of `expected` come back in order; total above stored sets `capExceeded`; engine 422 closes the run
       as `CONTROL_DEFINITION_OUTDATED`, 504 as `timed_out` with `QUERY_TIMEOUT`, 503 as `DATABASE_UNAVAILABLE`,
@@ -233,7 +233,7 @@ Commit: `feat(api): controls with versions, optimistic concurrency and archive`
       clock); a malformed `runDate` is 400; 60 violations page as 25, 25, 10; `sort` and `dir`; `search` finds
       Hebrew text and treats `%` and `_` literally; `condition` filters; `previousRun`; run history newest
       first.
-- [ ] Measure one 5,000-violation snapshot and write the time into `gates/phase-4.txt`.
+- [x] Measure one 5,000-violation snapshot and write the time into `gates/phase-4.txt`.
 
 Verify: `/check --tests`
 Review: `/phase-review api`

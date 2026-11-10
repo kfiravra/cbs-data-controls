@@ -36,6 +36,7 @@ public sealed class EngineStub : HttpMessageHandler
         Answer(Health, HttpStatusCode.OK, EngineFixtures.Read("health.json"));
         Answer(Glossary, HttpStatusCode.OK, EngineFixtures.Read("glossary.json"));
         Answer(Validate, HttpStatusCode.OK, EngineFixtures.Read("validate.json"));
+        Answer(Run, HttpStatusCode.OK, EngineFixtures.Read("run.json"));
     }
 
     public void Answer(string route, HttpStatusCode status, string json) =>

@@ -18,6 +18,9 @@ internal static partial class RunsModule
                 options => LanguageTag().IsMatch(options.DefaultLanguage),
                 "Runs:DefaultLanguage must be a language tag of two or three lower-case letters, such as he.")
             .ValidateOnStart();
+        services.AddSingleton<RunCalendar>();
+        services.AddScoped<RunQueries>();
+        services.AddScoped<RunService>();
         return services;
     }
 

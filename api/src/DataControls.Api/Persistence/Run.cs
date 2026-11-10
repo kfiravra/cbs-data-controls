@@ -68,4 +68,19 @@ internal sealed class Run
         EngineVersion = outcome.EngineVersion;
         FinishedAt = now;
     }
+
+    /// <summary>Closes the run without rows: its status and error say why, and the time is the api's own.</summary>
+    public void Fail(RunFailure failure, int durationMs, DateTime now)
+    {
+        _results.Clear();
+        Status = failure.Status;
+        ErrorCode = failure.Code;
+        ErrorParams = failure.ParamsJson;
+        DurationMs = durationMs;
+        TotalCount = null;
+        StoredCount = null;
+        Summary = null;
+        EngineVersion = null;
+        FinishedAt = now;
+    }
 }
