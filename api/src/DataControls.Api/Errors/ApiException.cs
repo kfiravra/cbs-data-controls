@@ -35,8 +35,22 @@ public sealed class ApiException : Exception
 
     public static ApiException NotFound() => new(ErrorCodes.NotFound);
 
+    public static ApiException ControlNotFound(int id) => new(ErrorCodes.ControlNotFound, new { id });
+
+    public static ApiException VersionNotFound(int id, int version) => new(ErrorCodes.VersionNotFound, new { id, version });
+
+    /// <summary>An archived control can be read but not changed or run.</summary>
+    public static ApiException ControlArchived(int id) => new(ErrorCodes.ControlArchived, new { id });
+
+    /// <summary>The control was saved by someone else since the client read it.</summary>
+    public static ApiException ConcurrencyConflict(int id) => new(ErrorCodes.ConcurrencyConflict, new { id });
+
     public static ApiException RequestInvalid(IReadOnlyList<RequestError> errors) =>
         new(ErrorCodes.RequestInvalid, errors: JsonSerializer.SerializeToElement(errors, JsonDefaults.Options));
+
+    /// <summary>A request with one fault that is found after the others were checked.</summary>
+    public static ApiException RequestInvalid(string path, string code) =>
+        RequestInvalid([new RequestError(path, code, new RequestErrorParams())]);
 
     /// <summary>A request refused before its members were read: 413 for its size, 415 for its media type.</summary>
     public static ApiException RequestRejected(int status) => new(ErrorCodes.RequestInvalid, status: status);

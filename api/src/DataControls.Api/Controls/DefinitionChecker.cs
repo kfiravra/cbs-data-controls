@@ -23,8 +23,12 @@ public sealed class DefinitionChecker(IDefinitionSchemaValidator schema, EngineC
     public Task<byte[]> ValidateAsync(JsonElement definition, CancellationToken cancellationToken)
     {
         CheckSchema(definition);
-        return engine.ValidateAsync(definition, cancellationToken);
+        return AskEngineAsync(definition, cancellationToken);
     }
+
+    /// <summary>The engine's layer alone, for a definition that already passed the schema.</summary>
+    public Task<byte[]> AskEngineAsync(JsonElement definition, CancellationToken cancellationToken) =>
+        engine.ValidateAsync(definition, cancellationToken);
 
     /// <summary>The api's own layer alone.</summary>
     public void CheckSchema(JsonElement definition)

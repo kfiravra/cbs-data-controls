@@ -6,6 +6,7 @@ internal static class ControlsModule
     {
         services.AddSingleton<IDefinitionSchemaValidator, DefinitionSchemaValidator>();
         services.AddScoped<DefinitionChecker>();
+        services.AddScoped<ControlService>();
         return services;
     }
 }

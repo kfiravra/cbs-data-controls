@@ -207,9 +207,9 @@ Review: `/phase-review api`
 Commit: `feat(api): engine client, glossary cache and definition validation`
 
 ### Phase 3: controls
-- [ ] `DefinitionHasher` and the `Control` and `ControlVersion` behaviour (create, rename, add version, archive).
-- [ ] `ControlService` and `ControlsController`: create, read, update, archive, list, versions (Design F).
-- [ ] Tests: create answers 201 with `Location` and version 1; a Hebrew name comes back intact and is found by
+- [x] `DefinitionHasher` and the `Control` and `ControlVersion` behaviour (create, rename, add version, archive).
+- [x] `ControlService` and `ControlsController`: create, read, update, archive, list, versions (Design F).
+- [x] Tests: create answers 201 with `Location` and version 1; a Hebrew name comes back intact and is found by
       `search`; read and both 404s; an update with a changed definition writes version n+1; a rename keeps the
       version and works with the engine down; a stale token is 409 and a malformed one 400; `PUT` on an archived
       control is 409; archive is 204 twice; list filters, order, paging, a page past the end and bad paging

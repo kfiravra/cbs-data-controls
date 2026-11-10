@@ -1,14 +1,14 @@
 # dc-api notes
 
 ## State
-Phases 1 and 2 are built; Phase 1 is reviewed and fixed (`8e80f74`, `a781c91`), Phase 2 is green (159 tests)
-and its review is next. Phase 2 added the engine client with its resilience pipeline, the error map, the
-glossary cache and `GET /glossary`, the engine half of `/health`, the schema validator and
-`POST /controls/validate`. The run is unattended (Kfir's word of 2026-11-11, below).
+Phases 1 to 3 are built; 1 and 2 are reviewed and fixed (`8e80f74` + `a781c91`, `b89bd0b` + `638787d`), Phase 3
+is green (239 tests) and its review is next. Phase 3 added the definition hasher, controls with immutable
+versions, the concurrency token, archive, the list with its filters and paging, and the versions endpoints. The
+run is unattended (Kfir's word of 2026-11-11, below).
 
 ## Next
-1. Phase 2 review, one `fix(api): review fixes` commit, the Log line.
-2. Phase 3 (controls), Phase 4 (runs), Phase 5 (suggestions, OpenAPI, static hosting), the gate.
+1. Phase 3 review, one `fix(api): review fixes` commit, the Log line.
+2. Phase 4 (runs and the snapshot), Phase 5 (suggestions, OpenAPI, static hosting), the gate.
 
 ## Blockers
 - None for the build. The live pass of the gate needs the engine (`feat/engine`, not merged): it waits, and this
@@ -79,8 +79,16 @@ wait for a merge: commit, no push.
     An `id` on the definition itself or inside a field reference is ignored, as the engine's own rule has it
     (the reviewer read it on `feat/engine`).
 
+16. **The controls list trims `search` and an empty one filters nothing**, as the contract says for the results
+    search; for the controls list the contract only says "the name contains it".
+17. **An archive that meets a concurrent save is applied to the row as it is now** (up to three tries). `DELETE`
+    carries no token and its contract knows no conflict, so a 409 or a 500 there would be an answer the contract
+    does not list.
+18. **Response types are named `ControlResponse`, `ControlSummaryResponse` and so on**, because the contract's
+    names (`Control`, `ControlVersion`) are the entities' names; the JSON members are the contract's.
+
 ## Last reviewed
-`b89bd0b` (Phase 2), fixes in the commit after it; `8e80f74` (Phase 1), fixes in `a781c91`
+`b89bd0b` (Phase 2), fixes in `638787d`; `8e80f74` (Phase 1), fixes in `a781c91`
 
 ## Docs for dc-delivery
 Kept as the work goes (plan.md decision 26) and copied into the PR body under this heading at `/ship`. The
@@ -217,3 +225,4 @@ warning by file, what the fix changed, what was left and why, what Kfir rejected
   correlation id in its warning, the startup probe's filter on the stopping token. Left: `EngineErrorMap` knows
   `RunStatus` and `RunFailure` and its run column has no caller until Phase 4 (info), because the plan asks for
   one table. Kfir rejected or rewrote: nothing; he was not present.
+- 2026-11-11 02:25 Phase 3 gate green: build, format, 239 tests, print guard (`gates/phase-3.txt`).
