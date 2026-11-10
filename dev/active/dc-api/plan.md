@@ -152,33 +152,32 @@ specification each step builds from. Where `contracts/api.md` or `contracts/erro
 contract wins and the plan line is corrected in the same step.
 
 ### Before Phase 1 (nothing here is this session's work)
-- [ ] dc-contracts has passed its gate and is merged: `contracts/` and `sql/` exist on main.
-- [ ] SQL Server is up and initialised from the main tree (`docker compose up -d db && scripts/db-init.sh`).
-- [ ] On Kfir's word, from the main tree: `git worktree add ../cbs-api -b feat/api origin/main`,
-      `cp .env ../cbs-api/.env`, `mkdir -p ../cbs-api/dev/active && mv dev/active/dc-api ../cbs-api/dev/active/`.
-      This task's session runs in `../cbs-api` on Opus.
+- [x] dc-contracts has passed its gate and is merged: `contracts/` and `sql/` exist on main (`f9928bf`, #1).
+- [x] SQL Server is up and initialised from the main tree (`data-controls-db-1`, healthy on 2026-11-11).
+- [x] The worktree `../cbs-api` on `feat/api` exists with its `.env`; the task folder came with git (task folders
+      are tracked since `bce225b`, so the `mv` step fell away).
 
 ### Phase 1: skeleton, request pipeline, persistence model
-- [ ] Contract diff: read `contracts/api.md`, `contracts/errors.md` and `sql/30_dq_tables.sql` as merged and
+- [x] Contract diff: read `contracts/api.md`, `contracts/errors.md` and `sql/30_dq_tables.sql` as merged and
       compare them with Design C and Design H. Correct the plan where they differ. Anything the api needs that
       the contract still leaves open goes to `notes.md` Blockers and to Kfir before code depends on it.
-- [ ] `api/` skeleton per Design A: solution, the two projects, `Directory.Build.props`,
+- [x] `api/` skeleton per Design A: solution, the two projects, `Directory.Build.props`,
       `Directory.Packages.props`, `.editorconfig`, launch profile on `http://localhost:5000`, the content root
       fixed to the app's own folder (Design I). Remove the template's weather sample, HTTPS redirect,
       authorization call and `.http` file.
-- [ ] Configuration per Design B: options classes with validation and `ValidateOnStart()`, the Development
+- [x] Configuration per Design B: options classes with validation and `ValidateOnStart()`, the Development
       `.env` source, the api block of `.env.example`.
-- [ ] Errors per Design D: `ApiException`, `ErrorCodes`, the problem writer, the `IExceptionHandler`, the
+- [x] Errors per Design D: `ApiException`, `ErrorCodes`, the problem writer, the `IExceptionHandler`, the
       model-state mapping, the `/api/{**rest}` catch-all.
-- [ ] Correlation id and language middleware per Design D.
-- [ ] Persistence per Design C: entities with their behaviour, configurations, the UTC converter, `DqDbContext`.
-- [ ] `GET /api/v1/health` with the database probe (the engine probe arrives in Phase 2).
-- [ ] Test support per Design G: `ApiFactory`, a minimal `EngineStub`, the marker and its sweep, the
+- [x] Correlation id and language middleware per Design D.
+- [x] Persistence per Design C: entities with their behaviour, configurations, the UTC converter, `DqDbContext`.
+- [x] `GET /api/v1/health` with the database probe (the engine probe arrives in Phase 2).
+- [x] Test support per Design G: `ApiFactory`, a minimal `EngineStub`, the marker and its sweep, the
       "SQL Server is not reachable" failure message.
-- [ ] Tests: the problem shape for an unknown api path, a malformed body and a missing required member; the
+- [x] Tests: the problem shape for an unknown api path, a malformed body and a missing required member; the
       correlation id echoed and generated; language resolution; health with the database up; `ErrorCodes`
       against `contracts/errors.md`; one row of each `dq` table written and read back through the model.
-- [ ] `.claude/skills/dc-api/SKILL.md`: replace "the task plan picks" with decision 1, and add the package pins.
+- [x] `.claude/skills/dc-api/SKILL.md`: replace "the task plan picks" with decision 1, and add the package pins.
 
 Verify: `/check --tests` (`cd api && dotnet build -warnaserror && dotnet format --verify-no-changes && dotnet test`)
 Review: `/phase-review api`
@@ -387,10 +386,14 @@ static files · controllers, `/openapi/v1.json`, `/api/docs` · the `/api/{**res
   factories (`ApiException.ControlNotFound(id)`). The `IExceptionHandler` writes it; it maps a connection-level
   `SqlException` to 503 `DATABASE_UNAVAILABLE`, a request aborted by the client to no response, and everything
   else to 500 `INTERNAL_ERROR`, logged with the correlation id and never echoed.
-- **Request errors**: `InvalidModelStateResponseFactory` answers 400 `REQUEST_INVALID` with `errors: [{ path,
-  code, params }]`. The codes are `REQUIRED`, `TOO_LONG`, `OUT_OF_RANGE` and `MALFORMED`: validation attributes
-  carry the code as their message, and any message that is not one of the four (a binder's English sentence)
-  becomes `MALFORMED`. Bodies are capped at 1 MB.
+- **Request errors** (corrected by the contract diff of Phase 1): 400 `REQUEST_INVALID` with `errors: [{ path,
+  code, params }]`. `REQUIRED`, `TOO_LONG` (with `max`) and `OUT_OF_RANGE` (with `min` and `max`) come from one
+  explicit check per request (`RequestCheck`), because the contract counts characters after trimming and wants
+  the bounds as params, which a validation attribute's message cannot carry. A binder failure (a member of the
+  wrong JSON type, a query value that is not an integer, text that does not parse) goes through
+  `InvalidModelStateResponseFactory` and is always `MALFORMED`, at the JSON Pointer made from the binder's JSON
+  path or under the query parameter's name. Bodies are capped at 1 MB (413); a media type that is not JSON is
+  415; both are `REQUEST_INVALID` without `errors`.
 - **Correlation id**: `X-Correlation-Id` is taken when it matches `^[A-Za-z0-9._-]{1,64}$`, else a new GUID in
   `N` form. It is put on the response, in a log scope, in every problem and on every engine call.
 - **Language**: the primary subtag of the first range of `Accept-Language` when the glossary's `languages` list
@@ -526,10 +529,11 @@ functions directly (the hasher, the three corrections of schema errors, the lang
    no `not`, `anyOf` or `oneOf`; one schema-layer fixture is an extra member; `nodeId` is the `id` of the nearest
    enclosing node; a `schemaVersion` other than 1 is `UNSUPPORTED_SCHEMA_VERSION` in both services.
 2. `concurrencyToken` is the base64 of the row version, opaque to the client.
-3. `GET /controls`: `active=true` by default; `search` is "name contains"; ordered by name, then id. The
-   versions list is newest first.
-4. A bad `page`, `pageSize`, `sort`, `dir` or `active` is 400 `REQUEST_INVALID`; a page past the end is 200 with
-   empty `items`.
+3. `GET /controls`: `active` is `true` (the default), `false` or `all`; `search` is "name contains"; ordered by
+   name, then id. The versions list is newest first.
+4. A bad `page`, `pageSize`, `sort`, `dir` or `active` is 400 `REQUEST_INVALID`: `OUT_OF_RANGE` for a number
+   outside its range (`page` 1 to 1,000,000, `pageSize` 1 to 200), `MALFORMED` for a value that is not an integer
+   or not one of the words. A page past the end is 200 with empty `items`.
 5. `REQUEST_INVALID.errors` items are `{ path, code, params }` with the codes `REQUIRED`, `TOO_LONG`,
    `OUT_OF_RANGE`, `MALFORMED`.
 6. Results: `sort=key` is the engine's key order (`seq`) and the default; `sort=display` is `display_text`, then

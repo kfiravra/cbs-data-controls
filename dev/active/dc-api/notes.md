@@ -1,23 +1,55 @@
 # dc-api notes
 
 ## State
-Phase 1 not started. The plan was written on Fable on 2026-11-10 in the main tree (branch `feat/contracts`) and
-updated the same evening with three asks from dc-delivery (plan.md decisions 25 to 27, Design I). Execution is
-for Opus in the worktree `../cbs-api` on `feat/api`, which does not exist yet. `contracts/`, `sql/` and the
-database do not exist yet either: the plan was written against `dev/active/dc-contracts/plan.md` (Design A, E and
-F, the engine session's Design H and this session's Design I), and Phase 1 opens by comparing Design C and Design
-H of this plan with what dc-contracts actually merged.
+Phase 1 is built and green (64 tests): the `api/` skeleton, configuration, the problem pipeline, correlation id
+and language, the `dq` model, `GET /api/v1/health` with the database probe, and the test support. Its review is
+next. The run is unattended (Kfir's word of 2026-11-11, below): no stop at phase gates, decisions are taken and
+written under "Decisions taken unattended".
 
 ## Next
-1. Wait for the dc-contracts gate and its merge to main.
-2. On Kfir's word, from the main tree: `git worktree add ../cbs-api -b feat/api origin/main`,
-   `cp .env ../cbs-api/.env`, `mkdir -p ../cbs-api/dev/active && mv dev/active/dc-api ../cbs-api/dev/active/`
-   (task folders are untracked, so a new worktree has none).
-3. In `../cbs-api`, on Opus: `/resume dc-api`, then Phase 1, starting with the contract diff.
+1. Phase 1 review (`/phase-review api`, one reviewer, opus), one `fix(api): review fixes` commit, the Log line.
+2. Phase 2: the engine client and its resilience pipeline, the error map, the glossary cache, the schema
+   validator (repeat `research/schema-probe.md` on the real schema first), `POST /controls/validate`.
+3. Phases 3 to 5 and the gate, in the plan's order.
 
 ## Blockers
-- dc-contracts is not merged: no `contracts/`, no `sql/`, no database.
-- Docker Desktop was not running on 2026-11-10 19:44; the database must be up from the main tree before any test.
+- None for the build. The live pass of the gate needs the engine (`feat/engine`, not merged): it waits, and this
+  session starts no service from another worktree.
+
+## Unattended run (Kfir, 2026-11-11, pasted before going to sleep)
+Run the task to its final gate without questions. At each phase end: review, fix, commit, tick, continue. A
+decision is taken and written here. Steps that need another task's running service wait for the merge and are
+listed. The SQL Server container is shared and is never stopped, recreated or reset. `contracts/` is frozen: a
+doubt is noted and the api is built to the contract. Scope is the plan as it stands. Gate passed: push the
+branch and open the PR (his word for both, given in that message), no merge. Gate blocked only by steps that
+wait for a merge: commit, no push.
+
+## Decisions taken unattended
+1. **The session ran on Fable, not Opus.** The plan gives execution to Opus; a session cannot change its own
+   model and nobody was there to switch it. Reviewer agents ran on opus as the harness sets them.
+2. **Request checks are explicit, not attribute messages** (plan Design D, corrected). The contract counts
+   characters after trimming and wants `max`, `min` as params; `RequestCheck` collects `REQUIRED`, `TOO_LONG`
+   and `OUT_OF_RANGE` with exact pointers, and the model-state mapping only turns binder failures into
+   `MALFORMED`.
+3. **415 is a media type that is not JSON; JSON text that does not parse is 400.** `contracts/api.md` says "a
+   body that is not JSON 415". Read as the media type, which is what 415 means in HTTP; a body sent as
+   `application/json` whose text does not parse answers 400 `REQUEST_INVALID` with `MALFORMED` at `""`. The two
+   cannot be told apart reliably after the binder (a syntax error and a wrong-typed member are the same
+   exception), and both readings answer `REQUEST_INVALID`. For dc-delivery's review of the contract wording.
+4. **JSON is read strictly**: member names are case-sensitive (`Name` is an unknown member, ignored) and a number
+   is never read from a string (`"5"` for `max` is `MALFORMED`). The web defaults of System.Text.Json accept both.
+5. **The encoder is `JavaScriptEncoder.Create(UnicodeRanges.All)`**: Hebrew and `₪` are written as they are;
+   `<`, `>`, `&`, `'` and `+` are still written as `\uXXXX`, which is the same JSON.
+6. **`Runs:DefaultLanguage` is checked by form at start** (two or three lower-case letters). Design B asks for "a
+   language the glossary lists", but the glossary is the engine's and the host never waits for the engine
+   (decision 21); once the glossary is read its own `defaultLanguage` is used.
+7. **A test-only controller at `/_probe`** (in the test assembly, outside `/api/v1`) shows what the pipeline does
+   with a body, a query value and a failure. Phase 1 has no endpoint with a body, and the plan's Phase 1 tests
+   need one.
+8. **Build settings beyond Design A**: `GenerateDocumentationFile` with CS1591 off, because IDE0005 (unused
+   usings) is only reported in such a build; every private field is `_camelCase`, static ones included; the
+   template's `appsettings.Development.json` is removed (the one filter it would carry is set in code); the api's
+   version is 1.0.0 and `/health` reports the assembly version.
 
 ## Last reviewed
 (none)
@@ -104,3 +136,11 @@ warning by file, what the fix changed, what was left and why, what Kfir rejected
   - The Windows host (Windows 10 Home, build 19045) is reachable from WSL through `cmd.exe` and
     `powershell.exe` from a `/mnt/c` working directory and had no .NET on 2026-11-10, so it is where the publish
     trial shows whether the folder is self-contained.
+- 2026-11-11 00:05 resumed in `../cbs-api` on `feat/api` (level with main at `f9928bf`), unattended on Kfir's
+  word. Contract diff of Phase 1: `sql/30_dq_tables.sql` matches Design C column for column; Design H holds except
+  three lines, corrected in the plan: request errors need params and trimmed lengths (Design D), `active` also
+  takes `all` (H3), and a bad query value is `OUT_OF_RANGE` or `MALFORMED` by kind (H4). Nothing the api needs is
+  left open by the contract, so no blocker was raised.
+- 2026-11-11 00:20 Phase 1 gate green: build with `-warnaserror`, format, 64 tests, print guard
+  (`gates/phase-1.txt`). NuGet on 2026-11-11: the three Microsoft packages at 10.0.15 (11.0.0 exists),
+  Resilience 10.11.0, SwaggerUI 10.3.1 (11.0.0 exists), JsonSchema.Net 8.0.5 pinned (9.6.0 exists).
