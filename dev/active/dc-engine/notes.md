@@ -1,26 +1,75 @@
 # dc-engine notes
 
 ## State
-Phase 0 not started. The plan was written on Fable on 2026-11-10 in the main tree, before `contracts/` exists: it
-is built on `dev/active/dc-contracts/plan.md` Designs B to H (H holds the amendments this planning added there).
-Execution is for Opus, in the worktree `../cbs-engine` on `feat/engine`, after dc-contracts merges. This folder
-moves into that worktree in phase 0.
+Phase 0 done on 2026-11-11; phase 1 is next. The run is unattended on Kfir's word of 2026-11-11 (the night
+brief, see "Decisions taken unattended"): no questions, no stop at a phase gate, push and PR allowed once the
+gate passes, no merge. `contracts/` merged as `f9928bf`; this worktree (`../cbs-engine`, `feat/engine`) was cut
+from it and already holds `.env` and this folder.
 
-The plan was amended the same day for dc-delivery's asks (plan.md decisions 20 to 25): the connection is set by
-`ENGINE_DB_DRIVER` and an optional `ENGINE_DB_PORT`; Python 3.12 or later with Windows wheels for 3.12 to 3.14;
-UTF-8 by name on every file; `requirements.txt` moved from phase 7 to phase 1; this task writes no document but
-the README's engine section; the Log records what each review found.
+The plan was written on Fable on 2026-11-10 and amended the same day for dc-delivery's asks (plan.md decisions
+20 to 25) and for the scope decision (no LLM lane, Hebrew only, no offline bundle).
 
 ## Next
-1. Wait for the dc-contracts gate and its merge. Then, on Kfir's word, from the main tree:
-   `git worktree add ../cbs-engine -b feat/engine origin/main`, `cp .env ../cbs-engine/.env`,
-   `mkdir -p ../cbs-engine/dev/active && mv dev/active/dc-engine ../cbs-engine/dev/active/`.
-2. Open Claude Code in `../cbs-engine`, switch to Opus, run `/resume dc-engine`.
-3. Phase 0: `odbcinst -q -d` must list `ODBC Driver 18 for SQL Server` (it does since 2026-11-10 20:57); then
-   read `contracts/` against plan.md Design J and record every difference in this file before writing code.
+1. Phase 1: `engine/pyproject.toml`, `uv sync`, `requirements.txt` and the wheel check, settings, errors, web,
+   main, the glossary package, the startup check, `/health` and `/glossary`, with their tests.
+2. Then phases 2 to 5 and 7 in order, each closed by `/check --tests`, a reviewer on opus, one review-fix commit
+   and a Log line here.
+3. The gate, then push and PR (Kfir's word is in the night brief). No merge.
 
 ## Blockers
-- dc-contracts has not started, and nothing in this task starts before its gate (architecture §19).
+None. Steps that need another task's running service are listed under "Waiting for a merge" when they appear.
+
+## Phase 0: `contracts/` against Design J (2026-11-11)
+`contracts/` wins everywhere. The nine points of plan.md "Lines from dc-contracts as it merges" stand as written
+there. Read in full: `glossary.json` 1.0.0, the schema, `api.md`, `errors.md`, the six examples and the thirteen
+invalid fixtures. Further differences from Design J and Design G, none of which needs a contract change:
+
+- Entity `label` is `{ singular, plural }`, each one text per language; a suggestion's `{entity}` is the plural.
+- `computed` is `{ function, over }`, and `over` names the column the function reads (errors.md, Age).
+- `phrases.relatedAny` and `phrases.relatedNone` are each `{ sentence, reason }`, not one text.
+- `REQUEST_INVALID` carries `errors: [{ path, code, params }]` with the request error codes (`REQUIRED`,
+  `OUT_OF_RANGE`, `MALFORMED`; `TOO_LONG` has no use in the engine). Design G names only the handler. Pinned per
+  member in api.md: `definition` absent or null is `REQUIRED` and any non-object `MALFORMED`; a member the engine
+  does not know is `MALFORMED` at that member; `rowCap` and `max` below 1 are `OUT_OF_RANGE`; a `runDate` that is
+  not a real date is `MALFORMED`. 413 and 415 are `REQUEST_INVALID` without `errors`.
+- The correlation id is taken from the request only when it matches `^[A-Za-z0-9._-]{1,64}$`; otherwise the
+  engine creates 32 hexadecimal characters.
+- `GLOSSARY_MISMATCH` params: `table` as `schema.name`, `column` null when the whole table is missing.
+- `UNSUPPORTED_SCHEMA_VERSION` applies only to an object whose `schemaVersion` is present and is not the number
+  1; a definition without the member goes to the schema.
+- `nodeId` is the id of the nearest node at or above the path that has a string `id`; it is absent on
+  `DUPLICATE_NODE_ID`.
+- A member forbidden with `false` under `properties` is reported at its object. Python `jsonschema` does that
+  by itself (its `descend` returns before it adds the member to the path); `scripts/contracts-check.py` pins
+  `jsonschema==4.26.0`, and the engine pins the same version so both read the schema alike.
+- The public glossary: a relationship has no `join`, and one that starts or ends at a hidden entity is left
+  out; a field always has `operators`.
+- `/debug/compile` lists params as `{ name, type, value }` in placeholder order.
+- `is_empty` is NULL, the empty string or spaces only. SQL Server's `= ''` ignores trailing spaces, so Design
+  D's expression already gives it; an integration test proves it on employee 1083.
+- Record keys are strings of at most 64 characters.
+- `README.md` has no engine heading: the skeleton only says the engine block of Configuration and the engine
+  line of "Running the tests" are filled by dc-engine. Phase 4 decides where the section goes.
+
+Machine on 2026-11-11: `odbcinst -q -d` lists `ODBC Driver 18 for SQL Server`; nothing listens on 8000; the
+container `data-controls-db-1` is healthy on 127.0.0.1:1433; `scripts/db-check.sh` from this worktree: 27
+passed, 0 failed.
+
+## Decisions taken unattended (2026-11-11)
+Each one was Kfir's to make and was made without him, on the night brief's "decide, write it in notes.md,
+continue". He reads these first.
+
+1. The session runs on Fable 5.2, not on Opus as plan.md decision 19 and the kickoff say: nobody was there to
+   switch the model. Reviewers and the security auditor still run on opus.
+2. Spend lines are written and not waited on. Kfir gave his word for every install in the plan (mid-turn
+   message, 2026-11-11); reviews, the two extra suite runs and the image build go by the night brief.
+3. This folder was committed alone, before any code, as the branch's first commit, on Kfir's explicit word;
+   CLAUDE.md's "no docs-only commits" was set aside for that one commit.
+4. Phase 0's `mv` step and `git worktree add` were skipped as told: the worktree existed and the folder came
+   from git.
+
+## Waiting for a merge
+(none yet)
 
 ## Docs for dc-delivery
 One line per item, added in the step that makes it true (plan.md decision 24): the file and section, what it
@@ -60,3 +109,7 @@ variables in architecture §14 and in the README's configuration table, when pha
   ran on Windows.
 - 2026-11-10 side effect of that check: uv downloaded CPython 3.13.14 and 3.14.6 into `~/.local/share/uv/python/`
   (104 MB and 110 MB). uv now builds a project that has no `.python-version` on 3.14.
+- 2026-11-11 phase 0, unattended. `/resume` found the notes stale (they still waited for dc-contracts, merged as
+  `f9928bf`). Checked the driver, the port, the container and `scripts/db-check.sh` (27 passed), read
+  `contracts/` against Design J and recorded the differences above. No gate file: phase 0 has no commit of its
+  own in the plan; this folder was committed alone on Kfir's word (decision 3 above).

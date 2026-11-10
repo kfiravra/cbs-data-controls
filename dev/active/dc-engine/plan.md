@@ -177,19 +177,19 @@ A document that this task makes untrue and does not own (decision 24) gets its l
 dc-delivery" in the same step: the file and section, what it says, what is true now.
 
 ### Phase 0: preconditions (no commit)
-- [ ] dc-contracts passed its gate and is merged: `contracts/` is on `origin/main`.
-- [ ] The worktree, on Kfir's word (kickoff §5), from the main tree: `git worktree add ../cbs-engine -b feat/engine
+- [x] dc-contracts passed its gate and is merged: `contracts/` is on `origin/main`.
+- [x] The worktree, on Kfir's word (kickoff §5), from the main tree: `git worktree add ../cbs-engine -b feat/engine
       origin/main`, `cp .env ../cbs-engine/.env`, `mkdir -p ../cbs-engine/dev/active && mv dev/active/dc-engine
       ../cbs-engine/dev/active/`. This task's session runs in `../cbs-engine` on Opus.
-- [ ] Host driver: `odbcinst -q -d` lists `ODBC Driver 18 for SQL Server` (17 serves as well, decision 20).
+- [x] Host driver: `odbcinst -q -d` lists `ODBC Driver 18 for SQL Server` (17 serves as well, decision 20).
       `msodbcsql18` 18.7.1 has been on this host since 2026-11-10 20:57; it was missing when this plan was first
       written.
-- [ ] Database: the container runs from the main tree and `scripts/db-check.sh` passed there after the last seed
+- [x] Database: the container runs from the main tree and `scripts/db-check.sh` passed there after the last seed
       change. Never `db-init.sh` from the worktree.
-- [ ] Read `contracts/` against Design J and write every difference into `notes.md` before phase 1. `contracts/`
+- [x] Read `contracts/` against Design J and write every difference into `notes.md` before phase 1. `contracts/`
       wins; something the engine needs and `contracts/` lacks is a contract change (one commit on main on Kfir's
       word, one line to the other sessions).
-- [ ] Port: `ss -ltn | grep ':8000'`. If another project's container holds it, smoke runs use `ENGINE_PORT=8010`;
+- [x] Port: `ss -ltn | grep ':8000'`. If another project's container holds it, smoke runs use `ENGINE_PORT=8010`;
       ask before stopping anything.
 
 ### Phase 1: skeleton, glossary, startup check (about 2 h)
