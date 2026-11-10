@@ -167,7 +167,17 @@ describe('ResultsStore', () => {
   });
 
   describe('rows', () => {
-    it('are asked for with the view of the address, leaving out what filters nothing', async () => {
+    it('are asked for without a search or a condition when the view has none', async () => {
+      await open(run('succeeded', 23));
+
+      store.show(VIEW);
+      const request = await next('/api/v1/runs/41/results');
+
+      expect(request.request.params.keys().sort()).toEqual(['dir', 'page', 'pageSize', 'sort']);
+      request.flush({ items: [], total: 23, page: 1, pageSize: 25 });
+    });
+
+    it('are asked for with everything the view of the address says', async () => {
       await open(run('succeeded', 23));
 
       store.show({ ...VIEW, page: 2, size: 10, search: 'levi', condition: 'c2', sort: 'display', dir: 'desc' });
@@ -201,6 +211,22 @@ describe('ResultsStore', () => {
       expect(store.rows()?.total).toBe(4);
     });
 
+    it('of a run that was left never land on the run that was opened after it', async () => {
+      await open(run('succeeded', 23));
+      store.show(VIEW);
+      const left = await next('/api/v1/runs/41/results');
+
+      const opening = store.open(42);
+      expect(left.cancelled).toBe(true);
+      (await next('/api/v1/runs/42')).flush({ ...run('succeeded', 5), id: 42 });
+      await opening;
+      (await next('/api/v1/controls/7/versions/3')).flush({ version: 3, createdAt: '', definition: DEFINITION });
+
+      expect(store.run()?.id).toBe(42);
+      expect(store.rows()).toBeNull();
+      expect(store.rowsLoading()).toBe(false);
+    });
+
     it('keep the failure and stop waiting when a page cannot be read', async () => {
       await open(run('succeeded', 23));
 
@@ -210,6 +236,23 @@ describe('ResultsStore', () => {
       expect(store.rowsLoading()).toBe(false);
       expect(store.failure()?.code).toBe('NETWORK_ERROR');
     });
+  });
+
+  it('leaves the screen to the newer of two runs when the older one answers last', async () => {
+    const older = store.open(41);
+    (await next('/api/v1/glossary')).flush(SYNTHETIC_GLOSSARY);
+    const first = await next('/api/v1/runs/41');
+    const newer = store.open(42);
+    (await next('/api/v1/runs/42')).flush({ ...run('succeeded', 5), id: 42 });
+    await newer;
+
+    first.flush(run('succeeded', 23));
+    await older;
+    http.match('/api/v1/controls/7/versions/3').forEach((request) =>
+      request.flush({ version: 3, createdAt: '', definition: DEFINITION }),
+    );
+
+    expect([store.run()?.id, store.run()?.totalCount]).toEqual([42, 5]);
   });
 
   describe('running again', () => {
@@ -236,7 +279,8 @@ describe('ResultsStore', () => {
       );
 
       expect(await running).toBeNull();
-      expect(store.failure()?.code).toBe('CONTROL_ARCHIVED');
+      expect(store.rerunFailure()?.code).toBe('CONTROL_ARCHIVED');
+      expect(store.failure()).toBeNull();
     });
   });
 });

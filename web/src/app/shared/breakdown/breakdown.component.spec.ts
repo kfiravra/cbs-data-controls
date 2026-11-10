@@ -1,3 +1,4 @@
+import { provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { provideTestTranslations, t } from '../../../testing/translate';
@@ -31,7 +32,10 @@ describe('BreakdownComponent', () => {
   }
 
   beforeEach(() => {
-    TestBed.configureTestingModule({ imports: [BreakdownComponent], providers: [provideTestTranslations()] });
+    TestBed.configureTestingModule({
+      imports: [BreakdownComponent],
+      providers: [provideHttpClient(), provideTestTranslations()],
+    });
     fixture = TestBed.createComponent(BreakdownComponent);
     filters = [];
     fixture.componentInstance.filter.subscribe((id) => filters.push(id));
@@ -45,7 +49,14 @@ describe('BreakdownComponent', () => {
     expect(rows().map((row) => row.getAttribute('data-node'))).toEqual(['c1', 'c2']);
     expect(rows().map((row) => row.querySelector('[data-testid="mark"]')!.textContent)).toEqual(['A', 'B']);
     expect(rows()[0].textContent).toContain('ends before it starts');
-    expect(rows()[1].querySelector('.meter__count')!.textContent).toBe('1,500');
+    expect(rows()[1].querySelector('[data-testid="breakdown-count"]')!.textContent).toBe('1,500');
+  });
+
+  it('draws no mark, and no empty box in its place, for a condition whose mark is not known', async () => {
+    await draw({ marks: new Map([['c1', 'A']]) });
+
+    expect(rows().map((row) => row.querySelectorAll('[data-testid="mark"]').length)).toEqual([1, 0]);
+    expect(rows()[1].textContent).toContain('age under 16');
   });
 
   it('gives each row its share of all violations as the length of its bar', async () => {

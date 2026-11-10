@@ -32,7 +32,7 @@
         @for (row of rows(); track row.seq) {
           <tr data-testid="result-row" [attr.data-key]="row.key">
             @for (column of columns(); track column.key; let first = $first) {
-              <td [class.cell-title]="first" [class.cell-meta]="!first" [class.num]="!first">
+              <td [class.cell-title]="first" [class.cell-meta]="!first && isNumber(column)" [class.num]="isNumber(column)">
                 <bdi>{{ value(row, column) }}</bdi>
               </td>
             }
@@ -41,22 +41,25 @@
                 @for (reason of row.reasons; track reason.conditionId) {
                   <p
                     class="reason"
+                    [class.reason--unmarked]="!marks().has(reason.conditionId)"
                     data-testid="reason"
                     [attr.data-node]="reason.conditionId"
                     (pointerenter)="trace.emit(reason.conditionId)"
                     (pointerleave)="trace.emit(null)"
                   >
-                    <app-mark
-                      [label]="marks().get(reason.conditionId) ?? ''"
-                      [state]="
-                        active() === reason.conditionId
-                          ? 'active'
-                          : traced() === reason.conditionId
-                            ? 'traced'
-                            : 'resting'
-                      "
-                      [name]="'common.condition' | translate: { mark: marks().get(reason.conditionId) ?? '' }"
-                    />
+                    @if (marks().get(reason.conditionId); as mark) {
+                      <app-mark
+                        [label]="mark"
+                        [state]="
+                          active() === reason.conditionId
+                            ? 'active'
+                            : traced() === reason.conditionId
+                              ? 'traced'
+                              : 'resting'
+                        "
+                        [name]="'common.condition' | translate: { mark }"
+                      />
+                    }
                     <span><app-text-parts [parts]="reason.textParts" [markValues]="true" /></span>
                   </p>
                 }

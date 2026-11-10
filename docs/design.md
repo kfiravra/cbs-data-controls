@@ -675,7 +675,7 @@ Every empty, waiting and failed state, and what it says. The error codes are tho
 | Run still in progress when its results are opened (`running`) | Results | State panel, neutral, no icon | That the results appear when the run ends | Look again |
 | Engine, database or network not answering, `ENGINE_UNAVAILABLE`, `DATABASE_UNAVAILABLE`, `NETWORK_ERROR` | Any screen, under the page head | Banner, Danger | What still works (reading) and what waits (run, save) | Try again |
 | The saved definition no longer fits the glossary, `CONTROL_DEFINITION_OUTDATED` | Results: state panel, Warning. Editor: banner, Warning, and the error on the row | Which condition, by its mark: the label of a field that left the glossary no longer exists, and a key never reaches the screen | Edit the control |
-| Control archived, `CONTROL_ARCHIVED` | Editor, results | Banner, Warning; the editor shows the control as text | That it can be read but not changed or run | Duplicate into a new control |
+| Control archived, `CONTROL_ARCHIVED` | Editor, under the page head: the control is shown as text. Results, after "run again" was refused | Banner, Warning | That it can be read but not changed or run | Editor: duplicate into a new control. Results: none |
 | No such control, run or page | In place of the screen | State panel, neutral | That the address may be wrong or the thing gone | Back to the list |
 | Definition not valid, `DEFINITION_INVALID` | Editor | Field error on the row; status line on the sentence field | What is missing on that condition | Fix the row |
 | Saved elsewhere meanwhile (conflict) | Editor, under the page head | Banner, Warning | That this screen's changes are not saved | Load the current version |

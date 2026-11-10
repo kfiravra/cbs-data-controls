@@ -157,16 +157,17 @@ export class ControlEditorPage {
 
   protected readonly busy = computed(() => this.store.saveState() !== 'idle');
 
+  /** An address that names no control (not `new`, not a positive integer), or a control that is not there. */
+  protected readonly notFound = computed(
+    () => this.target(this.id(), this.from()) === null || this.store.loadState() === 'notFound',
+  );
+
   constructor() {
     effect(() => {
       const target = this.target(this.id(), this.from());
-      untracked(() => {
-        if (target) {
-          void this.store.open(target);
-        } else {
-          this.store.loadState.set('notFound');
-        }
-      });
+      if (target) {
+        untracked(() => void this.store.open(target));
+      }
     });
   }
 

@@ -78,5 +78,6 @@ describe('FormatService', () => {
     expect(format.value('as stored', field('reference'))).toBe('as stored');
     expect(format.value(null, field('reference'))).toBe('');
     expect(format.value('unknown field', undefined)).toBe('unknown field');
+    expect(format.value(10432, undefined)).toBe('10432');
   });
 });

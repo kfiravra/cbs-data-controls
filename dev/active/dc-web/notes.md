@@ -115,7 +115,7 @@ invalid fixtures, as merged in `f9928bf`. Where they differ from Design E to M o
 - Nothing in `contracts/` looked wrong, and nothing blocks a screen: no line for Kfir from this step.
 
 ## Last reviewed
-5a57791 (phase 4), fixed in the `fix(web): review fixes` commit after 3474145. Phase 5 (3474145) is under review.
+3474145 (phase 5), fixed in the `fix(web): review fixes` commit after 383ec73. Phase 6 (383ec73) is under review.
 
 ## Hand-over to dc-delivery
 Read by its phase B0 (plan.md Design Q). Filled as the work goes and complete before `/ship`.
@@ -325,3 +325,25 @@ rewrote. A review that found nothing, or did not run, is logged as that.
   kept inside and returned. Screenshots in `screenshots/phase-6/` (`list-delivered` is the first screen of the
   delivered system). `docs/design.md`: the archive confirmation without a restore, and the suggestions dialog
   as built. No cut taken: the archived view and "open in editor" are built.
+- 2026-11-11 /phase-review web, phase 5 (one reviewer agent, opus; cost line: about 177k tokens, started without
+  waiting), diff de43850..3474145: standards 6 warnings, 1 hard violation, 3 info; plan 1 warning, 2 info.
+  `run-results.page.html`: the trimmed search was written back into the search field, eating a space the user
+  had just typed (warning; the list page did the same). `results.store.ts`: opening another run neither dropped
+  the rows request of the run that was left nor guarded against an older `open` landing late, so rows or a
+  failure of run A could stand under run B (warning). `run-results.page.html`: a glossary that could not be
+  read was not said, and without it a record's number got separators (warning). `results-table`, `breakdown`:
+  a node without a mark drew an empty mark box named "תנאי " (warning). A first page of rows that failed left
+  skeleton rows waiting forever (warning). `docs/design.md`: the archived row promised a Warning banner with
+  "Duplicate" on the results, the code showed a Danger banner whose "try again" reloaded (warning).
+  `run-results.page.ts`: an `effect` wrote `loadState` from the address, a derived value (hard violation,
+  typescript.md). The no-violations state dropped the run summary, against Design L (plan warning). Info:
+  `counted()` repeated the plural pipe; the breakdown had its own number format; identifying text after the
+  first column was drawn as metadata; spec selectors by class, a test name that claimed more than it tested, a
+  hover read without retry, a fixture path that did not match its node; no screenshot of the running, loading
+  and not-found states; two States rows beyond what the phase asked. Fixed in the review-fix commit: all of
+  them. The search goes to the address as typed (both screens); the store counts its opens and drops the rows
+  request on a new one; the glossary banner stands on the results and a number without a glossary field is
+  written digit for digit; no mark, no box; the table waits only while a request is on its way; a refused
+  re-run is its own failure (a Warning banner for an archived control, else "try again" runs again) and
+  design.md says that; not-found from the address is a `computed` in the results page and in the editor page;
+  the summary stands for a clean run; `CountedService` is the one place for counted text. Eleven tests added.

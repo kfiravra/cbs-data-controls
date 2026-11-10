@@ -1,4 +1,4 @@
-@if (store.loadState() === 'notFound') {
+@if (notFound()) {
   <app-not-found />
 } @else {
   <app-page-head [title]="title() | translate" [meta]="meta()" [back]="true">

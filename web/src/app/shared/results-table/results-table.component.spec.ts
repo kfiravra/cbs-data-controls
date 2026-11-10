@@ -123,6 +123,14 @@ describe('ResultsTableComponent', () => {
     expect(second.querySelector('[data-testid="value"]')).toBeNull();
   });
 
+  it('draws a reason without a mark, and without an empty box, when the marks of the run are not known', async () => {
+    await draw({ marks: new Map() });
+
+    const [first] = reasons(rows()[0]);
+    expect(first.querySelector('[data-testid="mark"]')).toBeNull();
+    expect(first.textContent).toContain('total: 16,500 (above 15,000)');
+  });
+
   it('names each reason mark as its condition, because a reason line has no other name for it', async () => {
     await draw();
 

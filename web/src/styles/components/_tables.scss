@@ -175,6 +175,11 @@ a.cell-title:hover {
   }
 }
 
+// the marks of a run could not be read: the reason takes the line alone
+.reason--unmarked {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .table-foot {
   display: flex;
   flex-wrap: wrap;

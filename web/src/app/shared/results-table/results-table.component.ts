@@ -66,6 +66,11 @@ export class ResultsTableComponent {
     return sort === 'asc' ? 'ascending' : sort === 'desc' ? 'descending' : 'none';
   });
 
+  /** A number reads as the record's reference, set small beside its name; text reads as part of the name. */
+  protected isNumber(column: ResultColumn): boolean {
+    return column.field?.type === 'number';
+  }
+
   protected value(row: ResultItem, column: ResultColumn): string {
     return this.format.value(row.display[column.key] ?? null, column.field);
   }

@@ -1,4 +1,4 @@
-@if (store.loadState() === 'notFound') {
+@if (notFound()) {
   <app-not-found />
 } @else {
   @let run = store.run();
@@ -24,8 +24,24 @@
   </app-page-head>
 
   <div class="stack page-banners">
+    @if (store.glossaryError(); as error) {
+      <app-error-banner data-source="glossary" [error]="error" (retry)="reload()" />
+    }
     @if (store.failure(); as error) {
-      <app-error-banner [error]="error" (retry)="reload()" />
+      <app-error-banner data-source="read" [error]="error" (retry)="reload()" />
+    }
+    @if (store.rerunFailure(); as error) {
+      @if (error.code === 'CONTROL_ARCHIVED') {
+        <app-banner
+          tone="warning"
+          icon="archive"
+          data-testid="archived-banner"
+          [title]="'errors.CONTROL_ARCHIVED.title' | translate"
+          [body]="'errors.CONTROL_ARCHIVED.body' | translate"
+        />
+      } @else {
+        <app-error-banner data-source="rerun" [error]="error" (retry)="rerun()" />
+      }
     }
   </div>
 
@@ -41,13 +57,15 @@
     </p>
   }
 
+  @if (store.state() === 'violations' || store.state() === 'noViolations') {
+    <section class="section" aria-labelledby="s-summary">
+      <h2 class="sr-only" id="s-summary">{{ 'results.summary.title' | translate }}</h2>
+      <app-run-summary [figure]="capParams().total" [noun]="noun()" [facts]="facts()" [previous]="previous()" />
+    </section>
+  }
+
   @switch (store.state()) {
     @case ('violations') {
-      <section class="section" aria-labelledby="s-summary">
-        <h2 class="sr-only" id="s-summary">{{ 'results.summary.title' | translate }}</h2>
-        <app-run-summary [figure]="capParams().total" [noun]="noun()" [facts]="facts()" [previous]="previous()" />
-      </section>
-
       <div class="split section">
         <aside class="split__side" aria-labelledby="s-by">
           <div class="panel">
@@ -84,7 +102,7 @@
             [searchLabel]="'results.search.label' | translate"
             [placeholder]="'results.search.placeholder' | translate"
             [filtersLabel]="'results.sort.label' | translate"
-            (searchChange)="go({ search: $event.trim() })"
+            (searchChange)="go({ search: $event })"
           >
             <mat-form-field class="toolbar__filter only-narrow" appearance="outline" subscriptSizing="dynamic">
               <mat-select
@@ -122,7 +140,7 @@
               [traced]="store.traced()"
               [active]="view().condition"
               [sort]="displaySort()"
-              [loading]="store.rows() === null || store.rerunning()"
+              [loading]="tableLoading()"
               (sortChange)="setSort($event)"
               (trace)="store.traced.set($event)"
             />

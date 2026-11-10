@@ -73,14 +73,16 @@ export class FormatService {
   /**
    * A raw value of a record (an identifying field of a violation), written as the engine writes values:
    * a number that names a record digit for digit, another number with separators, a date by the pattern,
-   * an enum or a boolean by its glossary label, and nothing for a missing value.
+   * an enum or a boolean by its glossary label, and nothing for a missing value. Without the glossary a
+   * number is written digit for digit too: an identifying number is far more often a name than a quantity,
+   * and a separator inside a record's number would be wrong.
    */
   value(value: Scalar | null, field: GlossaryField | undefined): string {
     if (value === null) {
       return '';
     }
     if (typeof value === 'number') {
-      const text = field?.identifier ? String(value) : this.number(value);
+      const text = !field || field.identifier ? String(value) : this.number(value);
       const unit = this.language.text(field?.unit);
       return unit ? `${text} ${unit}` : text;
     }

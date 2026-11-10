@@ -32,7 +32,7 @@
     [searchLabel]="'list.search.label' | translate"
     [placeholder]="'list.search.placeholder' | translate"
     [filtersLabel]="'list.filters.label' | translate"
-    (searchChange)="go({ search: $event.trim() })"
+    (searchChange)="go({ search: $event })"
   >
     <mat-form-field class="toolbar__filter" appearance="outline" subscriptSizing="dynamic">
       <mat-select

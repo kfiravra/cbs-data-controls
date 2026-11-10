@@ -6,9 +6,9 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import { ResultsSort, SortDirection } from '../../core/api/api.types';
 import { findEntity } from '../../core/glossary/glossary.lookups';
+import { CountedService } from '../../core/i18n/counted.service';
 import { FormatService } from '../../core/i18n/format.service';
 import { LanguageService } from '../../core/i18n/language.service';
-import { pluralKeys } from '../../core/i18n/plural';
 import { BannerComponent } from '../../shared/banner/banner.component';
 import { ErrorBannerComponent } from '../../shared/banner/error-banner.component';
 import { BreakdownComponent } from '../../shared/breakdown/breakdown.component';
@@ -63,6 +63,7 @@ export class RunResultsPage {
   private readonly translate = inject(TranslateService);
   private readonly format = inject(FormatService);
   private readonly language = inject(LanguageService);
+  private readonly countedText = inject(CountedService);
 
   protected readonly pageSizes = PAGE_SIZES;
 
@@ -74,6 +75,10 @@ export class RunResultsPage {
   readonly condition = input<string>();
   readonly sort = input<string>();
   readonly dir = input<string>();
+
+  /** A run id is a positive integer; anything else in the address names no run. */
+  private readonly runId = computed(() => (/^[1-9]\d*$/.test(this.id()) ? Number(this.id()) : null));
+  protected readonly notFound = computed(() => this.runId() === null || this.store.loadState() === 'notFound');
 
   /** The view the address describes; anything the address does not say is the default. */
   protected readonly view = computed<ResultsView>(() => {
@@ -168,6 +173,11 @@ export class RunResultsPage {
     return this.counted('results.outdated', marks.length, { marks: list });
   });
 
+  /** Rows are on their way: the first page of a run, or a run that is starting again. */
+  protected readonly tableLoading = computed(
+    () => (this.store.rows() === null && this.store.rowsLoading()) || this.store.rerunning(),
+  );
+
   /** True when the rows asked for are none because of the search or the filter, not because the run has none. */
   protected readonly nothingMatches = computed(() => {
     const view = this.view();
@@ -176,14 +186,10 @@ export class RunResultsPage {
 
   constructor() {
     effect(() => {
-      const id = this.id();
-      untracked(() => {
-        if (/^[1-9]\d*$/.test(id)) {
-          void this.store.open(Number(id));
-        } else {
-          this.store.loadState.set('notFound');
-        }
-      });
+      const id = this.runId();
+      if (id !== null) {
+        untracked(() => void this.store.open(id));
+      }
     });
     // the rows follow the address, once the run they belong to is there
     effect(() => {
@@ -198,16 +204,8 @@ export class RunResultsPage {
     return this.translate.instant(key, params) as string;
   }
 
-  /** A counted noun: the plural form of the language for the count, with the count written in. */
   private counted(baseKey: string, count: number, params: Record<string, unknown> = {}): string {
-    const values = { count: this.format.number(count), ...params };
-    for (const key of pluralKeys(baseKey, count, this.language.lang)) {
-      const text = this.text(key, values);
-      if (text !== key) {
-        return text;
-      }
-    }
-    return baseKey;
+    return this.countedText.text(baseKey, count, params);
   }
 
   /** Changes the address; the view and the rows follow it. A change of what is shown goes back to page 1. */
@@ -241,7 +239,15 @@ export class RunResultsPage {
   }
 
   protected reload(): void {
-    void this.store.open(Number(this.id()));
+    const id = this.runId();
+    if (id !== null) {
+      void this.store.open(id);
+    }
+  }
+
+  /** A text identifying field reads as the record's name; a number as its reference. */
+  protected isNumber(column: ResultColumn): boolean {
+    return column.field?.type === 'number';
   }
 
   protected editControl(): void {

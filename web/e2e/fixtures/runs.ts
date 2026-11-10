@@ -107,10 +107,13 @@ export function failedRun(control: Control, id: number, code: string): StoredRun
 
 /** A run of a definition the glossary no longer fits: the engine's definition errors ride in the run error. */
 export function outdatedRun(control: Control, id: number, nodeId: string): StoredRun {
+  const index = control.definition.where.children.findIndex((child) => child.type !== 'group' && child.id === nodeId);
   return stoppedRun(control, id, 'failed', {
     code: 'CONTROL_DEFINITION_OUTDATED',
     params: {
-      errors: [{ code: 'UNKNOWN_FIELD', path: '/where/children/0/left', nodeId, params: { entity: 'e', field: 'f' } }],
+      errors: [
+        { code: 'UNKNOWN_FIELD', path: `/where/children/${index}/left`, nodeId, params: { entity: 'e', field: 'f' } },
+      ],
     },
   });
 }

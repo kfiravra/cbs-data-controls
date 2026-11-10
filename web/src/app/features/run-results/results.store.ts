@@ -1,6 +1,6 @@
 import { DestroyRef, Injectable, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Subject, catchError, firstValueFrom, map, of, switchMap } from 'rxjs';
+import { EMPTY, Subject, catchError, firstValueFrom, map, of, switchMap } from 'rxjs';
 
 import { ApiError, toApiError } from '../../core/api/api-error';
 import { DefinitionError, Page, ResultItem, ResultsQuery, ResultsSort, Run, SortDirection } from '../../core/api/api.types';
@@ -48,15 +48,20 @@ export class ResultsStore {
   private readonly runsApi = inject(RunsApi);
   private readonly controlsApi = inject(ControlsApi);
   private readonly marksService = inject(MarksService);
-  private readonly asked = new Subject<{ runId: number; query: ResultsQuery }>();
+  /** The page of rows to read; null drops a request that is on its way (another run was opened). */
+  private readonly asked = new Subject<{ runId: number; query: ResultsQuery } | null>();
+  /** Counts the calls of `open`: an older one that lands after a newer one changes nothing. */
+  private turn = 0;
 
   readonly glossary = this.glossaryService.glossary;
   readonly glossaryError = this.glossaryService.error;
 
   readonly loadState = signal<LoadState>('loading');
   readonly run = signal<Run | null>(null);
-  /** A failed load of the run or of its rows, or a run that could not be started again. */
+  /** A failed load of the run or of its rows. */
   readonly failure = signal<ApiError | null>(null);
+  /** A run that could not be started again. */
+  readonly rerunFailure = signal<ApiError | null>(null);
   /** Node id to mark, from the definition of the version that ran; empty when it could not be read. */
   readonly marks = signal<ReadonlyMap<string, string>>(NO_MARKS);
   readonly rows = signal<Page<ResultItem> | null>(null);
@@ -91,11 +96,13 @@ export class ResultsStore {
     // the newest question wins: an older page never replaces a newer one
     this.asked
       .pipe(
-        switchMap(({ runId, query }) =>
-          this.runsApi.results(runId, query).pipe(
-            map((page): Rows => ({ page })),
-            catchError((error: unknown) => of<Rows>({ failure: toApiError(error) })),
-          ),
+        switchMap((question) =>
+          question === null
+            ? EMPTY
+            : this.runsApi.results(question.runId, question.query).pipe(
+                map((page): Rows => ({ page })),
+                catchError((error: unknown) => of<Rows>({ failure: toApiError(error) })),
+              ),
         ),
         takeUntilDestroyed(inject(DestroyRef)),
       )
@@ -111,18 +118,28 @@ export class ResultsStore {
 
   /** Reads a run, the definition of the version that ran (for the marks), and the glossary (for labels). */
   async open(runId: number): Promise<void> {
+    const turn = ++this.turn;
+    this.asked.next(null);
     this.loadState.set('loading');
     this.run.set(null);
     this.rows.set(null);
+    this.rowsLoading.set(false);
     this.marks.set(NO_MARKS);
     this.failure.set(null);
+    this.rerunFailure.set(null);
     void this.glossaryService.load();
     try {
       const run = await firstValueFrom(this.runsApi.get(runId));
+      if (turn !== this.turn) {
+        return;
+      }
       this.run.set(run);
       this.loadState.set('ready');
       void this.readMarks(run);
     } catch (error) {
+      if (turn !== this.turn) {
+        return;
+      }
       const failure = toApiError(error);
       this.loadState.set(failure.status === 404 ? 'notFound' : 'failed');
       this.failure.set(failure.status === 404 ? null : failure);
@@ -157,11 +174,11 @@ export class ResultsStore {
       return null;
     }
     this.rerunning.set(true);
-    this.failure.set(null);
+    this.rerunFailure.set(null);
     try {
       return await firstValueFrom(this.runsApi.start(run.controlId));
     } catch (error) {
-      this.failure.set(toApiError(error));
+      this.rerunFailure.set(toApiError(error));
       return null;
     } finally {
       this.rerunning.set(false);
@@ -176,7 +193,9 @@ export class ResultsStore {
       }
     } catch {
       // without the version's definition the screen stays readable: reasons and clauses stand without marks
-      this.marks.set(NO_MARKS);
+      if (this.run()?.id === run.id) {
+        this.marks.set(NO_MARKS);
+      }
     }
   }
 }

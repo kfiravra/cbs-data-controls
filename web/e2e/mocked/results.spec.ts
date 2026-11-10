@@ -189,9 +189,9 @@ test.describe('run results', () => {
 
     await page.locator(`[data-testid="breakdown-row"][data-node="${id}"]`).hover();
 
-    const states = await everywhere.evaluateAll((marks) => marks.map((mark) => mark.getAttribute('data-state')));
-    expect(states.length).toBeGreaterThan(2);
-    expect(new Set(states)).toEqual(new Set(['traced']));
+    const states = () => everywhere.evaluateAll((marks) => marks.map((mark) => mark.getAttribute('data-state')));
+    await expect.poll(async () => [...new Set(await states())]).toEqual(['traced']);
+    expect((await states()).length).toBeGreaterThan(2);
   });
 
   test('a run that found nothing says so, with what was checked', async ({ page, api }, testInfo) => {
@@ -203,6 +203,8 @@ test.describe('run results', () => {
     const entity = label(glossary.entities.find((candidate) => candidate.key === control.rootEntity)!.label.plural);
     await expect(panel).toContainText(t('results.none.title'));
     await expect(panel).toContainText(t('results.none.body', { entity }));
+    // the panel stands in place of the breakdown and the table; the summary of the run stays
+    await expect(page.getByTestId('run-total')).toHaveText('0');
     await expect(page.getByTestId('results-table')).toHaveCount(0);
     await expect(page.getByTestId('breakdown')).toHaveCount(0);
     await shot(page, testInfo, 'results-no-violations');
@@ -215,7 +217,7 @@ test.describe('run results', () => {
 
     await expect(page.getByTestId('cap-banner')).toContainText(t('errors.ROW_CAP_EXCEEDED.title', { total: '6,412', stored: '20' }));
     await expect(page.getByTestId('run-total')).toHaveText('6,412');
-    await expect(breakdown(page).first().locator('.meter__count')).toHaveText('6,412');
+    await expect(breakdown(page).first().getByTestId('breakdown-count')).toHaveText('6,412');
     await expect(page.getByTestId('table-range')).toHaveText(t('results.range', { from: 1, to: 20, total: 20 }));
     await shot(page, testInfo, 'results-cap');
   });
@@ -254,6 +256,23 @@ test.describe('run results', () => {
     const running = api.addRun(runningRun(controlOf(api, 2), RUN + 1));
     await open(page, running);
     await expect(page.getByTestId('state-running')).toContainText(t('results.running.title'));
+    await shot(page, testInfo, 'results-running');
+  });
+
+  test('a run that cannot be started again says why, and its "try again" tries the run again', async ({ page, api }) => {
+    const control = controlOf(api, 1);
+    const stored = api.addRun(succeededRun(control, RUN));
+    api.fail(`POST /controls/${control.id}/runs`, problem(503, 'ENGINE_UNAVAILABLE'));
+    await open(page, stored);
+    await page.getByTestId('rerun').click();
+    const banner = page.getByTestId('error-banner');
+    await expect(banner).toHaveAttribute('data-code', 'ENGINE_UNAVAILABLE');
+
+    api.heal(`POST /controls/${control.id}/runs`);
+    await banner.getByRole('button', { name: t('common.retry'), exact: true }).click();
+
+    await expect(page).not.toHaveURL(new RegExp(`/runs/${RUN}$`));
+    expect(api.callsTo(`POST /controls/${control.id}/runs`)).toHaveLength(2);
   });
 
   test('running again waits on skeleton rows, then opens the new run', async ({ page, api }, testInfo) => {
@@ -275,15 +294,42 @@ test.describe('run results', () => {
     await expect(page.getByTestId('previous-run')).toHaveAttribute('href', `/runs/${RUN}`);
   });
 
-  test('the head and skeleton bars stand while a run is read, and an unknown run is not found', async ({ page, api }) => {
+  test('the head and skeleton bars stand while a run is read, and an unknown run is not found', async ({ page, api }, testInfo) => {
     const stored = api.addRun(succeededRun(controlOf(api, 1), RUN));
     api.delay(`GET /runs/${RUN}`, 500);
     await page.goto(`/runs/${RUN}`);
     await expect(page.getByTestId('results-loading')).toBeVisible();
+    await shot(page, testInfo, 'results-loading');
     await expect(rows(page)).toHaveCount(stored.run.totalCount!);
 
     await page.goto('/runs/987654');
     await expect(page.getByTestId('not-found')).toBeVisible();
+    await shot(page, testInfo, 'results-not-found');
+
+    await page.goto('/runs/not-a-number');
+    await expect(page.getByTestId('not-found')).toBeVisible();
+  });
+
+  test('a glossary that cannot be read is said, and the stored results stay readable', async ({ page, api }) => {
+    const stored = api.addRun(succeededRun(controlOf(api, 1), RUN));
+    api.fail('GET /glossary', problem(503, 'ENGINE_UNAVAILABLE'));
+    await open(page, stored);
+
+    await expect(page.getByTestId('error-banner')).toHaveAttribute('data-code', 'ENGINE_UNAVAILABLE');
+    await expect(rows(page)).toHaveCount(stored.run.totalCount!);
+    // without the glossary a record's number is still written digit for digit, never with a separator
+    await expect(rows(page).first()).toContainText(stored.results[0].key);
+    await expect(rows(page).first().getByTestId('reason').first()).toContainText(stored.results[0].reasons[0].text);
+  });
+
+  test('rows that cannot be read leave the failure in place of a table that would wait forever', async ({ page, api }) => {
+    const stored = api.addRun(succeededRun(controlOf(api, 1), RUN));
+    api.fail(`GET /runs/${RUN}/results`, problem(400, 'REQUEST_INVALID'));
+    await open(page, stored);
+
+    await expect(page.getByTestId('error-banner')).toHaveAttribute('data-code', 'REQUEST_INVALID');
+    await expect(page.getByTestId('skeleton-row')).toHaveCount(0);
+    await expect(page.getByTestId('results-table')).toHaveAttribute('aria-busy', 'false');
   });
 
   test('a run of an archived control cannot be run again, and the screen says why', async ({ page, api }) => {
@@ -294,7 +340,8 @@ test.describe('run results', () => {
 
     await page.getByTestId('rerun').click();
 
-    await expect(page.getByTestId('error-banner')).toContainText(t('errors.CONTROL_ARCHIVED.title'));
+    await expect(page.getByTestId('archived-banner')).toContainText(t('errors.CONTROL_ARCHIVED.title'));
+    await expect(page.getByTestId('error-banner')).toHaveCount(0);
     await expect(rows(page)).toHaveCount(stored.run.totalCount!);
   });
 });

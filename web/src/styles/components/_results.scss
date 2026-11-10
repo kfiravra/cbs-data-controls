@@ -87,6 +87,11 @@
   font-weight: 500;
 }
 
+// the marks of a run could not be read: the clause takes the place of the mark too
+.meter--unmarked .meter__clause {
+  grid-column: 1 / 3;
+}
+
 .meter__count {
   font-weight: 500;
   font-variant-numeric: tabular-nums;
