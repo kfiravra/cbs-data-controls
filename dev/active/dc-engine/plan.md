@@ -292,11 +292,11 @@ Commit: `feat(engine): control suggestions from lifecycle, required fields and c
 ### Phase 6: (removed by the scope decision: no LLM lane)
 
 ### Phase 7: engine image (about 1 h; the second cut)
-- [ ] `engine/Dockerfile`: `python:3.12-slim`, `msodbcsql18` and `unixodbc`, `pip install -r requirements.txt`
+- [x] `engine/Dockerfile`: `python:3.12-slim`, `msodbcsql18` and `unixodbc`, `pip install -r requirements.txt`
       (the file of phase 1), a non-root user, the build context is the repository root (it copies `contracts/` and
       `engine/`), `ENGINE_DB_DRIVER` set to the driver the image installs, the start command of Design A on
       `0.0.0.0:8000`.
-- [ ] Smoke (state the build minutes first): build, run on the compose network of `data-controls` with the
+- [x] Smoke (state the build minutes first): build, run on the compose network of `data-controls` with the
       worktree's `.env`, `/health` answers 200 and one example runs. The compose service stays with dc-delivery.
 
 Verify: `docker build -f engine/Dockerfile -t dc-engine .` · the smoke above

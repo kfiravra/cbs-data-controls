@@ -1,29 +1,28 @@
 # dc-engine notes
 
 ## State
-Phases 1 to 5 done on 2026-11-11 (gates: `gates/phase-1.txt` to `gates/phase-5.txt` and
-`gates/readme-commands.txt`, 493 tests); phase 7, the image, is next, then the gate. Phases 1 to 3 are
-reviewed and their fixes committed; the reviews of phases 4 and 5 are running. The run is unattended on Kfir's
-word of 2026-11-11 (the night brief, see "Decisions taken unattended"): no questions, no stop at a phase gate,
-push and PR allowed once the gate passes, no merge.
+Every phase is done on 2026-11-11 (1 to 5 and 7; 6 was removed by the scope decision; nothing was cut). Gates:
+`gates/phase-1.txt` to `gates/phase-5.txt`, `gates/readme-commands.txt`, `gates/image-smoke.txt`; 505 tests.
+Phases 1 to 5 are reviewed and their fixes committed; the gate is next. The run is unattended on Kfir's word of
+2026-11-11 (the night brief, see "Decisions taken unattended"): no questions, no stop at a phase gate, push and
+PR allowed once the gate passes, no merge.
 
-What exists: the engine of architecture §6, all six endpoints. `engine/` holds `pyproject.toml`, `uv.lock`,
-`.python-version` (3.12) and `requirements.txt`; settings and the connection URL; problem details; the glossary
-package; the validator; the compiler and its cache; the executor; the explainer; the suggestions (a profile
-per entity, five generators, the pipeline); `GET /health`, `GET /glossary`, `POST /validate`, `POST /run`,
-`POST /suggest`, `POST /debug/compile` (off by default). On the seed `/suggest` returns seven proposals, four of
-them the examples marked `heuristic: true`, node for node. Start: `cd engine && .venv/bin/python -m uvicorn
-app.main:create_app --factory --host 127.0.0.1 --port 8000`.
+What exists: the engine of architecture §6, all six endpoints, and its image. `engine/` holds
+`pyproject.toml`, `uv.lock`, `.python-version` (3.12), `requirements.txt` and `Dockerfile`; settings and the
+connection URL; problem details; the glossary package; the validator; the compiler and its cache; the
+executor; the explainer; the suggestions; `GET /health`, `GET /glossary`, `POST /validate`, `POST /run`,
+`POST /suggest`, `POST /debug/compile` (off by default). Start: `cd engine && .venv/bin/python -m uvicorn
+app.main:create_app --factory --host 127.0.0.1 --port 8000`. Image: `docker build -f engine/Dockerfile -t
+dc-engine .` from the repository root.
 
 For Kfir's read at the gate: `engine/tests/golden/*.text.json` (six files: the rule sentence, a sentence per
 node, one reason per matched node, in Hebrew) and one `/suggest` answer, saved as `gates/suggest-answer.json`
 at the gate.
 
 ## Next
-1. Phase 7: `engine/Dockerfile`, build, a smoke run on the compose network.
-2. The gate: `/check all --tests`, the lock and its export, the wheel check, the suite under 3.13 and 3.14,
+1. The gate: `/check all --tests`, the lock and its export, the wheel check, the suite under 3.13 and 3.14,
    the §19 items test by test, the security auditor, the lines for dc-api and dc-delivery, `/ship`.
-3. Push and PR (Kfir's word is in the night brief). No merge.
+2. Push and PR (Kfir's word is in the night brief). No merge.
 
 ## Blockers
 None. Steps that need another task's running service are listed under "Waiting for a merge" when they appear.
@@ -137,6 +136,12 @@ continue". He reads these first.
 20. The engine refuses at startup a glossary that lacks a suggestion text it writes (a kind or an evidence
     key), like the other "cannot serve" checks of decision 13.
 
+21. The image is built on `python:3.12-slim-bookworm`, not on the moving `python:3.12-slim` the plan names:
+    Microsoft's ODBC repository is per Debian release, and the pin keeps `debian/12` in the Dockerfile true.
+    The ignore file is `engine/Dockerfile.dockerignore` (BuildKit reads it for this Dockerfile alone), so the
+    repository root gets no `.dockerignore` from this task. The image has no HEALTHCHECK: the compose service
+    and its health check are dc-delivery's.
+
 ## Waiting for a merge
 (none yet)
 
@@ -176,6 +181,14 @@ says, what is true now. The list goes into the PR body under this heading at `/s
 - `docs/architecture.md` §19, the engine gate ("`/suggest` yields examples 2 to 5"): it does, node for node,
   and on the seed it yields three more proposals (decision 18). Example 1 is never proposed: no generator
   writes a number into a definition.
+- `docker-compose.yml`, the engine service (dc-delivery's), from the image as built: `build: { context: .,
+  dockerfile: engine/Dockerfile }`; it listens on `0.0.0.0:8000` as uid 10001; it needs
+  `DQ_ENGINE_RO_PASSWORD`, `ENGINE_DB_HOST=db` and `ENGINE_DB_PORT=1433` and nothing else (never the `sa` or
+  the `dq_app` password: pass the variables by name, not the whole `.env`); `ENGINE_DB_DRIVER` is set in the
+  image; a health check can be `python -c "import urllib.request;
+  urllib.request.urlopen('http://127.0.0.1:8000/health')"` (the image has no curl); the engine itself waits up
+  to 30 s for the database and then exits non-zero, so `depends_on: db: condition: service_healthy` plus
+  `restart: on-failure` is enough. First build about 4.5 minutes, 250 MB.
 - For the limitations document: a suggestion is counted on today's date; the profile and each count are
   separate statements; `/suggest` runs one statement per rootable entity and one per candidate (ten on the
   seed), each under the statement timeout.
@@ -344,3 +357,9 @@ says, what is true now. The list goes into the PR body under this heading at `/s
   what the profile holds as built; `tests/unit/test_suggestions.py:135-166` the gaps are tested: exactly five
   rows, no rows at all, the startup refusal through `create_app`, and `/suggest` answering 504 on a fabricated
   timeout. All of it in the review-fix commit that follows this line.
+- 2026-11-11 phase 7, unattended, `gates/image-smoke.txt`: `docker build -f engine/Dockerfile -t dc-engine .`
+  (4 min 35 s the first time; rebuilt in 7 s on the final tree), then the container on the network
+  `data-controls_default` with the engine's password and `ENGINE_DB_HOST=db`: `/health` 200, the first example
+  flags 1051, 1052 and 1053, `/suggest` returns seven proposals; it runs as uid 10001, lists ODBC Driver 18 and
+  holds one password variable. The smoke container was started with a 25-second `timeout` and ended by
+  itself; the database container was never stopped or recreated.

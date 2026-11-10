@@ -1,0 +1,15 @@
+# engine image smoke, 2026-11-11T01:37:55+02:00, image rebuilt on the tree of commit dcc70b6 (cached layers)
+# docker build -f engine/Dockerfile -t dc-engine .   (4 min 35 s on this machine the first time: the base image, msodbcsql18, 25 packages)
+# docker run --rm --network data-controls_default -e DQ_ENGINE_RO_PASSWORD -e ENGINE_DB_HOST=db -e ENGINE_DB_PORT=1433 -p 127.0.0.1:8011:8000 dc-engine
+$ curl -s 127.0.0.1:8011/health
+{"status":"ok","database":"ok","glossaryVersion":"1.0.0","engineVersion":"0.1.0"}   [HTTP 200]
+$ POST /run minor-high-salary on 2026-11-01 | jq .totalCount, [.violations[].key]
+3
+["1051","1052","1053"]
+$ POST /suggest | jq [.items[].definition.rootEntity]
+["employee","employee","employee","employee","department","department","department"]
+$ docker exec dc-engine-smoke sh -c "id; odbcinst -q -d; env | grep -c PASSWORD"
+uid=10001(engine) gid=999(engine) groups=999(engine)
+[ODBC Driver 18 for SQL Server]
+1
+# image size: 250 MB; the container ends by itself after 25 s (timeout), nothing was stopped by hand
