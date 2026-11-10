@@ -53,8 +53,8 @@ function suggestionOf(example: Example): SuggestionItem {
   const count = { count: String(example.expected.total), total: String(seed[root.table.name].length) };
   const rendered = engine.sentenceOf(example.definition);
   return {
-    name: example.name[lang],
-    description: example.description[lang],
+    name: filled(file.suggestions.kinds[kind].name[lang], fills),
+    description: filled(file.suggestions.kinds[kind].description[lang], fills),
     rationale: filled(file.suggestions.kinds[kind].rationale[lang], fills),
     evidence: [
       {

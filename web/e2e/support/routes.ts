@@ -254,6 +254,11 @@ export class FakeApi {
       return problem(409, 'CONCURRENCY_CONFLICT', { id: control.id });
     }
     const changed = JSON.stringify(body.definition) !== JSON.stringify(control.definition);
+    const sameDetails = body.name!.trim() === control.name && (body.description?.trim() || null) === control.description;
+    if (!changed && sameDetails) {
+      // nothing changed: the control as it is, and nothing written
+      return ok(control);
+    }
     const versions = this.versionsOf(control);
     if (changed) {
       versions.push(body.definition!);

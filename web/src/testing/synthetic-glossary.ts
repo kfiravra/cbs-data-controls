@@ -38,6 +38,15 @@ export const SYNTHETIC_GLOSSARY: Glossary = {
       reason: {},
     },
     {
+      key: 'holds',
+      arity: 1,
+      types: ['text'],
+      fieldComparable: false,
+      label: { default: text('holds') },
+      sentence: {},
+      reason: {},
+    },
+    {
       key: 'within',
       arity: 2,
       types: ['number', 'date'],
@@ -69,6 +78,7 @@ export const SYNTHETIC_GLOSSARY: Glossary = {
     {
       key: 'order',
       label: { singular: text('order'), plural: text('orders') },
+      description: text('an order'),
       rootable: true,
       visible: true,
       identifyingFields: ['reference', 'order_number'],
@@ -94,14 +104,19 @@ export const SYNTHETIC_GLOSSARY: Glossary = {
     {
       key: 'customer',
       label: { singular: text('customer'), plural: text('customers') },
+      description: text('a customer'),
       rootable: true,
       visible: true,
       identifyingFields: ['name'],
-      fields: [field('name', 'text', ['same', 'among', 'absent']), field('credit', 'number', ['same', 'above'])],
+      fields: [
+        field('name', 'text', ['same', 'holds', 'among', 'absent']),
+        field('credit', 'number', ['same', 'above']),
+      ],
     },
     {
       key: 'region',
       label: { singular: text('region'), plural: text('regions') },
+      description: text('a region'),
       rootable: false,
       visible: true,
       identifyingFields: ['code'],
@@ -110,6 +125,7 @@ export const SYNTHETIC_GLOSSARY: Glossary = {
     {
       key: 'line',
       label: { singular: text('line'), plural: text('lines') },
+      description: text('an order line'),
       rootable: true,
       visible: true,
       identifyingFields: ['sku'],

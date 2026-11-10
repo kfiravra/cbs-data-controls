@@ -165,7 +165,8 @@ export function valueLabel(field: GlossaryField, value: Scalar): LocalizedText |
     return field.valueLabels?.[value ? 'true' : 'false'];
   }
   if (field.type === 'enum') {
-    return field.enumValues?.find((entry) => entry.value === value)?.label;
+    const stored = String(value).toLowerCase();
+    return field.enumValues?.find((entry) => entry.value.toLowerCase() === stored)?.label;
   }
   return undefined;
 }
@@ -190,7 +191,9 @@ function distancesFrom(glossary: Glossary, rootKey: string): Map<string, number>
 /**
  * The relationship map: every rootable entity in glossary order, and between two neighbours the
  * relationship that joins them, taken from the side nearer the chosen root so its label reads as the user
- * would say it from there. It assumes no number of entities and no shape of their graph.
+ * would say it from there. It assumes no number of entities. It is one row, so a glossary that is not a
+ * chain shows only the relationships between neighbours; the sentence under the map lists everything the
+ * root can reach.
  */
 export function mapFor(glossary: Glossary, rootKey: string): EntityMap {
   const entities = rootEntities(glossary);

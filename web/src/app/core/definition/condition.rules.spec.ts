@@ -75,13 +75,23 @@ describe('condition rules', () => {
     expect(changeOperator(single, 'absent', glossary).value).toBeUndefined();
   });
 
-  it('drops a field comparison when the new operator does not compare fields', () => {
-    const before = row({ left: { field: 'total' }, operator: 'above', mode: 'field', right: { field: 'paid' } });
+  it('drops a field comparison when the new operator takes one operand and cannot compare two fields', () => {
+    const before = row({
+      left: { field: 'name' },
+      operator: 'same',
+      mode: 'field',
+      right: { path: ['customer.region'], field: 'code' },
+    });
 
-    const after = changeOperator(before, 'within', glossary);
+    const after = changeOperator(before, 'holds', glossary);
 
-    expect(after.mode).toBe('value');
-    expect(after.right).toBeUndefined();
+    expect(after).toEqual(row({ left: { field: 'name' }, operator: 'holds' }));
+  });
+
+  it('keeps a literal value when the new operator of the same arity cannot compare two fields', () => {
+    const before = row({ left: { field: 'name' }, operator: 'same', value: 'north' });
+
+    expect(changeOperator(before, 'holds', glossary)).toEqual({ ...before, operator: 'holds' });
   });
 
   it('swaps the operand kind with the comparison toggle and forgets the other kind', () => {

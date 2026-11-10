@@ -54,7 +54,7 @@ describe('TextPartsComponent', () => {
   it('opens each clause with its mark, bound to the first word of the clause', async () => {
     await draw({ parts: SENTENCE, marks: MARKS });
 
-    const bound = [...host().querySelectorAll('.nb')].map((element) => element.textContent);
+    const bound = [...host().querySelectorAll('.nb:has(app-mark)')].map((element) => element.textContent);
     expect(bound).toEqual(['A age', 'B monthly']);
     expect(host().textContent).toBe('A age under 18 and B monthly salary over 15,000');
   });
@@ -79,6 +79,16 @@ describe('TextPartsComponent', () => {
     await draw({ parts: REASON });
 
     expect(host().querySelector('app-value')).toBeNull();
+  });
+
+  it('keeps a value on one line, so a number is never parted from its unit', async () => {
+    const withUnit = SENTENCE.map((part) => (part.text === '15,000' ? { ...part, text: '15,000 units' } : part));
+
+    await draw({ parts: withUnit });
+
+    const whole = [...host().querySelectorAll('.nb')].map((element) => element.textContent);
+    expect(whole).toEqual(['18', '15,000 units']);
+    expect(host().textContent).toBe('age under 18 and monthly salary over 15,000 units');
   });
 
   it('shows a traced, an active and an open condition on its mark, open first', async () => {

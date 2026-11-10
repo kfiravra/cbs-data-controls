@@ -83,7 +83,7 @@ invalid fixtures, as merged in `f9928bf`. Where they differ from Design E to M o
 - Nothing in `contracts/` looked wrong, and nothing blocks a screen: no line for Kfir from this step.
 
 ## Last reviewed
-ab0d004 (phase 1), fixed in the commit after it.
+d57b922 (phase 2), fixed in the `fix(web): review fixes` commit after e517490. Phase 3 (e517490) is under review.
 
 ## Hand-over to dc-delivery
 Read by its phase B0 (plan.md Design Q). Filled as the work goes and complete before `/ship`.
@@ -198,3 +198,25 @@ rewrote. A review that found nothing, or did not run, is logged as that.
   `screenshots/phase-3/` (`builder-example-5`, `builder-example-6`, `builder-deep-tree` at 390 and 1440): the
   first screens that draw themed Material fields. `docs/design.md` updated for the related node's letter and
   head, the map's link labels and the note. No cut taken.
+- 2026-11-11 /phase-review web, phase 2 (one reviewer agent, opus; cost line: about 250k tokens, started without
+  waiting), diff 1dda6d3..d57b922: standards 1 critical, 4 warnings, 7 info; plan 1 warning, 1 info.
+  `draft.check.ts`: `canAddNested` let a related node in at one node under the limit, though it brings two (itself
+  and its first row), so a draft could reach 31 nodes (critical). `draft.check.ts` / `draft.ts`: two spellings of
+  one number in a list ("1,000", "1000") passed the check and were sent twice, which the schema rejects (warning).
+  `format.service.ts`: `when` counted days in 24-hour spans, wrong by a day around a clock change (warning).
+  `glossary.lookups.ts`: `mapFor` draws only the relationships between neighbours while its comment claimed no
+  assumption about the graph (warning). `condition.rules.spec.ts`: the branch for an operator of the same arity
+  that cannot compare fields was never run (warning). `_mark.scss` / `text-parts.component.ts`: a `value` part
+  ("15,000 ₪") could wrap between number and unit, against "keep a value part on one line" (plan warning). Info:
+  the text-parts component trimmed the first part; `draft.spec.ts` recomputed `highestId` the way the code does;
+  `api.spec.ts` named a case it did not test; `parseNumber` read "1,5" as 15; `GlossaryEntity.description` was
+  optional; the enum label lookup was case-sensitive; the fake api wrote a new token for an unchanged save and
+  the suggestion fixture took names from the example files; `api.types.ts` lacks `ControlVersionSummary` and the
+  health shape; Design F's `unit(field)` does not exist. Fixed in the review-fix commit: the critical and every
+  warning (`canAddGroup` and `canAddRelated` replace `canAddNested`; a list is sent once per value; days are
+  calendar days; values with their unit are one unbroken span; the rules spec reaches the branch through a new
+  operator of the synthetic glossary), and the info items except three. `mapFor` keeps its one-row model: its
+  comment and design.md now say that only neighbours are linked and the sentence under the map lists the rest.
+  Left: no test at a clock change (the spec cannot set the zone of the machine); `ControlVersionSummary` is not
+  mirrored because no screen reads the version list (the health shape comes with the gate fixture in phase 7);
+  no `unit(field)` accessor, since it would only return `field.unit`.

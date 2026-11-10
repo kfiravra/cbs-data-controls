@@ -1,4 +1,4 @@
-import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 
@@ -100,6 +100,9 @@ describe('api layer', () => {
   it('says which language the interface is in on every api call, and on no other call', () => {
     TestBed.inject(GlossaryApi).get().subscribe();
     expect(http.expectOne('/api/v1/glossary').request.headers.get('Accept-Language')).toBe('he');
+
+    TestBed.inject(HttpClient).get('/assets/i18n/he.json').subscribe();
+    expect(http.expectOne('/assets/i18n/he.json').request.headers.has('Accept-Language')).toBe(false);
   });
 
   it('turns a problem into an error of codes and params, with its definition errors', () => {

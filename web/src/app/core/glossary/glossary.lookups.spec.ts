@@ -98,6 +98,8 @@ describe('glossary lookups over the contract glossary', () => {
     const textField = fields.find((field) => field.type === 'text')!;
 
     expect(valueLabel(enumField, enumField.enumValues![0].value)).toEqual(enumField.enumValues![0].label);
+    // found without regard to case, as the database compares a stored value
+    expect(valueLabel(enumField, enumField.enumValues![0].value.toUpperCase())).toEqual(enumField.enumValues![0].label);
     expect(valueLabel(boolField, true)).toEqual(boolField.valueLabels!.true);
     expect(valueLabel(boolField, false)).toEqual(boolField.valueLabels!.false);
     expect(valueLabel(textField, 'anything')).toBeUndefined();

@@ -291,7 +291,7 @@ export interface GlossaryField {
 export interface GlossaryEntity {
   readonly key: string;
   readonly label: { readonly singular: LocalizedText; readonly plural: LocalizedText };
-  readonly description?: LocalizedText;
+  readonly description: LocalizedText;
   readonly rootable: boolean;
   readonly visible: boolean;
   readonly identifyingFields: readonly string[];

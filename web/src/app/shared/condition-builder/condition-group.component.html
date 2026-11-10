@@ -66,11 +66,11 @@
       <button class="adder" type="button" data-adder="condition" [disabled]="!canAdd()" (click)="add('addCondition')">
         <app-icon name="add" size="sm" /><span>{{ 'editor.add.condition' | translate }}</span>
       </button>
-      <button class="adder" type="button" data-adder="group" [disabled]="!canNest()" (click)="add('addGroup')">
+      <button class="adder" type="button" data-adder="group" [disabled]="!canGroup()" (click)="add('addGroup')">
         <app-icon name="add" size="sm" /><span>{{ 'editor.add.group' | translate }}</span>
       </button>
       @if (hasRelated()) {
-        <button class="adder" type="button" data-adder="related" [disabled]="!canNest()" (click)="add('addRelated')">
+        <button class="adder" type="button" data-adder="related" [disabled]="!canRelate()" (click)="add('addRelated')">
           <app-icon name="add" size="sm" /><span>{{ 'editor.add.related' | translate }}</span>
         </button>
       }

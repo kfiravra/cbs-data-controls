@@ -49,9 +49,10 @@ export class FormatService {
   /** Today and yesterday in words with the time; an earlier day as its date. */
   when(timestamp: string): string {
     const at = new Date(timestamp);
-    const startOfToday = new Date();
-    startOfToday.setHours(0, 0, 0, 0);
-    const daysBack = Math.ceil((startOfToday.getTime() - at.getTime()) / DAY_MS);
+    const now = new Date();
+    // calendar days, counted in UTC so a day with a clock change is still one day
+    const dayNumber = (day: Date) => Date.UTC(day.getFullYear(), day.getMonth(), day.getDate()) / DAY_MS;
+    const daysBack = dayNumber(now) - dayNumber(at);
     if (daysBack <= 0) {
       return this.translate.instant('common.todayAt', { time: this.time(timestamp) });
     }

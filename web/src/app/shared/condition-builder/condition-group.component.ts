@@ -5,7 +5,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 
 import { GroupOp } from '../../core/definition/definition.types';
 import { DraftGroup, DraftNode } from '../../core/definition/draft';
-import { canAddCondition, canAddNested } from '../../core/definition/draft.check';
+import { canAddCondition, canAddGroup, canAddRelated } from '../../core/definition/draft.check';
 import { DraftEdit } from '../../core/definition/draft.edit';
 import { relatedOptions } from '../../core/glossary/glossary.lookups';
 import { joiningWord } from '../../core/glossary/glossary.phrases';
@@ -61,7 +61,8 @@ export class ConditionGroupComponent {
   );
 
   protected readonly canAdd = computed(() => canAddCondition(this.view().check));
-  protected readonly canNest = computed(() => canAddNested(this.view().check, this.group().key));
+  protected readonly canGroup = computed(() => canAddGroup(this.view().check, this.group().key));
+  protected readonly canRelate = computed(() => canAddRelated(this.view().check, this.group().key));
   protected readonly hasRelated = computed(() => {
     const scope = this.scope();
     return scope !== undefined && relatedOptions(this.view().glossary, scope).length > 0;

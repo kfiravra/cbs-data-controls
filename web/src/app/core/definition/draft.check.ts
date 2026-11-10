@@ -172,11 +172,20 @@ export function canAddCondition(check: DraftCheck): boolean {
   return check.conditionCount < check.limits.maxConditions;
 }
 
-/**
- * Whether a group, or a related node (whose own group counts), may be added inside the group `groupKey`:
- * it brings one more level and at least one more condition.
- */
-export function canAddNested(check: DraftCheck, groupKey: string): boolean {
+function canNest(check: DraftCheck, groupKey: string, newNodes: number): boolean {
   const depth = check.groupDepth.get(groupKey) ?? check.limits.maxDepth;
-  return canAddCondition(check) && depth + 1 <= check.limits.maxDepth;
+  return depth + 1 <= check.limits.maxDepth && check.conditionCount + newNodes <= check.limits.maxConditions;
+}
+
+/** Whether a group may be added inside the group `groupKey`: one more level, and its first row. */
+export function canAddGroup(check: DraftCheck, groupKey: string): boolean {
+  return canNest(check, groupKey, 1);
+}
+
+/**
+ * Whether a related node may be added inside the group `groupKey`: its own group is one more level, and it
+ * brings two nodes, itself and its first row, so a mark never passes the last letter.
+ */
+export function canAddRelated(check: DraftCheck, groupKey: string): boolean {
+  return canNest(check, groupKey, 2);
 }

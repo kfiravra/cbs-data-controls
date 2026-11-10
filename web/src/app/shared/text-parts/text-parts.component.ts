@@ -8,7 +8,10 @@ import { ValueComponent } from '../value/value.component';
 
 interface Piece {
   readonly text: string;
+  /** Drawn as the marked value of a reason. */
   readonly value: boolean;
+  /** A value with its unit: never broken between the number and the unit. */
+  readonly whole: boolean;
 }
 
 interface ClauseView {
@@ -32,7 +35,7 @@ const NONE: ReadonlySet<string> = new Set();
   selector: 'app-text-parts',
   imports: [MarkComponent, TranslatePipe, ValueComponent],
   // one line per block: white space between elements would add spaces the engine did not write
-  template: `@for (clause of clauses(); track $index) {@if (clause.nodeId; as id) {<span class="clause" [attr.data-node]="id" (pointerenter)="trace.emit(id)" (pointerleave)="trace.emit(null)">@if (clause.mark; as mark) {<span class="nb"><app-mark [label]="mark" [state]="stateOf(id)" [changed]="changed().has(id)" [name]="'common.condition' | translate: { mark }" /> {{ clause.lead }}</span>}@for (piece of clause.pieces; track $index) {@if (piece.value) {<app-value [text]="piece.text" />} @else {{{ piece.text }}}}</span>} @else {@for (piece of clause.pieces; track $index) {{{ piece.text }}}}}`,
+  template: `@for (clause of clauses(); track $index) {@if (clause.nodeId; as id) {<span class="clause" [attr.data-node]="id" (pointerenter)="trace.emit(id)" (pointerleave)="trace.emit(null)">@if (clause.mark; as mark) {<span class="nb"><app-mark [label]="mark" [state]="stateOf(id)" [changed]="changed().has(id)" [name]="'common.condition' | translate: { mark }" /> {{ clause.lead }}</span>}@for (piece of clause.pieces; track $index) {@if (piece.value) {<app-value [text]="piece.text" />} @else if (piece.whole) {<span class="nb">{{ piece.text }}</span>} @else {{{ piece.text }}}}</span>} @else {@for (piece of clause.pieces; track $index) {{{ piece.text }}}}}`,
   styles: `
     :host {
       display: inline;
@@ -54,16 +57,22 @@ export class TextPartsComponent {
 
   protected readonly clauses = computed<ClauseView[]>(() =>
     toClauses(this.parts()).map((clause) => {
-      const pieces: Piece[] = clause.parts.map((part) => ({
-        text: part.text,
-        value: this.markValues() && (part.role === 'actual' || part.role === 'otherActual'),
-      }));
+      const pieces: Piece[] = clause.parts.map((part) => {
+        const actual = part.role === 'actual' || part.role === 'otherActual';
+        return {
+          text: part.text,
+          value: actual && this.markValues(),
+          whole: part.role === 'value' || (actual && !this.markValues()),
+        };
+      });
       const mark = clause.nodeId && clause.opensNode ? this.marks().get(clause.nodeId) : undefined;
-      if (mark === undefined || pieces[0].value) {
+      if (mark === undefined || pieces[0].value || pieces[0].whole) {
         return { nodeId: clause.nodeId, mark, lead: '', pieces };
       }
-      const [lead, rest] = splitFirstWord(pieces[0].text.trimStart());
-      return { nodeId: clause.nodeId, mark, lead, pieces: [{ text: rest, value: false }, ...pieces.slice(1)] };
+      // the engine's text as written: the mark only takes the first word beside it
+      const [lead, rest] = splitFirstWord(pieces[0].text);
+      const tail = rest === '' ? [] : [{ text: rest, value: false, whole: false }];
+      return { nodeId: clause.nodeId, mark, lead, pieces: [...tail, ...pieces.slice(1)] };
     }),
   );
 

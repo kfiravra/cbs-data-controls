@@ -123,14 +123,20 @@ export function fromDefinition(definition: Definition, ids: IdSource): DraftGrou
  * when the text is not a number the contract accepts (finite, below 10^15 in absolute value).
  */
 export function parseNumber(text: string, format: GlossaryFormat | undefined): number | null {
-  const group = format?.groupSeparator ?? ',';
-  const decimal = format?.decimalSeparator ?? '.';
-  const plain = text.trim().split(group).join('').replace(decimal, '.');
-  if (!/^-?\d+(\.\d+)?$/.test(plain)) {
+  const group = escaped(format?.groupSeparator ?? ',');
+  const decimal = escaped(format?.decimalSeparator ?? '.');
+  const shape = new RegExp(`^(-?)(\\d+|\\d{1,3}(?:${group}\\d{3})+)(?:${decimal}(\\d+))?$`);
+  const match = shape.exec(text.trim());
+  if (!match) {
     return null;
   }
-  const parsed = Number(plain);
+  const whole = match[2].replace(new RegExp(group, 'g'), '');
+  const parsed = Number(`${match[1]}${whole}${match[3] ? `.${match[3]}` : ''}`);
   return Math.abs(parsed) < 1e15 ? parsed : null;
+}
+
+function escaped(separator: string): string {
+  return separator.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 interface Scope {
@@ -160,7 +166,9 @@ function definitionCondition(node: DraftCondition, scope: Scope): ConditionNode 
     return { ...base, right: fieldRef(node.right) };
   }
   if (node.values !== undefined && arity !== 1) {
-    return { ...base, values: node.values.map((value) => literal(value, isNumber, scope.format)) };
+    const values = node.values.map((value) => literal(value, isNumber, scope.format));
+    // the schema wants a list without repeats, and two spellings of one number are one value
+    return { ...base, values: arity === 'list' ? [...new Set(values)] : values };
   }
   return node.value === undefined ? base : { ...base, value: literal(node.value, isNumber, scope.format) };
 }

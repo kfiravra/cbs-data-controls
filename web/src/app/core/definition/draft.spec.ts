@@ -74,6 +74,23 @@ describe('draft of a definition', () => {
     expect(children[2]).toMatchObject({ values: [1, 20] });
   });
 
+  it('sends a list once per value when two spellings of one number were typed', () => {
+    const draft: DraftGroup = {
+      type: 'group',
+      key: 'g1',
+      op: 'and',
+      children: [
+        { type: 'condition', id: 'c1', left: { field: 'total' }, operator: 'among', mode: 'value', values: ['1,000', '1000', '7'] },
+        { type: 'condition', id: 'c2', left: { field: 'total' }, operator: 'within', mode: 'value', values: ['5', '5'] },
+      ],
+    };
+
+    const children = toDefinition(draft, 'order', SYNTHETIC_GLOSSARY, 'he').where.children;
+
+    expect(children[0]).toMatchObject({ values: [1000, 7] });
+    expect(children[1]).toMatchObject({ values: [5, 5] });
+  });
+
   it('sends no operand for an operator that takes none, even when the row still holds one', () => {
     const draft: DraftGroup = {
       type: 'group',
@@ -121,10 +138,28 @@ describe('draft of a definition', () => {
 
 describe('ids of a draft', () => {
   it('finds the highest numbered id of a definition, related sub-trees included', () => {
-    for (const example of contractExamples()) {
-      const numbers = [...JSON.stringify(example.definition).matchAll(/"id":"[cr](\d+)"/g)].map((m) => Number(m[1]));
-      expect(highestId(example.definition.where), example.id).toBe(Math.max(...numbers));
-    }
+    const where: Definition['where'] = {
+      type: 'group',
+      op: 'and',
+      children: [
+        { type: 'condition', id: 'c3', left: { field: 'total' }, operator: 'absent' },
+        { type: 'condition', id: 'by_hand', left: { field: 'total' }, operator: 'absent' },
+        {
+          type: 'related',
+          id: 'r5',
+          relationship: 'order.lines',
+          quantifier: 'any',
+          where: {
+            type: 'group',
+            op: 'and',
+            children: [{ type: 'condition', id: 'c12', left: { field: 'sku' }, operator: 'absent' }],
+          },
+        },
+      ],
+    };
+
+    expect(highestId(where)).toBe(12);
+    expect(highestId({ type: 'group', op: 'and', children: [where.children[1]] })).toBe(0);
   });
 
   it('never gives an id twice, across conditions, related nodes and groups', () => {
@@ -162,5 +197,12 @@ describe('parseNumber', () => {
     expect(parseNumber('12a', HE)).toBeNull();
     expect(parseNumber('1e3', HE)).toBeNull();
     expect(parseNumber('1000000000000000', HE)).toBeNull();
+  });
+
+  it('answers null when a separator does not group thousands, so a mistyped decimal is not read as a larger number', () => {
+    expect(parseNumber('1,5', HE)).toBeNull();
+    expect(parseNumber('15,00', HE)).toBeNull();
+    expect(parseNumber(',500', HE)).toBeNull();
+    expect(parseNumber('1,000,000.25', HE)).toBe(1000000.25);
   });
 });

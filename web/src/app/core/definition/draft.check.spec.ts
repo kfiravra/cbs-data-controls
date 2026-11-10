@@ -1,7 +1,7 @@
 import { contractExamples, contractGlossary } from '../../../testing/contracts';
 import { SYNTHETIC_GLOSSARY } from '../../../testing/synthetic-glossary';
 import { DraftCondition, DraftGroup, DraftNode, IdSource, fromDefinition } from './draft';
-import { canAddCondition, canAddNested, checkDraft } from './draft.check';
+import { canAddCondition, canAddGroup, canAddRelated, checkDraft } from './draft.check';
 
 const glossary = SYNTHETIC_GLOSSARY;
 
@@ -146,9 +146,21 @@ describe('checkDraft', () => {
     const check = checkDraft(deep, 'order', glossary, 'he');
 
     expect([check.groupDepth.get('root'), check.groupDepth.get('g2'), check.groupDepth.get('g3')]).toEqual([1, 2, 3]);
-    expect(canAddNested(check, 'root')).toBe(true);
-    expect(canAddNested(check, 'g2')).toBe(true);
-    expect(canAddNested(check, 'g3')).toBe(false);
+    expect(canAddGroup(check, 'root')).toBe(true);
+    expect(canAddGroup(check, 'g2')).toBe(true);
+    expect(canAddGroup(check, 'g3')).toBe(false);
+    expect(canAddRelated(check, 'g3')).toBe(false);
+  });
+
+  it('stops adding a related node one node earlier than a group, because it brings a row of its own', () => {
+    const max = glossary.limits.maxConditions;
+    const withRows = (count: number) =>
+      checkDraft(rootOf(...Array.from({ length: count }, (_, index) => row(`c${index}`))), 'order', glossary, 'he');
+
+    expect(canAddRelated(withRows(max - 2), 'root')).toBe(true);
+    expect(canAddRelated(withRows(max - 1), 'root')).toBe(false);
+    expect(canAddGroup(withRows(max - 1), 'root')).toBe(true);
+    expect(canAddGroup(withRows(max), 'root')).toBe(false);
   });
 
   it('finds the draft incomplete when all its values together pass the limit of the definition', () => {
