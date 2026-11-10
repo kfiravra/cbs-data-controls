@@ -56,7 +56,7 @@ internal sealed class Run
             CorrelationId = correlationId,
         };
 
-    /// <summary>Closes the run with its snapshot: the rows are stored in the order given, numbered from 1.</summary>
+    /// <summary>Closes the run with its snapshot; the stored count is the number of rows given.</summary>
     public void Succeed(RunOutcome outcome, IEnumerable<RunResult> results, DateTime now)
     {
         _results.AddRange(results);

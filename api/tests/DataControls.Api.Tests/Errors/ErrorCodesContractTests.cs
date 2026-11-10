@@ -16,7 +16,7 @@ public sealed partial class ErrorCodesContractTests
     private static readonly IReadOnlyList<string[]> _catalogue = ContractFiles.ErrorTable("Codes");
 
     [Fact]
-    public void Every_code_the_catalogue_gives_the_api_is_declared_and_no_other()
+    public void Declared_codes_are_exactly_the_catalogue_rows_when_the_row_is_from_the_api_or_both()
     {
         var expected = _catalogue.Where(SentByTheApi).Select(row => row[Code]).Order();
 
@@ -30,7 +30,7 @@ public sealed partial class ErrorCodesContractTests
     }
 
     [Fact]
-    public void Every_problem_code_has_the_status_of_the_catalogue()
+    public void Problem_status_is_the_catalogue_status_when_the_code_has_one()
     {
         var expected = _catalogue
             .Where(SentByTheApi)
@@ -41,7 +41,7 @@ public sealed partial class ErrorCodesContractTests
     }
 
     [Fact]
-    public void Run_error_codes_are_the_ones_the_catalogue_marks()
+    public void Run_error_codes_are_the_catalogue_rows_when_the_row_is_marked_run_error()
     {
         var expected = _catalogue.Where(SentByTheApi).Where(row => row[RunError] == "yes").Select(row => row[Code]).Order();
 
@@ -49,7 +49,7 @@ public sealed partial class ErrorCodesContractTests
     }
 
     [Fact]
-    public void Request_error_codes_are_the_catalogue_table()
+    public void Request_error_codes_are_the_catalogue_table_when_read_from_errors_md()
     {
         var expected = ContractFiles.ErrorTable("Request error codes").Select(row => row[Code]).Order();
 

@@ -51,5 +51,3 @@ public sealed class EngineStub : HttpMessageHandler
             "application/problem+json");
     }
 }
-
-public sealed record EngineCall(string Route, IReadOnlyDictionary<string, string> Headers, string Body);

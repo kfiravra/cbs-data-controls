@@ -31,11 +31,13 @@ wait for a merge: commit, no push.
    characters after trimming and wants `max`, `min` as params; `RequestCheck` collects `REQUIRED`, `TOO_LONG`
    and `OUT_OF_RANGE` with exact pointers, and the model-state mapping only turns binder failures into
    `MALFORMED`.
-3. **415 is a media type that is not JSON; JSON text that does not parse is 400.** `contracts/api.md` says "a
-   body that is not JSON 415". Read as the media type, which is what 415 means in HTTP; a body sent as
-   `application/json` whose text does not parse answers 400 `REQUEST_INVALID` with `MALFORMED` at `""`. The two
-   cannot be told apart reliably after the binder (a syntax error and a wrong-typed member are the same
-   exception), and both readings answer `REQUEST_INVALID`. For dc-delivery's review of the contract wording.
+3. **A body that is not JSON is 415, by its media type or by its text** (first taken the other way, then turned
+   by the Phase 1 review). `contracts/api.md` says "a body that is not JSON 415". The first reading took that as
+   the media type only and answered unparsable text sent as `application/json` with 400 `MALFORMED` at `""`; the
+   reviewer held it against the contract's wording, and the contract is built to as written. A guard in front of
+   the binders now reads a JSON body once and answers 415 without `errors` when its text does not parse, so a
+   binder failure always means a well-formed body with a member of the wrong type (400, `MALFORMED` at the
+   member). A JSON value that is not an object (`[]`, `5`) is well-formed and stays 400 `MALFORMED` at `""`.
 4. **JSON is read strictly**: member names are case-sensitive (`Name` is an unknown member, ignored) and a number
    is never read from a string (`"5"` for `max` is `MALFORMED`). The web defaults of System.Text.Json accept both.
 5. **The encoder is `JavaScriptEncoder.Create(UnicodeRanges.All)`**: Hebrew and `₪` are written as they are;
@@ -74,6 +76,9 @@ happen, add what did.
   engine for at most the attempt timeout (75 s by default).
 - README outside the api section: `/api/docs` and `/openapi/v1.json` are served in every environment; `dotnet
   test` in `api/` needs the database up, and writes and deletes marked rows in `dq`.
+- `docs/architecture.md` §12 or `contracts/api.md` §1, wording only: "a body that is not JSON 415" is built as
+  both a media type that is not JSON and JSON text that does not parse (decision 3 of the unattended run). If
+  the engine reads it differently, the two services disagree on one status and the line needs a second sentence.
 - `docs/ai-usage.md`: the Log below.
 
 ## Log

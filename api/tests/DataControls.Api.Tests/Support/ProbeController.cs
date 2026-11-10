@@ -43,5 +43,3 @@ public sealed class ProbeController(RequestContextAccessor requests) : Controlle
     [HttpGet("failure")]
     public IActionResult Fail() => throw new InvalidOperationException(Secret);
 }
-
-public sealed record ProbeRequest(string? Name, string? Note);

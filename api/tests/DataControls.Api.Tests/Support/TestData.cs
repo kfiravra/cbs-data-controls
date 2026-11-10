@@ -1,3 +1,4 @@
+using System.Text.Json;
 using DataControls.Api.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -15,7 +16,20 @@ internal static class TestData
     /// <summary>A marked name that no other test uses; a list test searches by <paramref name="testId"/>.</summary>
     public static string Name(string testId, string label = "control") => $"{Marker}{testId}-{label}";
 
+    /// <summary>
+    /// Hebrew text for a test that must show Hebrew survives: the name of the first example control, which
+    /// is data of the contract. Test code itself stays English.
+    /// </summary>
+    public static string HebrewText { get; } = ReadHebrewText();
+
     public static string NewTestId() => Guid.NewGuid().ToString("N")[..12];
+
+    private static string ReadHebrewText()
+    {
+        using var example = JsonDocument.Parse(ContractFiles.Read("examples/minor-high-salary.json"));
+        return example.RootElement.GetProperty("name").GetProperty("he").GetString()
+            ?? throw new InvalidOperationException("The example has no Hebrew name.");
+    }
 
     public static async Task EnsureDatabaseAsync(IServiceProvider services)
     {

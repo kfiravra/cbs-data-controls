@@ -20,9 +20,3 @@ public sealed class ApiFixture : IAsyncLifetime
         await Factory.DisposeAsync();
     }
 }
-
-[CollectionDefinition(Name)]
-public sealed class ApiCollection : ICollectionFixture<ApiFixture>
-{
-    public const string Name = "api";
-}

@@ -17,7 +17,7 @@ var builder = WebApplication.CreateBuilder(new WebApplicationOptions
 builder.Configuration.AddDevelopmentDotEnv(builder.Environment);
 // Set in code, so statements stay out of Information logs whatever settings file is deployed.
 builder.Logging.AddFilter("Microsoft.EntityFrameworkCore.Database.Command", LogLevel.Warning);
-builder.WebHost.ConfigureKestrel(kestrel => kestrel.Limits.MaxRequestBodySize = RequestBodyLimitMiddleware.MaxBodyBytes);
+builder.WebHost.ConfigureKestrel(kestrel => kestrel.Limits.MaxRequestBodySize = RequestBodyGuardMiddleware.MaxBodyBytes);
 
 builder.Services
     .AddRequestPipeline()
@@ -32,7 +32,7 @@ var app = builder.Build();
 
 app.UseExceptionHandler(_ => { });
 app.UseMiddleware<RequestContextMiddleware>();
-app.UseMiddleware<RequestBodyLimitMiddleware>();
+app.UseMiddleware<RequestBodyGuardMiddleware>();
 app.UseStatusCodePages(StatusCodeProblems.WriteAsync);
 
 app.MapControllers();

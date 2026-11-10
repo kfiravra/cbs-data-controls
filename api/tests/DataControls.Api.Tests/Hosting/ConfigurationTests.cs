@@ -87,7 +87,7 @@ public sealed class ConfigurationTests
     }
 
     [Fact]
-    public void Defaults_pass_validation()
+    public void Options_pass_validation_when_nothing_is_configured()
     {
         Assert.Equal("http://localhost:8000", Options<EngineOptions>(services => services.AddEngine()).Value.BaseUrl);
         Assert.Equal(5000, Options<RunsOptions>(services => services.AddRuns()).Value.RowCap);

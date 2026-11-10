@@ -11,6 +11,8 @@ internal static class JsonDefaults
     /// <summary>Leaves Hebrew as it is; the default encoder writes every non-ASCII letter as \uXXXX.</summary>
     public static JavaScriptEncoder Encoder { get; } = JavaScriptEncoder.Create(UnicodeRanges.All);
 
+    public const int MaxDepth = 64;
+
     public static JsonWriterOptions WriterOptions { get; } = new() { Encoder = Encoder };
 
     public static JsonSerializerOptions Options { get; } = Create();
@@ -23,6 +25,9 @@ internal static class JsonDefaults
         // would accept "Name" for "name" and "5" for 5.
         options.PropertyNameCaseInsensitive = false;
         options.NumberHandling = JsonNumberHandling.Strict;
+        // MVC lowers the depth to 32; the body guard parses with the serializer's own default, and the
+        // two must agree on what is well-formed.
+        options.MaxDepth = MaxDepth;
         options.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.SnakeCaseLower, allowIntegerValues: false));
         options.Converters.Add(new UtcTimestampJsonConverter());
     }

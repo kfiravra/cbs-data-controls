@@ -7,15 +7,13 @@ namespace DataControls.Api.Tests.Health;
 public sealed class HealthTests(ApiFixture fixture)
 {
     [Fact]
-    public async Task Health_returns_200_and_reports_the_database_ok_when_sql_server_answers()
+    public async Task Health_returns_200_degraded_with_the_database_ok_when_the_engine_is_not_probed_yet()
     {
         var response = await fixture.Factory.CreateClient().GetAsync("/api/v1/health");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        var health = await response.ReadJsonAsync();
-        Assert.Equal("ok", health.GetProperty("database").GetString());
-        Assert.Equal("1.0.0", health.GetProperty("version").GetString());
-        var expectedStatus = health.GetProperty("engine").GetString() == "ok" ? "ok" : "degraded";
-        Assert.Equal(expectedStatus, health.GetProperty("status").GetString());
+        HttpAssert.JsonEqual(
+            """{"status":"degraded","database":"ok","engine":"unavailable","version":"1.0.0"}""",
+            await response.Content.ReadAsStringAsync());
     }
 }

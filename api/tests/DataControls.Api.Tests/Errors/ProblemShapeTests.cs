@@ -30,10 +30,24 @@ public sealed class ProblemShapeTests(ApiFixture fixture)
         await HttpAssert.ProblemAsync(response, HttpStatusCode.NotFound, "NOT_FOUND");
     }
 
-    [Fact]
-    public async Task Body_returns_400_malformed_at_the_root_when_it_is_not_json_text()
+    [Theory]
+    [InlineData("this is not json")]
+    [InlineData("""{"name":"cut off""")]
+    [InlineData("""{"name":"x",}""")]
+    public async Task Body_returns_415_without_errors_when_it_is_sent_as_json_and_its_text_is_not_json(string body)
     {
-        var response = await _client.PostAsync("/_probe/items", JsonBody("this is not json"));
+        var response = await _client.PostAsync("/_probe/items", JsonBody(body));
+
+        var problem = await HttpAssert.ProblemAsync(response, HttpStatusCode.UnsupportedMediaType, "REQUEST_INVALID");
+        Assert.False(problem.TryGetProperty("errors", out _));
+    }
+
+    [Theory]
+    [InlineData("[]")]
+    [InlineData("5")]
+    public async Task Body_returns_400_malformed_at_the_root_when_it_is_json_but_not_an_object(string body)
+    {
+        var response = await _client.PostAsync("/_probe/items", JsonBody(body));
 
         var problem = await HttpAssert.ProblemAsync(response, HttpStatusCode.BadRequest, "REQUEST_INVALID");
         HttpAssert.JsonEqual("""[{"path":"","code":"MALFORMED","params":{}}]""", HttpAssert.Errors(problem));
@@ -55,6 +69,7 @@ public sealed class ProblemShapeTests(ApiFixture fixture)
     [InlineData("""{"name":null}""")]
     [InlineData("""{"name":"   "}""")]
     [InlineData("""{"Name":"wrong case is an unknown member"}""")]
+    [InlineData("null")]
     [InlineData("")]
     public async Task Required_member_returns_400_required_when_it_is_missing_null_or_blank(string body)
     {
@@ -78,12 +93,14 @@ public sealed class ProblemShapeTests(ApiFixture fixture)
     }
 
     [Fact]
-    public async Task Member_is_trimmed_and_unknown_members_are_ignored()
+    public async Task Member_comes_back_trimmed_and_in_hebrew_when_the_body_also_has_an_unknown_member()
     {
-        var response = await _client.PostAsync("/_probe/items", JsonBody("""{"name":"  עובד  ","extra":true}"""));
+        var hebrew = TestData.HebrewText[..ProbeController.MaxNameLength].Trim();
+
+        var response = await _client.PostAsync("/_probe/items", JsonBody($$"""{"name":"  {{hebrew}}  ","extra":true}"""));
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Equal("""{"name":"עובד","note":null}""", await response.Content.ReadAsStringAsync());
+        Assert.Equal($$"""{"name":"{{hebrew}}","note":null}""", await response.Content.ReadAsStringAsync());
     }
 
     [Fact]
@@ -118,11 +135,25 @@ public sealed class ProblemShapeTests(ApiFixture fixture)
     }
 
     [Fact]
-    public async Task Body_returns_413_without_errors_when_it_is_over_one_megabyte()
+    public async Task Body_returns_413_without_errors_when_its_declared_length_is_over_one_megabyte()
     {
         var oversized = $$"""{"name":"{{new string('a', 1024 * 1024)}}"}""";
 
         var response = await _client.PostAsync("/_probe/items", JsonBody(oversized));
+
+        var problem = await HttpAssert.ProblemAsync(response, HttpStatusCode.RequestEntityTooLarge, "REQUEST_INVALID");
+        Assert.False(problem.TryGetProperty("errors", out _));
+    }
+
+    [Fact]
+    public async Task Body_returns_413_without_errors_when_it_is_over_one_megabyte_and_declares_no_length()
+    {
+        var content = new StreamContent(new MemoryStream(Encoding.UTF8.GetBytes($$"""{"name":"{{new string('a', 1024 * 1024)}}"}""")));
+        content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+        var request = new HttpRequestMessage(HttpMethod.Post, "/_probe/items") { Content = content };
+        request.Headers.TransferEncodingChunked = true;
+
+        var response = await _client.SendAsync(request);
 
         var problem = await HttpAssert.ProblemAsync(response, HttpStatusCode.RequestEntityTooLarge, "REQUEST_INVALID");
         Assert.False(problem.TryGetProperty("errors", out _));

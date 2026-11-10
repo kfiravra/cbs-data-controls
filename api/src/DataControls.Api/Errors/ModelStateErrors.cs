@@ -4,9 +4,10 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 namespace DataControls.Api.Errors;
 
 /// <summary>
-/// Turns what the binders rejected into request errors. A binder only fails on a value of the wrong JSON
-/// type or form, and its message is an English sentence, so every entry is <c>MALFORMED</c>; the rules
-/// that have a code of their own are checked by <see cref="RequestCheck"/>.
+/// Turns what the binders rejected into request errors. No request type carries a validation attribute and
+/// the implicit one is switched off, so a binder only fails on a value of the wrong JSON type or form, and
+/// its message is an English sentence: every entry is <c>MALFORMED</c>. The rules that have a code of
+/// their own are checked by <see cref="RequestCheck"/>.
 /// </summary>
 internal static class ModelStateErrors
 {

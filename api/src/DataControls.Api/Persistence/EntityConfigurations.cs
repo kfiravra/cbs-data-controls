@@ -20,7 +20,10 @@ internal sealed class ControlConfiguration : IEntityTypeConfiguration<Control>
         builder.Property(control => control.CreatedAt).HasColumnName("created_at");
         builder.Property(control => control.UpdatedAt).HasColumnName("updated_at");
         builder.Property(control => control.RowVersion).HasColumnName("row_version").IsRowVersion();
-        builder.HasMany(control => control.Versions).WithOne().HasForeignKey(version => version.ControlId);
+        builder.HasMany(control => control.Versions)
+            .WithOne()
+            .HasForeignKey(version => version.ControlId)
+            .OnDelete(DeleteBehavior.NoAction);
     }
 }
 
@@ -63,7 +66,10 @@ internal sealed class RunConfiguration : IEntityTypeConfiguration<Run>
         builder.Property(run => run.ErrorParams).HasColumnName("error_params");
         builder.Property(run => run.EngineVersion).HasColumnName("engine_version").HasMaxLength(32);
         builder.Property(run => run.CorrelationId).HasColumnName("correlation_id").HasMaxLength(64);
-        builder.HasOne<ControlVersion>().WithMany().HasForeignKey(run => new { run.ControlId, run.VersionNumber });
+        builder.HasOne<ControlVersion>()
+            .WithMany()
+            .HasForeignKey(run => new { run.ControlId, run.VersionNumber })
+            .OnDelete(DeleteBehavior.NoAction);
         builder.HasMany(run => run.Results).WithOne().HasForeignKey(result => result.RunId).OnDelete(DeleteBehavior.Cascade);
     }
 }

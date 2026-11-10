@@ -16,18 +16,21 @@ public sealed class RoundTripTests(ApiFixture fixture)
     private static readonly DateTime _finishedAt = new(2026, 11, 10, 19, 44, 4, 5, DateTimeKind.Utc);
 
     [Fact]
-    public async Task One_row_of_each_table_reads_back_as_written()
+    public async Task Row_of_each_dq_table_reads_back_as_written_when_saved_through_the_model()
     {
-        var name = TestData.Name(TestData.NewTestId(), "בקרה עם שם בעברית");
+        var hebrew = TestData.HebrewText;
+        var name = TestData.Name(TestData.NewTestId(), hebrew);
         var definition = new StoredDefinition("""{"schemaVersion":1,"rootEntity":"employee"}""", new string('a', 64), "employee");
-        var result = new RunResult(1, "1051", """{"first_name":"אריאל"}""", "אריאל מור 1051", ["c1", "c2"], """[{"conditionId":"c1"}]""", "גיל: 16");
+        var display = $$"""{"first_name":"{{hebrew}}"}""";
+        var summary = $$"""{"sentence":"{{hebrew}}"}""";
+        var result = new RunResult(1, "1051", display, $"{hebrew} 1051", ["c1", "c2"], """[{"conditionId":"c1"}]""", $"{hebrew}: 16");
         int controlId;
         int runId;
 
         await using (var scope = fixture.Factory.Services.CreateAsyncScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<DqDbContext>();
-            var control = Control.Create(name, "תיאור", definition, _createdAt);
+            var control = Control.Create(name, hebrew, definition, _createdAt);
             db.Controls.Add(control);
             await db.SaveChangesAsync();
             controlId = control.Id;
@@ -35,7 +38,7 @@ public sealed class RoundTripTests(ApiFixture fixture)
             var run = Run.Start(controlId, 1, new DateOnly(2026, 11, 1), "he", "corr-1", _createdAt);
             db.Runs.Add(run);
             await db.SaveChangesAsync();
-            run.Succeed(new RunOutcome(3, 41, """{"sentence":"גיל מתחת ל־18"}""", "0.1.0"), [result], _finishedAt);
+            run.Succeed(new RunOutcome(3, 41, summary, "0.1.0"), [result], _finishedAt);
             await db.SaveChangesAsync();
             runId = run.Id;
         }
@@ -46,7 +49,7 @@ public sealed class RoundTripTests(ApiFixture fixture)
 
             var control = await db.Controls.Include(c => c.Versions).SingleAsync(c => c.Id == controlId);
             Assert.Equal(name, control.Name);
-            Assert.Equal("תיאור", control.Description);
+            Assert.Equal(hebrew, control.Description);
             Assert.Equal("employee", control.RootEntityKey);
             Assert.Equal(1, control.CurrentVersion);
             Assert.True(control.IsActive);
@@ -70,7 +73,7 @@ public sealed class RoundTripTests(ApiFixture fixture)
             Assert.Equal(DateTimeKind.Utc, run.FinishedAt?.Kind);
             Assert.Equal(RunStatus.Succeeded, run.Status);
             Assert.Equal((3, 1, 41), (run.TotalCount, run.StoredCount, run.DurationMs));
-            Assert.Equal("""{"sentence":"גיל מתחת ל־18"}""", run.Summary);
+            Assert.Equal(summary, run.Summary);
             Assert.Null(run.ErrorCode);
             Assert.Null(run.ErrorParams);
             Assert.Equal("0.1.0", run.EngineVersion);
@@ -79,11 +82,11 @@ public sealed class RoundTripTests(ApiFixture fixture)
             var stored = Assert.Single(run.Results);
             Assert.True(stored.Id > 0);
             Assert.Equal((runId, 1, "1051"), (stored.RunId, stored.Seq, stored.RecordKey));
-            Assert.Equal("""{"first_name":"אריאל"}""", stored.RecordDisplay);
-            Assert.Equal("אריאל מור 1051", stored.DisplayText);
+            Assert.Equal(display, stored.RecordDisplay);
+            Assert.Equal($"{hebrew} 1051", stored.DisplayText);
             Assert.Equal(["c1", "c2"], stored.MatchedConditionIds);
             Assert.Equal("""[{"conditionId":"c1"}]""", stored.Reasons);
-            Assert.Equal("גיל: 16", stored.ReasonText);
+            Assert.Equal($"{hebrew}: 16", stored.ReasonText);
 
             var matching = await db.RunResults.CountAsync(r => r.RunId == runId && r.MatchedConditionIds.Contains("c2"));
             Assert.Equal(1, matching);

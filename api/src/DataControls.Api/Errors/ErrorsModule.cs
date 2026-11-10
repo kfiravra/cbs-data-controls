@@ -8,6 +8,10 @@ internal static class ErrorsModule
     {
         services.AddSingleton<ProblemWriter>();
         services.AddExceptionHandler<ApiExceptionHandler>();
+        // Every rule of a request has a code of its own and is checked by RequestCheck. MVC's implicit
+        // [Required] on non-nullable members would report the same fault first, as an English sentence
+        // under the member's C# name.
+        services.Configure<MvcOptions>(options => options.SuppressImplicitRequiredAttributeForNonNullableReferenceTypes = true);
         services.Configure<ApiBehaviorOptions>(options =>
         {
             options.InvalidModelStateResponseFactory = context =>
