@@ -2,7 +2,8 @@ import { ChangeDetectionStrategy, Component, input, output, signal } from '@angu
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatFormField, MatPrefix } from '@angular/material/form-field';
 import { MatInput } from '@angular/material/input';
-import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
+import { MatTooltip } from '@angular/material/tooltip';
+import { Subject, debounceTime } from 'rxjs';
 
 import { IconComponent } from '../icon/icon.component';
 
@@ -14,7 +15,7 @@ const SEARCH_DEBOUNCE_MS = 300;
  */
 @Component({
   selector: 'app-toolbar',
-  imports: [IconComponent, MatFormField, MatInput, MatPrefix],
+  imports: [IconComponent, MatFormField, MatInput, MatPrefix, MatTooltip],
   template: `
     <div class="toolbar" role="search">
       <mat-form-field class="toolbar__search" appearance="outline" subscriptSizing="dynamic">
@@ -35,6 +36,7 @@ const SEARCH_DEBOUNCE_MS = 300;
           type="button"
           data-testid="toolbar-filters-toggle"
           [attr.aria-label]="label"
+          [matTooltip]="label"
           [attr.aria-expanded]="open()"
           (click)="open.set(!open())"
         >
@@ -66,7 +68,7 @@ export class ToolbarComponent {
 
   constructor() {
     this.typed
-      .pipe(debounceTime(SEARCH_DEBOUNCE_MS), distinctUntilChanged(), takeUntilDestroyed())
+      .pipe(debounceTime(SEARCH_DEBOUNCE_MS), takeUntilDestroyed())
       .subscribe((text) => this.searchChange.emit(text));
   }
 }

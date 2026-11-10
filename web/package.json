@@ -8,9 +8,7 @@
     "test": "ng test --watch=false",
     "lint": "ng lint",
     "typecheck:e2e": "tsc -p tsconfig.e2e.json",
-    "e2e": "playwright test e2e/mocked",
-    "e2e:gate": "playwright test e2e/gate --project=mobile --project=desktop --workers=1",
-    "preview": "node --experimental-strip-types e2e/preview.ts"
+    "e2e": "playwright test e2e/mocked"
   },
   "private": true,
   "packageManager": "npm@10.9.2",

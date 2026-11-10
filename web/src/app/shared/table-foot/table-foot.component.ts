@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 import { MatFormField } from '@angular/material/form-field';
 import { MatOption, MatSelect } from '@angular/material/select';
+import { MatTooltip } from '@angular/material/tooltip';
 import { TranslatePipe } from '@ngx-translate/core';
 
 import { LanguageService } from '../../core/i18n/language.service';
@@ -12,7 +13,7 @@ import { IconComponent } from '../icon/icon.component';
  */
 @Component({
   selector: 'app-table-foot',
-  imports: [IconComponent, MatFormField, MatOption, MatSelect, TranslatePipe],
+  imports: [IconComponent, MatFormField, MatOption, MatSelect, MatTooltip, TranslatePipe],
   template: `
     <div class="table-foot">
       <span class="num" data-testid="table-range">{{ rangeKey() | translate: range() }}</span>
@@ -21,7 +22,7 @@ import { IconComponent } from '../icon/icon.component';
           <mat-form-field class="field--sm pager__size" appearance="outline" subscriptSizing="dynamic">
             <mat-select
               data-testid="page-size"
-              [attr.aria-label]="'common.pageSize' | translate"
+              [aria-label]="'common.pageSize' | translate"
               [value]="pageSize()"
               (selectionChange)="pageSizeChange.emit($event.value)"
             >
@@ -36,6 +37,7 @@ import { IconComponent } from '../icon/icon.component';
           type="button"
           data-testid="page-previous"
           [attr.aria-label]="'common.previousPage' | translate"
+          [matTooltip]="'common.previousPage' | translate"
           [disabled]="page() <= 1"
           (click)="pageChange.emit(page() - 1)"
         >
@@ -46,6 +48,7 @@ import { IconComponent } from '../icon/icon.component';
           type="button"
           data-testid="page-next"
           [attr.aria-label]="'common.nextPage' | translate"
+          [matTooltip]="'common.nextPage' | translate"
           [disabled]="page() >= lastPage()"
           (click)="pageChange.emit(page() + 1)"
         >
@@ -60,7 +63,7 @@ import { IconComponent } from '../icon/icon.component';
     }
 
     .pager__size {
-      inline-size: 128px;
+      inline-size: calc(2 * var(--space-8));
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,

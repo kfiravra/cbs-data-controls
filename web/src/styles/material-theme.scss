@@ -1,7 +1,7 @@
 // Angular Material, pointed at the design tokens. One light theme; the system tokens read the custom
 // properties of tokens.scss, and each component that still differs is corrected through its own overrides
 // mixin. Never a selector on an internal `mdc-` or `mat-mdc-` class: where a token does not reach, Material's
-// default stays. Rules on a Material host element (`mat-form-field`, `mat-chip-row`) and on the panel and
+// default stays. Rules on a Material host element (`mat-form-field`) and on the panel and
 // backdrop classes this app passes in are the app's own.
 @use 'sass:map';
 @use '@angular/material' as mat;
@@ -83,7 +83,7 @@ html {
   @include mat.form-field-overrides(
     (
       container-height: var(--size-control),
-      container-vertical-padding: 10px,
+      container-vertical-padding: calc((var(--size-control) - 1.4 * var(--text-body)) / 2),
       container-text-size: var(--text-body),
       container-text-line-height: 1.4,
       outlined-container-shape: var(--radius-sm),
@@ -189,6 +189,7 @@ html {
     (
       container-height: 30px,
       container-shape-radius: var(--radius-sm),
+      elevated-container-color: var(--color-tonal),
       outline-width: 0,
       label-text-color: var(--color-ink),
       label-text-size: var(--text-label),
@@ -241,7 +242,7 @@ mat-form-field {
     @include mat.form-field-overrides(
       (
         container-height: var(--size-control-sm),
-        container-vertical-padding: calc((var(--size-control-sm) - 22px) / 2),
+        container-vertical-padding: calc((var(--size-control-sm) - 1.4 * var(--text-small)) / 2),
         container-text-size: var(--text-small),
       )
     );
@@ -251,10 +252,6 @@ mat-form-field {
       )
     );
   }
-}
-
-mat-chip-row {
-  background: var(--color-tonal);
 }
 
 // classes this app passes to MatDialog (panelClass, backdropClass) and MatSnackBar (panelClass)

@@ -11,13 +11,11 @@
     "pageSize": "רשומות בעמוד",
     "perPage": "{{count}} בעמוד",
     "previousPage": "העמוד הקודם",
-    "nextPage": "העמוד הבא",
-    "filters": "סינון"
+    "nextPage": "העמוד הבא"
   },
   "list": {
     "title": "בקרות",
-    "pageTitle": "רשימת הבקרות",
-    "range": "מוצגות {{from}} עד {{to}} מתוך {{total}} בקרות"
+    "pageTitle": "רשימת הבקרות"
   },
   "editor": {
     "titleNew": "בקרה חדשה",

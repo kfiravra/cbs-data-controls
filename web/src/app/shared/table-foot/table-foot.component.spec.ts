@@ -1,9 +1,7 @@
 import { ComponentRef } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MatIconRegistry } from '@angular/material/icon';
-import { DomSanitizer } from '@angular/platform-browser';
 
-import { registerIcons } from '../../core/icons/icons';
+import { provideTestIcons } from '../../../testing/icons';
 import { provideTestTranslations, t } from '../../../testing/translate';
 import { TableFootComponent } from './table-foot.component';
 
@@ -17,8 +15,10 @@ describe('TableFootComponent', () => {
     (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>(`[data-testid="${testId}"]`)!;
 
   beforeEach(async () => {
-    TestBed.configureTestingModule({ imports: [TableFootComponent], providers: [provideTestTranslations()] });
-    registerIcons(TestBed.inject(MatIconRegistry), TestBed.inject(DomSanitizer));
+    TestBed.configureTestingModule({
+      imports: [TableFootComponent],
+      providers: [provideTestTranslations(), provideTestIcons()],
+    });
     fixture = TestBed.createComponent(TableFootComponent);
     ref = fixture.componentRef;
     ref.setInput('rangeKey', 'results.range');

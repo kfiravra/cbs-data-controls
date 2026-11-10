@@ -39,7 +39,7 @@ The dev server for the mocked specs runs on :4200 from this worktree.
     its banner there (`.page-banner`).
 
 ## Last reviewed
-(none)
+ab0d004 (phase 1), fixed in the commit after it.
 
 ## Hand-over to dc-delivery
 Read by its phase B0 (plan.md Design Q). Filled as the work goes and complete before `/ship`.
@@ -124,3 +124,21 @@ rewrote. A review that found nothing, or did not run, is logged as that.
 - 2026-11-11 phase 1 on Fable 5.2: gate `gates/phase-1.txt` (ngc, ng lint, e2e type check, 11 unit tests, ng
   build, print guard, `e2e/mocked/shell.spec.ts` on mobile and desktop: 4 passed). Screenshots in
   `screenshots/phase-1/`. The Material theme compiles; no screen draws a themed field yet (phase 3 is the first).
+- 2026-11-11 /phase-review web, phase 1 (one reviewer agent, opus; cost line: about 180k tokens, started without
+  waiting), diff 459782e..ab0d004: standards 1 critical, 4 warnings, 3 info; plan 1 critical, 1 warning, 3 info.
+  `toast.service.ts`: `horizontalPosition: 'start'` without `direction` is the left edge, the end edge in RTL
+  (critical). `toolbar.component.ts`: `distinctUntilChanged` swallowed a term typed again after the search was
+  cleared from outside (critical). `table-foot.component.ts`: `[attr.aria-label]` on `mat-select` is overwritten by
+  the select's own host binding (warning). Icon buttons of the table foot, the toolbar and the confirm dialog had
+  no tooltip (warning). Banner, toolbar, confirm dialog and toast had no spec (warning). Literal sizes off the
+  scale in `_tables.scss`, `_builder.scss`, `material-theme.scss` and the table foot (warning).
+  `material-theme.scss`: the `mat-chip-row` background lost to Material's own rule (warning). Info: the state
+  panel's title was always `h2`; `BannerTone` repeated `StateTone` with two tones no banner uses; the font check
+  tested only the Latin face; three unused keys in `he.json`; two npm scripts for files that do not exist yet;
+  the English `<title>` in `index.html`. Fixed in the review-fix commit: all criticals and warnings (the toast is
+  given the direction; the toolbar emits every settled text; the select takes `aria-label` as its input; tooltips
+  added; four specs added; the flagged sizes now come from tokens; chips take `elevated-container-color`), and
+  the info items except one. Left: `index.html` keeps `<title>Data Controls</title>`, the product's English name,
+  shown only until the translated title is set (a Hebrew title there would put Hebrew outside `he.json`); other
+  dimension literals that design.md itself gives (1px lines, the 2px outline, chip and spinner sizes, the
+  value's `1px 6px`) stay as they are.

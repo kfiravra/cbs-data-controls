@@ -2,8 +2,7 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 
 import { IconName } from '../../core/icons/icons';
 import { IconComponent } from '../icon/icon.component';
-
-export type StateTone = 'neutral' | 'warning' | 'danger' | 'success';
+import { Tone } from '../tone';
 
 /**
  * A message that stands where content would be: an icon, a title, a short paragraph (the default slot) and
@@ -17,7 +16,11 @@ export type StateTone = 'neutral' | 'warning' | 'danger' | 'success';
       @if (icon(); as name) {
         <app-icon [name]="name" size="lg" />
       }
-      <h2 class="t-title num">{{ title() }}</h2>
+      @if (pageTitle()) {
+        <h1 class="t-title num">{{ title() }}</h1>
+      } @else {
+        <h2 class="t-title num">{{ title() }}</h2>
+      }
       <ng-content />
       <div class="state__actions">
         <ng-content select="[actions]" />
@@ -32,7 +35,9 @@ export type StateTone = 'neutral' | 'warning' | 'danger' | 'success';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class StatePanelComponent {
-  readonly tone = input<StateTone>('neutral');
+  readonly tone = input<Tone>('neutral');
   readonly icon = input<IconName>();
   readonly title = input.required<string>();
+  /** True where the panel stands for the whole page, so its title is the page's first heading. */
+  readonly pageTitle = input(false);
 }

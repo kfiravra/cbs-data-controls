@@ -21,8 +21,10 @@ test.describe('shell', () => {
     await expect(page).toHaveTitle(t('app.title', { app: t('app.name'), page: t('states.notFound.title') }));
 
     await page.evaluate(() => document.fonts.ready);
-    const fontLoaded = await page.evaluate(() =>
-      [400, 500].every((weight) => document.fonts.check(`${weight} 16px "IBM Plex Sans Hebrew"`)),
+    // checked against Hebrew text: without it only the face that covers a space is tested
+    const fontLoaded = await page.evaluate(
+      (sample) => [400, 500].every((weight) => document.fonts.check(`${weight} 16px "IBM Plex Sans Hebrew"`, sample)),
+      t('app.name'),
     );
     expect(fontLoaded).toBe(true);
     expect(failed).toEqual([]);

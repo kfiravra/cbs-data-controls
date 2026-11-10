@@ -40,20 +40,20 @@
 
 // the rail: one line down the start edge of a group, with the joining word of the group sitting on it
 .group__body {
-  --rail-pad: 8px;
+  --rail-pad: var(--space-2);
 
   display: grid;
   gap: var(--space-2);
   min-inline-size: 0;
-  margin-inline-start: 15px;
+  margin-inline-start: var(--space-4);
   padding-inline-start: var(--rail-pad);
   border-inline-start: 1px solid var(--color-line-strong);
   container-type: inline-size;
 }
 
 .joiner {
-  inline-size: 30px;
-  margin-inline-start: calc(-1 * var(--rail-pad) - 16px);
+  inline-size: var(--space-6);
+  margin-inline-start: calc(-1 * var(--rail-pad) - var(--space-4));
   padding-block: 1px;
   background: var(--color-surface);
   text-align: center;
@@ -133,7 +133,7 @@
   }
 
   .cond > .mark {
-    margin-block-start: 11px;
+    margin-block-start: calc((var(--size-control) - var(--size-mark)) / 2);
   }
 
   .cond__name {

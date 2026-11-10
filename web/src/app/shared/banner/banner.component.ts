@@ -2,15 +2,11 @@ import { ChangeDetectionStrategy, Component, computed, input, output } from '@an
 
 import { IconName } from '../../core/icons/icons';
 import { IconComponent } from '../icon/icon.component';
+import { Tone } from '../tone';
 
-export type BannerTone = 'neutral' | 'warning' | 'danger' | 'success';
+export type BannerTone = Extract<Tone, 'warning' | 'danger'>;
 
-const TONE_ICON: Record<BannerTone, IconName> = {
-  neutral: 'info',
-  warning: 'warning',
-  danger: 'error',
-  success: 'check_circle',
-};
+const TONE_ICON: Record<BannerTone, IconName> = { warning: 'warning', danger: 'error' };
 
 /**
  * A message that belongs to the whole screen and leaves the content in place: an icon in the state colour,
@@ -43,7 +39,7 @@ const TONE_ICON: Record<BannerTone, IconName> = {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BannerComponent {
-  readonly tone = input<BannerTone>('neutral');
+  readonly tone = input<BannerTone>('warning');
   readonly icon = input<IconName>();
   readonly title = input.required<string>();
   readonly body = input<string>();

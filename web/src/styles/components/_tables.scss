@@ -211,7 +211,7 @@ th[aria-sort='descending'] .th-sort {
     }
 
     th {
-      padding-block: 10px;
+      padding-block: var(--space-2);
       font-size: var(--text-small);
       font-weight: 500;
       color: var(--color-muted);
@@ -250,7 +250,7 @@ th[aria-sort='descending'] .th-sort {
     }
 
     .cell-meta {
-      padding-block-start: 15px;
+      padding-block-start: var(--space-4);
     }
 
     .cell-nowrap {

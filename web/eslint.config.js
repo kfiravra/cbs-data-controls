@@ -27,6 +27,11 @@ module.exports = defineConfig([
       ],
       '@angular-eslint/prefer-on-push-component-change-detection': 'error',
       'no-console': ['error', { allow: ['warn', 'error'] }],
+      // a leading underscore names what is taken out of an object or a signature on purpose
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_', ignoreRestSiblings: true },
+      ],
       'no-restricted-syntax': [
         'error',
         { selector: 'Literal[value=/[\\u0590-\\u05FF]/]', message: HEBREW_MESSAGE },

@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
+import { MatTooltip } from '@angular/material/tooltip';
 import { TranslatePipe } from '@ngx-translate/core';
 import { Observable, map } from 'rxjs';
 
@@ -14,7 +15,7 @@ export interface ConfirmDialogData {
 /** Asks before an action that takes something out of view. Texts arrive translated. */
 @Component({
   selector: 'app-confirm-dialog',
-  imports: [IconComponent, TranslatePipe],
+  imports: [IconComponent, MatTooltip, TranslatePipe],
   template: `
     <div class="dialog" data-testid="confirm-dialog">
       <div class="dialog__head">
@@ -23,6 +24,7 @@ export interface ConfirmDialogData {
           class="icon-btn"
           type="button"
           [attr.aria-label]="'common.close' | translate"
+          [matTooltip]="'common.close' | translate"
           (click)="close(false)"
         >
           <app-icon name="close" />

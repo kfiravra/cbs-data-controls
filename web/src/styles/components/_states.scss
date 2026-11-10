@@ -50,15 +50,6 @@
   }
 }
 
-.banner--success {
-  border-color: var(--color-success-line);
-  background: var(--color-success-tint);
-
-  > .icon {
-    color: var(--color-success);
-  }
-}
-
 .state {
   display: grid;
   gap: var(--space-3);
