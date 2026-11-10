@@ -429,9 +429,9 @@ def check_schema(ctx: Context) -> CheckResult:
 
 def check_text(c: Collector, where: str, text: Any, languages: list[str], allowed: frozenset[str] = frozenset(),
                required: frozenset[str] = frozenset(), padded: bool = False) -> None:
-    """A {he, en} text: one non-empty string per language and nothing else, only `allowed` placeholders, the
-    `required` ones present, the same placeholders in every language, no stray brace, no padding unless
-    `padded`, no Hebrew letter in English and no Latin-only Hebrew."""
+    """A text: one non-empty string per language of the glossary and nothing else, only `allowed` placeholders,
+    the `required` ones present, the same placeholders in every language, no stray brace, no padding unless
+    `padded`, and no Hebrew text made of Latin letters alone."""
     if not isinstance(text, dict):
         c.add(where, f"must be an object with {', '.join(languages)}")
         return
@@ -455,8 +455,6 @@ def check_text(c: Collector, where: str, text: Any, languages: list[str], allowe
             c.add(where + pointer(lang), "stray brace outside a placeholder")
         if not padded and value != value.strip():
             c.add(where + pointer(lang), "leading or trailing space")
-        if lang == "en" and HEBREW_LETTER.search(bare):
-            c.add(where + pointer(lang), "Hebrew letters in the English text")
         if lang == "he" and LATIN_LETTER.search(bare) and not HEBREW_LETTER.search(bare):
             c.add(where + pointer(lang), "the Hebrew text has Latin letters and no Hebrew letter")
     if len({frozenset(v) for v in used.values()}) > 1:
@@ -807,7 +805,7 @@ def check_glossary(ctx: Context) -> CheckResult:
     if not isinstance(languages, list) or not languages or len(set(map(str, languages))) != len(languages) or any(
             not isinstance(lang, str) or not LANGUAGE.match(lang) for lang in languages):
         c.add("/languages", "must be a non-empty list of distinct two-letter language codes")
-        languages = ["he", "en"]
+        languages = ["he"]
     if g.get("defaultLanguage") not in languages:
         c.add("/defaultLanguage", f"{g.get('defaultLanguage')!r} is not one of the languages")
     if check_members(c, "/limits", g.get("limits"), LIMIT_KEYS):
@@ -1155,7 +1153,7 @@ def check_example(c: Collector, glossary: dict[str, Any], validator: Draft202012
                   doc: Any) -> None:
     """One example file: the wrapper, the definition against the schema and then the glossary, the expected
     set of its run date and of every alternate run."""
-    languages = [lang for lang in glossary.get("languages", []) if isinstance(lang, str)] or ["he", "en"]
+    languages = [lang for lang in glossary.get("languages", []) if isinstance(lang, str)] or ["he"]
     if not check_members(c, "", doc, EXAMPLE_MEMBERS, EXAMPLE_OPTIONAL):
         return
     if doc.get("id") != stem or not EXAMPLE_ID.match(stem):

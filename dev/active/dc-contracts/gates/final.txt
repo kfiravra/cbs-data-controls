@@ -1,19 +1,19 @@
-# the Gate, from a clean container, on the tree of the review-fix commit, 2026-11-10T21:06Z, branch feat/contracts at aafe9ca
+# the Gate, from a clean container with rotated local passwords, on the tree of the scope-decision commit, 2026-11-10T21:39Z, branch feat/contracts at dd6eb34
 $ docker compose down -v
  Container data-controls-db-1 Stopping 
  Container data-controls-db-1 Stopped 
  Container data-controls-db-1 Removing 
  Container data-controls-db-1 Removed 
- Network data-controls_default Removing 
  Volume data-controls_db-data Removing 
+ Network data-controls_default Removing 
  Volume data-controls_db-data Removed 
  Network data-controls_default Removed 
 exit=0
 $ docker compose up -d db && scripts/db-init.sh
- Volume data-controls_db-data Creating 
- Network data-controls_default Creating 
  Network data-controls_default Creating 
  Volume data-controls_db-data Creating 
+ Volume data-controls_db-data Creating 
+ Network data-controls_default Creating 
  Volume data-controls_db-data Created 
  Volume data-controls_db-data Created 
  Network data-controls_default Created 
@@ -25,8 +25,8 @@ $ docker compose up -d db && scripts/db-init.sh
  Container data-controls-db-1 Running 
  Container data-controls-db-1 Waiting 
  Container data-controls-db-1 Healthy 
- Container data-controls-db-init-run-adbdd37a4c6b Creating 
- Container data-controls-db-init-run-adbdd37a4c6b Created 
+ Container data-controls-db-init-run-c908dca1e372 Creating 
+ Container data-controls-db-init-run-c908dca1e372 Created 
 db-init: sql/00_database.sql
 db-init: sql/10_schemas.sql
 db-init: sql/20_hr_tables.sql
@@ -40,8 +40,8 @@ $ scripts/db-init.sh
  Container data-controls-db-1 Running 
  Container data-controls-db-1 Waiting 
  Container data-controls-db-1 Healthy 
- Container data-controls-db-init-run-e61811576fa8 Creating 
- Container data-controls-db-init-run-e61811576fa8 Created 
+ Container data-controls-db-init-run-6ee4991c2716 Creating 
+ Container data-controls-db-init-run-6ee4991c2716 Created 
 db-init: sql/00_database.sql
 db-init: sql/10_schemas.sql
 db-init: sql/20_hr_tables.sql
@@ -122,70 +122,70 @@ $ node --test .claude/hooks/tests/*.test.mjs
     # Subtest: print-guard: path:line: code rows pass through
     ok 6 - print-guard: path:line: code rows pass through
       ---
-      duration_ms: 58.974909
+      duration_ms: 40.275456
       type: 'test'
       ...
     1..6
 ok 33 - stop-check keeps file:line for the .NET, Angular, pyright and print-guard formats (2026-11-09)
   ---
-  duration_ms: 279.123332
+  duration_ms: 229.035433
   type: 'suite'
   ...
 # Subtest: stop-check housekeeping (2026-11-01)
     # Subtest: a touched file that was deleted since is dropped, so nothing runs for it
     ok 1 - a touched file that was deleted since is dropped, so nothing runs for it
       ---
-      duration_ms: 50.811955
+      duration_ms: 28.461224
       type: 'test'
       ...
     # Subtest: the same errors twice clear the touched list so a red session is not re-checked every Stop
     ok 2 - the same errors twice clear the touched list so a red session is not re-checked every Stop
       ---
-      duration_ms: 93.894654
+      duration_ms: 93.186067
       type: 'test'
       ...
     1..2
 ok 34 - stop-check housekeeping (2026-11-01)
   ---
-  duration_ms: 144.875042
+  duration_ms: 121.799258
   type: 'suite'
   ...
 # Subtest: stop-check falls back to the dirty tree when nothing was recorded (2026-11-01 bypass-mode blind spot)
     # Subtest: dirty untracked file -> checks run once, then not again for the same tree
     ok 1 - dirty untracked file -> checks run once, then not again for the same tree
       ---
-      duration_ms: 122.937396
+      duration_ms: 111.175789
       type: 'test'
       ...
     # Subtest: a content change to the dirty file re-arms the fallback
     ok 2 - a content change to the dirty file re-arms the fallback
       ---
-      duration_ms: 104.019613
+      duration_ms: 105.267319
       type: 'test'
       ...
     # Subtest: a recorded touched list takes precedence over the tree
     ok 3 - a recorded touched list takes precedence over the tree
       ---
-      duration_ms: 20.043134
+      duration_ms: 19.793068
       type: 'test'
       ...
     1..3
 ok 35 - stop-check falls back to the dirty tree when nothing was recorded (2026-11-01 bypass-mode blind spot)
   ---
-  duration_ms: 250.236305
+  duration_ms: 239.248339
   type: 'suite'
   ...
 # Subtest: stop-check without jq reports and exits 0 (2026-11-01 fail-open)
     # Subtest: prints the install hint instead of pretending to check
     ok 1 - prints the install hint instead of pretending to check
       ---
-      duration_ms: 58.707541
+      duration_ms: 59.438185
       type: 'test'
       ...
     1..1
 ok 36 - stop-check without jq reports and exits 0 (2026-11-01 fail-open)
   ---
-  duration_ms: 58.803072
+  duration_ms: 59.535384
   type: 'suite'
   ...
 1..36
@@ -196,6 +196,6 @@ ok 36 - stop-check without jq reports and exits 0 (2026-11-01 fail-open)
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 5965.561986
+# duration_ms 5770.653384
 exit=0
 overall=0

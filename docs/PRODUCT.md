@@ -13,7 +13,7 @@ web
 ## Stack
 
 Angular 21 (standalone components, signals, zoneless), Angular Material and the CDK, `@ngx-translate/core` with
-`he.json` and `en.json`, Vitest, Playwright. Decided in architecture §8 and `.claude/skills/dc-web` before this
+`he.json`, Vitest, Playwright. Decided in architecture §8 and `.claude/skills/dc-web` before this
 record was written; not asked. The client is served as static files by the .NET API.
 
 ## Users
@@ -24,7 +24,7 @@ defines a control, runs it and reads its violations; there are no separate autho
 
 Primary scene (confirmed): an office desk, a desktop monitor, daylight office lighting, during ordinary working
 hours. The phone is the secondary scene: opening a run and reading its violations. When a desk need and a phone need
-conflict, the desk leads. The layout is still written mobile first and checked at 390, 1024 and 1440.
+conflict, the desk leads. The layout is still written mobile first and checked at 390 and 1440.
 
 A second audience reads the product once: the bureau's evaluators, who run the submission from a clean clone and
 judge, among other things, how reachable it is for a non-technical user.
@@ -49,8 +49,8 @@ the user never meets a table name, a column name or a line of SQL on the way.
 
 - Three screens and one dialog: the controls list (home), the control editor, the run results, and the suggestions
   dialog. There is no dashboard and no other destination.
-- Hebrew is the default language and the document direction is right to left; English sits beside it and flips the
-  direction. Dates and numbers use the Hebrew locale.
+- Hebrew is the one language of the interface and the document direction is right to left. The texts stay keyed
+  by language, so another language is added data, not a redesign. Dates and numbers use the Hebrew locale.
 - Every entity, field, relationship and operator label comes from the business glossary at run time. Nothing on
   screen may assume the sample data model (ministry, department, employee): another glossary must render as well.
 - An internal tool with no sign-in in v1. Runs are synchronous: the user waits for the result of a run.
@@ -74,7 +74,7 @@ the user never meets a table name, a column name or a line of SQL on the way.
   definition, an edit conflict.
 - Not in v1: sign-in and roles, scheduled or background runs, export, a glossary editor, marking a violation as
   handled, notifications.
-- Vocabulary, fixed in Hebrew and English: control (בקרה), violation (חריגה), run (הרצה), root entity (ישות ראשית),
+- Vocabulary, fixed in Hebrew (the English word is this document's gloss): control (בקרה), violation (חריגה), run (הרצה), root entity (ישות ראשית),
   business glossary (מילון המונחים), condition tree (עץ תנאים).
 
 ## Brand Commitments

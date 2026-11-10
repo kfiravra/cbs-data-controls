@@ -57,7 +57,7 @@ Anything a tool already enforces is listed first so reviewers skip it.
 - Test behaviour through public interfaces, not implementation. Names say "<behaviour> when <condition>".
 - Expected values come from an independent source (`contracts/examples/`, goldens, the planted seed rows), never
   recomputed the way the code computes them.
-- Mock only external dependencies (the engine from the api, the LLM, the network); never the unit under test, and
+- Mock only external dependencies (the engine from the api, the network); never the unit under test, and
   never the database where collation, rowversion or NULL logic matter.
 
 ## Security (architecture §10)
@@ -69,8 +69,8 @@ Anything a tool already enforces is listed first so reviewers skip it.
 - Each service uses only its own login; `sa` only in the init path.
 - Secrets from the environment only; no connection string or key in code, fixtures or logs.
 - CORS from configuration, never `*`.
-- The LLM sees the glossary and aggregates, never row values, and its suggestions go through the compiler like any
-  user definition.
+- Suggestions are heuristics over the glossary and aggregates, with no call outside the system, and each one goes
+  through the validator and the compiler like any user definition.
 
 ## Git
 

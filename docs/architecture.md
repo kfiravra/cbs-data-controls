@@ -39,7 +39,7 @@ Vocabulary used throughout (keep these names in code, docs and UI):
 5. **One root entity per control.** Every control starts from one entity; related entities join through declared relationships. This fixes the grain of the result so counts and per-record reasons are well defined. A control scans **all** records of its root entity.
 6. **The condition describes the violation.** Records matching the condition are the exceptions ("find employees who..."). This matches the assignment's examples. NULL comparisons do not match (SQL three-valued logic); missing data is detected explicitly with "is empty / is null" operators.
 7. **Business users never see technical names.** Display names from the glossary everywhere; technical names appear only in logs and developer documentation.
-8. **English code, Hebrew from data.** Source code, identifiers, keys, logs, comments and tests are English only. Hebrew exists in exactly two kinds of data files: the client's translation files (`web/src/assets/i18n/he.json`, with `en.json` beside it) and the glossary (every label and reason template carries `{ "he": …, "en": … }`). Everything that crosses a service boundary is a **key** (field keys, operator keys, error codes, reason keys) plus parameters; text is rendered from data at the edge, in the requested language, Hebrew by default. Seed data values (ministry names, people) are data and may be Hebrew.
+8. **English code, Hebrew from data.** Source code, identifiers, keys, logs, comments and tests are English only. Hebrew exists in exactly two kinds of data files: the client's translation file (`web/src/assets/i18n/he.json`) and the glossary (every label and reason template is keyed by language: `{ "he": … }`). The mechanism is multilingual and v1 ships Hebrew alone: another language is one more translation file and one more value under each text. Everything that crosses a service boundary is a **key** (field keys, operator keys, error codes, reason keys) plus parameters; text is rendered from data at the edge, in the requested language, Hebrew by default. Seed data values (ministry names, people) are data and may be Hebrew.
 9. **Every failure is explained in plain language.** Both violations ("why this record failed") and system errors ("what went wrong, what to do"), rendered through the same translation data.
 
 ---
@@ -80,7 +80,7 @@ The three services agree on their shared shapes through one folder, `contracts/`
 - Must never: build or execute dynamic SQL; access schema `hr`; execute SQL text received from any other component; hard-code user-facing text.
 
 **Python FastAPI service (control engine)**
-- Owns: the glossary (file, loader, startup validation against the database); semantic validation of definitions; compilation of a definition into a parameterized SELECT; execution under the read-only login with row cap and timeout; computing per-condition flags and rendering reasons from glossary templates in the requested language; the compile cache; the suggestions module (data statistics, heuristics, optional LLM).
+- Owns: the glossary (file, loader, startup validation against the database); semantic validation of definitions; compilation of a definition into a parameterized SELECT; execution under the read-only login with row cap and timeout; computing per-condition flags and rendering reasons from glossary templates in the requested language; the compile cache; the suggestions module (data statistics, heuristics).
 - Stateless: holds no persistent state, writes nothing anywhere. Can be restarted at any time.
 - Must never: write to any database; store results; execute anything other than a single SELECT it compiled itself; accept identifiers from callers (only glossary keys); hard-code user-facing text.
 
@@ -117,13 +117,14 @@ Three related tables so that relationships of two hops can be demonstrated: **Mi
 
 ### 4.3 Business glossary — a versioned JSON file in the Python service
 Describes `hr` in business language. Contents:
-- **Entities**: key (e.g. `employee`), physical table, key column, display names (`{he, en}`, singular and plural), description, which fields identify a record in result tables (e.g. first name + last name + employee number), whether it may be a root entity, visibility, and optionally a `lifecycle`: the field that says a record is active and the value that means it.
-- **Fields** per entity: key, display name `{he, en}`, description, data type (number, text, date, bool, enum), physical column **or** a computed kind from a closed whitelist implemented in the engine (e.g. `age_years` derived from birth_date), nullable, visible (technical columns such as surrogate keys are hidden), allowed operators (derived from type unless overridden), unit, enum values with labels `{he, en}`, `required` (always, while active or while inactive: what the suggestion heuristics read) and `comparable` (false for a computed field and for a field that only says whether a link exists; such a field is never a side of a field-to-field comparison) and `identifier` (a number that names a record, such as an employee number, is written digit for digit and never with a thousands separator).
-- **Relationships**: key (e.g. `employee.department`), from entity, to entity, join columns, cardinality (many-to-one, one-to-one, one-to-many), label `{he, en}` as seen by the user ("המחלקה של העובד").
-- **Operators**: key, arity, applicable types, whether the right side may be another field, and three texts with named placeholders (field label, actual value, threshold): the `label` in the picker, the `sentence` clause of the rule and the `reason` of a violation. Each text holds variants, every variant `{he, en}`, chosen by the field's type and by whether the right side is a field (`<type>.field`, `field`, `<type>`, `default`), so Hebrew can say "מוקדם מ" for a date and "קטן מ" for a number.
+- **Entities**: key (e.g. `employee`), physical table, key column, display names (one text per language, singular and plural), description, which fields identify a record in result tables (e.g. first name + last name + employee number), whether it may be a root entity, visibility, and optionally a `lifecycle`: the field that says a record is active and the value that means it.
+- **Fields** per entity: key, display name per language, description, data type (number, text, date, bool, enum), physical column **or** a computed kind from a closed whitelist implemented in the engine (e.g. `age_years` derived from birth_date), nullable, visible (technical columns such as surrogate keys are hidden), allowed operators (derived from type unless overridden), unit, enum values with labels per language, `required` (always, while active or while inactive: what the suggestion heuristics read) and `comparable` (false for a computed field and for a field that only says whether a link exists; such a field is never a side of a field-to-field comparison) and `identifier` (a number that names a record, such as an employee number, is written digit for digit and never with a thousands separator).
+- **Relationships**: key (e.g. `employee.department`), from entity, to entity, join columns, cardinality (many-to-one, one-to-one, one-to-many), label per language as seen by the user ("המחלקה של העובד").
+- **Operators**: key, arity, applicable types, whether the right side may be another field, and three texts with named placeholders (field label, actual value, threshold): the `label` in the picker, the `sentence` clause of the rule and the `reason` of a violation. Each text holds variants, every variant keyed by language, chosen by the field's type and by whether the right side is a field (`<type>.field`, `field`, `<type>`, `default`), so Hebrew can say "מוקדם מ" for a date and "קטן מ" for a number.
 - **Limits**: nesting depth 4, 30 conditions, 100 values in a list, 500 values in a definition, paths of 2 hops. They live in the glossary because the schema cannot express depth or totals; the schema repeats the two it can express and `scripts/contracts-check.py` asserts that they agree.
 - **Formats and phrases**: per language, the date pattern and the number format, and the words that join clauses (and, or, the list separator, a field reached through a relationship, "at least one" and "none" of the related records).
-- **Suggestion texts**: the name, description and rationale of each kind of proposed control and the text of its evidence, `{he, en}`. The glossary holds meaning only: no threshold, range or other rule parameter.
+- **Suggestion texts**: the name, description and rationale of each kind of proposed control and the text of its evidence, per language. The glossary holds meaning only: no threshold, range or other rule parameter.
+- **Languages**: the list of languages the texts are written in, and the default one. v1 lists Hebrew alone; a request for a language that is not listed is answered in the default.
 - **Glossary version**: a version string; part of the compile-cache key.
 
 Rules:
@@ -173,10 +174,10 @@ Written and committed **before** the engine, API and client tasks start; they ru
 | File | What it fixes |
 |---|---|
 | `contracts/control-definition.schema.json` | The definition JSON (§5): node types, operators, limits |
-| `contracts/glossary.json` | The glossary (§4.3): entity, field, relationship and operator **keys**, labels `{he, en}`, the sentence and reason templates, limits, formats and suggestion texts. It is the one source of reason and rule-sentence text. The engine loads this very file |
+| `contracts/glossary.json` | The glossary (§4.3): entity, field, relationship and operator **keys**, labels per language, the sentence and reason templates, limits, formats and suggestion texts. It is the one source of reason and rule-sentence text. The engine loads this very file |
 | `contracts/examples/*.json` | The four assignment controls plus two more, each with the record keys it must flag in the seed data and the condition ids matched per record (the engine's integration tests and the client's e2e both use them). `invalid/` holds definitions that must be rejected, each with its layer, expected code and JSON pointer |
 | `contracts/api.md` | Both HTTP APIs on one page: path, method, request JSON, response JSON, error codes with parameters. Engine endpoints (§6) and application API (§7). Where it differs from this document, `api.md` wins |
-| `contracts/errors.md` | The closed list of error codes, definition error codes, reason keys, evidence keys and part roles with their parameters, and the rules they share (what "matched" means, NULL, depth and count, rendering). `he.json` and `en.json` carry the text of the error codes only; reasons and sentences are rendered by the engine from the glossary |
+| `contracts/errors.md` | The closed list of error codes, definition error codes, reason keys, evidence keys and part roles with their parameters, and the rules they share (what "matched" means, NULL, depth and count, rendering). `he.json` carries the text of the error codes only; reasons and sentences are rendered by the engine from the glossary |
 
 A change to any of these after the parallel tasks have started is one commit to `contracts/` plus one line pasted into the other sessions. No other coordination exists.
 
@@ -191,11 +192,11 @@ Modules (one service, clear internal boundaries):
 - **executor**: runs two statements under the read-only login — an exact count and a capped, deterministically ordered page of rows — with a per-statement timeout.
 - **explainer**: produces the rule sentence and, per violation, the structured reasons (reason key + parameters per matched condition) and the rendered reason text in the requested language, from the glossary's templates and labels and the actual values. A condition is matched for a record when it is true and every group above it up to the root is true, so a true condition on a failed branch is not a reason. Every rendered text also comes as parts that carry the node id and the role of each piece (field, value, actual value), so a client can mark the conditions without rendering anything itself: the engine is the only renderer.
 - **cache**: in-memory map from hash(definition JSON + glossary version + engine version) to the compiled statement. Saves validation and compilation for unchanged definitions. It never caches results; every run queries the database.
-- **suggestions**: computes aggregate statistics on `hr` (null rates, ranges, distinct counts, FK orphans, date-pair sanity), derives heuristic control suggestions, optionally asks an LLM (only glossary and aggregates are sent, never row values), validates every suggestion through the validator and compiler, and returns suggestions as control definitions with name, description, rationale and evidence in the requested language. Works without an LLM key (heuristics only). Built from the start, inside the engine task.
+- **suggestions**: computes aggregate statistics on `hr` (null rates, ranges, distinct counts, FK orphans, date-pair sanity), derives heuristic control suggestions, validates every suggestion through the validator and compiler, and returns suggestions as control definitions with name, description, rationale and evidence in the requested language. Built from the start, inside the engine task. **Designed and not built in v1**: an optional LLM step after the heuristics, for rules that need business knowledge (the thresholds of the first assignment example). It would receive only the glossary and the aggregates, never row values, and its proposals would pass the same validator and compiler before anything is shown.
 
 Endpoints (all JSON, errors as problem details with stable codes; the language comes from `Accept-Language`, default `he`):
 - `GET /health` — service and database connectivity.
-- `GET /glossary` — the glossary for UI consumption (keys, labels in both languages, types, operators, relationships), and its version.
+- `GET /glossary` — the glossary for UI consumption (keys, labels in every language of the glossary, types, operators, relationships), and its version.
 - `POST /validate` — dry compile; returns validation errors, or the preview sentence of the rule and one sentence per condition in the requested language.
 - `POST /run` — input: a definition, the run date (default today, Asia/Jerusalem), the row cap; output: total count, the rule sentence, a sentence and a count per condition, violations with display fields, matched condition ids, structured reasons and rendered reason text, duration. Stateless.
 - `POST /suggest` — returns suggested definitions.
@@ -237,9 +238,9 @@ Screens:
 4. **Suggestions dialog**: list of suggested controls with rationale and evidence, select, open in editor, create selected.
 
 Design constraints:
-- **i18n**: a translation service with JSON files (`he.json` default and fallback, `en.json` beside it); every user-facing string is `t('key')`; glossary labels are read from the glossary in the active language; error codes from the APIs resolve to text here. Rule sentences, reasons and suggestion texts arrive rendered by the engine, as text and as parts, and the client only draws them. No Hebrew literal anywhere in code or templates.
+- **i18n**: a translation service with JSON files (`he.json`; the service is keyed by language, v1 ships Hebrew alone and has no language switch); every user-facing string is `t('key')`; glossary labels are read from the glossary in the active language; error codes from the APIs resolve to text here. Rule sentences, reasons and suggestion texts arrive rendered by the engine, as text and as parts, and the client only draws them. No Hebrew literal anywhere in code or templates.
 - **RTL**: document direction follows the language (`dir="rtl"` for Hebrew), logical CSS properties only, Hebrew locale for dates and numbers.
-- **Responsive, mobile first**: the three screens work at 390 px (results table as card rows, editor stacked), 1024 and 1440. Verified by screenshots at every gate.
+- **Responsive, mobile first**: the three screens work from 390 px (results table as card rows, editor stacked) up to 1440. Verified by screenshots at 390 and 1440 at every gate.
 - Visual design (palette, type, components, motion) comes from `docs/design.md`, produced before the client task with the design skills; this document does not decide it.
 - State: signals for editor and screen state; services for server communication and glossary caching. No global state library.
 - Reusable components: condition group (recursive), condition row, field picker, operator picker, value input, related-records node, rule sentence preview, relationship map, results table, run summary, error banner, confirm dialog. The editor and the suggestions dialog reuse the same components.
@@ -256,7 +257,7 @@ Design constraints:
 
 **View results.** Every page, filter and search is a query on `dq.RunResult` for that run. Python is not involved.
 
-**Suggestions.** Client requests suggestions → .NET calls the engine → engine computes statistics, applies heuristics, optionally queries an LLM with glossary and aggregates only, validates each suggestion through the compiler, drops invalid ones → client shows them as drafts → user accepts some → .NET creates ordinary controls (new versions) → they are run like any other control. Nothing is saved or run automatically.
+**Suggestions.** Client requests suggestions → .NET calls the engine → engine computes statistics, applies heuristics, validates each suggestion through the compiler, drops invalid ones → client shows them as drafts → user accepts some → .NET creates ordinary controls (new versions) → they are run like any other control. Nothing is saved or run automatically.
 
 **Startup.** Engine loads the glossary, validates it against the database, fails fast on mismatch. .NET fetches the glossary, verifies database connectivity, exposes health.
 
@@ -304,9 +305,9 @@ Every error has a stable code, an HTTP status, parameters, and a translated mess
 ## 14. Deployment and running
 
 - **Docker Compose**: SQL Server 2022, a one-shot init container running the SQL scripts, the Python engine, the .NET API serving the built Angular app. Health checks and startup ordering.
-- **Manual path (assume no Docker and possibly no internet at the grader's machine)**: run the SQL scripts in SSMS or sqlcmd on a local SQL Server; start the engine with a local Python environment (ship dependency wheels or a lock file); start the .NET API with the Angular build already in its static folder so Node is not required. One script to start everything.
-- Configuration by environment variables: connection strings for the two logins, engine URL, row cap, timeouts, default language, time zone (Asia/Jerusalem), optional LLM key, debug endpoint flag. Example env files provided; no secrets committed.
-- The AI suggestions feature must work with heuristics alone when no LLM key is configured.
+- **Manual path (no Docker)**: short from-source instructions in the README. Run the SQL scripts in SSMS or sqlcmd on a local SQL Server; install the engine's locked dependencies into a local Python environment and start it; build the Angular app and start the .NET API, which serves it. No bundle and no prebuilt binaries.
+- Configuration by environment variables: connection strings for the two logins, engine URL, row cap, timeouts, default language, time zone (Asia/Jerusalem), debug endpoint flag. Example env files provided; no secrets committed.
+- The suggestions feature is heuristics alone: it needs no key and makes no call outside the system.
 - The SQL Server 2022 image is x86-64 only; on Apple Silicon it runs under Docker Desktop's Rosetta emulation, and the manual path is the fallback. Stated in the README.
 
 ---
@@ -328,9 +329,9 @@ data-controls/
   sql/            schema, security (logins), seed data, indexes, cleanup
   engine/         Python FastAPI service (loads contracts/glossary.json)
   api/            .NET 10 (LTS) Web API
-  web/            Angular app (src/assets/i18n/he.json, en.json)
+  web/            Angular app (src/assets/i18n/he.json)
   docker-compose.yml
-  scripts/        run-all for the manual path
+  scripts/        database init and checks, the contracts check, the start script of the Docker path
 ```
 
 ---
@@ -416,10 +417,10 @@ Each task is its own `/task-plan` with a plan, gates and a review pass; Fable pl
 | Task | Ships | Gate | Runs |
 |---|---|---|---|
 | **1 `dc-contracts`** | repository skeleton, harness, Docker Compose with SQL Server + init container, `sql/` (hr, dq, two logins, Hebrew seed with planted violations, indexes), the whole `contracts/` folder (§5.1), `docs/architecture.md` (this document, trimmed), README skeleton | `docker compose up db` + init on a clean container; a check script prints the expected violating records per example; the schema validates all six examples | first, alone; nothing else starts before its gate |
-| **2 `dc-engine`** | glossary loader + startup check, validator, compiler, executor, explainer, cache, suggestions (heuristics + optional LLM), all endpoints | golden tests for the six examples; every rejection path; injection values bound; integration against the seed returns the exact planted ids; `/suggest` yields the four assignment controls from the seed with no key | parallel, own worktree |
+| **2 `dc-engine`** | glossary loader + startup check, validator, compiler, executor, explainer, cache, suggestions (heuristics), all endpoints | golden tests for the six examples; every rejection path; injection values bound; integration against the seed returns the exact planted ids; `/suggest` yields the examples marked `heuristic` (2 to 5) from the seed | parallel, own worktree |
 | **3 `dc-api`** | glossary cache, controls + versions + concurrency, runs + snapshot, paging/filter/search/sort, suggestions proxy + accept, engine client with resilience and error mapping, problem details, OpenAPI, static hosting | tests for validation, status codes, conflict, timeout/unavailable mapping, snapshot paging; the API answers every call in `contracts/api.md` | parallel, own worktree |
-| **4 `dc-web`** | i18n shell (he/en, RTL), controls list, editor (builder, pickers, relationship map, preview, errors by JSON path), results screen with all states, suggestions dialog, per `docs/design.md` | Playwright: create → save → run → read results on the six examples; screenshots at 390 and 1440; the design skills' critique and polish applied once | parallel, own worktree; starts on what needs no API (shell, i18n, components) and wires to the real API as it lands |
-| **5 `dc-delivery`** | compose end to end from a fresh clone, the manual path script, all docs in §17, `docs/ai-usage.md`, the §18 checklist ticked | a clean machine runs both paths first time; six examples run from the UI | last, short |
+| **4 `dc-web`** | i18n shell (Hebrew, RTL), controls list, editor (builder, pickers, relationship map, preview, errors by JSON path), results screen with all states, suggestions dialog, per `docs/design.md` | Playwright: create → save → run → read results on the six examples; screenshots at 390 and 1440; the design skills' critique and polish applied once | parallel, own worktree; starts on what needs no API (shell, i18n, components) and wires to the real API as it lands |
+| **5 `dc-delivery`** | compose end to end from a fresh clone, the from-source instructions of the manual path, all docs in §17, `docs/ai-usage.md`, the §18 checklist ticked | a clean machine runs both paths first time; six examples run from the UI | last, short |
 
 Parallel rules: one SQL Server container on the machine, started from the main tree and shared by every session; never two test suites at once; a contract change goes through `contracts/` plus one line to the other sessions; nothing is pushed or merged without the developer's word; one PR per task.
 

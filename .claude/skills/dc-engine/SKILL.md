@@ -65,16 +65,16 @@ PATH (the hook's fallback) still resolves the imports.
 - FastAPI's default 422 body (`{"detail": [...]}`) is English prose from Pydantic. Register handlers for
   `RequestValidationError`, `HTTPException` and `Exception`, so every error is problem details with `code`,
   `params` and a JSON `path`: never a traceback, SQL or a driver message.
-- Language comes from `Accept-Language` (`he` or `en`; anything else → `he`). Reasons go out both as data (reason
+- Language comes from `Accept-Language`: a language the glossary lists, else its default. It lists `he` alone,
+  so every answer is in Hebrew; the mechanism stays keyed by language. Reasons go out both as data (reason
   key + params per matched condition) and as text rendered from the glossary's templates in that language.
 - The run date defaults to today in `Asia/Jerusalem` (`zoneinfo`), not the server's UTC date, which is still
   yesterday for the first two or three hours of every Israeli day.
 - Compile cache key: a hash of the canonical definition (`json.dumps(sort_keys=True, separators=(",", ":"),
   ensure_ascii=False)`) plus the glossary version plus the engine version. It holds compiled statements, never
   results.
-- Suggestions work with no LLM key (heuristics only). The LLM sees the glossary and aggregates, never row values;
-  every suggestion goes through validator and compiler and is dropped when invalid. No LLM sits in the
-  definition-to-SQL path.
+- Suggestions are heuristics only: no LLM, no key, no call outside the system (the LLM step of architecture §6 is
+  a design that is not built). Every suggestion goes through validator and compiler and is dropped when invalid.
 - `/debug/compile` is off unless configured; no other endpoint returns SQL.
 
 ## Tests

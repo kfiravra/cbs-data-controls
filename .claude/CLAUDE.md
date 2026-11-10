@@ -38,7 +38,7 @@ the api writes, and only to `dq`; only the engine reads `hr`.
   sits in the wrong service.
 - `dir="rtl"` for Hebrew, the default language, and logical CSS only (`margin-inline-start`, `inset-inline-end`,
   `text-align: start`); a physical `left` or `right` is an RTL bug.
-- English-only code, identifiers, logs, comments and tests. Hebrew text lives only in `web/src/assets/i18n/*.json`
+- English-only code, identifiers, logs, comments and tests. Hebrew text lives only in `web/src/assets/i18n/he.json`
   and `contracts/glossary.json`; seed values in `sql/` and control names in `contracts/examples/` are data and may be
   Hebrew. Errors cross a service boundary as codes and parameters; sentences and reasons come rendered by the engine.
 - A contract change is one commit to `contracts/` on main plus one line pasted into the other sessions; nothing
@@ -66,7 +66,7 @@ the api writes, and only to `dq`; only the engine reads `hr`.
 - Task state lives in `dev/active/<task>/plan.md` + `notes.md` and rides in that task's commits (`/task-plan`, `/resume`, `/handoff`).
 - After every completed plan step, tick its checkbox in `plan.md` and update `notes.md` State/Next; at every phase end add a Log line and the gate path. Never batch these to the end of a phase.
 - Phase end: `/phase-review` by area, then one review-fix commit.
-- Spend is stated before any run that costs money or minutes: `/suggest` runs with an LLM key (model), agent fan-outs (count, model), e2e against live services.
+- Spend is stated before any run that costs money or minutes: agent fan-outs (count, model), e2e against live services.
   One line, then wait for the word; never start it in the same breath.
 - Models: Fable for planning sessions, Opus for execution, Sonnet only for named mechanical lanes (a lane the plan lists by name).
   Subagents default to opus (`CLAUDE_CODE_SUBAGENT_MODEL`) and never inherit the session model; at most 6 at once.

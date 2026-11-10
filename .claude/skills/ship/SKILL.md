@@ -26,7 +26,7 @@ Map what changed to what must be updated, and propose the edits (apply them when
 | Change | Update |
 |---|---|
 | Endpoints, payloads, status codes | `contracts/api.md` (one commit on main, one line to the other sessions) |
-| Error codes | `contracts/errors.md`, `web/src/assets/i18n/he.json` and `en.json` |
+| Error codes | `contracts/errors.md`, `web/src/assets/i18n/he.json` |
 | Reason keys, sentence and reason text | `contracts/errors.md`, `contracts/glossary.json` (the engine renders; no i18n keys) |
 | Entities, fields, relationships, operators | `contracts/glossary.json`, `docs/glossary.md` |
 | Definition shape, limits, NULL semantics | `contracts/control-definition.schema.json`, `docs/control-definition.md` |

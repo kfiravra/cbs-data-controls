@@ -1,18 +1,17 @@
 # dc-delivery: one command per path, the documents and the gate
 Created: 2026-11-10 · Branch: feat/delivery (cut from main right after the dc-contracts merge; it lives in the main tree)
 Amended: 2026-11-10 after the hand-backs of dc-web, dc-api and dc-engine (decisions 28 to 34; the Log in `notes.md` says what changed)
+Amended: 2026-11-10 by the dc-contracts session on Kfir's scope decision (the section after the Decisions says what went)
 
 ## Goal
 
-After this task a grader who receives the repository link or one zip file runs the system the first time they try,
-in one of two ways. With Docker: one script creates `.env`, builds the containers and serves the app on
-http://localhost:5000. Without Docker and without internet, on Windows: one script from the offline bundle needs
-only a local SQL Server, its ODBC driver and a Python from 3.12 to 3.14. Either way the controls list opens with the
-six example controls ready to run, and the README, the documents of architecture §17, a one-page Hebrew cover and
-the ticked §18 checklist say what was built and how to see it. This is the last task before the submission of
-2026-11-15. It is planned before tasks 1 to 4 are executed, so that what it needs from them reaches their sessions
-in time. The graders most likely have Windows and SQL Server and no Docker (§14), so the manual path is the one
-most of them will take, and it gets the larger share of the work.
+After this task a grader who receives the repository link runs the system the first time they try, in one of two
+ways. With Docker: one script creates `.env`, builds the containers and serves the app on http://localhost:5000.
+Without Docker: a short README section runs the system from source against a local SQL Server, with Python 3.12
+or later, the .NET 10 SDK and Node 22. Either way the controls list opens with the six example controls ready to run, and
+the README, the documents of architecture §17, a one-page Hebrew cover and the ticked §18 checklist say what was
+built and how to see it. This is the last task before the submission of 2026-11-15. It is planned before tasks 1
+to 4 are executed, so that what it needs from them reaches their sessions in time.
 
 ## Decisions
 
@@ -22,26 +21,25 @@ From the interview (Kfir, 2026-11-10, four rounds):
    merged and runs in the main tree while the three worktrees run; there is no fourth worktree. Lane B (compose,
    manual path, README, gate) starts when engine, api and web have merged. (The last day keeps integration and
    proof only; rejected: everything after the merges, documents written by the three tasks.)
-2. **The manual path is a hybrid bundle.** The api is published self-contained for win-x64 with the Angular build
-   inside, so the grader needs no .NET and no Node. The engine runs on the grader's own Python and installs from a
-   bundled wheelhouse with no network. `run-all.ps1` drives it on Windows; `run-all.sh` runs from source on Linux
-   and macOS. (Kfir's design; rejected: an embedded Python, a framework-dependent publish, building on the
-   grader's machine.)
-3. **The wheelhouse covers CPython 3.12, 3.13 and 3.14** for win_amd64. 3.12 stays the development and Docker
-   version, and the engine suite runs once under 3.13 and 3.14 before the gate. (python.org has shipped no 3.12
-   installer since April 2025; rejected: 3.12 only, with a bundled installer or with a message.)
-4. **Clean machines.** Docker path: a fresh clone on WSL with the dev stack removed. Manual path: Kfir's Windows 10
-   host, which on 2026-11-10 has no .NET, no Python, no SQL Server and only the legacy ODBC driver. Kfir installs
-   SQL Server 2022 Express there once and makes the final run with the network off. (Rejected: WSL only, GitHub
-   Actions, a rented VM.)
+2. **The manual path is short from-source instructions** in the README: the database by `scripts/db-init.sh` or by
+   hand in SSMS, the engine in a Python virtual environment from `engine/requirements.txt`, the api by the .NET SDK
+   with the Angular build as its `wwwroot`. No bundle, no prebuilt binaries and no start-everything script.
+   (Scope decision of 2026-11-10; it replaces the hybrid Windows bundle and its wheelhouse, the first decisions 2
+   and 3.)
+3. (Removed by the scope decision: the wheelhouse for CPython 3.12 to 3.14. The engine still checks that every
+   pin has a Windows wheel for those versions: its decision 21.)
+4. **Clean machines.** Docker path: a fresh clone on WSL with the dev stack removed, and once from a Windows folder
+   with Docker Desktop. Manual path: the README's from-source section followed to the letter on that fresh clone.
+   (Rejected: GitHub Actions, a rented VM. The offline run on the Windows host went with the bundle.)
 5. **The six examples are loaded through the application API on first start**, by one stdlib-Python script that
    also verifies each run against the example's expected records and writes the generated part of
    `docs/examples.md`. `LOAD_EXAMPLES=false` turns the loading off. (Only the api writes `dq`, so there is no SQL
    seed of controls; rejected: an opt-in command, an empty list.)
 6. **Loaded, never run.** The list opens with six controls that have no run, and the first result on screen comes
    from the grader's own click. The README lists the count each example gives.
-7. **`.env` is generated on first start**, with random passwords, by the start script of each path. No password is
-   in the repository and `.env.example` holds placeholders. The by-hand route stays documented. (Rejected: working
+7. **`.env` is generated on first start**, with random passwords, by the start script of the Docker path. No
+   password is in the repository and `.env.example` holds placeholders. The from-source instructions give the
+   by-hand route: copy the example and set the three passwords. (Rejected: working
    demo values in the example file, placeholders alone.)
 8. **Documents are English, plus one Hebrew cover page**, `docs/submission.he.md`, linked first in the README: the
    assignment's seven deliverables in its own words, where each one is, and the run commands. (Rejected: English
@@ -69,31 +67,29 @@ From the interview (Kfir, 2026-11-10, four rounds):
 Settled here, inside the architecture and the answers above (object before lane B starts):
 
 14. Delivery writes the api's Dockerfile, `.dockerignore` and the compose services (dc-contracts decision 17,
-    dc-api decision 23). The engine's image is dc-engine's Phase 7, the third item on its cut list: delivery uses
+    dc-api decision 23). The engine's image is dc-engine's Phase 7, the second item on its cut list: delivery uses
     it when it exists and writes it per Design A when that phase was cut. `engine/requirements.txt` exists either
     way: dc-engine exports it in its phase 1.
-15. One zip serves both ways of submitting (kickoff §2 leaves it open): a snapshot of the tracked source plus
-    `prebuilt/`. It is a release asset when the graders get the repository, and the whole submission when they ask
-    for a file.
+15. The submission is the repository. When the graders ask for a file, it is a `git archive` of the tag: source
+    only, a few MB, and both paths run from it.
 16. In compose each container receives only its own connection settings: `environment:` per service, never
     `env_file`, and `.env` is in no image. (CLAUDE.md: never hand a service the other's string or `sa`.) On the
     manual path both services run as one user on one machine with `.env` beside them, and the engine reads that
-    file itself; the run-all scripts still hand each child only its own variables, and the limitations document
-    says what that does not protect.
-17. The manual path keeps the two SQL logins, so the instance must allow SQL Server authentication. `run-all.ps1`
-    detects Windows-only mode and stops with the two-step fix; it changes the server setting only under
-    `-EnableMixedMode`. (A Windows-login fallback would run both services as the grader's sysadmin account and
-    erase §2 principle 4.)
-18. `run-all.ps1` creates the database when `DataControls` is missing, as the grader's Windows login through
-    `sqlcmd`, in the order and with the variables of `scripts/db-init.sh`. It never drops a database on its own:
-    `-ResetDb` asks for the database name to be typed. The SSMS route stays in `sql/README.md`.
+    file itself; the instructions still start each service with only its own variables, and the limitations
+    document says what that does not protect.
+17. The manual path keeps the two SQL logins, so the instance must allow SQL Server authentication. The
+    instructions say how to see that it does and where the setting is; nothing changes a server setting for the
+    grader. (A Windows-login fallback would run both services as the grader's sysadmin account and erase §2
+    principle 4.)
+18. On the manual path the database is created by `scripts/db-init.sh` in its host mode, or by hand in SSMS as
+    `sql/README.md` describes. Nothing in this task drops a database.
 19. The start scripts poll the app's health themselves. `docker compose up --wait` is not used: it has been
     reported to return an error when a one-shot service exits 0.
 20. PowerShell scripts run on Windows PowerShell 5.1, are ASCII only, and are started through `.cmd` wrappers with
     `-ExecutionPolicy Bypass`. (The client default policy is Restricted, and 5.1 reads a file without a BOM in the
     ANSI code page, which is the Hebrew one on the graders' machines.)
-21. The loader posts each example's Hebrew name and description (the default language; `--lang en` posts the
-    English ones) and skips a control whose exact name already exists, an archived one included.
+21. The loader posts each example's name and description in the glossary's default language (Hebrew, the only
+    one the examples carry) and skips a control whose exact name already exists, an archived one included.
 22. `docs/examples.md` is a hand-written frame around a generated region. The rule sentences and the reasons in it
     are the engine's own output, copied from a real run and never rendered again.
 23. A bug the gate finds in engine, api or web is fixed on this branch as its own `fix(<area>): …` commit with a
@@ -116,28 +112,22 @@ From the hand-backs of dc-web, dc-api and dc-engine (carried by Kfir on 2026-11-
 again at 21:45). Decisions 31 and 32 are calls the web plan left open: the defaults below stand until Kfir says
 otherwise.
 
-28. **The gate specs run as dc-web wrote them**: `--workers=1`, on a stack whose engine has no `ANTHROPIC_API_KEY`
-    (with a key the suggestions spec is one paid `/suggest` call per project, up to 25 s each, and that is said
-    first). The specs act only on controls they create, each named with a tag (`e2e-` and six characters) and
+28. **The gate specs run as dc-web wrote them**: `--workers=1`. The specs act only on controls they create, each named with a tag (`e2e-` and six characters) and
     found by its id; they never touch the six loaded examples, and they leave about eighteen archived, tagged
     controls per run. Those stay where they are: a gate stack is thrown away, and a grader's database starts
     without them.
-29. **On Windows the engine gets its connection by parts and the api gets one string.** Engine (dc-engine decision
-    20): `ENGINE_DB_HOST` is the instance; `ENGINE_DB_PORT` is absent, which means no port; `ENGINE_DB_DRIVER` is
-    absent, and the engine takes Driver 18, else 17, whichever is installed. The script writes `.env` without the
-    port lines instead of passing an empty value, because cmd and Windows PowerShell delete a variable that is set
-    to nothing. Api (dc-api Design B and I): `ConnectionStrings__Dq` alone, composed in memory. The server name
-    lives in `.env` as `DB_HOST`, a name the database block already has. (Replaces the `DB_SERVER` variable of the
-    first version of this plan: no new name is invented.)
-30. **The offline install uses the committed `engine/requirements.txt`**, dc-engine's export of the lock with
-    hashes and markers, against the wheelhouse: `pip install --no-index --find-links`. pip evaluates the markers
-    on the grader's machine, so the bundle carries no requirement list of its own. Pins per Python version exist
-    only inside `make-bundle.sh`, to know which wheels to download. (Replaces the three per-version lists of the
-    first version.)
+29. **Against a local named instance the engine gets its connection by parts and the api gets one string.** Engine
+    (dc-engine decision 20): `ENGINE_DB_HOST` is the instance; `ENGINE_DB_PORT` is absent, which means no port;
+    `ENGINE_DB_DRIVER` is absent, and the engine takes Driver 18, else 17, whichever is installed. Api (dc-api
+    Design B): `ConnectionStrings__Dq` alone. The from-source instructions give both forms, for a default
+    instance on a port and for a named one.
+30. **The from-source install uses the committed `engine/requirements.txt`**, dc-engine's export of the lock with
+    hashes and markers: `pip install -r engine/requirements.txt` in a virtual environment, for a reader without
+    uv. B2 compares the file with a fresh export.
 31. **The README shows the gate's five shots as they are.** Two of them, the editor and the results, carry the
     test's tag in the control's name; the caption says that the images come from the automated end-to-end run.
     (The other way costs five minutes in B4: those two screens shot by hand on the loaded example.)
-32. **The suggestions repeat four loaded controls, and the README says so.** With no key the engine proposes the
+32. **The suggestions repeat four loaded controls, and the README says so.** The engine proposes the
     rules of examples 2 to 5, which decision 5 has already loaded; creating one adds a second control with the
     same rule. The walkthrough presents that as what it is: the engine derived the same rules from the glossary
     and the data. "Mark a suggestion that already exists" goes to the extensions, because it needs the api to
@@ -148,10 +138,46 @@ otherwise.
     word stands in for the findings, and no line says what Kfir read or approved unless he said so.
 34. **Document edits the three tasks no longer make are made here.** None of them edits a §17 document now: each
     keeps a list "Docs for dc-delivery" in its notes and in its PR body. B0 collects the three lists and B4
-    applies them; the first known items are the suggestion lines of architecture §6 and §19 (dc-engine decision 1:
-    with no key the engine yields examples 2 to 5, not "the four assignment controls"). The row for
+    applies them; the first known item is the result column of architecture §19 (the suggestion lines of §6 and
+    §19 already say that the engine yields examples 2 to 5 from heuristics alone). The row for
     `docs/design.md` in CLAUDE.md is written here too (dc-web decision 26). `docs/design.md` itself stays
     dc-web's: this task links it and checks that it is tracked.
+
+## Scope decision (Kfir, 2026-11-10; written in by the dc-contracts session, which carried it through all five plans)
+
+Four cuts, each already applied to the text of this plan. Where a line above or below still disagrees with this
+section, this section holds.
+
+1. **Hebrew only.** The language mechanism stays as designed (texts keyed by language, `languages` and
+   `defaultLanguage` in the glossary, `Accept-Language`, the run's language); only the English values went. The
+   loader has no `--lang`, `examples.py docs` writes Hebrew alone, the walkthrough has no language switch, and no
+   screenshot or check is in English. The documents of this task stay in English, with the Hebrew cover.
+2. **Suggestions are heuristics only.** There is no LLM lane in the engine: no SDK, no key, no model setting. No
+   stack carries `ANTHROPIC_API_KEY`, the security audit has no LLM boundary to read, and the documents describe
+   the LLM step as a design that is not built (architecture §6).
+3. **Two paths: Docker, and short from-source instructions.** The offline Windows bundle is gone: no wheelhouse,
+   no self-contained publish, no `make-bundle.sh`, no `run-all.ps1`, no `run-all.sh`, no rehearsal on the Windows
+   host, and no second run of the engine suite under 3.13 and 3.14 here. Kept: `scripts/start.sh`, and `start.ps1`
+   behind `start.cmd`, because they are the Docker path; `engine/requirements.txt`, for a reader without uv; the
+   engine's driver and port settings (decision 29), because a grader's local SQL Server is often a named
+   instance; and, in the engine's own gate, the Windows wheel check and the suite under 3.13 and 3.14, because a
+   grader installs with pip on the Python they have.
+4. **Screenshots at 390 and 1440 only**, as decision 27 already has them.
+
+## Lines from dc-contracts as it merges (2026-11-10)
+
+- **`README.md` was left as it is** by the scope decision, on Kfir's word, so two of its lines are stale until B4
+  rewrites it: the comment beside `--render` says "he and en", and nothing in it says that the texts are Hebrew
+  alone.
+- **`.env.example` holds no password** since the dc-contracts review, and `db-init.sh` and `db-check.sh` refuse a
+  password with spaces, quotes, `$`, `;` or a backslash. The generator of Design D draws from letters and digits,
+  which passes. The two login passwords reach sqlcmd through the environment, never on a command line.
+- **`scripts/db-check.sh` needs `jq`** on the host for three of its five sections; the from-source prerequisites
+  name it where the reader runs that script.
+- **`sql/` was not changed by the scope decision**: `dq.Run.language` still accepts `he` and `en`.
+- **For the limitations document**: the LLM step of the suggestions is a design that is not built (architecture
+  §6); every predicate of the Hebrew templates outside the colon style is masculine singular, which holds while
+  every field label is masculine; the from-source path was run on Linux only.
 
 ## Asks to the other tasks, and their answers
 
@@ -160,14 +186,14 @@ folders was edited from here.
 
 | To | Ask | Answer (their plan as amended) | Used in |
 |---|---|---|---|
-| dc-engine | Reach a named instance over shared memory with ODBC Driver 17 or 18 | Decision 20: `ENGINE_DB_DRIVER` (unset: the first of Driver 18 and 17 that is installed) and `ENGINE_DB_PORT` (unset or empty: no port in `Server=`). No variable holds a whole connection string: the login stays `dq_engine_ro`. The process environment wins over `.env` | Decision 29, Design F |
-| dc-engine | `requires-python >=3.12`; Windows wheels for 3.12 to 3.14 | Decision 21: yes; a wheels-only resolve was run at planning with `anthropic` included, and runs again whenever the lock changes and at its gate. `anthropic>=1,<2` joins the lock only in its phase 6, the first item on its cut list | Decision 30, Design E |
-| dc-engine | Every file read names UTF-8 | Decision 22, enforced by Ruff's `PLW1514` | Design F keeps `PYTHONUTF8=1` as a second guard |
-| dc-engine | A start command that needs no uv | Decision 23: from `engine/`, `python -m uvicorn app.main:create_app --factory --host 127.0.0.1 --port <port>`; `engine/requirements.txt` belongs to its phase 1 | Decision 14, Design F and G |
+| dc-engine | Reach a named instance over shared memory with ODBC Driver 17 or 18 | Decision 20: `ENGINE_DB_DRIVER` (unset: the first of Driver 18 and 17 that is installed) and `ENGINE_DB_PORT` (unset or empty: no port in `Server=`). No variable holds a whole connection string: the login stays `dq_engine_ro`. The process environment wins over `.env` | Decision 29, Design G |
+| dc-engine | `requires-python >=3.12`; Windows wheels for 3.12 to 3.14 | Decision 21: yes; a wheels-only resolve runs whenever the lock changes and at its gate, and its suite runs once under 3.13 and once under 3.14 | Design G: the from-source install with pip, on the grader's Python |
+| dc-engine | Every file read names UTF-8 | Decision 22, enforced by Ruff's `PLW1514` | Design G: a from-source run on Windows needs no `PYTHONUTF8` |
+| dc-engine | A start command that needs no uv | Decision 23: from `engine/`, `python -m uvicorn app.main:create_app --factory --host 127.0.0.1 --port <port>`; `engine/requirements.txt` belongs to its phase 1 | Decision 14, Design G |
 | dc-engine | Cuts and the image are in its notes | Its gate: the State of its `notes.md` holds what B0 reads first | Phase B0 |
-| dc-api | The win-x64 self-contained publish stands alone | Decision 25, Design I: the content root is the app's own folder, so the executable starts from any directory; `wwwroot` must be inside the publish folder before the start; `ConnectionStrings__Dq` alone is enough, with no `DQ_APP_PASSWORD`; no `.env` is read outside Development. Tried once in its Phase 5: its notes say "ran" or "published, not started" | Design E and F |
+| dc-api | The published api stands alone, outside the tree | Decision 25, Design I: the content root is the app's own folder; `wwwroot` must be inside the publish folder before the start; `ConnectionStrings__Dq` alone is enough, with no `DQ_APP_PASSWORD`; no `.env` is read outside Development | Design G |
 | dc-api | The hand-off of the live tests | Its Gate and Risks, as before | Phase B2 |
-| dc-web | The gate passes on a list that holds the six examples | Decisions 22 and 25, Design O: own tagged controls only, found by id; one worker; no key | Decision 28, B1, G1 |
+| dc-web | The gate passes on a list that holds the six examples | Decisions 22 and 25, Design O: own tagged controls only, found by id; one worker | Decision 28, B1, G1 |
 | dc-web | Base URL, screenshot folder | Design O; decision 27 adds a suggestions spec so that the fourth shot exists | Decisions 27 and 31 |
 | dc-web | (its own decision 26) | `docs/design.md` stays with dc-web; its CLAUDE.md row is left to this task | Decision 34, B4 |
 | all three | One owner per document; factual Logs | dc-engine 24 and 25, dc-api 26 and 27, dc-web 23 and 24 | Decisions 33 and 34, B0, Design K |
@@ -179,8 +205,7 @@ An answer that was planned and not built is fixed in Phase B0 per decision 23.
 Every phase ends the same way: tick the steps as they finish, run the Verify block and save its output under
 `gates/<phase>.txt`, `/phase-review` for the areas named with its report saved under `reviews/`, one
 `fix(<scope>): review fixes` commit, and a Log line in `notes.md` in the form of decision 33. State the spend
-before every image pull or build, every Playwright run, every review fan-out, the bundle build and the interpreter
-downloads, then wait for the word. Recreating or removing containers goes through the git guard's question. The
+before every image pull or build, every Playwright run and every review fan-out, then wait for the word. Recreating or removing containers goes through the git guard's question. The
 Design section below is the specification each step builds from.
 
 ### Lane A: documents that need nothing built (starts when dc-contracts has merged; main tree; the three worktrees are running)
@@ -218,10 +243,8 @@ contract documents are corrected in the same sitting.
 - [ ] Kfir's `.env` holds `DB_PORT=1433` and `ENGINE_DB_PORT=1433` explicitly, before the defaults move in B1.
 - [ ] Read what the three tasks left for this one. Their folders moved into the worktrees
       (`../cbs-engine/dev/active/dc-engine/`, or `dev/completed/` there after `/ship`; the same for api and web):
-      - dc-engine, `notes.md` State: the variables as built, the start command, the Python versions its suite ran
-        under, which phases were cut (phase 6: no `anthropic`, no key; phase 7: no image);
-      - dc-api, `notes.md`: the Log line of the publish trial ("ran" or "published, not started"), and whether the
-        live tests ran or are handed over;
+      - dc-engine, `notes.md` State: the variables as built, the start command, which phases were cut (the image);
+      - dc-api, `notes.md`: whether the live tests ran or are handed over;
       - dc-web, `notes.md` "Hand-over to dc-delivery" and `web/README.md`: the cuts taken with the sentence to
         write about each, whether the gate ran on a pre-loaded list and on the build the api hosts, and what it
         left in the dev `dq` (the six examples of its phase 7);
@@ -229,7 +252,7 @@ contract documents are corrected in the same sitting.
 - [ ] Record "As built" in `notes.md`, ten lines at most. Design A to G use the names the plans gave on
       2026-11-10; what was built wins.
 - [ ] Each answer in the asks table holds in the code: the driver choice and the port-less URL (the engine's own
-      tests), the published api's content root (its trial line). One that does not is fixed here per decision 23.
+      tests), the published api's content root. One that does not is fixed here per decision 23.
 - [ ] `git diff <A1 sha>..main -- contracts/ docs/` and the three "Docs for dc-delivery" lists: correct the lane-A
       documents. The corrections ride in the B4 commit.
 - [ ] No session is serving from a worktree and no suite is running: `ss -ltn`, and
@@ -245,17 +268,20 @@ contract documents are corrected in the same sitting.
 - [ ] `.env.example` per Design B.
 - [ ] `scripts/examples.py` per Design C.
 - [ ] `scripts/lib/env.sh` and `scripts/start.sh` per Design D (executable).
+- [ ] `scripts/lib/env.ps1`, `scripts/start.ps1` and `start.cmd` per Design D, for the Docker path from a Windows
+      folder. `.gitattributes`: `*.ps1` and `*.cmd` with `eol=crlf`.
 - [ ] `.claude/skills/dc-sql/SKILL.md`: the facts this phase changed (services, ports, who reaches whom).
 
-Verify (the stack's `.env` holds no `ANTHROPIC_API_KEY` for this run; if Kfir's does, say the paid calls first or
-blank the line on his word):
+Verify:
 ```
 bash -n scripts/start.sh scripts/lib/env.sh
+LC_ALL=C grep -nP '[^\x00-\x7F]' scripts/*.ps1 scripts/lib/*.ps1 *.cmd      # prints nothing
+powershell.exe -NoProfile -Command "<parse each .ps1 with [Parser]::ParseFile; print the errors>"   # none
 docker compose config -q
 docker compose build                 # base images and packages, several minutes: say so and wait
 scripts/start.sh                     # recreates containers: the guard asks
 docker compose ps -a                 # db-init and examples exited 0; db, engine and api healthy
-docker compose exec engine env       # no dq_app and no sa password; ANTHROPIC_API_KEY empty or absent
+docker compose exec engine env       # no dq_app and no sa password
 docker compose exec api env          # no dq_engine_ro and no sa password
 python3 scripts/examples.py verify --base-url http://localhost:5000        # six PASS lines
 scripts/db-check.sh
@@ -271,51 +297,26 @@ cd web && E2E_BASE_URL=http://localhost:5000 npx playwright test e2e/gate --proj
 Review: `/phase-review sql engine api infra` (the Dockerfiles sit in `engine/` and `api/`)
 Commit: `feat(compose): full stack with engine, api and example loader`
 
-#### Phase B2: run-all from source (Linux, macOS)
+#### Phase B2: the manual path, from source
 - [ ] `engine/requirements.txt` is dc-engine's: `cd engine && uv export --no-dev --format requirements-txt | diff -
       requirements.txt` prints nothing.
-- [ ] `scripts/run-all.sh` per Design G (executable).
+- [ ] The from-source steps of Design G written out as the commands the README will carry, in
+      `gates/B2-manual.md`, and carried out once exactly as written.
 
 Verify (on WSL, the database in its container, the `engine` and `api` containers stopped through the guard; the
 host needs `msodbcsql18`, which the engine task had Kfir install; port 8000 belongs to another project here, so
-`ENGINE_PORT` and `Engine__BaseUrl` point elsewhere):
+the engine's port and `Engine__BaseUrl` point elsewhere):
 ```
-bash -n scripts/run-all.sh
-scripts/run-all.sh                   # engine and api as host processes against localhost:1433
+# the commands of gates/B2-manual.md, one by one: engine and api as host processes against localhost:1433
 python3 scripts/examples.py verify --base-url http://localhost:5000
 cd api && DC_LIVE=1 dotnet test --filter Category=Live     # only if the api's notes hand the live tests over
-# Ctrl+C, then: ss -ltn shows no listener on 5000 or on the engine's port
+# stop both, then: ss -ltn shows no listener on 5000 or on the engine's port
 ```
-Commit: `feat(scripts): run-all from source for the manual path` (reviewed together with B3)
-
-#### Phase B3: the Windows bundle
-- [ ] `.gitattributes`: `*.ps1` and `*.cmd` with `eol=crlf`. `.gitignore`: `/out/`.
-- [ ] `scripts/make-bundle.sh` per Design E (executable).
-- [ ] `scripts/lib/env.ps1`, `scripts/run-all.ps1` and `run-all.cmd` per Design F.
-- [ ] `scripts/start.ps1` and `start.cmd` per Design D.
-- [ ] The engine suite on the merged tree under 3.13 and then under 3.14, as dc-engine's gate ran it:
-      `cd engine && uv run --isolated --locked --python 3.13 python -m pytest` (uv downloads the interpreters and
-      the wheels of each version: say so). What breaks is fixed per decision 23.
-- [ ] Rehearsal on the Windows host, network on. Kfir installs SQL Server 2022 Express (the Basic install) and one
-      Python from python.org; the session drives the rest from WSL through `powershell.exe`. Record in `notes.md`
-      what the machine holds after the SQL Server install: the ODBC drivers, the `sqlcmd` path, the authentication
-      mode, the enabled protocols, the instance name. These facts become the README's prerequisites. If the api's
-      trial line says "published, not started", this is the first start of the published api anywhere.
-- [ ] The Docker path from a Windows folder: `start.cmd` with Docker Desktop, then `examples.py verify`.
-
-Verify:
-```
-bash -n scripts/make-bundle.sh
-LC_ALL=C grep -nP '[^\x00-\x7F]' scripts/*.ps1 scripts/lib/*.ps1 *.cmd      # prints nothing
-powershell.exe -NoProfile -Command "<parse each .ps1 with [Parser]::ParseFile; print the errors>"   # none
-scripts/make-bundle.sh               # web build, win-x64 publish, wheel downloads: say so and wait
-# on Windows, from the extracted bundle: run-all.cmd → examples.py verify → Ctrl+C → a second run-all.cmd
-```
-Review: `/phase-review infra --since <B1 sha>` (B2 and B3 together)
-Commit: `feat(scripts): offline windows bundle, run-all.ps1 and start scripts for windows`
+Review: `/phase-review infra --since <B1 sha>`
+No commit of its own: the commands ride into the README in B4.
 
 #### Phase B4: README, architecture as built, cover page, checklist
-- [ ] `README.md` per Design I, every command in it copied from a run of B1 to B3 (tick them in
+- [ ] `README.md` per Design I, every command in it copied from a run of B1 and B2 (tick them in
       `gates/readme-commands.md`).
 - [ ] `docs/screenshots/`: the five files of decision 27, copied from the B1 run, with the caption of decision 31.
 - [ ] `docs/examples.md`: the frame, then `python3 scripts/examples.py docs` for the generated region.
@@ -327,9 +328,9 @@ Commit: `feat(scripts): offline windows bundle, run-all.ps1 and start scripts fo
       `git log`.
 - [ ] `docs/submission.he.md` per Design L.
 - [ ] `docs/assumptions-limitations-extensions.md`, `docs/control-definition.md`, `docs/glossary.md`: the as-built
-      corrections of B0 and the limits learned in B1 to B3 (tested versions, the Python range, the row cap value,
-      the cuts the three tasks recorded, the extension of decision 32).
-- [ ] `sql/README.md`: the Windows init as `run-all.ps1` does it, and the host port.
+      corrections of B0 and the limits learned in B1 and B2 (tested versions, the row cap value, the cuts the
+      three tasks recorded, the extension of decision 32, the LLM step as a design that is not built).
+- [ ] `sql/README.md`: the host port.
 - [ ] `docs/design.md` is tracked (`git ls-files docs/design.md`) and is not edited: it is dc-web's. If it is not
       tracked, ask Kfir.
 - [ ] `.claude/CLAUDE.md`: rows for the §17 documents, `docs/design.md` among them (dc-web left its row to this
@@ -352,35 +353,28 @@ Commit: `docs: readme, examples, architecture as built, hebrew cover and ai usag
       `git clone --branch feat/delivery <main tree> <scratch>/dc-clean` and the README followed to the letter:
       `scripts/start.sh`; the app in a browser, where the first screen shows six controls and no run on any
       (decision 6); `examples.py verify`; the gate specs with the command of B1, one worker, on the generated
-      `.env`, which has no key; the untagged listing equal before and after. Output in `gates/G1-docker-wsl.txt`.
+      `.env`; the untagged listing equal before and after. Output in `gates/G1-docker-wsl.txt`.
 - [ ] **G2 Docker path, Windows host.** The same from a Windows folder with `start.cmd`, without the gate specs.
-- [ ] **G3 Manual path, Windows host, offline.** The bundle built from the committed HEAD; copied to Windows and
-      given the Mark of the Web; extracted with Explorer to a short path; the network off. Kfir follows the README
-      alone (Claude Code does not run offline): `run-all.cmd`, then by hand in the browser the six examples
-      (3, 3, 6, 10, 3, 3), a reason on every record, search and filter, one new control created and run, the
-      suggestions dialog with one suggested control created, the language switch. He fills
-      `gates/G3-manual-windows.md`, a ten-line checklist the session prepares. Network back on:
-      `examples.py verify` on the same installation.
-- [ ] **G4 run-all.sh** from the fresh clone of G1, as in B2.
+- [ ] **G3 Manual path, from source.** On the fresh clone of G1, with the `engine` and `api` containers stopped:
+      the README's from-source section followed to the letter, then `examples.py verify`, and by hand in the
+      browser one example run with a reason on every record. Output in `gates/G3-manual.txt`.
 - [ ] **G5 Security audit.** One `security-auditor` on opus over the merged repository (say it first): logins and
-      grants, the compose network and ports, the per-service environment, error bodies, CORS, secrets, the LLM
-      boundary. The report is saved as `reviews/security.md`. Critical findings are fixed (decision 23); the rest
+      grants, the compose network and ports, the per-service environment, error bodies, CORS, secrets. The report is saved as `reviews/security.md`. Critical findings are fixed (decision 23); the rest
       are added to the limitations document; the Log line lists both.
 - [ ] **G6 Checklist.** Every item of §18 is ticked and its evidence exists. An item that cannot be ticked
       honestly is a blocker for Kfir, not a tick.
 - [ ] **G7 Kfir reads** `docs/ai-usage.md` and `docs/submission.he.md` (both speak in his name) and the first
       screen of the README. The Log says what he changed or rejected, in his words where he gave them.
 - [ ] **G8** `/check all --tests`, then `/ship dc-delivery`; the PR and the merge on Kfir's word.
-- [ ] **G9 After the merge**, each on Kfir's word: tag `v1.0.0`; `scripts/make-bundle.sh` at the tag; a fresh
-      `git clone` from GitHub with `scripts/start.sh` as the last sanity check; the release asset or the zip
-      hand-over; the graders as collaborators.
+- [ ] **G9 After the merge**, each on Kfir's word: tag `v1.0.0`; a fresh `git clone` from GitHub with
+      `scripts/start.sh` as the last sanity check; the graders as collaborators.
 
 ## Design
 
 ### A. Images and compose
 
 **`.dockerignore`** (repository root, the build context of both images): `.git`, `.env*` except `.env.example`,
-`dev/`, `out/`, `prebuilt/`, `**/node_modules`, `**/.venv`, `**/bin`, `**/obj`, `**/dist`, `**/.angular`,
+`dev/`, `**/node_modules`, `**/.venv`, `**/bin`, `**/obj`, `**/dist`, `**/.angular`,
 `docs/screenshots`. Both images build from the root because both read `contracts/`.
 
 **`engine/Dockerfile`** is dc-engine's (its Phase 7: `python:3.12-slim`, `msodbcsql18` and `unixodbc`,
@@ -405,7 +399,7 @@ The api checks at start that `Asia/Jerusalem` resolves: if the image lacks tzdat
 |---|---|---|---|
 | `db` | | `127.0.0.1:${DB_PORT:-14330}:1433` | the sa password |
 | `db-init` (one-shot) | `db` healthy | | sa and the two login passwords |
-| `engine` | `db-init` completed successfully | none | `ENGINE_DB_HOST=db`, `ENGINE_DB_PORT=1433`, `DQ_ENGINE_RO_PASSWORD`, the other `ENGINE_*` settings that `.env` sets, and `ANTHROPIC_API_KEY` when the engine's phase 6 was built and `.env` sets it |
+| `engine` | `db-init` completed successfully | none | `ENGINE_DB_HOST=db`, `ENGINE_DB_PORT=1433`, `DQ_ENGINE_RO_PASSWORD` and the other `ENGINE_*` settings that `.env` sets |
 | `api` | `engine` healthy | `${APP_BIND:-127.0.0.1}:${APP_PORT:-5000}:8080` | `DB_HOST=db`, `DB_PORT=1433` (the container's port, never the host's `DB_PORT`), `DQ_APP_PASSWORD`, `Engine__BaseUrl=http://engine:8000` |
 | `examples` (one-shot) | `api` healthy | | `LOAD_EXAMPLES`, the api URL |
 
@@ -416,22 +410,22 @@ Silicon (§14).
 
 ### B. Environment file
 
-`.env.example` keeps the three blocks of dc-contracts and gains a fourth. All password values are empty, and so is
-`ANTHROPIC_API_KEY`; the header says the start scripts fill the passwords, and gives the by-hand rule (8 or more
+`.env.example` keeps the three blocks of dc-contracts and gains a fourth. All password values are empty; the
+header says the start scripts fill the passwords, and gives the by-hand rule (8 or more
 characters with upper case, lower case and a digit; no quotes, `$`, `;` or spaces). Two lines that other tasks
 wrote change here: `DB_PORT` in the database block and `ENGINE_DB_PORT` in the engine block both become `14330`,
 because three readers must agree on the host port (compose publishes on the first, the api's Development source
 reads the first, an engine run by hand reads the second). A comment says that this repository's own developers
 keep 1433 in both; Kfir's `.env` already does. The new block: `APP_PORT=5000`, `APP_BIND=127.0.0.1`,
-`LOAD_EXAMPLES=true`. Compose and the run-all scripts map the names the two tasks chose and invent none: on the
-Windows path the server name is the database block's `DB_HOST` (decision 29).
+`LOAD_EXAMPLES=true`. Compose maps the names the two tasks chose and invents none; on the manual path the server
+name is the database block's `DB_HOST` (decision 29).
 
 ### C. `scripts/examples.py`
 
 Standard library only, Python 3.12 or later, every file opened as UTF-8, ASCII on stdout (ids and counts, never
 Hebrew names: a Windows console may not encode them). It speaks only to the application API of `contracts/api.md`.
 
-- `load [--base-url URL] [--dir contracts/examples] [--lang he|en]`: waits for `/api/v1/health` (two minutes at
+- `load [--base-url URL] [--dir contracts/examples]`: waits for `/api/v1/health` (two minutes at
   most); exits 0 at once when `LOAD_EXAMPLES` is `false`; for each example file in the folder (not `invalid/`)
   looks for a control with exactly that name (`GET /controls?search=…&active=all`, then an exact comparison) and
   posts it when there is none. It never starts a run. Any other answer than 2xx prints the code and the
@@ -443,11 +437,11 @@ Hebrew names: a Windows console may not encode them). It speaks only to the appl
   per record. `alternateRuns` the same way. It also fails when a display value consists of question marks (the
   Hebrew did not survive). One `PASS` or `FAIL` line per example, exit 1 on any failure. It leaves runs behind: it
   is a test tool, and the README says so.
-- `docs [--out docs/examples.md] [--check]`: runs each example as `verify` does, once per language, and writes the
-  region between the two generated-region markers: names, the Hebrew description (for examples 1 to 4 the
-  assignment's own sentence), the rule sentence in both languages, the definition JSON, the expected count, and
-  the table of flagged records with their display fields, matched ids and the Hebrew reason text, plus one English
-  reason as a sample. `--check` writes nothing and exits 1 when the file differs.
+- `docs [--out docs/examples.md] [--check]`: runs each example as `verify` does and writes the region between
+  the two generated-region markers: the name, the Hebrew description (for examples 1 to 4 the assignment's own
+  sentence), the rule sentence, the definition JSON, the expected count, and the table of flagged records with
+  their display fields, matched ids and the reason text, all as the engine rendered them in Hebrew. `--check`
+  writes nothing and exits 1 when the file differs.
 
 ### D. Start scripts (the Docker path)
 
@@ -455,103 +449,45 @@ Hebrew names: a Windows console may not encode them). It speaks only to the appl
 1. Docker answers (`docker info`); otherwise one line that says to start Docker Desktop.
 2. `.env`: when it is missing, copy `.env.example` and fill each empty password with 24 random characters from
    letters and digits without look-alikes, re-drawn until upper case, lower case and a digit are all present.
-   Nothing else is filled: `ANTHROPIC_API_KEY` stays empty. An existing `.env` is never changed. The passwords are
-   not printed; the script says where they are.
+   Nothing else is filled. An existing `.env` is never changed. The passwords are not printed; the script says
+   where they are.
 3. `docker compose up -d --build`.
 4. Poll `http://localhost:<APP_PORT>/api/v1/health` for up to five minutes. On a timeout print
    `docker compose ps -a` and the last lines of the service that is not healthy, and exit 1.
 5. Print the address, the database address for SSMS, and the commands that stop (`docker compose down`) and wipe
    (`docker compose down -v`).
 
-`scripts/lib/env.sh` and `scripts/lib/env.ps1` hold the `.env` creation and a loader that returns the variables as
-a map; start and run-all share them.
+`scripts/lib/env.sh` and `scripts/lib/env.ps1` hold the `.env` creation for the two start scripts. The PowerShell
+side follows decision 20.
 
-### E. The bundle (`scripts/make-bundle.sh`, run on WSL)
+### E and F. (removed with the Windows bundle)
 
-```
-data-controls-<version>/
-  …                    the tracked source, as `git archive HEAD` gives it (no .env, no dev/active);
-                       engine/requirements.txt, run-all.cmd and start.cmd are part of it
-  prebuilt/
-    wwwroot/           the Angular production build (for run-all.sh without Node)
-    api-win-x64/       the self-contained publish, with the same build as the wwwroot inside it
-    wheels/            win_amd64 wheels for CPython 3.12, 3.13 and 3.14, and the pure ones
-    VERSION            commit, build date, tool versions
-```
+The bundle layout, `scripts/make-bundle.sh` and `run-all.ps1` were Designs E and F. The scope decision removed
+them; the letters stay unused so that the references to Designs G to L keep their meaning.
 
-Steps: refuse a dirty tree (the bundle must equal a commit); version from `git describe --tags --always`; extract
-`git archive` into `out/stage/`; `npm ci && npx ng build`; `dotnet publish api/src/DataControls.Api -c Release
--r win-x64 --self-contained true` and the Angular build copied into the `wwwroot` of that folder. Wheels, per
-Python version: resolve `engine/requirements.txt` for Windows and that version with the engine's own check
-(`uv pip compile requirements.txt --python-version <v> --python-platform x86_64-pc-windows-msvc --only-binary :all:`,
-kept as a pin list under `out/`), then `pip download --no-deps --only-binary=:all: --platform win_amd64
---python-version <v>` of that list into the one `wheels/` folder. The pins are resolved per platform because pip
-evaluates environment markers for the machine it runs on and would leave out the Windows-only packages.
+### G. The manual path: from-source instructions
 
-Checks before zipping: `engine/requirements.txt` equals a fresh export of the lock; for each of the three versions
-the same resolve passes again with `--no-index --find-links prebuilt/wheels`, so the folder alone satisfies the
-file; `prebuilt/api-win-x64/` holds `DataControls.Api.exe`, `appsettings.json`, `Microsoft.Data.SqlClient.SNI.dll`
-and `wwwroot/index.html`; no `.env` and no secret pattern of `/ship` §2 in the stage; the size is printed. The
-archive is written with `python3 -m zipfile` (this machine has no `zip`) to
-`out/data-controls-<version>-win-x64.zip`, and its SHA-256 is printed.
+A README section of about a screen, for a reader with a local SQL Server and no Docker. Prerequisites: SQL Server
+2019 or 2022 with SQL Server authentication allowed, ODBC Driver 18 or 17, Python 3.12 or later (the engine's
+gate ran its suite under 3.12, 3.13 and 3.14), the .NET 10 SDK, Node 22.
+The steps, each a command the reader pastes:
 
-### F. `run-all.ps1` (Windows, the bundle)
+1. `.env`: copy `.env.example`, set the three passwords, set `DB_HOST` (and `DB_PORT`, or neither port line for a
+   named instance: decision 29).
+2. Database: `DB_HOST=… scripts/db-init.sh` where `sqlcmd` and bash exist, else the scripts by hand in SSMS as
+   `sql/README.md` describes.
+3. Engine: a virtual environment in `engine/`, `pip install -r requirements.txt` (or `uv sync --frozen --no-dev`),
+   then from `engine/` `python -m uvicorn app.main:create_app --factory --host 127.0.0.1 --port 8000`, with
+   `ENGINE_DB_HOST` and `DQ_ENGINE_RO_PASSWORD`.
+4. Client and api: `npm ci && npx ng build` in `web/`; `dotnet publish api/src/DataControls.Api -c Release`; the
+   Angular build copied into the `wwwroot` of the publish folder; the published api started with
+   `ConnectionStrings__Dq`, `Engine__BaseUrl` and `ASPNETCORE_URLS`.
+5. `python scripts/examples.py load`, then the address in a browser.
 
-`run-all.cmd` is one line: `powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\run-all.ps1" %*`.
-Parameters: `-Server`, `-SqlAdminUser` and `-SqlAdminPassword` (default: the Windows login), `-SkipDbInit`,
-`-ResetDb`, `-EnableMixedMode`, `-NoExamples`, `-NoBrowser`, `-AppPort`, `-EnginePort`.
-
-1. `Unblock-File` over the bundle folder (a downloaded zip marks every file). Without `prebuilt\` the script says
-   that it runs the offline bundle and where the from-source steps are.
-2. Preflight, every failure collected and printed together with its fix, exit 1 on any:
-   a 64-bit Windows; a real CPython 3.12, 3.13 or 3.14 (`py -3.x` first, then `python`; the Microsoft Store stub
-   does not count); "ODBC Driver 18 for SQL Server" or 17 installed (the engine chooses between them itself; the
-   script only says early when neither is there); `sqlcmd` on PATH or under the SQL Server folders, needed only
-   for the database step; one local instance found in the registry, or `-Server` when there are none or several;
-   the two ports free, naming the process that holds one; the bundle path short enough for pip.
-3. `.env` created as in Design D when missing: the two login passwords filled, `DB_HOST` set to the instance
-   (`.\SQLEXPRESS`, without quotes), and the `DB_PORT` and `ENGINE_DB_PORT` lines removed: a local instance over
-   shared memory has no port, and to the engine a missing port means none. An existing `.env` that still carries
-   `ENGINE_DB_PORT` while `DB_HOST` names an instance stops the preflight with that one-line fix; the script does
-   not try to pass an empty variable to a child (decision 29).
-4. Database: `SERVERPROPERTY('IsIntegratedSecurityOnly')` = 1 stops with the fix, or applies it under
-   `-EnableMixedMode` (elevation and a service restart). When `DataControls` is missing, run `sql\NN_*.sql` in
-   order with `sqlcmd -b -f 65001 -v …`. Then each login connects and reads one row of its own schema.
-5. Engine: a venv in `engine\.venv`; `pip install --no-index --find-links prebuilt\wheels -r
-   engine\requirements.txt`; then, with `engine\` as the working directory,
-   `python -m uvicorn app.main:create_app --factory --host 127.0.0.1 --port <EnginePort>`. Its environment adds
-   `ENGINE_DB_HOST` (the value of `DB_HOST`), `DQ_ENGINE_RO_PASSWORD` and `PYTHONUTF8=1`, and holds neither a port
-   nor a driver variable. The engine also reads the bundle's `.env` itself, which it finds from its own location;
-   the process environment wins. Log to `logs\engine.log`; wait for `/health`.
-6. Api: start `prebuilt\api-win-x64\DataControls.Api.exe`, from any directory (its content root is its own
-   folder), with `ConnectionStrings__Dq` composed in memory from `DB_HOST` and the `dq_app` password
-   (`Server=<DB_HOST>;Database=DataControls;User ID=dq_app;Password=…;Encrypt=True;TrustServerCertificate=True`),
-   `Engine__BaseUrl=http://127.0.0.1:<EnginePort>`, `ASPNETCORE_ENVIRONMENT=Production` and
-   `ASPNETCORE_URLS=http://127.0.0.1:<AppPort>`. It gets no `DQ_APP_PASSWORD` and reads no `.env`. Log to
-   `logs\api.log`; wait for `/api/v1/health`.
-7. `examples.py load` with the venv's Python, unless `-NoExamples` or `LOAD_EXAMPLES=false`.
-8. Print the address and open the browser. Ctrl+C or closing the window stops both children; a second run finds a
-   leftover listener in the preflight and names it.
-
-A second run reuses `.env`, the database and the venv. Children are started with their own environment block, not
-with the script's. Everything Windows-side is run from WSL during development (`powershell.exe -NoProfile
--ExecutionPolicy Bypass -File <C:\ path>`, from a `/mnt/c` working directory); installs and anything behind a UAC
-prompt are Kfir's.
-
-### G. `run-all.sh` (Linux and macOS, from source)
-
-Needs Python 3.12 or later, the .NET 10 SDK, ODBC Driver 18 or 17 (`odbcinst -q -d`), and Node 22 unless
-`prebuilt/wwwroot` exists. Steps: preflight as in F; `.env`; `--init-db` runs `scripts/db-init.sh` in its host
-mode when `sqlcmd` is on PATH, and otherwise says how to initialise (compose's `db-init`, or SSMS per
-`sql/README.md`). Engine: a venv from `uv sync --frozen --no-dev` when uv is there and from
-`pip install -r engine/requirements.txt` when it is not, then from `engine/`
-`python -m uvicorn app.main:create_app --factory --host 127.0.0.1 --port ${ENGINE_PORT:-8000}`, with
-`ENGINE_DB_HOST=localhost` and `ENGINE_DB_PORT` equal to the host's `DB_PORT`. Api: `dotnet publish
-api/src/DataControls.Api -c Release` without a runtime identifier, the Angular build copied into the `wwwroot` of
-the publish folder before the start, then the published api with the three database variables and
-`Engine__BaseUrl`. Each child gets only its own variables. Then `examples.py load`, the address printed, and a trap
-that stops both children on exit. `engine/requirements.txt` is dc-engine's export of the lock, committed for people
-without uv; `make-bundle.sh` and B2 compare it with a fresh export.
+Each service is started with only its own variables. The section says what the path does not do: it creates no
+database user beyond the two logins, changes no server setting, and installs nothing outside the repository
+folder. B2 carries the commands out once on WSL; a Windows shell differs in how a variable is set, and the section
+shows that form beside the bash one for the two start commands.
 
 ### H. The contract documents (lane A)
 
@@ -579,10 +515,9 @@ without uv; `make-bundle.sh` and B2 compare it with a fresh export.
 In this order: the link to the Hebrew cover; what the system is in three paragraphs with the list screenshot; the
 diagram of §3 as text; **Run with Docker** (one command per OS, what appears, the counts to expect, stop and wipe,
 ports and their variables, the Apple Silicon note, three troubleshooting lines: port taken, Docker not running,
-macOS AirPlay on 5000); **Run on Windows without Docker** (what must be installed, as measured in the B3
-rehearsal; `run-all.cmd`; what it does to the machine and what it never does; mixed mode; the SSMS route; stopping
-and removing); **Run from source on Linux or macOS**; the demo walkthrough (run the six examples, create a control
-of one's own, read reasons, search and filter, suggestions, the language switch, a phone-width window);
+macOS AirPlay on 5000); **Run from source, without Docker** (Design G: what must be installed, the five steps,
+what the path never does, SQL Server authentication, the SSMS route, stopping); the demo walkthrough (run the six
+examples, create a control of one's own, read reasons, search and filter, suggestions, a phone-width window);
 configuration as one table from `.env.example`; tests, one command per project, plus `examples.py verify` and
 `db-check.sh`; operations (reset, retention cleanup, the debug endpoint, `/api/docs`); the repository map; the
 document index of §17.
@@ -591,11 +526,11 @@ The engine and api sections that the two tasks wrote, and `web/README.md`, are k
 them, and their commands are not rewritten. The screenshots are the five of decision 27, with one caption line for
 decision 31: the images come from the automated end-to-end run, which is why two control names end in a tag.
 
-The suggestions step says what was built (decision 32). With no key the engine proposes the controls it can derive
-from the glossary and the data: the rules of examples 2 to 5, which the list already holds, so creating one adds a
-second control with the same rule. Example 1 needs thresholds that only the LLM path supplies, and
-`ANTHROPIC_API_KEY` adds Claude's proposals. If the engine's phase 6 was cut, the README names no key and the
-limitations document lists the adapter as an extension.
+The suggestions step says what was built (decision 32). The engine proposes the controls it can derive from the
+glossary and the data: the rules of examples 2 to 5, which the list already holds, so creating one adds a second
+control with the same rule. Example 1 is not proposed: its thresholds are business knowledge that no heuristic
+invents. The LLM step that could propose such rules is a design that is not built; the limitations document lists
+it as an extension.
 
 ### J. `docs/architecture.md`, trimmed in place
 
@@ -606,7 +541,7 @@ limitations document lists the adapter as an extension.
 | §15 | Two sentences and a link to `docs/ai-usage.md` | lane A |
 | §20 | One line and a link to the assumptions document | lane A |
 | §1 to §12 | Only statements that differ from what was built, the three "Docs for dc-delivery" lists among them | B4 |
-| §6, §19 | The suggestion lines as dc-engine built them: with no key the engine yields examples 2 to 5, and thresholds come only through the LLM path | B4 |
+| §6, §19 | The suggestion lines as dc-engine built them: the engine yields examples 2 to 5 from heuristics; the LLM step stays in §6 as a design that is not built | B4 |
 | §13, §14 | As built, short; §14 points to the README for commands | B4 |
 | §16 | The tree as built | B4 |
 | §17 | Stays as the index, with links and a row for the cover page | B4 |
@@ -622,8 +557,8 @@ No heading is renumbered or removed.
    show; the harness (CLAUDE.md, skills, rules, hooks, plans with gates, the reviewer and security-auditor agents);
    the claude.ai chat, in the words of decision 11; the two third-party design skills; the context7 and Playwright
    servers.
-2. Where no AI runs: the definition-to-SQL path is deterministic code; the optional LLM of the suggestions sees
-   the glossary and aggregates only, and its output goes through the validator and compiler.
+2. Where no AI runs: nowhere in the product. The definition-to-SQL path is deterministic code and the
+   suggestions are heuristics over the glossary and aggregates; the LLM step is a design that is not built.
 3. How the work was organised: five tasks, a plan interview before each, gates, reviews, `contracts/` as the only
    channel between parallel sessions, asks carried between plans by the developer. Numbers from `git log` and the
    notes Logs.
@@ -651,28 +586,15 @@ wrap the page in `<div dir="rtl">` if they flip.
   folders), or cut a phase. B0 reads their hand-over notes before anything is composed, and what was built wins
   over Design A to G.
 - **Time.** Lane B has one working day (14 Nov) and the gate the morning after. If the merges slip, cut in this
-  order and record it in `notes.md`: the macOS claims of `run-all.sh` (the README then says "tested on Linux"); the
-  390 screenshot; the editor part of the glossary walkthrough (keep `/validate`); G2, in which case `start.ps1`
-  and `start.cmd` are removed and the README gives the two commands by hand; the 3.13 and 3.14 wheels (3.12 with a
-  clear message). Never cut: G1, G3, the six examples, the run instructions, `docs/ai-usage.md`, the §18 ticks.
-- **Unknowns of the Windows host**, all settled by the B3 rehearsal and none before it: whether the SQL Server
-  install brings an ODBC 17 or 18 driver and `sqlcmd`; a named instance over shared memory with TCP off (dc-engine
-  checked on Linux that the URL becomes `Server=.\SQLEXPRESS`; nothing was run on Windows); mixed mode off after
-  the Basic install; Defender and SmartScreen on an unsigned executable from a marked zip.
-- **SQL Server 2022 on Windows 10 Home** is not confirmed by a source read during planning. If the installer
-  refuses, use SQL Server 2019 Express and write the tested version into the README.
-- **Hebrew code pages on Windows.** PowerShell 5.1 and Python both default to the ANSI code page: scripts are
-  ASCII, Python gets `PYTHONUTF8=1` beside the engine's explicit encodings, sqlcmd gets `-f 65001`, and `verify`
-  fails on question marks.
-- **A key on the gate stack** turns the suggestions spec into paid calls. The generated `.env` has none; Kfir's
-  may, and B1 runs on his.
+  order and record it in `notes.md`: the 390 screenshot; the editor part of the glossary walkthrough (keep
+  `/validate`); G2, in which case `start.ps1` and `start.cmd` are removed and the README gives the two commands by
+  hand. Never cut: G1, G3, the six examples, the run instructions, `docs/ai-usage.md`, the §18 ticks.
+- **The from-source path on Windows is written, not run.** B2 and G3 run it on WSL. What differs on Windows is
+  named in the section (how a variable is set, a named instance without a port, SQL Server authentication off
+  after a Basic install) and the limitations document says that this path was tested on Linux.
 - **Gate leftovers.** Every gate run adds about eighteen archived, tagged controls, and a killed run can leave
   active ones. They do not disturb a later run or the loader. The README shots come from a run on a list that
   holds only the six examples besides them.
-- **A late dependency without a Windows wheel.** `anthropic` joins the engine's lock only in its phase 6. Its
-  wheels were checked at planning, and the engine's check runs again whenever the lock changes; the bundle's own
-  offline resolve is the last guard, and a failure there drops that Python version from the wheelhouse, with the
-  README saying so.
 - **Builds need the network** (Microsoft's apt repository, PyPI, npm, NuGet, MCR). G1 builds without a cache once;
   base images are pinned by tag.
 - **The gate deletes the development database** (`down -v`). It runs after the three merges only, and the fresh
@@ -684,8 +606,6 @@ wrap the page in `<div dir="rtl">` if they flip.
 - **The documents of lane A drift** from what the three tasks build. B0 diffs `contracts/` since the lane-A commit
   and reads the three drift lists, and the walkthrough of `docs/glossary.md` is carried out, not only read.
 - **`.claude/CLAUDE.md` has a 100-line test.** The §17 rows are merged into two and the "As they land" line goes.
-- **The bundle is about 80 MB**, too large for mail. It travels as a release asset or a shared link; a source-only
-  `git archive` zip of a few MB is the fallback, and it runs the Docker path.
 - **`docs/ai-usage.md` and the cover page speak in Kfir's name.** G7 is his read, and nothing is claimed about his
   reviews beyond what the Logs and he say.
 - **Port 5000 is AirPlay's on macOS**, and a local SQL Server may hold a grader's 1433. `APP_PORT` and the 14330
@@ -694,7 +614,9 @@ wrap the page in `<div dir="rtl">` if they flip.
 ## Out of scope
 
 - CI workflows, images pushed to a registry, HTTPS and certificates, sign-in.
-- An embedded Python, a macOS or Linux prebuilt bundle, the manual path on a machine without any Python.
+- An offline bundle, prebuilt binaries, a wheelhouse, a start-everything script for the manual path, a run of it
+  on a Windows host: the manual path is from source, by the README (the scope decision).
+- English texts, a language switch, an LLM step in the suggestions (the scope decision).
 - Changes to engine, api or web behaviour beyond the fixes the gate forces (decision 23). Marking or hiding a
   suggestion that already exists is one of them (decision 32).
 - `docs/design.md` (dc-web's) and `docs/PRODUCT.md` (the design session's): linked, never edited here.

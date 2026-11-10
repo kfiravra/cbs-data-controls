@@ -25,9 +25,10 @@ the complete list of what is served under `/api/v1`.
   no value and never sends it as null. `T or null` marks a member that is always present. In a request an optional
   member may be absent or null, and both mean "not given". `date` is a `YYYY-MM-DD` string, `timestamp` an ISO 8601
   string.
-- **Language.** The primary subtag of the first range of `Accept-Language` when it is `he` or `en`; anything else, or
-  no header, is `he`. It selects the language of rendered text (sentences, reasons, suggestion texts, evidence). The
-  api forwards the resolved value, `he` or `en`, to the engine.
+- **Language.** The primary subtag of the first range of `Accept-Language` when it is one of the glossary's
+  `languages`; anything else, or no header, is the glossary's `defaultLanguage`. The glossary lists `he` alone, so
+  every answer is in Hebrew. It selects the language of rendered text (sentences, reasons, suggestion texts,
+  evidence). The api forwards the resolved value to the engine.
 - **Correlation id.** `X-Correlation-Id` is used when it matches `^[A-Za-z0-9._-]{1,64}$`; otherwise the service
   creates one (32 hexadecimal characters). It is returned on every response, carried by every problem as
   `correlationId`, and forwarded by the api on every engine call.
@@ -232,7 +233,7 @@ past the end is 200 with empty `items`.
 | `controlVersion` | integer | the version that ran |
 | `rootEntity` | string | that version's root entity key: the `rootEntity` of the version's stored definition (no column holds it, and the control's own root entity is the current version's) |
 | `runDate` | date | the date the rules were evaluated on |
-| `language` | string | `he` or `en`: the language its text was rendered and stored in |
+| `language` | string | a language of the glossary (`he`): the language its text was rendered and stored in |
 | `startedAt` | timestamp | |
 | `finishedAt` | timestamp or null | null while running |
 | `status` | string | `running`, `succeeded`, `failed` or `timed_out` |
@@ -272,13 +273,12 @@ the engine; the client never does.
 | `GET /glossary` | none | 200 the public glossary | none |
 | `POST /validate` | `{ definition }` | 200 `{ valid, sentence, sentenceParts, conditions }` | 422 `DEFINITION_INVALID` |
 | `POST /run` | `{ definition, runDate?, rowCap? }` | 200 the run answer | 422 `DEFINITION_INVALID`, 504 `QUERY_TIMEOUT`, 503 `DATABASE_UNAVAILABLE` |
-| `POST /suggest` | `{ rootEntity?, max? }` | 200 `{ source, items }` | 503 `DATABASE_UNAVAILABLE`, 504 `QUERY_TIMEOUT` |
+| `POST /suggest` | `{ rootEntity?, max? }` | 200 `{ items }` | 503 `DATABASE_UNAVAILABLE`, 504 `QUERY_TIMEOUT` |
 | `POST /debug/compile` | `{ definition, runDate? }` | 200 `{ sql, params, countSql, countParams }` | 404 `DEBUG_DISABLED`, 422 `DEFINITION_INVALID` |
 
 **Time limits.** Every statement runs under the engine's statement timeout, 30 s by default
 (`QUERY_TIMEOUT.timeoutSeconds` reports it). `/run` runs two statements (the count, then the page), so its worst case
-is about 60 s; `/suggest` takes up to about 25 s when an LLM key is configured. The api's attempt timeout (75 s by
-default) stays above both.
+is about 60 s. The api's attempt timeout (75 s by default) stays above it.
 
 ### `GET /health`
 
@@ -289,7 +289,7 @@ the database (checked again at most once a minute).
 ### `GET /glossary`
 
 200 the public glossary: `contracts/glossary.json` without its physical names, without what is hidden, and with
-every field's operators resolved. Labels and templates come in both languages; nothing is rendered.
+every field's operators resolved. Labels and templates come in every language of `languages`; nothing is rendered.
 
 | Member | Type | Notes |
 |---|---|---|
@@ -311,7 +311,7 @@ without `table` and `keyColumn`. A field is the file's field without `column` an
 | Field member | Type | Notes |
 |---|---|---|
 | `key` | string | |
-| `label` | text | `{ he, en }` |
+| `label` | text | one string per language: `{ "he": … }` |
 | `description?` | text | |
 | `type` | string | `number`, `text`, `date`, `bool` or `enum` |
 | `nullable` | boolean | |
@@ -384,11 +384,9 @@ stateless: nothing is stored by the engine.
 
 | Member | Type | Notes |
 |---|---|---|
-| `source` | string | `heuristics`, or `heuristics+llm` when an LLM call succeeded (whatever survived validation) |
-| `items` | SuggestionItem[] | the heuristic ones first, then the LLM's; each one validated, compiled and counted on today's date, and dropped when it flags no record |
+| `items` | SuggestionItem[] | what the heuristics propose from the glossary and the data; each one validated, compiled and counted on today's date, and dropped when it flags no record |
 
-Errors: 503 `DATABASE_UNAVAILABLE`; 504 `QUERY_TIMEOUT`. With no LLM key, or when the LLM call fails or takes longer
-than 20 s, the answer is the heuristic list, with the same shape and status.
+Errors: 503 `DATABASE_UNAVAILABLE`; 504 `QUERY_TIMEOUT`.
 
 ### `POST /debug/compile`
 
@@ -570,7 +568,7 @@ pass `search` and `condition`. 404 `RUN_NOT_FOUND`.
 | `max?` | integer | at least 1 (400 `OUT_OF_RANGE`); as on the engine's `/suggest` |
 
 The body may be empty; nothing is stored or run. The api checks these two members and sends exactly them to the
-engine's `/suggest`. 200 the engine's body unchanged (`{ source, items: SuggestionItem[] }`). Errors as in the
+engine's `/suggest`. 200 the engine's body unchanged (`{ items: SuggestionItem[] }`). Errors as in the
 endpoint table.
 
 ### `POST /api/v1/suggestions/accept`
@@ -594,7 +592,7 @@ both follow the seed and the glossary when those change.
 
 ### A `/run` answer
 
-Request: `POST /run` with `Accept-Language: en` and this body.
+Request: `POST /run` with `Accept-Language: he` and this body.
 
 ```json
 {
@@ -626,34 +624,34 @@ Answer: 200, three violations found and two returned, the counts over all three.
   "durationMs": 41,
   "engineVersion": "0.1.0",
   "glossaryVersion": "1.0.0",
-  "sentence": "Age is less than 18 and Salary is greater than 15,000 ILS",
+  "sentence": "גיל קטן מ־18 וגם שכר גדול מ־15,000 ₪",
   "sentenceParts": [
-    { "text": "Age", "nodeId": "c1", "role": "field" },
-    { "text": " is less than ", "nodeId": "c1" },
+    { "text": "גיל", "nodeId": "c1", "role": "field" },
+    { "text": " קטן מ־", "nodeId": "c1" },
     { "text": "18", "nodeId": "c1", "role": "value" },
-    { "text": " and " },
-    { "text": "Salary", "nodeId": "c2", "role": "field" },
-    { "text": " is greater than ", "nodeId": "c2" },
-    { "text": "15,000 ILS", "nodeId": "c2", "role": "value" }
+    { "text": " וגם " },
+    { "text": "שכר", "nodeId": "c2", "role": "field" },
+    { "text": " גדול מ־", "nodeId": "c2" },
+    { "text": "15,000 ₪", "nodeId": "c2", "role": "value" }
   ],
   "conditions": [
     {
       "id": "c1",
-      "sentence": "Age is less than 18",
+      "sentence": "גיל קטן מ־18",
       "sentenceParts": [
-        { "text": "Age", "nodeId": "c1", "role": "field" },
-        { "text": " is less than ", "nodeId": "c1" },
+        { "text": "גיל", "nodeId": "c1", "role": "field" },
+        { "text": " קטן מ־", "nodeId": "c1" },
         { "text": "18", "nodeId": "c1", "role": "value" }
       ],
       "count": 3
     },
     {
       "id": "c2",
-      "sentence": "Salary is greater than 15,000 ILS",
+      "sentence": "שכר גדול מ־15,000 ₪",
       "sentenceParts": [
-        { "text": "Salary", "nodeId": "c2", "role": "field" },
-        { "text": " is greater than ", "nodeId": "c2" },
-        { "text": "15,000 ILS", "nodeId": "c2", "role": "value" }
+        { "text": "שכר", "nodeId": "c2", "role": "field" },
+        { "text": " גדול מ־", "nodeId": "c2" },
+        { "text": "15,000 ₪", "nodeId": "c2", "role": "value" }
       ],
       "count": 3
     }
@@ -668,12 +666,12 @@ Answer: 200, three violations found and two returned, the counts over all three.
           "conditionId": "c1",
           "reasonKey": "lt",
           "params": { "left": { "field": "age" }, "actual": 16, "value": 18 },
-          "text": "Age: 16 (less than 18)",
+          "text": "גיל: 16 (קטן מ־18)",
           "textParts": [
-            { "text": "Age", "nodeId": "c1", "role": "field" },
+            { "text": "גיל", "nodeId": "c1", "role": "field" },
             { "text": ": ", "nodeId": "c1" },
             { "text": "16", "nodeId": "c1", "role": "actual" },
-            { "text": " (less than ", "nodeId": "c1" },
+            { "text": " (קטן מ־", "nodeId": "c1" },
             { "text": "18", "nodeId": "c1", "role": "value" },
             { "text": ")", "nodeId": "c1" }
           ]
@@ -682,18 +680,18 @@ Answer: 200, three violations found and two returned, the counts over all three.
           "conditionId": "c2",
           "reasonKey": "gt",
           "params": { "left": { "field": "salary" }, "actual": 16500, "value": 15000 },
-          "text": "Salary: 16,500 ILS (greater than 15,000 ILS)",
+          "text": "שכר: 16,500 ₪ (גדול מ־15,000 ₪)",
           "textParts": [
-            { "text": "Salary", "nodeId": "c2", "role": "field" },
+            { "text": "שכר", "nodeId": "c2", "role": "field" },
             { "text": ": ", "nodeId": "c2" },
-            { "text": "16,500 ILS", "nodeId": "c2", "role": "actual" },
-            { "text": " (greater than ", "nodeId": "c2" },
-            { "text": "15,000 ILS", "nodeId": "c2", "role": "value" },
+            { "text": "16,500 ₪", "nodeId": "c2", "role": "actual" },
+            { "text": " (גדול מ־", "nodeId": "c2" },
+            { "text": "15,000 ₪", "nodeId": "c2", "role": "value" },
             { "text": ")", "nodeId": "c2" }
           ]
         }
       ],
-      "reasonText": "Age: 16 (less than 18); Salary: 16,500 ILS (greater than 15,000 ILS)"
+      "reasonText": "גיל: 16 (קטן מ־18); שכר: 16,500 ₪ (גדול מ־15,000 ₪)"
     },
     {
       "key": "1052",
@@ -704,12 +702,12 @@ Answer: 200, three violations found and two returned, the counts over all three.
           "conditionId": "c1",
           "reasonKey": "lt",
           "params": { "left": { "field": "age" }, "actual": 15, "value": 18 },
-          "text": "Age: 15 (less than 18)",
+          "text": "גיל: 15 (קטן מ־18)",
           "textParts": [
-            { "text": "Age", "nodeId": "c1", "role": "field" },
+            { "text": "גיל", "nodeId": "c1", "role": "field" },
             { "text": ": ", "nodeId": "c1" },
             { "text": "15", "nodeId": "c1", "role": "actual" },
-            { "text": " (less than ", "nodeId": "c1" },
+            { "text": " (קטן מ־", "nodeId": "c1" },
             { "text": "18", "nodeId": "c1", "role": "value" },
             { "text": ")", "nodeId": "c1" }
           ]
@@ -718,18 +716,18 @@ Answer: 200, three violations found and two returned, the counts over all three.
           "conditionId": "c2",
           "reasonKey": "gt",
           "params": { "left": { "field": "salary" }, "actual": 22000, "value": 15000 },
-          "text": "Salary: 22,000 ILS (greater than 15,000 ILS)",
+          "text": "שכר: 22,000 ₪ (גדול מ־15,000 ₪)",
           "textParts": [
-            { "text": "Salary", "nodeId": "c2", "role": "field" },
+            { "text": "שכר", "nodeId": "c2", "role": "field" },
             { "text": ": ", "nodeId": "c2" },
-            { "text": "22,000 ILS", "nodeId": "c2", "role": "actual" },
-            { "text": " (greater than ", "nodeId": "c2" },
-            { "text": "15,000 ILS", "nodeId": "c2", "role": "value" },
+            { "text": "22,000 ₪", "nodeId": "c2", "role": "actual" },
+            { "text": " (גדול מ־", "nodeId": "c2" },
+            { "text": "15,000 ₪", "nodeId": "c2", "role": "value" },
             { "text": ")", "nodeId": "c2" }
           ]
         }
       ],
-      "reasonText": "Age: 15 (less than 18); Salary: 22,000 ILS (greater than 15,000 ILS)"
+      "reasonText": "גיל: 15 (קטן מ־18); שכר: 22,000 ₪ (גדול מ־15,000 ₪)"
     }
   ]
 }

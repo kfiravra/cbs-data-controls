@@ -1,9 +1,8 @@
 {
   "id": "minor-high-salary",
-  "name": { "he": "קטינים בשכר גבוה", "en": "Minors with a high salary" },
+  "name": { "he": "קטינים בשכר גבוה" },
   "description": {
-    "he": "איתור עובדים שגילם נמוך מ־18 ושכרם גבוה מ־15,000 ש\"ח.",
-    "en": "Find employees who are under 18 and whose salary is above 15,000 ILS."
+    "he": "איתור עובדים שגילם נמוך מ־18 ושכרם גבוה מ־15,000 ש\"ח."
   },
   "runDate": "2026-11-01",
   "definition": {

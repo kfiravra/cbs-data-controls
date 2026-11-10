@@ -1,9 +1,8 @@
 {
   "id": "inactive-ministry-salary-out-of-range",
-  "name": { "he": "חריגות שכר במשרד לא פעיל", "en": "Salary out of range in an inactive ministry" },
+  "name": { "he": "חריגות שכר במשרד לא פעיל" },
   "description": {
-    "he": "איתור עובדים פעילים במשרד שאינו פעיל ששכרם נמוך מ־6,000 ש\"ח או גבוה מ־40,000 ש\"ח.",
-    "en": "Find active employees of an inactive ministry whose salary is below 6,000 ILS or above 40,000 ILS."
+    "he": "איתור עובדים פעילים במשרד שאינו פעיל ששכרם נמוך מ־6,000 ש\"ח או גבוה מ־40,000 ש\"ח."
   },
   "runDate": "2026-11-01",
   "definition": {

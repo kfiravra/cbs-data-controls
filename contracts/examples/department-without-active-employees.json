@@ -1,9 +1,8 @@
 {
   "id": "department-without-active-employees",
-  "name": { "he": "מחלקות פעילות ללא עובדים פעילים", "en": "Active departments without active employees" },
+  "name": { "he": "מחלקות פעילות ללא עובדים פעילים" },
   "description": {
-    "he": "איתור מחלקות פעילות שאין בהן אף עובד פעיל.",
-    "en": "Find active departments that have no active employee."
+    "he": "איתור מחלקות פעילות שאין בהן אף עובד פעיל."
   },
   "runDate": "2026-11-01",
   "heuristic": true,

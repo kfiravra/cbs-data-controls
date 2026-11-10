@@ -1,9 +1,8 @@
 {
   "id": "missing-mandatory-data",
-  "name": { "he": "נתוני חובה חסרים", "en": "Missing mandatory data" },
+  "name": { "he": "נתוני חובה חסרים" },
   "description": {
-    "he": "איתור רשומות שבהן חסרים נתונים המחויבים לפי כללים עסקיים. עובד פעיל חייב בדואר אלקטרוני, בשכר ובשיוך למחלקה; עובד לא פעיל חייב בתאריך סיום העסקה.",
-    "en": "Find records that lack data the business rules require. An active employee must have an email, a salary and a department; an inactive employee must have a termination date."
+    "he": "איתור רשומות שבהן חסרים נתונים המחויבים לפי כללים עסקיים. עובד פעיל חייב בדואר אלקטרוני, בשכר ובשיוך למחלקה; עובד לא פעיל חייב בתאריך סיום העסקה."
   },
   "runDate": "2026-11-01",
   "heuristic": true,

@@ -2,18 +2,24 @@
 
 ## State
 Every phase is done and committed on `feat/contracts`: `43745cc` (phase 1), `b0d3015` (phase 2), `16824ce`
-(phase 3), `aafe9ca` (phase 4), then one review-fix commit. One review over the branch by area ran on `aafe9ca`
-(five Opus reviewers); its findings and what happened to each are in the Log. The Gate ran from a clean container on
-the tree of the fix commit: `gates/final.txt`, db-check 27 passed, contracts-check 5 checks, hook tests 226 pass.
-The branch is pushed and the PR to main is open, on Kfir's word. Not merged.
+(phase 3), `aafe9ca` (phase 4), `dd6eb34` (the review fixes), then one commit for Kfir's scope decision of
+2026-11-10 (plan decisions 37 to 40: Hebrew only, heuristic suggestions only, two delivery paths, screenshots at
+390 and 1440) with the fixes of its own review. The Gate ran from a clean container on the tree of that last
+commit, with rotated local passwords: `gates/final.txt`, db-check 27 passed, contracts-check 5 checks, hook tests
+226 pass. The branch is pushed and the PR to main is open, on Kfir's word. Not merged.
 
 ## Next
-1. Kfir reads `uv run scripts/contracts-check.py --render`: the last moment a wording change is free. Open wording
-   questions are in the Log (the review line): the gender of the predicates, "קטן מ" against the assignment's
+1. Kfir reads `uv run scripts/contracts-check.py --render` (Hebrew only now): the last moment a wording change is
+   free. Open wording questions are in the Log: the gender of the predicates, "קטן מ" against the assignment's
    "נמוך מ", the brackets around related conditions.
 2. The merge, on Kfir's word. Then on main: `scripts/db-init.sh --reset` (the seed is new there), and the three
-   worktrees of kickoff §5 with `.env` copied into each.
-3. One line to each session before it starts (the Log's review line has the full list): engine, api, web.
+   worktrees of kickoff §5 with `.env` copied into each. The local `.env` holds new passwords since the rotation.
+3. The lines for the engine, api, web and delivery sessions are written into their plans ("Lines from dc-contracts
+   as it merges"); nothing more has to be carried by hand.
+4. `README.md` was left as it is by the scope decision: its `--render` comment still says "he and en".
+5. History: `43745cc` shows three former local dev passwords in `.env.example` (removed in `dd6eb34`, rotated
+   locally before the push, so they open nothing). Taking them out of the branch's history is a rebase, which
+   needs Kfir's word.
 
 ## Blockers
 (none)
@@ -145,3 +151,28 @@ The branch is pushed and the PR to main is open, on Kfir's word. Not merged.
   init twice (7 scripts each), db-check 27 passed 0 failed, contracts-check 5 checks passed, hook tests 226 pass 0
   fail. Mutation runs after the fixes: 16 malformed or relabelled cases, 19 example mutations, 12 fixture and
   catalogue mutations, each reported.
+- 2026-11-10 scope decision by Kfir, given after the review and before the push (plan decisions 37 to 40), carried
+  through `contracts/`, `docs/`, `.claude/` and the five plans in one commit. Removed: 177 English values of the
+  glossary and the `en` format, the English names and descriptions of the six examples, the `source` member of
+  `/suggest` and the keyed timings, the English `/run` example of `api.md` (now Hebrew, rendered from the
+  glossary), the LLM phase and settings of the engine plan, the offline Windows bundle of the delivery plan
+  (wheelhouse, self-contained publish, `make-bundle.sh`, `run-all.ps1`, `run-all.sh`, the Windows rehearsal),
+  `en.json`, the language switch and the `tablet` project of the web plan. Kept on purpose: the language
+  mechanism; `heuristic: true` on examples 2 to 5; the Docker start scripts, `start.cmd` among them;
+  `engine/requirements.txt`; the engine's driver and port settings; the 1024px layout breakpoints of
+  `docs/design.md`; architecture §6's LLM step as a design that is not built. Not touched: `README.md` (Kfir's
+  word), `sql/`, `dev/briefs/`, the notes of the other tasks. The lines kept for the consumer sessions went into
+  the engine, api, web and delivery plans as a section each.
+- 2026-11-10 one `reviewer` on Opus read the diff of the scope decision for leftovers and contradictions. Found
+  and fixed: the cut numbers of the engine, delivery and web plans were stale after a cut was removed; the web
+  plan still had a results state for "a run in the other language" and an English date fallback; architecture
+  §3.1 still said "optional LLM"; this plan still named the `run-all` script and English glosses of glossary
+  values, and decision 26 had a broken sentence; the delivery plan's decisions jumped from 2 to 4 (a stub for 3
+  now) and one ask was worded wrongly; the engine's contract lines missed `<node>/right`. Over-deletion, reversed:
+  the engine's win_amd64 wheel check and its suite runs under 3.13 and 3.14 were removed with the bundle, but the
+  from-source path installs with pip on whatever Python the grader has, so both are back in the engine plan; the
+  PowerShell parse check of the kept `start.ps1` is back in the delivery plan. Reported clean: `contracts/`,
+  `.claude/`, `docs/design.md`, `docs/PRODUCT.md`; the `/run` example parses and its parts join to its texts.
+- 2026-11-10 the local database passwords were rotated (`.env`, ignored by git) and the Gate ran again from a
+  clean container on the final tree: `gates/final.txt`, init twice with 7 scripts, db-check 27 passed 0 failed,
+  contracts-check 5 checks passed, hook tests 226 pass 0 fail.

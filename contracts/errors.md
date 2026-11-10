@@ -257,11 +257,11 @@ and several of one code by `params.index`.
 ### Rendering
 
 - **One source.** Every word of a rule sentence, a condition sentence, a reason, a suggestion's name, description and
-  rationale, and an evidence text comes from the glossary in `he` and `en`: operator templates (`operators.*.label`,
-  `sentence`, `reason`), `phrases`, entity, field, relationship, enum and bool labels, units, `formats` and
-  `suggestions`. The engine renders it in the request's language and is the only renderer.
+  rationale, and an evidence text comes from the glossary, in each language of its `languages`: operator templates
+  (`operators.*.label`, `sentence`, `reason`), `phrases`, entity, field, relationship, enum and bool labels, units,
+  `formats` and `suggestions`. The engine renders it in the request's language and is the only renderer.
 - **Variants.** `label`, `sentence` and `reason` of an operator are each an object of variants, every variant
-  `{ he, en }`. The first variant present in this order is used: `<type>.field`, `field`, `<type>`, `default`, where
+  one text per language. The first variant present in this order is used: `<type>.field`, `field`, `<type>`, `default`, where
   `<type>` is the left field's type and the two `field` variants apply only when the condition has a `right`.
 - **Placeholders** of operator templates: `{field}` the left field, `{value}` the operand of arity 1 or the first of
   arity 2, `{value2}` the second of arity 2, `{values}` the list, `{actual}` the record's left value (reasons only),
@@ -272,15 +272,15 @@ and several of one code by `params.index`.
   field's label and `{relationship}` the label of the last relationship on the path; the result is one part, with
   the role `field` or `other`. A relationship is its `label`.
 - **Values.** A date follows the pattern `formats.<language>.date`, its tokens `dd`, `MM` and `yyyy` filled from the
-  date's day, month and year; the current patterns are `dd.MM.yyyy` for `he` and `yyyy-MM-dd` for `en`. A number
+  date's day, month and year; the pattern of `he` is `dd.MM.yyyy`. A number
   has `formats.<language>.groupSeparator` between groups of three integer digits and
-  `formats.<language>.decimalSeparator` before the fraction (currently `,` and `.` in both languages), with the
+  `formats.<language>.decimalSeparator` before the fraction (`,` and `.` for `he`), with the
   trailing zeros of the fraction removed and the separator with them (`15000` is `15,000`, `15000.50` is
   `15,000.5`). A number of a field marked `identifier: true` in the glossary names a record and is not a quantity:
   it is written digit for digit, with no separator (`1051`), which is also how `display_text` holds it. An enum value is the `label` of its `enumValues` entry, found without
   regard to case, as the database compares it; a stored value with no entry is shown as stored. A bool is
   `valueLabels.true` or `valueLabels.false`; text is shown as stored. A value of a field with a `unit` is followed by
-  one space and the unit in the language, inside the same part (`15,000 ILS`). A NULL value renders as nothing.
+  one space and the unit in the language, inside the same part (`15,000 ₪`). A NULL value renders as nothing.
 - **Lists.** `{values}` renders each item as a part with the role `value`, with `phrases.listSeparator` between them
   as parts without a role.
 - **Sentences.** A condition renders its operator's `sentence` variant. A related node renders

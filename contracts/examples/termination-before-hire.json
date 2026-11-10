@@ -1,9 +1,8 @@
 {
   "id": "termination-before-hire",
-  "name": { "he": "סיום העסקה לפני תחילתה", "en": "Termination before hire" },
+  "name": { "he": "סיום העסקה לפני תחילתה" },
   "description": {
-    "he": "איתור עובדים שתאריך סיום העסקתם מוקדם מתאריך תחילת העסקתם.",
-    "en": "Find employees whose termination date is earlier than their hire date."
+    "he": "איתור עובדים שתאריך סיום העסקתם מוקדם מתאריך תחילת העסקתם."
   },
   "runDate": "2026-11-01",
   "heuristic": true,

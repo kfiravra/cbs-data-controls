@@ -1,9 +1,8 @@
 {
   "id": "active-in-inactive-department",
-  "name": { "he": "עובדים פעילים במחלקה לא פעילה", "en": "Active employees in an inactive department" },
+  "name": { "he": "עובדים פעילים במחלקה לא פעילה" },
   "description": {
-    "he": "איתור עובדים פעילים המשויכים למחלקה שאינה פעילה.",
-    "en": "Find active employees assigned to a department that is not active."
+    "he": "איתור עובדים פעילים המשויכים למחלקה שאינה פעילה."
   },
   "runDate": "2026-11-01",
   "heuristic": true,
