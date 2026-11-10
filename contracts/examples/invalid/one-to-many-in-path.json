@@ -1,0 +1,29 @@
+{
+  "layer": "semantic",
+  "expected": {
+    "code": "PATH_NOT_TRAVERSABLE",
+    "path": "/where/children/0/left"
+  },
+  "definition": {
+    "schemaVersion": 1,
+    "rootEntity": "department",
+    "where": {
+      "type": "group",
+      "op": "and",
+      "children": [
+        {
+          "type": "condition",
+          "id": "c1",
+          "left": {
+            "path": [
+              "department.employees"
+            ],
+            "field": "salary"
+          },
+          "operator": "gt",
+          "value": 15000
+        }
+      ]
+    }
+  }
+}

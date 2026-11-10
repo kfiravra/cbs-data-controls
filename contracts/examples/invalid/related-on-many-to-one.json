@@ -1,0 +1,38 @@
+{
+  "layer": "semantic",
+  "expected": {
+    "code": "RELATIONSHIP_NOT_QUANTIFIABLE",
+    "path": "/where/children/0/relationship"
+  },
+  "definition": {
+    "schemaVersion": 1,
+    "rootEntity": "employee",
+    "where": {
+      "type": "group",
+      "op": "and",
+      "children": [
+        {
+          "type": "related",
+          "id": "r1",
+          "relationship": "employee.department",
+          "quantifier": "any",
+          "where": {
+            "type": "group",
+            "op": "and",
+            "children": [
+              {
+                "type": "condition",
+                "id": "c1",
+                "left": {
+                  "field": "is_active"
+                },
+                "operator": "eq",
+                "value": false
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

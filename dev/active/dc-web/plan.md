@@ -3,6 +3,8 @@ Created: 2026-11-10 · Branch: feat/web (worktree `../cbs-web`, cut from main on
 
 Amended: 2026-11-10 on two asks from dc-delivery, carried by Kfir (decisions 22 to 27, Design O and Q, phases 7 and
 8, the Gate).
+Amended: 2026-11-10 by the dc-contracts session on Kfir's scope decision, with the lines from the merged contracts (the
+two sections before the Phases).
 
 ## Goal
 
@@ -44,8 +46,7 @@ From the interview (Kfir, 2026-11-10):
    fields with `display_text` defined. No restore endpoint: the archive dialog says only that the control leaves the
    list, keeps its runs and can be duplicated.
 7. **Cut order** when time runs short, first cut first: the archived view (archiving itself stays) · the settle ·
-   the 1024 screenshots and the English visual pass (`en.json` stays complete and the switch works) · "open in
-   editor" on a suggestion · sorting the results. Never cut: the six-example gate, reasons with marks and marked
+   "open in editor" on a suggestion · sorting the results. Never cut: the six-example gate, reasons with marks and marked
    values, errors on the offending row, every results state, Hebrew RTL at 390 and 1440, duplicate, creating the
    selected suggestions.
 8. **A run from the list stays on the list**: the row's result updates in place, as design.md draws the row. Save
@@ -112,9 +113,55 @@ Settled in planning on those three (object or they stand):
 27. **The gate also opens the suggestions dialog on the real stack and creates one draft.** Nobody asked for it.
     dc-delivery takes its README screenshots from the gate run on its composed stack (its decision 27: list,
     editor, results and suggestions at 1440, the results at 390), and this plan's gate had no suggestions screen.
-    The same spec is the only run of "create selected" against the real api before dc-delivery's hand check on
-    Windows. (Rejected: the shot of the mocked spec, which is not the composed stack; a dialog that is opened
+    The same spec is the only run of "create selected" against the real api before dc-delivery's gate. (Rejected: the shot of the mocked spec, which is not the composed stack; a dialog that is opened
     and closed without creating, which leaves the accept request untried.)
+
+## Scope decision (Kfir, 2026-11-10; written in by the dc-contracts session, which carried it through all five plans)
+
+Applied to the text of this plan. Where a line still disagrees with this section, this section holds.
+
+1. **Hebrew only.** No `en.json`, no language switch, no English spec and no English screenshot. The mechanism
+   stays: one translation file per language, `LanguageService` holding the language as a value, `label[lang]`,
+   `Accept-Language` on every call. The glossary lists `he` alone, and its texts are objects with the one key `he`.
+2. **Suggestions are heuristics only.** The answer to `POST /suggestions` is `{ items }`: there is no `source`, no
+   key and no paid call, so the gate needs no word about spend for the suggestions spec.
+3. **No offline Windows bundle** in dc-delivery: its gate is the Docker path and a from-source run.
+4. **Screenshots at 390 and 1440 only.** The Playwright projects are `mobile` and `desktop`; there is no `tablet`
+   project and no shot at 1024. The breakpoints of `docs/design.md` are layout, not screenshots, and stay.
+
+`docs/design.md` was edited for 1 and 4 by the dc-contracts session (the app bar has no language switch, marks are
+Hebrew letters only, the check is at 390 and 1440). It stays this task's document from here on.
+
+## Lines from dc-contracts as it merges (2026-11-10)
+
+`contracts/` wins over this plan. These points were pinned there, most of them in the review of the branch:
+
+- **Both asks of decision 6 are in the contract**: `formats.he.date` is `dd.MM.yyyy`, and the identifying fields
+  are name first with `display_text` defined (dc-contracts decisions 30 and 31). The table of Design P that calls
+  them "not in the dc-contracts plan yet" is out of date.
+- **Error paths.** A semantic error names the member the editor edits as one input (`left`, `operator`, `value`,
+  `values` with `params.index`, `right`, `relationship`), as Design K assumes. Two kinds end elsewhere and need
+  the fallback through `nodeId`: schema-layer paths (`…/type`, `…/left/path`, the node itself) and
+  `DUPLICATE_NODE_ID` (`…/id`, with no `nodeId`).
+- **`NETWORK_ERROR`** is a row of `errors.md` now: a code the client derives when the api does not answer.
+  `GLOSSARY_MISMATCH` never reaches the client; the state for a control whose field left the glossary is the run
+  error `CONTROL_DEFINITION_OUTDATED`. The States table of `docs/design.md` still says otherwise.
+- **`Run.status` may be `running`** when a run is fetched: another user's run in progress, or one a crash cut
+  off. No screen state covers it yet.
+- **Counts under the cap are exact**: `conditions[].count` is over all violations, not the stored rows. The
+  States table of `docs/design.md` says the opposite and is the line that changes.
+- **Identifiers.** A field marked `identifier: true` (employee and department numbers) is a number written digit
+  for digit. `display` values of such a field are drawn without a thousands separator, which is how
+  `display_text`, and so the search, holds them.
+- **Rendered text.** A value part carries its unit after a plain space: keep a value part on one line. A NULL
+  renders as nothing. The engine's reason reads "גיל: 15 (מתחת ל־18)"; `docs/design.md` draws "גיל [15] נמוך
+  מ־16", and its related-records head words the node differently from the engine's "אין … עם (…)". Kfir settled
+  the engine's wording at the dc-contracts gate: numbers "מתחת ל־" and "מעל", dates "לפני" and "אחרי", and the
+  colon style for the rest ("שכר: חסר"), so no text agrees with the gender of a field.
+- **The public glossary** has a shape table in `api.md`: `operators` resolved per field, `comparable`,
+  `identifier`, `visible`, `arity` as 0, 1, 2 or `"list"`.
+- **Requests**: `page` is 1 to 1,000,000; the results `search` is trimmed and an empty one filters nothing; a body
+  over 1 MB is 413 and a body that is not JSON 415, both `REQUEST_INVALID`.
 
 ## Phases
 
@@ -164,11 +211,11 @@ Verify: `git -C ../cbs-web status --short` prints nothing and `../cbs-web/docs/d
 - [ ] The font from `@fontsource/ibm-plex-sans-hebrew` (400, 500, 600) through the stylesheet; icons per Design B.
 - [ ] Language and direction per Design C: `main.ts`, `LanguageService`, `LOCALE_ID` and locale data, the translate
       providers, the plural helper, Material's Intl strings.
-- [ ] Shell: app bar (brand mark, name, language switch), page container, banner slot, the routes of Design D with
+- [ ] Shell: app bar (brand mark, name), page container, banner slot, the routes of Design D with
       lazy placeholder screens and the not-found state.
 - [ ] Shared components, first group of Design I.
-- [ ] `he.json` and `en.json` with the keys used so far; the parity spec and the style guard of Design N.
-- [ ] `playwright.config.ts` per Design O. `e2e/mocked/shell.spec.ts`: Hebrew and English, `lang` and `dir`, the
+- [ ] `he.json` with the keys used so far; the key guard and the style guard of Design N.
+- [ ] `playwright.config.ts` per Design O. `e2e/mocked/shell.spec.ts`: `lang` and `dir`, the
       font is loaded (`document.fonts.check`), no request failed, the not-found state; screenshots.
 
 Verify: `/check --tests` · `cd web && npx playwright test e2e/mocked/shell.spec.ts` (about a minute: say so first)
@@ -196,8 +243,8 @@ Commit: `feat(web): workspace, design tokens and hebrew rtl shell`
 - [ ] `core/i18n/format.service.ts` (Design C).
 - [ ] `e2e/fixtures` and `e2e/support/routes.ts` per Design O: the glossary, the six examples as controls, validate
       answers, runs and result pages for every state.
-- [ ] `he.json`, `en.json`: `errors.<CODE>` and `errors.definition.<CODE>` for every code of `contracts/errors.md`;
-      the parity spec now reads that file.
+- [ ] `he.json`: `errors.<CODE>` and `errors.definition.<CODE>` for every code of `contracts/errors.md`; the key
+      guard now reads that file.
 - [ ] `.claude/skills/dc-web/SKILL.md`: the facts this plan changed (text arrives as parts and the client has no
       renderer; the `mocked` and `gate` spec folders; a gate spec acts only on its own tagged controls and finds
       them by id).
@@ -221,7 +268,7 @@ Commit: `feat(web): definition draft, glossary and api layer`
 - [ ] Component specs: adding and removing conditions and groups (the §13 test), the operator list follows the
       field, the value input follows the type and the arity, the comparison toggle.
 - [ ] `e2e/support/builder-driver.ts`, first version, and `e2e/mocked/builder.spec.ts`: examples 5 and 6 built
-      through the driver, one of them by keyboard only; screenshots of a deep tree at the three widths.
+      through the driver, one of them by keyboard only; screenshots of a deep tree at 390 and 1440.
 - [ ] `docs/design.md`: the related-records node carries its own letter (decision 4), and its head as built.
 
 Verify: `/check --tests` · `cd web && npx playwright test e2e/mocked/builder.spec.ts`
@@ -255,8 +302,8 @@ Commit: `feat(web): control editor with the engine's sentence, save and run`
 - [ ] Reasons from `textParts` with the actual values marked; marks from the definition of the version that ran;
       the trace across breakdown, sentence and reasons; the active mark while a condition filters.
 - [ ] The states of Design L: loading and re-run skeletons, no violations, cap exceeded, timed out, outdated
-      definition, failed otherwise, a search that matches nothing, run not found, a run in the other language.
-- [ ] Sort (cut 5): the first column's header, and the sort select on a phone.
+      definition, failed otherwise, a search that matches nothing, run not found.
+- [ ] Sort (cut 4): the first column's header, and the sort select on a phone.
 - [ ] Specs: the results table (marks, marked values, `<bdi>`), the breakdown filter, the state chosen from a run.
 - [ ] `e2e/mocked/results.spec.ts`: every state above; screenshots.
 - [ ] `docs/design.md`: the rows of the States table that decisions 15 and 16 change.
@@ -270,7 +317,7 @@ Commit: `feat(web): run results with reasons, breakdown and states`
       button), the result cell, run in place (decision 8), edit, duplicate, paging, the two empty states, loading.
 - [ ] The archived view (cut 1): the state filter and archived rows with duplicate only.
 - [ ] The suggestions dialog per Design M: request, drafts with marks, selection, create selected, open in editor
-      (cut 4), its empty and failed states.
+      (cut 3), its empty and failed states.
 - [ ] Specs: the result cell from `lastRun`, run in place, the dialog's selection count.
 - [ ] `e2e/mocked/list.spec.ts` and `suggestions.spec.ts`; screenshots, among them the first screen of the
       delivered system (six examples, none of them run: Design K). `e2e/preview.ts`.
@@ -283,7 +330,7 @@ Commit: `feat(web): controls list and suggestions dialog`
 ### Phase 7: the real stack
 - [ ] `git merge main` when the api and the engine are on it, or run them from their worktrees; the db runs from
       the main tree. Say what will run and for how long, and wait for the word. Port 8000: ask before stopping
-      another project's container. The engine runs with no `ANTHROPIC_API_KEY` (Design O).
+      another project's container.
 - [ ] `e2e/support/gate.ts` per Design O: the health check, the tag, the ids a test created, the teardown.
 - [ ] `e2e/gate/examples.spec.ts` per Design O: the six examples built through the UI under tagged names, saved,
       run and read; example 4 leaves `gate-editor` and `gate-results`; one example reloads its results by URL.
@@ -317,7 +364,6 @@ Commit: `test(web): six-example gate against the real stack`
 - [ ] `/impeccable critique`, once per screen. Say the spend first (two opus sub-agents per run, three runs, one
       run at a time) and wait for the word. Fix its P0 and P1 findings.
 - [ ] `/impeccable polish`, once, over the client.
-- [ ] English and 1024 (cut 3): the mocked specs in English on `desktop`, every screen on `tablet`; fix what breaks.
 - [ ] A keyboard pass by hand through the gate flow: every action reachable, focus visible, a dialog traps focus
       and returns it.
 - [ ] `web/README.md` per Design Q: serve, test, the two e2e folders, the gate command with what it needs and
@@ -349,7 +395,7 @@ web/
   angular.json · proxy.conf.json · eslint.config.js · playwright.config.ts
   e2e/        fixtures/ (typed) · support/ (routes, driver, i18n, shots) · mocked/ · gate/ · preview.ts
   src/
-    main.ts   styles/ (tokens, base, material-theme, components/)   assets/i18n/ (he.json, en.json)   assets/icons/
+    main.ts   styles/ (tokens, base, material-theme, components/)   assets/i18n/ (he.json)   assets/icons/
     app/
       app.config.ts · app.routes.ts · app.component
       core/      api/ · http/ · glossary/ · definition/ · text/ · i18n/
@@ -384,15 +430,15 @@ Features import `core` and `shared`, never each other; `shared` imports `core` o
 
 ### C. Language, direction, formats
 
-- `main.ts` reads the saved language (`localStorage`, key `dc.lang`, inside try/catch; `he` by default), sets
-  `<html lang dir>`, then bootstraps with `LOCALE_ID` (`he` or `en-IL`), the registered locale data and
+- `main.ts` sets `<html lang="he" dir="rtl">` and bootstraps with `LOCALE_ID` `he`, the registered locale data and
   `provideTranslateService({ loader: provideTranslateHttpLoader({ prefix: '/assets/i18n/', suffix: '.json' }),
-  fallbackLang: 'he', lang })`.
-- The switch stores the other language and reloads. An interceptor sends `Accept-Language` on every api call.
+  fallbackLang: 'he', lang: 'he' })`.
+- `LanguageService` holds the language as a value, so components read `label[lang]` and nothing else names `he`.
+  There is no switch and nothing is stored. An interceptor sends `Accept-Language` on every api call.
 - Glossary labels are `label[lang]`. Counted nouns go through `plural.ts`: `Intl.PluralRules(lang)` picks the key
   suffix (`.one`, `.two`, `.other`) and falls back to `.other`.
-- `FormatService`: dates by the date pattern of the glossary's `formats[lang]` (fallback `dd.MM.yyyy` and
-  `yyyy-MM-dd` while the glossary is not loaded), time as `HH:mm`, today and yesterday in words, numbers and
+- `FormatService`: dates by the date pattern of the glossary's `formats[lang]` (fallback `dd.MM.yyyy` while the glossary is not
+  loaded), time as `HH:mm`, today and yesterday in words, numbers and
   seconds through `Intl.NumberFormat`. Digits are Western. User data is wrapped in `<bdi>`.
 - Material's own strings come from the translation files through its `*Intl` services.
 
@@ -482,8 +528,7 @@ Nothing in `web/` names an entity, a field, a relationship or an operator key, o
   definition of the version that ran (`GET /controls/{id}/versions/{version}`, fetched beside the run), and the
   suggestions dialog walks each draft's `definition`. `run.conditions` lists only the nodes a run can match, so it
   feeds the breakdown and never the order.
-- Letters: Hebrew numerals in the Hebrew interface (א to י, יא to יד, טו, טז, יז to יט, כ, כא and on to ל) and A to
-  Z, then AA and on, in English.
+- Letters: Hebrew numerals (א to י, יא to יד, טו, טז, יז to יט, כ, כא and on to ל).
 - States: resting, traced, active (the current filter), open (incomplete or invalid). A mark is hidden from
   assistive technology where a name says it (`condition B`) and is its name elsewhere.
 - Text parts, as Design H2 of the dc-contracts plan defines them: `TextPart { text, nodeId?, role? }`.
@@ -577,8 +622,7 @@ the save state.
 - States from the run. `succeeded` with zero: the Success state panel in place of the breakdown and the table.
   `capExceeded`: the Warning banner. `timed_out`: the Danger panel with the seconds. `failed` with
   `CONTROL_DEFINITION_OUTDATED`: the Warning panel naming the condition by its mark. `failed` otherwise: the Danger
-  panel with "run again". A search that matches nothing: the neutral panel. A run made in the other language: its
-  text is shown as stored, with a one-line note.
+  panel with "run again". A search that matches nothing: the neutral panel.
 
 ### M. Suggestions dialog
 
@@ -587,15 +631,15 @@ meanwhile. Each draft: a checkbox (none ticked at first), the name, the sentence
 evidence texts as chips, and "open in editor", which closes the dialog and opens `/controls/new` with the draft in
 router state. The main button counts the selection and is disabled at zero; it posts `/suggestions/accept`, then a
 toast, the dialog closes and the list reloads. A 422 marks the draft at the failing index. No suggestions: a
-sentence saying so. Opening the dialog saves and runs nothing. The e2e runs with no LLM key.
+sentence saying so. Opening the dialog saves and runs nothing.
 
 ### N. Translation keys and guards
 
 - Namespaces: `app`, `common`, `list`, `editor`, `results`, `suggestions`, `states`, `material`, `errors.<CODE>`,
   `errors.definition.<CODE>`. Sentence and reason text is not here: it arrives rendered (dc-contracts decision 3).
 - Hebrew text: the mock's wording wherever the mock shows the string, otherwise the voice of `docs/PRODUCT.md`
-  (action nouns, no gendered address, no database terms). English is written beside it, key for key.
-- Guard specs: `he.json` and `en.json` hold the same keys and no empty value; every code and every definition
+  (action nouns, no gendered address, no database terms).
+- Guard specs: `he.json` holds no empty value; every code and every definition
   error code of `contracts/errors.md` has its key; no Hebrew letter in `src/app/**/*.{ts,html}`; no hex colour
   outside `tokens.scss`, and no physical side (`left`, `right`, `margin-left`, `padding-right` and the like) in
   any stylesheet.
@@ -606,7 +650,7 @@ sentence saying so. Opening the dialog saves and runs nothing. The e2e runs with
   `contracts/`, read from disk: the six examples round-trip through `fromDefinition` and `toDefinition`; each
   invalid fixture's path resolves to the right node; the glossary lookups. One synthetic glossary with other
   entities proves nothing assumes the sample model.
-- `playwright.config.ts`: projects `mobile` 390×844, `tablet` 1024×768 and `desktop` 1440×900; `locale: 'he-IL'`,
+- `playwright.config.ts`: projects `mobile` 390×844 and `desktop` 1440×900; `locale: 'he-IL'`,
   `timezoneId: 'Asia/Jerusalem'`. `baseURL` is `E2E_BASE_URL` when it is set and `http://localhost:4200` when it
   is not. The `webServer` block (`ng serve` on 4200, reusing a running one) exists only when it is not set, so a
   run aimed at the build the api hosts starts no dev server. No `toHaveScreenshot` baselines:
@@ -666,8 +710,7 @@ left behind.
   at least one, each with its sentence and marks, none ticked. It shoots the dialog, ticks the first draft and
   creates it. The dialog has no rename, so the spec adds the tag to that item's `name` in the request on its way
   out (`route.continue` with the changed body). The id comes from the answer to `/suggestions/accept`; the control
-  is opened by that id and archived in the teardown. The gate is run on a stack with no `ANTHROPIC_API_KEY`: with
-  a key this spec is one paid `/suggest` call per project, up to 25 s each, and whoever starts it says so first.
+  is opened by that id and archived in the teardown.
 - **Shots.** `list.spec.ts` shoots the list before it creates anything (`gate-list`); `examples.spec.ts` shoots
   example 4 in the editor before the save (`gate-editor`) and its results (`gate-results`); `suggestions.spec.ts`
   shoots the dialog (`gate-suggestions`). Both projects write them, so `e2e/screenshots/desktop/` holds the four
@@ -732,7 +775,7 @@ five tasks.
   `docs/design.md` are this task's and stand under `## What`.
 - **`web/README.md`** holds what dc-delivery records as built: how to serve (the proxy to 5000), the unit tests,
   the two e2e folders, the gate command with `E2E_BASE_URL`, what the gate needs (the api, the engine and the db
-  healthy, no LLM key) and what it leaves (archived controls with `e2e-` in their names), the three projects, the
+  healthy) and what it leaves (archived controls with `e2e-` in their names), the two projects, the
   screenshot folder with the five gate shots, the build output folder.
 - **`notes.md`, "Hand-over to dc-delivery"**: the state of its asks; the as-built facts in ten lines at most; every
   cut of decision 7 that was taken, with the sentence dc-delivery must write about it; whether the gate ran on a
@@ -777,13 +820,11 @@ five tasks.
 - **The gate runs on a list it does not own** (decision 22). The rules of Design O are the defence, and phase 7
   checks them: two runs on a list that holds the six examples, with every untagged control compared before and
   after. If Kfir withholds the pre-load, dc-delivery's phase B1 is the first such run.
-- **With the examples loaded, the suggestions made without a key repeat controls the list already holds**: the
+- **With the examples loaded, the suggestions repeat controls the list already holds**: the
   engine proposes the rules of examples 2 to 5 (dc-engine decision 1) and dc-delivery loads all six (its decision
   5). No plan marks or hides a suggestion that exists, and creating one adds a second control with the same rule.
   A mark would need the api to compare definition hashes, which is a contract ask. Kfir decides whether it
   matters for the demo.
-- **A stack with an LLM key** makes the suggestions spec of the gate a paid `/suggest` call per project. The gate
-  is run without a key; with one, the spend is said first.
 - **Gate leftovers.** The api deletes nothing: each gate run adds about eighteen archived controls, all tagged, and
   a killed run can leave active ones. They are harmless to a later run, and a grader's database starts without
   them.

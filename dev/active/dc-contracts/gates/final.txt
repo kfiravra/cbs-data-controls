@@ -1,0 +1,201 @@
+# the Gate, from a clean container with rotated local passwords, on the tree of the scope-decision commit, 2026-11-10T21:39Z, branch feat/contracts at dd6eb34
+$ docker compose down -v
+ Container data-controls-db-1 Stopping 
+ Container data-controls-db-1 Stopped 
+ Container data-controls-db-1 Removing 
+ Container data-controls-db-1 Removed 
+ Volume data-controls_db-data Removing 
+ Network data-controls_default Removing 
+ Volume data-controls_db-data Removed 
+ Network data-controls_default Removed 
+exit=0
+$ docker compose up -d db && scripts/db-init.sh
+ Network data-controls_default Creating 
+ Volume data-controls_db-data Creating 
+ Volume data-controls_db-data Creating 
+ Network data-controls_default Creating 
+ Volume data-controls_db-data Created 
+ Volume data-controls_db-data Created 
+ Network data-controls_default Created 
+ Network data-controls_default Created 
+ Container data-controls-db-1 Creating 
+ Container data-controls-db-1 Created 
+ Container data-controls-db-1 Starting 
+ Container data-controls-db-1 Started 
+ Container data-controls-db-1 Running 
+ Container data-controls-db-1 Waiting 
+ Container data-controls-db-1 Healthy 
+ Container data-controls-db-init-run-c908dca1e372 Creating 
+ Container data-controls-db-init-run-c908dca1e372 Created 
+db-init: sql/00_database.sql
+db-init: sql/10_schemas.sql
+db-init: sql/20_hr_tables.sql
+db-init: sql/30_dq_tables.sql
+db-init: sql/40_logins.sql
+db-init: sql/50_indexes.sql
+db-init: sql/60_seed_hr.sql
+db-init: DataControls is ready on db,1433 (7 scripts)
+exit=0
+$ scripts/db-init.sh
+ Container data-controls-db-1 Running 
+ Container data-controls-db-1 Waiting 
+ Container data-controls-db-1 Healthy 
+ Container data-controls-db-init-run-6ee4991c2716 Creating 
+ Container data-controls-db-init-run-6ee4991c2716 Created 
+db-init: sql/00_database.sql
+db-init: sql/10_schemas.sql
+db-init: sql/20_hr_tables.sql
+db-init: sql/30_dq_tables.sql
+db-init: sql/40_logins.sql
+db-init: sql/50_indexes.sql
+db-init: sql/60_seed_hr.sql
+db-init: DataControls is ready on db,1433 (7 scripts)
+exit=0
+$ scripts/db-check.sh
+PASS structure: database collation
+PASS structure: server collation, which tempdb and #temp tables share
+PASS structure: schemas hr and dq
+PASS structure: the seven tables of hr and dq, and no other
+PASS structure: the indexes of 50_indexes.sql
+PASS permissions: dq_engine_ro reads hr.Employee
+PASS permissions: dq_engine_ro is refused a read of dq.Control (error 229)
+PASS permissions: dq_engine_ro is refused an UPDATE of hr.Employee (error 229)
+PASS permissions: dq_engine_ro is refused CREATE TABLE (error 262)
+PASS permissions: dq_app inserts into dq.Control (rolled back)
+PASS permissions: dq_app is refused a read of hr.Employee (error 229)
+PASS permissions: dq_app is refused CREATE TABLE (error 262)
+PASS permissions: public holds no permission on hr or dq
+PASS glossary: all 19 columns the glossary names exist for dq_engine_ro
+PASS glossary: every stored field's type fits its column
+PASS glossary: dq_engine_ro sees hr alone in INFORMATION_SCHEMA
+PASS hebrew: the seed is loaded: 191 names in hr
+PASS hebrew: no seeded name holds a question mark
+PASS hebrew: every seeded name starts with a letter of the Hebrew block
+PASS hebrew: ministry and department names read back byte for byte as sql/60_seed_hr.sql writes them
+       1071   רנא חורי  [c1,c2]
+       1072   אלעד ממן  [c1,c2]
+       1076   מוחמד אגבאריה  [c1,c2]
+       1077   ליאור בן שושן  [c1,c2]
+       1117   עומרי דאהר  [c1,c2]
+       1118   הדס עטיה  [c1,c2]
+PASS examples: active-in-inactive-department on 2026-11-01: 6 records, keys and matched ids as the example expects
+       104    מחלקת ארכיון רפואי  [c1,r1]
+       204    יחידת חינוך דיגיטלי  [c1,r1]
+       403    יחידת התחבורה הציבורית  [c1,r1]
+PASS examples: department-without-active-employees on 2026-11-01: 3 records, keys and matched ids as the example expects
+       1111   עוז ירושלמי  [c1,c2,c3]
+       1112   בתיה שוורץ  [c1,c2,c4]
+       1117   עומרי דאהר  [c1,c2,c3]
+PASS examples: inactive-ministry-salary-out-of-range on 2026-11-01: 3 records, keys and matched ids as the example expects
+       1051   אריאל מור  [c1,c2]
+       1052   רותם יוסף  [c1,c2]
+       1053   גל עמר  [c1,c2]
+PASS examples: minor-high-salary on 2026-11-01: 3 records, keys and matched ids as the example expects
+       1051   אריאל מור  [c1,c2]
+       1052   רותם יוסף  [c1,c2]
+       1053   גל עמר  [c1,c2]
+       1054   אביגיל טל  [c1,c2]
+PASS examples: minor-high-salary on 2026-10-31: 4 records, keys and matched ids as the example expects
+       1058   לאה בן דוד  [c1,c3]
+       1081   יובל שמש  [c1,c2]
+       1082   מורן אלבז  [c1,c2]
+       1083   אופיר דיין  [c1,c2]
+       1084   שני וולך  [c1,c3]
+       1085   ברק יעקב  [c1,c4]
+       1086   אחינועם לביא  [c1,c2,c3]
+       1087   צחי אפריים  [c5,c6]
+       1088   רבקה מימון  [c5,c6]
+       1115   אביב קדוש  [c1,c3]
+PASS examples: missing-mandatory-data on 2026-11-01: 10 records, keys and matched ids as the example expects
+       1061   אסף גרינברג  [c1]
+       1062   סיגל חזן  [c1]
+       1063   אסתר וקנין  [c1]
+PASS examples: termination-before-hire on 2026-11-01: 3 records, keys and matched ids as the example expects
+db-check: 27 passed, 0 failed (structure permissions glossary hebrew examples)
+exit=0
+$ uv run scripts/contracts-check.py
+contracts-check: ok, 5 checks passed (schema, glossary, agreement, examples, invalid fixtures)
+exit=0
+$ node --test .claude/hooks/tests/*.test.mjs
+      type: 'test'
+      ...
+    # Subtest: print-guard: path:line: code rows pass through
+    ok 6 - print-guard: path:line: code rows pass through
+      ---
+      duration_ms: 40.275456
+      type: 'test'
+      ...
+    1..6
+ok 33 - stop-check keeps file:line for the .NET, Angular, pyright and print-guard formats (2026-11-09)
+  ---
+  duration_ms: 229.035433
+  type: 'suite'
+  ...
+# Subtest: stop-check housekeeping (2026-11-01)
+    # Subtest: a touched file that was deleted since is dropped, so nothing runs for it
+    ok 1 - a touched file that was deleted since is dropped, so nothing runs for it
+      ---
+      duration_ms: 28.461224
+      type: 'test'
+      ...
+    # Subtest: the same errors twice clear the touched list so a red session is not re-checked every Stop
+    ok 2 - the same errors twice clear the touched list so a red session is not re-checked every Stop
+      ---
+      duration_ms: 93.186067
+      type: 'test'
+      ...
+    1..2
+ok 34 - stop-check housekeeping (2026-11-01)
+  ---
+  duration_ms: 121.799258
+  type: 'suite'
+  ...
+# Subtest: stop-check falls back to the dirty tree when nothing was recorded (2026-11-01 bypass-mode blind spot)
+    # Subtest: dirty untracked file -> checks run once, then not again for the same tree
+    ok 1 - dirty untracked file -> checks run once, then not again for the same tree
+      ---
+      duration_ms: 111.175789
+      type: 'test'
+      ...
+    # Subtest: a content change to the dirty file re-arms the fallback
+    ok 2 - a content change to the dirty file re-arms the fallback
+      ---
+      duration_ms: 105.267319
+      type: 'test'
+      ...
+    # Subtest: a recorded touched list takes precedence over the tree
+    ok 3 - a recorded touched list takes precedence over the tree
+      ---
+      duration_ms: 19.793068
+      type: 'test'
+      ...
+    1..3
+ok 35 - stop-check falls back to the dirty tree when nothing was recorded (2026-11-01 bypass-mode blind spot)
+  ---
+  duration_ms: 239.248339
+  type: 'suite'
+  ...
+# Subtest: stop-check without jq reports and exits 0 (2026-11-01 fail-open)
+    # Subtest: prints the install hint instead of pretending to check
+    ok 1 - prints the install hint instead of pretending to check
+      ---
+      duration_ms: 59.438185
+      type: 'test'
+      ...
+    1..1
+ok 36 - stop-check without jq reports and exits 0 (2026-11-01 fail-open)
+  ---
+  duration_ms: 59.535384
+  type: 'suite'
+  ...
+1..36
+# tests 226
+# suites 36
+# pass 226
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 5770.653384
+exit=0
+overall=0

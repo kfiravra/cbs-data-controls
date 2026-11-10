@@ -1,6 +1,6 @@
 ---
 name: dc-web
-description: "Repo facts for web/, the Angular 21 client (standalone components and signals, ngx-translate he and en, Angular Material in RTL, Vitest, Playwright at 390 and 1440). Loads on its own when files under web/ are touched. Use when building screens, the condition builder, reusable components, translation keys, error display, responsive layout or e2e specs."
+description: "Repo facts for web/, the Angular 21 client (standalone components and signals, ngx-translate with he.json, Angular Material in RTL, Vitest, Playwright at 390 and 1440). Loads on its own when files under web/ are touched. Use when building screens, the condition builder, reusable components, translation keys, error display, responsive layout or e2e specs."
 paths:
   - "web/**"
 ---
@@ -9,8 +9,9 @@ paths:
 
 Angular 21 workspace in `web/` (project `web`): standalone components only, signals for screen and editor state,
 services for HTTP and the glossary cache, no global store library. Zoneless (the v21 default) with `OnPush`
-components. `@ngx-translate/core` and `@ngx-translate/http-loader` with `he` as the initial and fallback language
-and `en` beside it; Angular Material and the CDK; Vitest through `ng test` (the v21 default); Playwright for e2e.
+components. `@ngx-translate/core` and `@ngx-translate/http-loader` with `he` as the one language (the texts stay
+keyed by language; there is no `en.json` and no language switch); Angular Material and the CDK; Vitest through
+`ng test` (the v21 default); Playwright for e2e.
 Screens follow architecture §8: controls list, control editor, run results, suggestions dialog. The visual design
 comes from `docs/design.md` (written before this task), worked through `/impeccable`. Conventions:
 [.claude/rules/typescript.md](../../rules/typescript.md).
@@ -41,11 +42,11 @@ playwright install --with-deps chromium` needs sudo on WSL: ask the user to run 
   `provideTranslate*` calls beside it are ignored.
 - New CLI projects serve `public/` only. Add `{ "glob": "**/*", "input": "src/assets", "output": "assets" }` to the
   build `assets` in `angular.json`, or `/assets/i18n/he.json` 404s and every string renders as its key.
-- A missing key renders the key itself (`errors.QUERY_TIMEOUT`), silently. A unit test asserts that `he.json` and
-  `en.json` hold the same keys and cover every error code and reason key in `contracts/errors.md`.
-- Language and direction are bootstrap-time: set `<html lang dir>` from the saved language before
-  `bootstrapApplication` (`he` → `rtl`). `LOCALE_ID` is fixed for the app's lifetime, so a language switch stores
-  the choice and reloads. Register the Hebrew locale data (`@angular/common/locales/he`) for dates and numbers.
+- A missing key renders the key itself (`errors.QUERY_TIMEOUT`), silently. A unit test asserts that `he.json`
+  covers every error code in `contracts/errors.md`. Reason and sentence text is
+  not in these files: it arrives rendered from the engine, whose one source is the glossary.
+- Language and direction are bootstrap-time: set `<html lang="he" dir="rtl">` before `bootstrapApplication`.
+  `LOCALE_ID` is fixed for the app's lifetime. Register the Hebrew locale data (`@angular/common/locales/he`) for dates and numbers.
 - RTL: logical properties only (`margin-inline-start`, `padding-inline`, `inset-inline-end`, `text-align: start`,
   `border-inline-start`). Material components follow the document direction; check icons that point (arrows,
   chevrons) and flip the ones that do not mirror under `[dir=rtl]`.
@@ -65,4 +66,5 @@ playwright install --with-deps chromium` needs sudo on WSL: ask the user to run 
 ## Read before changing
 
 [architecture.md](../../../docs/architecture.md) §8 (client), §9 (flows), §12 (errors); `docs/design.md`;
-`contracts/api.md` for payloads; `contracts/errors.md` for codes and reason keys.
+`contracts/api.md` for payloads; `contracts/errors.md` for codes, reason keys and part roles (the text of a reason
+comes in the payload, never from i18n).

@@ -268,7 +268,7 @@ are normative; the prose says how to apply them. The mock and its screenshots ar
 
 A statistical table is trusted because every figure can be traced: a small mark beside the number leads to the note
 that explains it. This interface works the same way. Every condition of a control carries a mark, a letter given in
-order (א, ב, ג; A, B, C in English), and the mark travels with the condition wherever it is spoken of: on its row in
+order (א, ב, ג), and the mark travels with the condition wherever it is spoken of: on its row in
 the builder, on its clause in the sentence that reads the control back, on its line in the breakdown of a run, and
 beside every reason a record is listed. A user who asks "why is this record here" follows a letter, not a query.
 
@@ -380,7 +380,7 @@ step. The colour is the third signal, not the first.
 
 **Display, body and label font:** IBM Plex Sans Hebrew, with IBM Plex Sans and `system-ui` behind it. One family
 for everything. Its Hebrew and its Latin letters were drawn together, so Hebrew text with an English name or a
-number in it stays one texture, and the same font serves the English interface.
+number in it stays one texture.
 
 **Character:** an engineer's grotesque with a measured Hebrew: even, a little square, at ease in a table.
 
@@ -414,7 +414,7 @@ display tracking is not applied.
 **The Thirteen Floor Rule.** No text is smaller than 0.8125rem. Text the user must read to act (a message, a
 reason, an instruction) is 1rem; 0.875rem is for support beside it.
 
-**The Standing Numbers Rule.** Digits are Western (0 to 9) in both languages. Plex's digits share one width, so
+**The Standing Numbers Rule.** Digits are Western (0 to 9). Plex's digits share one width, so
 columns of numbers align without a feature switch. Numbers, dates, currency and durations are formatted by the
 locale (`he-IL`: `15,000 ₪`, `10.11.2026`, `09:12`), and a range is written with a word (`1 עד 10 מתוך 23`), not a
 dash, so its two ends cannot swap sides in right-to-left text.
@@ -455,7 +455,7 @@ row on a phone therefore take the same stacked form. Each level of nesting inden
 Right to left:
 
 - Only logical properties (`margin-inline-start`, `inset-inline-end`, `border-start-start-radius`,
-  `text-align: start`). The same rules serve English, left to right.
+  `text-align: start`), so the layout holds for any language the interface gains later, whatever its direction.
 - Arrows and chevrons follow the reading direction: back points to the start edge, next page to the end edge. Icons
   that show a thing and not a direction (run, search, edit, copy, delete) are never mirrored.
 - A meter fills from the start edge. The builder's rail stands on the start edge. The side column of a split
@@ -498,8 +498,8 @@ The suggestions action uses the light bulb; no sparkle stands for intelligence.
 
 ### App bar
 
-The frame of every screen. Bar ground, 56px, the brand mark and name at the start linking home, the language
-switch (a text button) at the end. It scrolls with the page.
+The frame of every screen. Bar ground, 56px, the brand mark and name at the start linking home. There is no
+language switch: the interface is in Hebrew alone. It scrolls with the page.
 
 ### Buttons
 
@@ -508,7 +508,7 @@ Plain and exact; they step, they do not glow.
 - **Shape:** 44px high, 24px side padding, 4px radius, Body strong. Small: 36px, 12px, Small strong, never below
   640px.
 - **Primary:** Action ground, On action text. One per view. **Tonal:** Tonal ground, Ink text; every other
-  button. **Text:** Ink text with an underline; cancel, a banner's action, the language switch.
+  button. **Text:** Ink text with an underline; cancel, a banner's action.
 - **On the sentence field:** the main action is Ground with Ink text; the second is On action tonal with On action
   text.
 - **Icon button:** 44px square, Muted icon, Tonal ground on hover; always with a name for assistive technology and
@@ -545,7 +545,7 @@ The signature of the system.
 
 - **Mark:** 22px square (wider for two letters), 4px radius, Action tint ground, Action letter at weight 600.
   Letters follow the order of the conditions in the definition, top to bottom, and are recomputed on every edit:
-  Hebrew numerals (א to י, then יא, יב and on) and A, B, C in English. The mark is display only: it is derived
+  Hebrew numerals (א to י, then יא, יב and on). The mark is display only: it is derived
   from the condition's stable id and never stored. On a run, the marks are those of the version that ran.
 - **States:** resting; **traced**, filled with Action while its condition is under the pointer or in focus
   anywhere on the screen; **active**, filled while it is the current filter; **open**, an outline in Danger while
@@ -712,7 +712,7 @@ two signs of waiting.
   nouns (`שמירה`, `הרצה`), no gendered address, no database terms.
 - **Do** take every colour, size, radius and duration from the tokens; a component holds no literal value.
 - **Do** keep every control 44px high on a phone and every label visible above its field.
-- **Do** build each screen at 390 first and check it at 390, 1024 and 1440 in Hebrew, and once in English.
+- **Do** build each screen at 390 first and check it at 390 and 1440.
 
 ### Don't:
 

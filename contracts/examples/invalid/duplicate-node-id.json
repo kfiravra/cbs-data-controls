@@ -1,0 +1,35 @@
+{
+  "layer": "semantic",
+  "expected": {
+    "code": "DUPLICATE_NODE_ID",
+    "path": "/where/children/1/id"
+  },
+  "definition": {
+    "schemaVersion": 1,
+    "rootEntity": "employee",
+    "where": {
+      "type": "group",
+      "op": "and",
+      "children": [
+        {
+          "type": "condition",
+          "id": "c1",
+          "left": {
+            "field": "status"
+          },
+          "operator": "eq",
+          "value": "active"
+        },
+        {
+          "type": "condition",
+          "id": "c1",
+          "left": {
+            "field": "salary"
+          },
+          "operator": "gt",
+          "value": 15000
+        }
+      ]
+    }
+  }
+}

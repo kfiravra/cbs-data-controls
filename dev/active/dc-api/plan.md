@@ -1,5 +1,6 @@
 # dc-api: the application API (.NET 10)
 Created: 2026-11-10 · Branch: feat/api (worktree `../cbs-api`, cut from origin/main once dc-contracts is merged; kickoff §5)
+Amended: 2026-11-10 by the dc-contracts session on Kfir's scope decision, with the lines from the merged contracts (the two sections before the Phases)
 
 ## Goal
 
@@ -86,11 +87,10 @@ Settled here, inside the architecture:
 
 From dc-delivery, carried by Kfir (2026-11-10, after that task's plan was written):
 
-25. **The published api stands alone.** `dotnet publish src/DataControls.Api -c Release -r win-x64
-    --self-contained true` must give a working app that reads nothing from the repository at run time:
-    dc-delivery ships that folder in an offline bundle and starts the executable from its own script, on a
-    Windows with no .NET. Design I says what makes it so. It is tried once in Phase 5, before the gate, and
-    `notes.md` says whether it ran.
+25. **The published api stands alone.** `dotnet publish src/DataControls.Api -c Release` must give a working app
+    that reads nothing from the repository at run time: dc-delivery's image and its from-source instructions both
+    start the published app. Design I says what makes it so. (The win-x64 self-contained publish and its trial on
+    the Windows host went with the offline bundle: the scope decision below.)
 26. **Documentation has an owner.** This task writes the api section of `README.md`, the api block of
     `.env.example` and its own harness lines (`.claude/skills/dc-api/SKILL.md`). The §17 documents
     (`docs/architecture.md` among them), `docs/submission.he.md` and the rest of the README are dc-delivery's
@@ -101,14 +101,51 @@ From dc-delivery, carried by Kfir (2026-11-10, after that task's plan was writte
     words, what the fix commit changed, what was left and why, and what Kfir rejected or rewrote. A review that
     found nothing is logged as that, with its range. No verdict stands in for the findings.
 
+## Scope decision (Kfir, 2026-11-10; written in by the dc-contracts session, which carried it through all five plans)
+
+Applied to the text of this plan. Where a line still disagrees with this section, this section holds.
+
+1. **Hebrew only.** The glossary lists `he` alone. The mechanism stays: `Accept-Language` is resolved against the
+   glossary's `languages`, a language that is not listed gets `defaultLanguage`, the resolved value is forwarded
+   and stored with the run. No test asks for English text; one asks for an unlisted language and gets Hebrew.
+2. **Suggestions are heuristics only.** The engine's `/suggest` answers `{ items }`: the `source` member is gone
+   from `contracts/api.md`. No timeout figure for a keyed `/suggest` remains.
+3. **No offline Windows bundle.** No win-x64 self-contained publish and no trial on the Windows host. The publish
+   is framework-dependent, for the image and for the from-source instructions; the rules of Design I stay,
+   because both still start a published app from a folder that is not the repository.
+
+## Lines from dc-contracts as it merges (2026-11-10)
+
+`contracts/` wins over this plan (Phase 1 opens with the diff). These points were pinned there, most of them in
+the review of the branch:
+
+- **A run whose snapshot cannot be stored** after the engine answered is closed `failed` with `INTERNAL_ERROR` and
+  no rows (`api.md`, `Run`). It is never left `running`; only a crash of the process does that.
+- **`Run.rootEntity`** is the `rootEntity` of the version's stored definition. No column holds it, and the
+  control's `root_entity_key` is the current version's.
+- **Requests**: a body over 1 MB answers 413 and a body that is not JSON 415, both as a `Problem` with
+  `REQUEST_INVALID` and no `errors`; `page` is 1 to 1,000,000; a `definition` that is not a JSON object is 400
+  `MALFORMED`; a record key has at most 64 characters, as the column.
+- **Results search** takes `%`, `_` and `[` literally, is trimmed first, and an empty one filters nothing.
+- **Suggestions**: the api checks `rootEntity` and `max` and sends the engine exactly those two members (the
+  engine rejects a member it does not know).
+- **`NETWORK_ERROR`** is a code the client derives; the api never sends it. Every other code of `errors.md`
+  keeps one status, except `REQUEST_INVALID` (400, 413, 415).
+- **The public glossary** has a shape table in `api.md` now, with `identifier` and `visible` among the field
+  members; the api passes it through unchanged.
+- **The standards** now word the boundary rule as the contract does: an error crosses as a code and params;
+  rendered sentences and reasons are the one text that crosses, and the api stores and serves them untouched.
+- **`dq.Run.language`** still accepts `he` and `en` in its CHECK constraint (`sql/` was not changed); the api
+  writes only what the glossary lists.
+
 ## Phases
 
 Every phase ends the same way: tick each step as it finishes and update `notes.md` State and Next, run
 `/check --tests`, save the verify output under `gates/phase-N.txt`, `/phase-review api`, one
 `fix(api): review fixes` commit, and a Log line in `notes.md` written as decision 27 asks:
 `<date> Phase N review (diff <sha>..<sha>): standards c/w/i, plan c/w/i. <file>: <finding>; … Fixed in <sha>: …
-Left: … (why). Kfir rejected or rewrote: …`. State the spend before a review (one reviewer agent, opus), before
-the live pass (minutes against live services) and before the publish trial, then wait for the word. Before every
+Left: … (why). Kfir rejected or rewrote: …`. State the spend before a review (one reviewer agent, opus) and
+before the live pass (minutes against live services), then wait for the word. Before every
 `dotnet test`: `pgrep -fa "pytest|dotnet test|ng test|vitest|playwright"` (the `playwright-mcp` servers match
 the pattern and are not suites). Work test-first at the seams of Design G (`/tdd`). The Design section is the
 specification each step builds from. Where `contracts/api.md` or `contracts/errors.md` says otherwise, the
@@ -212,8 +249,8 @@ Commit: `feat(api): runs, result snapshots and the results query`
 - [ ] `LiveEngineTests` per Design G, skipped unless `DC_LIVE=1`.
 - [ ] `README.md`: the api section only (run, configure, test, `/api/docs`, the publish command). Nothing else
       in the README and no file under `docs/` (decision 26).
-- [ ] The publish trial per Design I, once, after the tests of this phase are green and before its review, so a
-      fix it calls for lands in this phase. Write the Log line whether it ran or not.
+- [ ] The published app started once from another directory, per Design I, after the tests of this phase are
+      green and before its review, so a fix it calls for lands in this phase.
 - [ ] Tests: `/suggestions` forwards the body and the language and returns the engine's body; accept creates
       all or none and names the failing index; the OpenAPI document lists every contract path; `/api/docs`
       answers; `/` and an unknown client path return `index.html`; an unknown api path is a 404 problem; a
@@ -230,8 +267,8 @@ Commit: `feat(api): suggestions, openapi and static hosting`
 - [ ] Live pass, if the engine worktree answers `GET /health`: state the minutes and wait, then
       `DC_LIVE=1 dotnet test --filter Category=Live`, and walk `api/requests.http` once. If the engine is not up,
       write the hand-off to dc-delivery into `notes.md`; the tests are ready to run there.
-- [ ] `notes.md` holds the publish trial's Log line (ran, or published and not started, with the reason) and a
-      Log line per review in the form of decision 27.
+- [ ] `notes.md` holds the Log line of the start from another directory (Design I) and a Log line per review in
+      the form of decision 27.
 - [ ] `/ship`. In its docs-drift step, edit only what decision 26 gives this task; everything else goes, item by
       item, into the PR body under a fifth heading, "Docs for dc-delivery", taken from the list in `notes.md`
       and from the step's own table. Then the PR and the merge on Kfir's word.
@@ -295,14 +332,14 @@ Facts that bite here:
 | `Engine__BreakerMinimumThroughput`, `Engine__BreakerBreakDuration` | `5`, `00:00:15` | at least 2; at least 500 ms |
 | `Runs__RowCap` | `5000` | 1 to 100000 |
 | `Runs__TimeZone` | `Asia/Jerusalem` | resolves on this machine |
-| `Runs__DefaultLanguage` | `he` | `he` or `en` |
+| `Runs__DefaultLanguage` | `he` | a language the glossary lists; it stands in for the glossary's `defaultLanguage` until the glossary is loaded |
 | `Glossary__CacheMinutes`, `Glossary__WarmUpOnStart` | `10`, `true` | not negative |
 | `Cors__AllowedOrigins__0` and on | none | absolute origins, never `*` |
 
 The built connection string is `Server=tcp:<host>,<port>;Database=DataControls;User ID=dq_app;Password=…;
 Encrypt=True;TrustServerCertificate=True`: SqlClient encrypts by default and the container's certificate is
-self-signed. Compose passes the three variables; dc-delivery's Windows script passes `ConnectionStrings__Dq`
-instead, for a named instance with no port, so nothing but the builder of that string may assume a host and a
+self-signed. Compose passes the three variables; dc-delivery's from-source instructions pass
+`ConnectionStrings__Dq` instead for a named instance with no port, so nothing but the builder of that string may assume a host and a
 port. The Development `.env` source finds the file by walking up from the app's base directory (the content
 root, Design I), reads `KEY=value` lines, maps `__` to `:` and is added below the environment variables; outside
 Development it does not exist. A missing password fails the start with a message that names `DQ_APP_PASSWORD`
@@ -356,8 +393,9 @@ static files · controllers, `/openapi/v1.json`, `/api/docs` · the `/api/{**res
   becomes `MALFORMED`. Bodies are capped at 1 MB.
 - **Correlation id**: `X-Correlation-Id` is taken when it matches `^[A-Za-z0-9._-]{1,64}$`, else a new GUID in
   `N` form. It is put on the response, in a log scope, in every problem and on every engine call.
-- **Language**: the primary subtag of the first range of `Accept-Language` when it is `he` or `en`, else
-  `Runs:DefaultLanguage` (the engine's rule, word for word).
+- **Language**: the primary subtag of the first range of `Accept-Language` when the glossary's `languages` list
+  it, else the glossary's `defaultLanguage` (the engine's rule, word for word; `Runs:DefaultLanguage` until the
+  glossary is loaded). The glossary lists `he` alone, so every request resolves to Hebrew.
 - **Static hosting**: `UseDefaultFiles` and `UseStaticFiles` over the `wwwroot` beside the executable (it is
   missing in development and in a bare publish; dc-delivery copies the web build there before the start),
   `index.html` answered with `Cache-Control: no-cache`, the catch-all before `MapFallbackToFile("index.html")`.
@@ -376,7 +414,7 @@ One typed client, `EngineClient`: `GetHealthAsync`, `GetGlossaryAsync`, `Validat
   The options validator rejects a sampling duration under twice the attempt timeout and a total timeout under
   the attempt timeout.
 - **Forwarding**: a `DelegatingHandler` reading `IHttpContextAccessor` adds the correlation id and the resolved
-  language (`he` or `en`, not the raw header). Outside a request it sends a new id and the default language.
+  language (the resolved one, not the raw header). Outside a request it sends a new id and the default language.
 - **Failures** become one `EngineException` with a code: the engine's own code and status when the body is a
   problem; `ENGINE_UNAVAILABLE` for a connection error, a timeout rejection and an open circuit;
   `INTERNAL_ERROR` for any other status or a body that is not the contract.
@@ -504,8 +542,7 @@ functions directly (the hasher, the three corrections of schema errors, the lang
     definition; 20 items at most.
 12. 201 responses carry `Location`. `GET /health` is always 200.
 13. `contracts/api.md` states the engine's worst-case time: the engine plan gives 30 s per statement and two
-    statements per run, so about 60 s for `/run`, and up to 25 s for `/suggest` with a key. The api's attempt
-    timeout (75 s by default) sits above both.
+    statements per run, so about 60 s for `/run`. The api's attempt timeout (75 s by default) sits above it.
 14. A name has 1 to 200 characters and a description at most 1000; names are not unique.
 
 From the interview: counts are exact under the cap (decision 6); `PUT` on an archived control is 409 (decision
@@ -513,12 +550,11 @@ From the interview: counts are exact under the cap (decision 6); `PUT` on an arc
 
 ### I. The published api (decision 25)
 
-`cd api && dotnet publish src/DataControls.Api -c Release -r win-x64 --self-contained true` writes
-`src/DataControls.Api/bin/Release/net10.0/win-x64/publish/`. dc-delivery copies the Angular build into that
-folder's `wwwroot`, ships it as `prebuilt/api-win-x64/` and starts `DataControls.Api.exe` from `run-all.ps1`, with
-the script's working directory and with `ConnectionStrings__Dq`, `Engine__BaseUrl`,
-`ASPNETCORE_ENVIRONMENT=Production` and `ASPNETCORE_URLS`. Its Linux path and its image publish without a
-runtime identifier and start the app the same way.
+`cd api && dotnet publish src/DataControls.Api -c Release` writes
+`src/DataControls.Api/bin/Release/net10.0/publish/`. dc-delivery copies the Angular build into that folder's
+`wwwroot` and starts the app from it, in the image and in the from-source instructions, with
+`ConnectionStrings__Dq` (or the three database variables), `Engine__BaseUrl`,
+`ASPNETCORE_ENVIRONMENT=Production` and `ASPNETCORE_URLS`.
 
 What makes the folder stand alone:
 - **The content root is the app's own folder, not the working directory**:
@@ -535,27 +571,16 @@ What makes the folder stand alone:
   that keeps EF's statements out of Information logs is set in code, so it does not depend on that file.
 - The time zone check of Design B, so a Windows without ICU still starts.
 
-The trial (Phase 5, once):
-1. Say first what it costs and does: the first win-x64 publish downloads the Windows runtime packs, and the
-   trial starts a process on the Windows host. Wait for the word.
-2. Publish. Note the size of the folder and that it holds `DataControls.Api.exe`, `appsettings.json` and
-   `Microsoft.Data.SqlClient.SNI.dll`.
-3. Copy the folder to a place outside the repository on the Windows drive (under `/mnt/c/Users/…/AppData/Local/
-   Temp/`) and put a one-line `index.html` into its `wwwroot`.
-4. Start the executable on the Windows host through interop (`cmd.exe` or `powershell.exe`, from a `/mnt/c`
-   working directory that is not the app's folder) on a free port that is not 5000, with the four variables
-   above. The connection string points at `localhost,<DB_PORT>`, where Docker Desktop publishes the container;
-   the password travels in the child's environment and is never echoed or logged. The host had no .NET on
-   2026-11-10, which is the point of the test; if that changed, say so in the Log line.
-5. Ask it from the Windows side (`curl.exe`): `/api/v1/health` is 200; a schema-layer fixture posted to
-   `/api/v1/controls/validate` is 422 `SCHEMA_VIOLATION` (with no engine reachable this proves the embedded
-   schema); `/openapi/v1.json` is 200; `/` and `/runs/1` return the index. With the database up, `database` is
-   `ok` and a `GET /api/v1/controls` is 200.
-6. Stop the process and delete the copied folder.
-7. The Log line: the date, the command, the folder's size, the Windows build, the directory it was started from,
-   each request with its status, or the exact error text if it did not start. "Ran" is written only when step 5
-   answered. If the host could not be used (no interop, no word from Kfir, a prompt that needs a hand), the line
-   says "published, not started" and why, and dc-delivery's bundle gate is then the first real start.
+The start from another directory (Phase 5, once, on WSL):
+1. Publish. Copy the folder to a place outside the repository and put a one-line `index.html` into its `wwwroot`.
+2. Start the app from a working directory that is not its folder, on a free port that is not 5000, with the
+   variables above; the password travels in the child's environment and is never echoed or logged.
+3. Ask it: `/api/v1/health` is 200; a schema-layer fixture posted to `/api/v1/controls/validate` is 422
+   `SCHEMA_VIOLATION` (with no engine reachable this proves the embedded schema); `/openapi/v1.json` is 200; `/`
+   and `/runs/1` return the index. With the database up, `database` is `ok` and a `GET /api/v1/controls` is 200.
+4. Stop the process and delete the copied folder.
+5. The Log line: the date, the command, the directory it was started from, each request with its status, or the
+   exact error text if it did not start.
 
 ## Risks
 
@@ -580,25 +605,23 @@ The trial (Phase 5, once):
 - **Snapshot insert time** for 5,000 rows is measured in Phase 4, not assumed.
 - **Machine**: Docker Desktop was not running on 2026-11-10 19:44, and the database must be up from the main
   tree before any test. A new worktree has no `.env`; the api then fails at start with a message that says so.
-- **The publish trial cannot run on the Windows host** (interop off, a security prompt, no go-ahead from
-  Kfir). Then the entry is "published, not started", never "ran"; a start of the same publish on WSL
-  (`-r linux-x64`, from a folder outside the repository) may be added as a weaker check and is labelled as that.
 - **A Windows without ICU, or with a blocked port.** The time zone fallback covers the first; the second is
   `ASPNETCORE_URLS`. Both are named in the api section of the README.
 - **A document this task does not own goes stale** (architecture §7, §13 and §14, the assumptions). The list in
   `notes.md` is kept as the work goes, not rebuilt at `/ship`.
 - **Time.** Cut in this order and record it in notes: the CORS list, Swagger UI, `requests.http`, the live
-  tests (they move to dc-delivery). The §19 gate items, the publish trial and the two notes lists are never cut.
+  tests (they move to dc-delivery). The §19 gate items and the two notes lists are never cut.
 
 ## Out of scope
 
-- The api's Dockerfile and compose service, copying the web build into `wwwroot`, the bundle and the run-all
-  scripts (all dc-delivery). What they need from here: the build reads `contracts/control-definition.schema.json`
+- The api's Dockerfile and compose service, copying the web build into `wwwroot`, the from-source instructions
+  (all dc-delivery). What they need from here: the build reads `contracts/control-definition.schema.json`
   (so the image builds from the repository root) and the run reads nothing of the repository (Design I); the app
   listens where `ASPNETCORE_URLS` or the image says; Linux needs tzdata for `Asia/Jerusalem`.
 - Retention inside the api (decision 8), a sweeper for runs left `running` (decision 12), un-archive (decision 7).
 - A stub engine process for dc-web (decision 4).
 - Authentication, authorization, audit, rate limiting, asynchronous runs, scheduling, export (§10, §20).
+- A self-contained or win-x64 publish, English text, anything for an LLM step (the scope decision).
 - EF migrations: `sql/` owns the schema.
 - The §17 documents, `docs/submission.he.md` and the README outside the api section (dc-delivery, decision 26):
   not edited here, even when a line in them is wrong; the line goes to "Docs for dc-delivery".

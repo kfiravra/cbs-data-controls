@@ -8,16 +8,18 @@
 # A "skip" label carries a reason instead of a command.
 #
 # The verify matrix (.claude/CLAUDE.md):
-#   sql      sql/, scripts/db-*.sh, docker-compose.yml  --tests: sql-init, sql-check
-#   engine   engine/                                    engine-ruff, engine-pyright; --tests: engine-test
-#   api      api/                                       api-build, api-format; --tests: api-test
-#   web      web/                                       web-ngc, web-eslint; --tests: web-test, web-build
-#   contracts/**/*.json counts as engine + api + web: it is the one channel between them.
+#   sql       sql/, scripts/db-*.sh, docker-compose.yml   --tests: sql-init, sql-check
+#   contracts contracts/, scripts/contracts-check.py      contracts-check (uv run scripts/contracts-check.py)
+#   engine    engine/                                     engine-ruff, engine-pyright; --tests: engine-test
+#   api       api/                                        api-build, api-format; --tests: api-test
+#   web       web/                                        web-ngc, web-eslint; --tests: web-test, web-build
+#   contracts/**/*.json also counts as engine + api + web: it is the one channel between them.
 #   Service source (.py in engine/, .cs in api/, .ts in web/) also gets print-guard.
 #   .claude/hooks/ gets the hook self-test.
 # A part whose directory does not exist yet emits nothing. A part whose directory exists
 # without its manifest or tool emits a skip line that says what is missing.
-# Order: sql, engine, api, web, print-guard, hooks (sql-init first: everything after it reads the db).
+# Order: sql, contracts, engine, api, web, print-guard, hooks (sql-init first: everything after
+# it reads the db; contracts-check next: the three services read what it checks).
 set -uo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/tools.sh"
 
@@ -32,7 +34,7 @@ for a in "$@"; do
   esac
 done
 
-want_sql=0 want_engine=0 want_api=0 want_web=0 want_hooks=0
+want_sql=0 want_contracts=0 want_engine=0 want_api=0 want_web=0 want_hooks=0
 web_lint=() guard_files=()
 
 if [[ ${#paths[@]} -gt 0 ]]; then
@@ -49,7 +51,8 @@ if [[ ${#paths[@]} -gt 0 ]]; then
       web/*)
         want_web=1
         case "$rel" in web/*.ts|web/*.html) web_lint+=("${rel#web/}") ;; esac ;;
-      contracts/*.json) want_engine=1 want_api=1 want_web=1 ;;
+      contracts/*.json) want_contracts=1 want_engine=1 want_api=1 want_web=1 ;;
+      contracts/*|scripts/contracts-check.py) want_contracts=1 ;;
       .claude/hooks/*) want_hooks=1 ;;
     esac
     case "$rel" in
@@ -59,9 +62,10 @@ if [[ ${#paths[@]} -gt 0 ]]; then
 fi
 
 if [[ $all -eq 1 ]]; then
-  want_sql=1 want_engine=1 want_api=1 want_web=1 want_hooks=1
+  want_sql=1 want_contracts=1 want_engine=1 want_api=1 want_web=1 want_hooks=1
 fi
 [[ -d "$DC_ROOT/sql" || -e "$DC_ROOT/scripts/db-init.sh" ]] || want_sql=0
+[[ -d "$DC_ROOT/contracts" || -e "$DC_ROOT/scripts/contracts-check.py" ]] || want_contracts=0
 [[ -d "$DC_ROOT/engine" ]] || want_engine=0
 [[ -d "$DC_ROOT/api" ]] || want_api=0
 [[ -d "$DC_ROOT/web" ]] || want_web=0
@@ -81,6 +85,16 @@ if [[ $want_sql -eq 1 && $tests -eq 1 ]]; then
     emit sql-check . "scripts/db-check.sh"
   else
     skip "scripts/db-check.sh missing or not executable: sql-check cannot run"
+  fi
+fi
+
+if [[ $want_contracts -eq 1 ]]; then
+  if [[ ! -f "$DC_ROOT/scripts/contracts-check.py" ]]; then
+    skip "scripts/contracts-check.py missing: contracts-check cannot run"
+  elif ! command -v uv >/dev/null 2>&1; then
+    skip "uv not found on PATH: contracts-check runs as uv run scripts/contracts-check.py"
+  else
+    emit contracts-check . "uv run scripts/contracts-check.py"
   fi
 fi
 

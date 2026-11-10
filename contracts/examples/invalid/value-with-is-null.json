@@ -1,0 +1,26 @@
+{
+  "layer": "schema",
+  "expected": {
+    "code": "SCHEMA_VIOLATION",
+    "path": "/where/children/0"
+  },
+  "definition": {
+    "schemaVersion": 1,
+    "rootEntity": "employee",
+    "where": {
+      "type": "group",
+      "op": "and",
+      "children": [
+        {
+          "type": "condition",
+          "id": "c1",
+          "left": {
+            "field": "email"
+          },
+          "operator": "is_null",
+          "value": "none"
+        }
+      ]
+    }
+  }
+}

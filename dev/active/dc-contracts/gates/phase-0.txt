@@ -1,0 +1,49 @@
+dc-contracts phase 0 gate, 2026-11-10
+command: node --test .claude/hooks/tests/*.test.mjs
+tree: main with the edits that became bce225b (run before the commit); exit 0
+below: the 36 suite lines and the totals of that run (the full TAP output is 1606 lines and is not kept)
+
+ok 1 - git-guard blocks working-tree-destructive commands
+ok 2 - git-guard allows ordinary commands
+ok 3 - git-guard asks for push, rebase, PRs and container recreates
+ok 4 - git-guard checks each command segment on its own (2026-11-01 whole-line exemption)
+ok 5 - git-guard scans quoted text when an interpreter runs it (2026-11-01 bash -c bypass)
+ok 6 - git-guard ignores prose and path names (2026-09-02 heredoc false block)
+ok 7 - git-guard knows the other ways to discard work (2026-11-01 probe gaps)
+ok 8 - git-guard edge inputs
+ok 9 - git-guard override file
+ok 10 - git-guard honours /guard off
+ok 11 - git-guard fails closed without jq (2026-11-01 fail-open)
+ok 12 - subagents never inherit the session model (2026-10-29 agents on Fable)
+ok 13 - settings.json contract
+ok 14 - /guard skill contract
+ok 15 - skill frontmatter hygiene
+ok 16 - stack skills and rules load on their own by path (2026-11-09)
+ok 17 - the print guard runs at commit as well as at Stop
+ok 18 - CLAUDE.md stays an index
+ok 19 - doc links resolve
+ok 20 - no leftovers from the project this harness was copied from (2026-11-09 adaptation)
+ok 21 - pkgmap maps touched paths to the verify matrix
+ok 22 - pkgmap on a tree that is not built yet
+ok 23 - pkgmap web typecheck targets tsconfig.app.json (2026-05-31 TS6133 hollow --noEmit)
+ok 24 - pkgmap keeps one SQL Server container per machine
+ok 25 - post-edit records Edit/Write targets
+ok 26 - post-edit records files written through Bash (2026-11-01 bypass-mode edits invisible)
+ok 27 - print-guard flags debug output in service source
+ok 28 - print-guard --staged judges what will be committed
+ok 29 - the git pre-commit runs the guard on the staged files (core.hooksPath .claude/hooks/git)
+ok 30 - session-start
+ok 31 - stop-check
+ok 32 - stop-check keeps the file path in every error (2026-11-01 eslint/ruff paths dropped)
+ok 33 - stop-check keeps file:line for the .NET, Angular, pyright and print-guard formats (2026-11-09)
+ok 34 - stop-check housekeeping (2026-11-01)
+ok 35 - stop-check falls back to the dirty tree when nothing was recorded (2026-11-01 bypass-mode blind spot)
+ok 36 - stop-check without jq reports and exits 0 (2026-11-01 fail-open)
+
+# tests 224
+# suites 36
+# pass 224
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0

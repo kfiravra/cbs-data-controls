@@ -1,17 +1,19 @@
 # dc-engine: the Python control engine
 Created: 2026-11-10 · Branch: feat/engine (worktree `../cbs-engine`, cut from `origin/main` after dc-contracts merges)
 Amended: 2026-11-10 for dc-delivery's asks (decisions 20 to 25; the Log in `notes.md` says what changed)
+Amended: 2026-11-10 by the dc-contracts session on Kfir's scope decision, with the lines from the merged contracts (the two sections after the Decisions)
 
 ## Goal
 
 After this task `engine/` is the FastAPI service of architecture §6. It loads `contracts/glossary.json`, refuses to
 start when the glossary and the database disagree, validates a control definition, compiles it into one
 parameterized SELECT, runs it as `dq_engine_ro` under a row cap and a timeout, and returns the violating records
-with the reason each one failed, rendered in Hebrew or English. `/suggest` proposes controls from the glossary's
-lifecycle and required-field data and from counts on `hr`, and adds Claude's proposals when a key is configured.
+with the reason each one failed, rendered in the request's language: Hebrew, the one language the glossary
+lists. `/suggest` proposes controls from the glossary's lifecycle and required-field data and from counts on `hr`.
 The api (dc-api) is its only caller and builds its run flow on it, and nothing else may read `hr`, so every
-guarantee of architecture §10 is implemented and tested here. It must also start on a grader's Windows machine,
-on Python 3.12 to 3.14 with pip alone, against a named SQL Server instance (dc-delivery's manual path). The
+guarantee of architecture §10 is implemented and tested here. It must also start from source with Python 3.12
+or later and pip alone, on Windows too, against a grader's local SQL Server, a named instance included
+(dc-delivery's manual path). The
 submission is due 2026-11-15: the budget is one and a half working days, in parallel with dc-api and dc-web.
 
 ## Decisions
@@ -19,18 +21,17 @@ submission is due 2026-11-15: the budget is one and a half working days, in para
 From the interview (Kfir, 2026-11-10):
 
 1. **Business knowledge for suggestions is two glossary properties and nothing else**: `lifecycle` per entity and
-   `required` per field. With no key `/suggest` must yield examples 2, 3, 4 and 5 exactly. Example 1 needs the
-   thresholds 18 and 15,000; they are business knowledge, may come only from the LLM path, and are never written
-   into the glossary, the code or the prompt. The §19 gate line changes with it; dc-delivery makes that edit
-   (decision 24). (Rejected: `range` declarations with a `when`; profiling only, which reproduces example 2 alone.)
-2. **LLM**: Claude through the `anthropic` SDK, default model `claude-sonnet-5-5` from `ENGINE_LLM_MODEL`, behind a
-   one-method port, 20 s and then heuristics only. (Rejected: Opus 5.5 as the default, Haiku 5.5, no provider,
-   Gemini.)
-3. **`/suggest` returns only candidates that flag at least one record now**, each with that count as evidence;
-   the rule holds for Claude's proposals too. (Rejected: guard rules that flag nothing today.)
-4. **Budget 1.5 days.** Order: validator, compiler, executor, explainer and endpoints, then the generators, then
-   the LLM adapter. If late, cut in this order: the live LLM adapter (phase 6), the generators beyond the gate
-   (two steps of phase 5), the image (phase 7). A gate item is never cut.
+   `required` per field. `/suggest` must yield examples 2, 3, 4 and 5 exactly. Example 1 needs the thresholds 18
+   and 15,000; they are business knowledge, no generator invents them, and they are never written into the
+   glossary or the code, so example 1 is not proposed. The §19 gate line already says so (the scope decision
+   aligned it). (Rejected: `range` declarations with a `when`; profiling only, which reproduces example 2 alone.)
+2. (Removed by the scope decision of 2026-11-10: there is no LLM lane. The number stays so that later references
+   keep their meaning.)
+3. **`/suggest` returns only candidates that flag at least one record now**, each with that count as evidence.
+   (Rejected: guard rules that flag nothing today.)
+4. **Budget 1.5 days.** Order: validator, compiler, executor, explainer and endpoints, then the generators. If
+   late, cut in this order: the generators beyond the gate (two steps of phase 5), the image (phase 7). A gate
+   item is never cut.
 5. **The contract additions this plan needs are written into dc-contracts before its freeze** (its decisions 26 to
    29 and Design H, added at planning time): suggestion data, sentence and reason parts, `maxTotalValues` and
    `comparable`, four clarifications. Design J below lists them as assumptions.
@@ -60,17 +61,16 @@ Settled here, inside the architecture:
 14. **A suggestion candidate is an ordinary definition**: it is validated, compiled and counted like a user's.
     Generators are a closed list in code, keyed on glossary properties (lifecycle, required, cardinality, type),
     never on an entity or a field key.
-15. **LLM boundary**: the prompt holds the public glossary, the definition schema and aggregates; the answer is a
-    structured envelope with each definition as a JSON string (structured outputs reject recursive schemas) and is
-    untrusted input. The LLM is on only when `ANTHROPIC_API_KEY` is set. Effort `low`. The request carries the
-    server-side refusal fallback (`fallbacks: "default"`), the `claude-api` skill's default: drop it on Kfir's word.
+15. (Removed by the scope decision: no LLM boundary exists. Architecture §6 keeps the step as a design that is not
+    built.)
 16. **Startup**: wait up to 30 s for the database, then exit non-zero; a glossary mismatch exits at once, and so
     does a missing ODBC driver. `/health` repeats the glossary check at most once a minute.
 17. **Tooling**: uv with `uv.lock`, a `.python-version` of 3.12 and an exported `requirements.txt` (decisions 21
     and 23); the Ruff block of `.claude/standards/linter-followups.md` plus `PLW1514` (decision 22); pyright
     strict on `app/`.
-18. **Internal service**: no CORS, no authentication, bound to 127.0.0.1 in development. The api's timeouts must
-    exceed 30 s for a run and 25 s for `/suggest` with a key: one line to the dc-api session at the gate.
+18. **Internal service**: no CORS, no authentication, bound to 127.0.0.1 in development. The api's attempt
+    timeout must stay above the engine's worst case, about 60 s for a run of two 30-second statements: one line
+    to the dc-api session at the gate.
 19. **Reviews and models**: `/phase-review engine` at the end of every code phase (one reviewer on opus each),
     `security-auditor` once before `/ship`; no Sonnet lane; execution is test-first at the seams of Design I.
 
@@ -81,7 +81,7 @@ From dc-delivery's asks (carried by Kfir, 2026-11-10, after `dev/active/dc-deliv
     Server` that `pyodbc.drivers()` lists. `ENGINE_DB_PORT` unset or empty puts no port into `Server=`: that is
     how a named instance over shared memory is reached (`ENGINE_DB_HOST=.\SQLEXPRESS`), and it is 1433 over TCP
     everywhere else. Unset has to mean the same as empty, because cmd and Windows PowerShell delete a variable
-    that is set to nothing and dc-delivery's script removes the line. (Rejected: one variable with a full ODBC
+    that is set to nothing. (Rejected: one variable with a full ODBC
     connection string, like the api's `ConnectionStrings__Dq`. It would hold the password in a second place and
     let a deployment hand the engine any login, `sa` included; this way the login stays the constant
     `dq_engine_ro` and the URL is still built by `URL.create`. Choosing the driver when the variable is unset is
@@ -90,8 +90,9 @@ From dc-delivery's asks (carried by Kfir, 2026-11-10, after `dev/active/dc-deliv
     `requires-python = ">=3.12"`; development, the image and the lint and type targets stay on 3.12
     (`engine/.python-version`). Every runtime dependency must have a win_amd64 wheel for CPython 3.12, 3.13 and
     3.14: a wheels-only resolve of the exported pins per version (Design A) runs whenever the lock changes and at
-    the gate. Nothing POSIX-only at import or at start. `anthropic` is held at `>=1,<2`, the line the `claude-api`
-    skill documents: an open requirement resolved to 2.8.0 on 2026-11-10, and 2.x sends another API version.
+    the gate. Nothing POSIX-only at import or at start. (Written for the offline bundle and kept without it: the
+    from-source path installs with pip on whatever Python the grader has, python.org ships installers for 3.13
+    and 3.14 only, and pip must find a wheel for every pin.)
 22. **Every text file is read and written as UTF-8, by name**: `encoding="utf-8"` on every `open`, `read_text`
     and `write_text` in `app/` and `tests/`, and `env_file_encoding="utf-8"` in the settings. Ruff's `PLW1514`
     enforces it. (Before 3.15 Python opens a file in the machine's code page, cp1255 on a Hebrew Windows, and the
@@ -111,21 +112,66 @@ From dc-delivery's asks (carried by Kfir, 2026-11-10, after `dev/active/dc-deliv
     the findings, and "no findings" is written only when the review returned none. `docs/ai-usage.md` is built
     from these lines.
 
+## Scope decision (Kfir, 2026-11-10; written in by the dc-contracts session, which carried it through all five plans)
+
+Applied to the text of this plan. Where a line still disagrees with this section, this section holds.
+
+1. **Hebrew only.** `contracts/glossary.json` lists `"languages": ["he"]` and every text is an object with the
+   one key `he`. The mechanism stays: texts keyed by language, `Accept-Language` resolved against `languages`, a
+   language that is not listed answered in `defaultLanguage`, the run's language returned. No English golden, no
+   English read at the gate. Code that indexes a text takes the language as a value; nothing names `he`.
+2. **Suggestions are heuristics only.** No `anthropic` dependency, no `ANTHROPIC_API_KEY`, no `ENGINE_LLM_*`
+   setting, no port or adapter, no prompt builder, no LLM tests, no phase 6. The `/suggest` answer is
+   `{ items }`: the `source` member existed only for the LLM and is gone from `contracts/api.md`.
+3. **No offline Windows bundle** in dc-delivery, so nothing here is shipped as wheels. Everything this plan built
+   for a grader's Windows stays, because the from-source path needs all of it: `requirements.txt` and the
+   pip-only start (decision 23), the driver and port settings (decision 20), UTF-8 by name (decision 22), and
+   the win_amd64 wheel check with the suite runs under 3.13 and 3.14 (decision 21).
+
+## Lines from dc-contracts as it merges (2026-11-10)
+
+`contracts/` wins over this plan (phase 0). These are the points where the merged contract says more than, or
+other than, the Designs below; each is one decision already made there.
+
+- **Reason params**: every condition reason carries `actual`, and every field comparison `rightActual`, also when
+  the template shows neither (`errors.md`, Reason keys). Design D's "actual columns per condition whose reason
+  shows a value" becomes: for every condition that can be matched.
+- **A related node's relationship**: unknown is `UNKNOWN_RELATIONSHIP`; one that does not start at the scope
+  entity is `PATH_NOT_REACHABLE`; `RELATIONSHIP_NOT_QUANTIFIABLE` is only for one that is not one-to-many. Design C
+  uses the third for all three.
+- **The path of every definition error** is pinned per code in `errors.md`: a semantic error names the member the
+  editor edits as one input (`<node>/left`, `/right`, `/operator`, `/value`, `/values` with `params.index`,
+  `/relationship`, `/id`). Errors that share a path follow the order of the code table, then `params.index`. The
+  invalid fixtures carry code and path, and `scripts/contracts-check.py` proves both.
+- **`/suggest`** may also answer 504 `QUERY_TIMEOUT`; `max` defaults to 10 with a ceiling of 20; the engine
+  rejects a request member it does not know (400, `MALFORMED` at that member). A `definition` that is not a JSON
+  object is 400 `MALFORMED`, never a schema violation.
+- **Values**: a number literal at or beyond 10^15 in absolute value is `VALUE_TYPE_MISMATCH`. An enum's label is
+  found without regard to case, and a stored value with no entry is shown as stored. A NULL renders as nothing and
+  no part is empty. A unit follows its value after one space, inside the same part.
+- **`identifier: true`** on a number field (employee and department numbers, the two assignment fields): the
+  value is written digit for digit, with no group separator. The public glossary serves the flag.
+- **Glossary members Design J does not list**: entity `description`; field `label`, `description`, `identifier`.
+  `arity` is 0, 1, 2 or the string `"list"`. `formats.<language>` is `{ date, groupSeparator, decimalSeparator }`.
+- **Wording**: the two related `sentence` phrases bracket `{conditions}` themselves and the renderer adds no
+  bracket; `is_null` reads "חסר" for every type and "ריק" belongs to `is_empty`; the placeholders of suggestion
+  texts are defined in `errors.md` (Rendering, Suggestions).
+- **Text across the boundary**: the standards now say it as the contract does. An error crosses as a code and
+  params; rendered sentences and reasons are the one text that crosses.
+
 ## Phases
 
 Every code phase ends the same way: tick each step as it finishes and update `notes.md` State and Next,
 `/check --tests`, save the output as `gates/phase-N.txt`, `/phase-review engine`, one `fix(engine): review fixes`
 commit, a Log line in `notes.md`. Before anything that costs money or minutes (the first `uv sync`, a review, the
-image build, a live LLM call) state it in one line and wait for the word. Before every pytest run:
+image build) state it in one line and wait for the word. Before every pytest run:
 `pgrep -fa "pytest|dotnet test|ng test|vitest|playwright"`; the Playwright MCP servers (`playwright-mcp`) match
 that pattern and are not suites. `touch .claude/state/red` only while a slice is deliberately red.
 
 The Log line of a review is a record, not a verdict (decision 25): the range reviewed and the totals per
 severity; every critical and warning finding as `path:line` with a few words; for each, fixed in `<sha>`, or
 rejected with the reason and by whom (the session or Kfir); and what Kfir rewrote or overruled. Info findings by
-count. The reviewer's report is saved whole as `reviews/phase-N.md`. A reviewer who reads architecture §6 or §19
-will meet the old suggestions gate; that finding is rejected with a pointer to decision 1 and logged like any
-other.
+count. The reviewer's report is saved whole as `reviews/phase-N.md`.
 
 A document that this task makes untrue and does not own (decision 24) gets its line in `notes.md` under "Docs for
 dc-delivery" in the same step: the file and section, what it says, what is true now.
@@ -211,7 +257,8 @@ Commit: `feat(engine): compiler with golden tests and compile cache`
       of its dates; the cap; count and page agree; injection end to end; NULL semantics; LIKE wildcards stay
       literal; Hebrew round trip; the database down.
 - [ ] `tests/golden/<id>.text.json`: the rendered sentence, the per-node sentences and one reason per matched node,
-      in `he` and `en`, for the six examples. Kfir reads these at the gate.
+      in every language the glossary lists (Hebrew), for the six examples. Kfir reads these at the gate. One test
+      asks for a language that is not listed and gets the default.
 - [ ] `README.md`, the engine section only (dc-contracts left its heading in the skeleton): what must be installed
       (Python 3.12 or later, ODBC Driver 18 or 17), the start with Python and pip alone and the same with uv, the
       variables of Design A, the tests, and that the timeout path is proven on a fabricated error. Nothing outside
@@ -226,47 +273,25 @@ application/json' -d "{\"definition\": $(jq .definition contracts/examples/minor
 \"2026-11-01\"}" | jq '.totalCount, [.violations[].key]'`
 Commit: `feat(engine): executor, explainer and the validate and run endpoints`
 
-### Phase 5: suggestions without a key (about 2 h)
+### Phase 5: suggestions (about 2 h)
 - [ ] The profile per Design H: one aggregate SELECT per entity, built in `compiler`, run by `executor`.
 - [ ] Generators `missing_required`, `date_order`, `active_under_inactive` (one hop) and
       `active_without_active_children`, per Design H.
 - [ ] The pipeline (validate, compile, count, drop, evidence, text, order, cut) and `POST /suggest`.
-- [ ] The gate test: with `ANTHROPIC_API_KEY` unset, every example marked `heuristic: true` has a suggestion whose
+- [ ] The gate test: every example marked `heuristic: true` has a suggestion whose
       definition equals the example's, node for node, and which flags exactly the example's records.
 - [ ] Genericity tests: every generator runs on a synthetic glossary with other entities, fields and
       relationships and a stub counter, and names nothing from the real one.
-- [ ] (second cut) `active_under_inactive` over two-hop paths.
-- [ ] (second cut) Generator `missing_optional`.
-- [ ] `notes.md`, "Docs for dc-delivery": the dc-engine gate line of architecture §19 ("the four assignment
-      controls ... with no key") and the suggestions line of §6 no longer hold; what is true is decision 1. The
-      file itself is not edited here (decision 24).
+- [ ] (first cut) `active_under_inactive` over two-hop paths.
+- [ ] (first cut) Generator `missing_optional`.
 
 Verify: `/check --tests` · `curl -s -X POST localhost:8000/suggest -d '{}' -H 'content-type: application/json' |
-jq '.source, [.items[].name]'`
+jq '[.items[].name]'`
 Commit: `feat(engine): control suggestions from lifecycle, required fields and counts`
 
-### Phase 6: Claude proposals (about 1.5 h; the first cut)
-- [ ] Load the `claude-api` skill before writing any SDK call; the facts of Design H were read from it on
-      2026-11-10 and the skill wins where they differ.
-- [ ] `anthropic>=1,<2` joins `pyproject.toml` in this phase: `uv lock`, the export and the Windows wheel check
-      again (Design A), all in this phase's commit.
-- [ ] `suggestions/llm.py`: the port (`propose(context) -> list[RawSuggestion]`) and the Anthropic adapter.
-- [ ] `suggestions/prompt.py`: built from the public glossary, the schema and `Profile` objects only.
-- [ ] The pipeline takes the proposals through the same validate, compile, count and drop steps, removes
-      duplicates of the heuristic items, and reports `source`.
-- [ ] Tests with a fake port: a valid proposal is returned after the heuristic items; an invalid, a duplicate and
-      a zero-count one are dropped; a timeout, an API error, a refusal and malformed JSON each give a 200 with
-      `source: "heuristics"` and a warning that carries the correlation id; the recorded request holds no text
-      value of any `hr` row.
-- [ ] One live `/suggest` on Kfir's word (state: the model, about $0.05), its answer saved under `gates/`.
+### Phase 6: (removed by the scope decision: no LLM lane)
 
-If cut: the port, the fake and the pipeline tests stay, `source` is always `heuristics`, `anthropic` stays out of
-the lock, and "Docs for dc-delivery" in `notes.md` lists the adapter as an extension.
-
-Verify: `/check --tests`
-Commit: `feat(engine): optional claude proposals for suggestions`
-
-### Phase 7: engine image (about 1 h; the third cut)
+### Phase 7: engine image (about 1 h; the second cut)
 - [ ] `engine/Dockerfile`: `python:3.12-slim`, `msodbcsql18` and `unixodbc`, `pip install -r requirements.txt`
       (the file of phase 1), a non-root user, the build context is the repository root (it copies `contracts/` and
       `engine/`), `ENGINE_DB_DRIVER` set to the driver the image installs, the start command of Design A on
@@ -283,17 +308,16 @@ Commit: `build(engine): container image`
 - [ ] The lock and its export agree (`uv lock --check`; `uv export --no-dev --format requirements-txt | diff -
       requirements.txt`), and the Windows wheel check of Design A prints `exit=0` for 3.12, 3.13 and 3.14.
 - [ ] The suite once under 3.13 and once under 3.14: `uv run --isolated --locked --python 3.14 python -m pytest`
-      (state it first: two more suite runs and the wheels of each version). dc-delivery repeats it on the merged
-      tree; a failure found here is fixed here.
+      (state it first: two more suite runs and the wheels of each version). A failure found here is fixed here.
 - [ ] The §19 gate item by item, each with the test that proves it: goldens for the six examples; every
-      rejection path; injection values bound; the exact planted ids from the seed; `/suggest` with no key yields
-      examples 2 to 5 exactly.
-- [ ] Kfir reads `tests/golden/*.text.json` and one `/suggest` answer in Hebrew and in English. The Log says what
+      rejection path; injection values bound; the exact planted ids from the seed; `/suggest` yields examples 2 to
+      5 exactly.
+- [ ] Kfir reads `tests/golden/*.text.json` and one `/suggest` answer, in Hebrew. The Log says what
       he changed or rejected, in his words where he gave them.
 - [ ] `security-auditor` on `git diff origin/main...HEAD` (one agent on opus: state it); fix critical and high.
       The report is saved as `reviews/security.md` and logged per decision 25.
-- [ ] One line to the dc-api session: the statement timeout (30 s), `/suggest` up to 25 s with a key, and every
-      difference from Design J that phase 0 recorded.
+- [ ] One line to the dc-api session: the statement timeout (30 s) and every difference from Design J that phase
+      0 recorded.
 - [ ] `notes.md` State holds what dc-delivery reads first (its phase B0): the variables as built, the start
       command, the Python versions the suite ran under, which phases were cut, and the "Docs for dc-delivery" list.
 - [ ] `/ship dc-engine`. Its docs-drift step proposes edits: apply only those to this task's own files (the
@@ -338,8 +362,6 @@ SQLAlchemy Core expressions, exists only in `compiler` and `executor`.
 | `ENGINE_CONTRACTS_DIR` | `contracts/` beside `engine/` | |
 | `ENGINE_LOG_LEVEL` | `INFO` | SQL text only at DEBUG |
 | `ENGINE_SUGGEST_MAX` | `10` | default of `max`; the ceiling is 20 |
-| `ANTHROPIC_API_KEY` | empty | empty means heuristics only |
-| `ENGINE_LLM_MODEL`, `ENGINE_LLM_TIMEOUT_SECONDS`, `ENGINE_LLM_EFFORT` | `claude-sonnet-5-5`, `20`, `low` | |
 
 The default language is the glossary's.
 
@@ -367,7 +389,7 @@ location of `settings.py`, never from the working directory.
 `requires-python = ">=3.12"`, and `.python-version` holds `3.12`: without it uv builds the venv on the newest
 interpreter it has, which is 3.14 on this machine since planning. Runtime: fastapi, uvicorn (plain, without the
 `standard` extra), pydantic-settings, sqlalchemy 2.0.x, pyodbc, jsonschema, tzdata (Windows has no zone
-database), and from phase 6 `anthropic>=1,<2`. Development: pytest, httpx (for `TestClient`), ruff, pyright.
+database). Development: pytest, httpx (for `TestClient`), ruff, pyright.
 `[tool.uv] package = false`; pytest `pythonpath = ["."]`, marker `integration`, option `--update-goldens`. Ruff:
 the block of `linter-followups.md`, line length 120, `target-version = "py312"`, and `PLW1514` added to `select`
 with `preview = true` and `explicit-preview-rules = true` (it is a preview rule in Ruff 0.17; the second flag
@@ -398,11 +420,10 @@ line. The check exits 1 and names the package when a pinned version has no win_a
 /dev/null` cannot replace the redirect (uv writes a temporary file beside its output). uv fetches a 3.13 and a
 3.14 interpreter for the check where they are missing, about 105 MB each.
 
-Verified at planning, 2026-11-10, on a scratch lock of this list with `anthropic` included: the three resolves
-exit 0 with the same 32 pins (pyodbc 5.5.0, pydantic-core 2.50.4, sqlalchemy 2.0.57, greenlet 3.5.6, rpds-py
-2026.9.1, jiter 0.19.0 and anthropic 1.17.0 among them); a control with pyodbc 5.1.0 on 3.14 exits 1; the list
-imports under 3.13.14 and 3.14.6 on Linux; pip 24.0 accepts the exported file with its hashes and markers
-(`pip install --dry-run`). SQLAlchemy 2.0.57 turns the host `.\SQLEXPRESS` with no port into
+Verified at planning, 2026-11-10, on a scratch lock that still held `anthropic`, which is no longer in the list:
+the three resolves exit 0 (pyodbc 5.5.0, pydantic-core 2.50.4, sqlalchemy 2.0.57, greenlet 3.5.6 and rpds-py
+2026.9.1 among the pins); a control with pyodbc 5.1.0 on 3.14 exits 1; the list imports under 3.13.14 and 3.14.6
+on Linux; pip 24.0 accepts the exported file with its hashes and markers (`pip install --dry-run`). SQLAlchemy 2.0.57 turns the host `.\SQLEXPRESS` with no port into
 `Server=.\SQLEXPRESS` and `db` with 1433 into `Server=db,1433`, and it braces a password that holds `;` or `}`.
 pydantic-settings 2.16.2 behaves as the port bullet says. Nothing was run on Windows.
 
@@ -564,7 +585,7 @@ with no parameter; the constants of a `CASE` are parameters.
 | `GET /glossary` | the public view | |
 | `POST /validate` | `{ valid: true, sentence, sentenceParts, conditions }` | 422 `DEFINITION_INVALID` |
 | `POST /run` | `{ runDate, totalCount, returnedCount, capExceeded, durationMs, engineVersion, glossaryVersion, sentence, sentenceParts, conditions, violations }` | 422, 504 `QUERY_TIMEOUT`, 503 |
-| `POST /suggest` | `{ source, items: [{ name, description, rationale, evidence, definition, sentence, sentenceParts }] }` | 503 |
+| `POST /suggest` | `{ items: [{ name, description, rationale, evidence, definition, sentence, sentenceParts }] }` | 503, 504 `QUERY_TIMEOUT` |
 | `POST /debug/compile` | `{ sql, params, countSql, countParams }` | 404 `DEBUG_DISABLED`, 422 |
 
 - Routes are plain `def`. Request models are Pydantic with unknown keys forbidden; `runDate` defaults to today in
@@ -574,13 +595,14 @@ with no parameter; the constants of a `CASE` are parameters.
   Starlette's `HTTPException` (404 and 405 as `NOT_FOUND`), the domain exceptions, and `Exception` (500
   `INTERNAL_ERROR`). No prose, no traceback, no SQL, no driver message.
 - `X-Correlation-Id` is read or created, returned, and put on every log record through a context variable.
-- Language: the primary subtag of the first range of `Accept-Language` when it is `he` or `en`, else the default.
+- Language: the primary subtag of the first range of `Accept-Language` when the glossary's `languages` list it,
+  else `defaultLanguage`. The list holds `he` alone, so every answer is Hebrew; the code names no language.
 
 ### H. Suggestions
 
 **Profile.** Per entity one aggregate SELECT: the row count and, per visible field, the null count, for text the
 empty count, the distinct count, and for number and date fields that are not identifying fields the minimum and
-maximum. Typed `Profile` objects are the only thing the prompt builder accepts besides the public glossary.
+maximum. The generators read typed `Profile` objects and the glossary, nothing else.
 
 **Generators** (each returns candidate definitions; ids are `c1..` and `r1..` in document order; fields in glossary
 order; a single-child OR collapses; the root is always a group). "Active" is `lifecycle.field eq lifecycle.active`;
@@ -593,7 +615,7 @@ value. "Missing" is `is_empty` for text and `is_null` for every other type.
 | `date_order` | two visible, stored date fields of one entity | both orders are counted; when at least 5 rows hold both, one order holds in at least 80% of them and the other in at least one row: `AND(later lt field earlier)` | example 2 |
 | `active_under_inactive` | a many-to-one relationship (later: a two-hop path) whose two ends have a `lifecycle` | `AND(active, path › parent inactive)` | example 3 |
 | `active_without_active_children` | a one-to-many relationship whose two ends have a `lifecycle` | `AND(active, none of the relationship where AND(child active))` | example 5 |
-| `missing_optional` (second cut) | a nullable field without `required`, missing in at most 10% of rows and at least one | `AND(field missing)` | |
+| `missing_optional` (first cut) | a nullable field without `required`, missing in at most 10% of rows and at least one | `AND(field missing)` | |
 
 The two numbers of `date_order` and the one of `missing_optional` are tuning constants of the generator, named in
 its module. They are not rule parameters: no generator invents a threshold that ends up inside a definition.
@@ -602,31 +624,14 @@ its module. They are not rule parameters: no generator invents a threshold that 
 (today's run date); a candidate that fails validation is dropped with a warning (a generator bug); one that flags
 no record is dropped; evidence is attached (`violations_found` always, `field_missing` per field of a
 `missing_required` item, `date_order_split` for `date_order`); name, description, rationale and evidence text are
-rendered from `suggestions` in the glossary, the sentence by the explainer; LLM items follow the heuristic ones;
-the list is cut to `max`. `rootEntity` keeps the candidates rooted there.
-
-**LLM** (facts from the `claude-api` skill, read 2026-11-10; reload it before writing the adapter):
-- The official `anthropic` SDK, `anthropic.Anthropic(api_key=.., timeout=20.0, max_retries=0)`; the adapter is
-  built only when the key is set, so a developer's local `ant` profile never turns it on.
-- `client.beta.messages.create` with `model`, `max_tokens=16000`, `output_config={"effort": .., "format":
-  {"type": "json_schema", "schema": ..}}`, `betas=["server-side-fallback-2026-07-01"]`, `fallbacks="default"`.
-  No `thinking`, no sampling parameters, no forced `tool_choice` (each is a 400 on Sonnet 5.5).
-- Envelope: `{ suggestions: [{ name, description, rationale, definition }] }`, `definition` a string of JSON,
-  `additionalProperties: false` on both objects.
-- Prompt order for caching: instructions, the definition schema and the public glossary first; the aggregates,
-  the language and the heuristic definitions to avoid after them. The model writes name, description and rationale
-  in the requested language.
-- Anything but `stop_reason == "end_turn"` with parseable JSON, and any `anthropic` exception (`APITimeoutError`,
-  `RateLimitError`, `APIStatusError`, `APIConnectionError`), means heuristics only and one warning.
-- `source` is `heuristics+llm` when the call succeeded, whatever survived validation.
-- About 6k input and 4k output tokens a call: roughly $0.05 on Sonnet 5.5 ($2 and $10 per million).
+rendered from `suggestions` in the glossary, the sentence by the explainer; the list is cut to `max`. `rootEntity` keeps the candidates rooted there.
 
 ### I. Tests
 
 **Seams** (confirmed with this plan; the `/tdd` loop works at these and nowhere deeper): the validator as a
 function (definition to codes and paths); the compiler as a function (definition and glossary to SQL text and
 parameters); an endpoint through `TestClient`; the executor against the seeded database; the suggestion pipeline
-with a stub counter and a fake LLM port; the connection settings as a function (the variables and the list of
+with a stub counter; the connection settings as a function (the variables and the list of
 installed drivers to the ODBC connection string).
 
 **Goldens**: `tests/golden/<example id>.page.sql`, `.count.sql` and `.params.json`, compiled with
@@ -652,7 +657,7 @@ and column in the text is one the glossary names.
 | every rejection path | `contracts/examples/invalid/*.json` plus one test per remaining code and per limit |
 | injection values bound | `'; DROP TABLE hr.Employee; --` and friends in `value`, `values` and LIKE operands: only in the parameters, zero rows returned, the row count of the table unchanged; a key or an id carrying SQL is rejected by the schema |
 | the exact planted ids | every example through `POST /run` with its `runDate`: `totalCount`, the keys in order, `matched` per record; example 1 also on its alternate date |
-| `/suggest` with no key | phase 5's gate test over the examples marked `heuristic: true` |
+| `/suggest` yields examples 2 to 5 | phase 5's gate test over the examples marked `heuristic: true` |
 
 **Also**: `rowCap: 1` on the missing-data example gives the full `totalCount`, one row, `capExceeded` and counts
 over all violations; for every example the sum of `matched` over the rows equals `conditions[].count`; a negative
@@ -684,11 +689,11 @@ skip.
 - **`contracts/` differs from Design J**, or an amendment did not land. Phase 0 compares before any code; the
   engine follows `contracts/`, and a real gap is a contract change on main with one line to the other sessions.
 - **The ODBC driver on the host**: `msodbcsql18` is installed since 2026-11-10. Should it go missing, nothing in
-  phases 1 to 6 that touches the database runs; the fallback is the image first (phase 7) and pytest inside it.
+  phases 1 to 5 that touches the database runs; the fallback is the image first (phase 7) and pytest inside it.
 - **Windows is never run in this task**: the host has no Windows Python. What this task proves is the wheel
-  resolve, the UTF-8 rule, the connection-string tests and the suite under 3.13 and 3.14 on Linux. The first real
-  Windows run is dc-delivery's rehearsal (its phase B3), and what breaks there comes back as a `fix(engine)`
-  commit on its branch. `Encrypt=yes` with driver 17 over shared memory is first tried there.
+  resolve, the UTF-8 rule, the connection-string tests and the suite under 3.13 and 3.14 on Linux. dc-delivery
+  writes the from-source path for Windows and runs it on Linux; `Encrypt=yes` with driver 17 over shared memory
+  stays untried, and the limitations document says so.
 - **`PLW1514` is a preview rule** (Ruff 0.17.4 on 2026-11-10). If the Ruff in the lock has dropped or renamed it,
   the rule becomes a unit test that walks `app/` and `tests/` with `ast`; it is never dropped silently.
 - **A reproduced example drifts**: if dc-contracts reshapes the definition of example 2, 3, 4 or 5, or the seed
@@ -699,7 +704,6 @@ skip.
 - **The timeout path is proven only on a fabricated error.** Say so in the README and at the gate.
 - **Three suites on one machine**: pytest here, `dotnet test` and `ng test` in the other worktrees. `pgrep` first.
 - **Port 8000** may be held by another project's container: `ENGINE_PORT`, and ask before stopping anything.
-- **The LLM is slower than 20 s or unavailable**: the answer is the heuristic list, the same shape, a 200.
 - **Wording**: the templates are dc-contracts'; the engine renders them mechanically. Kfir's read at the gate is
   the last cheap moment; a wording change after it is a glossary commit on main.
 - **Time**: the cut order of decision 4. Record every cut in `notes.md` with what dc-delivery must say about it.
@@ -708,10 +712,10 @@ skip.
 
 ## Out of scope
 
-- The engine's compose service, the manual-path scripts, the wheelhouse, and every document except the README's
-  engine section (dc-delivery, decision 24).
-- A variable that holds a whole connection string; Windows authentication for the engine; the `anthropic` 2.x
-  line and its API version.
+- The engine's compose service, the manual-path instructions, and every document except the README's engine
+  section (dc-delivery, decision 24).
+- A variable that holds a whole connection string; Windows authentication for the engine.
+- An LLM step in the suggestions, English texts, a wheelhouse to ship (the scope decision).
 - The api and the client; storing results; paging over stored results.
 - Thresholds, ranges or any rule parameter in the glossary; suggestions built on percentiles or outliers.
 - Field-to-field comparisons that involve a computed field; relative values such as "today" in a definition.

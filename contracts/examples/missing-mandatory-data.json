@@ -1,0 +1,58 @@
+{
+  "id": "missing-mandatory-data",
+  "name": { "he": "נתוני חובה חסרים" },
+  "description": {
+    "he": "איתור רשומות שבהן חסרים נתונים המחויבים לפי כללים עסקיים. עובד פעיל חייב בדואר אלקטרוני, בשכר ובשיוך למחלקה; עובד לא פעיל חייב בתאריך סיום העסקה."
+  },
+  "runDate": "2026-11-01",
+  "heuristic": true,
+  "definition": {
+    "schemaVersion": 1,
+    "rootEntity": "employee",
+    "where": {
+      "type": "group",
+      "op": "or",
+      "children": [
+        {
+          "type": "group",
+          "op": "and",
+          "children": [
+            { "type": "condition", "id": "c1", "left": { "field": "status" }, "operator": "eq", "value": "active" },
+            {
+              "type": "group",
+              "op": "or",
+              "children": [
+                { "type": "condition", "id": "c2", "left": { "field": "email" }, "operator": "is_empty" },
+                { "type": "condition", "id": "c3", "left": { "field": "salary" }, "operator": "is_null" },
+                { "type": "condition", "id": "c4", "left": { "field": "department_assignment" }, "operator": "is_null" }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "op": "and",
+          "children": [
+            { "type": "condition", "id": "c5", "left": { "field": "status" }, "operator": "eq", "value": "inactive" },
+            { "type": "condition", "id": "c6", "left": { "field": "termination_date" }, "operator": "is_null" }
+          ]
+        }
+      ]
+    }
+  },
+  "expected": {
+    "total": 10,
+    "violations": [
+      { "key": "1058", "matched": ["c1", "c3"] },
+      { "key": "1081", "matched": ["c1", "c2"] },
+      { "key": "1082", "matched": ["c1", "c2"] },
+      { "key": "1083", "matched": ["c1", "c2"] },
+      { "key": "1084", "matched": ["c1", "c3"] },
+      { "key": "1085", "matched": ["c1", "c4"] },
+      { "key": "1086", "matched": ["c1", "c2", "c3"] },
+      { "key": "1087", "matched": ["c5", "c6"] },
+      { "key": "1088", "matched": ["c5", "c6"] },
+      { "key": "1115", "matched": ["c1", "c3"] }
+    ]
+  }
+}

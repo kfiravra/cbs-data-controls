@@ -1,0 +1,38 @@
+{
+  "id": "active-in-inactive-department",
+  "name": { "he": "עובדים פעילים במחלקה לא פעילה" },
+  "description": {
+    "he": "איתור עובדים פעילים המשויכים למחלקה שאינה פעילה."
+  },
+  "runDate": "2026-11-01",
+  "heuristic": true,
+  "definition": {
+    "schemaVersion": 1,
+    "rootEntity": "employee",
+    "where": {
+      "type": "group",
+      "op": "and",
+      "children": [
+        { "type": "condition", "id": "c1", "left": { "field": "status" }, "operator": "eq", "value": "active" },
+        {
+          "type": "condition",
+          "id": "c2",
+          "left": { "path": ["employee.department"], "field": "is_active" },
+          "operator": "eq",
+          "value": false
+        }
+      ]
+    }
+  },
+  "expected": {
+    "total": 6,
+    "violations": [
+      { "key": "1071", "matched": ["c1", "c2"] },
+      { "key": "1072", "matched": ["c1", "c2"] },
+      { "key": "1076", "matched": ["c1", "c2"] },
+      { "key": "1077", "matched": ["c1", "c2"] },
+      { "key": "1117", "matched": ["c1", "c2"] },
+      { "key": "1118", "matched": ["c1", "c2"] }
+    ]
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "id": "termination-before-hire",
+  "name": { "he": "סיום העסקה לפני תחילתה" },
+  "description": {
+    "he": "איתור עובדים שתאריך סיום העסקתם מוקדם מתאריך תחילת העסקתם."
+  },
+  "runDate": "2026-11-01",
+  "heuristic": true,
+  "definition": {
+    "schemaVersion": 1,
+    "rootEntity": "employee",
+    "where": {
+      "type": "group",
+      "op": "and",
+      "children": [
+        {
+          "type": "condition",
+          "id": "c1",
+          "left": { "field": "termination_date" },
+          "operator": "lt",
+          "right": { "field": "hire_date" }
+        }
+      ]
+    }
+  },
+  "expected": {
+    "total": 3,
+    "violations": [
+      { "key": "1061", "matched": ["c1"] },
+      { "key": "1062", "matched": ["c1"] },
+      { "key": "1063", "matched": ["c1"] }
+    ]
+  }
+}

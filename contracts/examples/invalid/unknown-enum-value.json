@@ -1,0 +1,26 @@
+{
+  "layer": "semantic",
+  "expected": {
+    "code": "UNKNOWN_ENUM_VALUE",
+    "path": "/where/children/0/value"
+  },
+  "definition": {
+    "schemaVersion": 1,
+    "rootEntity": "employee",
+    "where": {
+      "type": "group",
+      "op": "and",
+      "children": [
+        {
+          "type": "condition",
+          "id": "c1",
+          "left": {
+            "field": "status"
+          },
+          "operator": "eq",
+          "value": "retired"
+        }
+      ]
+    }
+  }
+}

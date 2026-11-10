@@ -16,6 +16,7 @@ the api writes, and only to `dq`; only the engine reads `hr`.
 ## Verify (`/check` picks the right subset for the parts you touched)
 
 - sql: `docker compose up -d db && scripts/db-init.sh`, then `scripts/db-check.sh` (the violating records per example)
+- contracts: `uv run scripts/contracts-check.py` (schema, glossary, their agreement, the examples, the invalid fixtures)
 - engine (`cd engine`): `.venv/bin/python -m pytest` · `.venv/bin/ruff check .` · `pyright` (the venv's, else PATH)
 - api (`cd api`): `dotnet build -warnaserror` · `dotnet test` · `dotnet format --verify-no-changes`
 - web (`cd web`): `npx ng lint` · `npx ng test --watch=false` · `npx ng build` · Playwright e2e (`npx playwright test`) with screenshots at 390 and 1440
@@ -37,9 +38,9 @@ the api writes, and only to `dq`; only the engine reads `hr`.
   sits in the wrong service.
 - `dir="rtl"` for Hebrew, the default language, and logical CSS only (`margin-inline-start`, `inset-inline-end`,
   `text-align: start`); a physical `left` or `right` is an RTL bug.
-- English-only code, identifiers, logs, comments and tests. Hebrew text lives only in `web/src/assets/i18n/*.json`
-  and `contracts/glossary.json` (seed values in `sql/` are data and may be Hebrew). Only keys and parameters cross
-  a service boundary; the client renders the text.
+- English-only code, identifiers, logs, comments and tests. Hebrew text lives only in `web/src/assets/i18n/he.json`
+  and `contracts/glossary.json`; seed values in `sql/` and control names in `contracts/examples/` are data and may be
+  Hebrew. Errors cross a service boundary as codes and parameters; sentences and reasons come rendered by the engine.
 - A contract change is one commit to `contracts/` on main plus one line pasted into the other sessions; nothing
   else coordinates the worktrees.
 - Port 8000 may be held by another project's container on this machine (`docker ps`); ask before stopping it.
@@ -65,7 +66,7 @@ the api writes, and only to `dq`; only the engine reads `hr`.
 - Task state lives in `dev/active/<task>/plan.md` + `notes.md` and rides in that task's commits (`/task-plan`, `/resume`, `/handoff`).
 - After every completed plan step, tick its checkbox in `plan.md` and update `notes.md` State/Next; at every phase end add a Log line and the gate path. Never batch these to the end of a phase.
 - Phase end: `/phase-review` by area, then one review-fix commit.
-- Spend is stated before any run that costs money or minutes: `/suggest` runs with an LLM key (model), agent fan-outs (count, model), e2e against live services.
+- Spend is stated before any run that costs money or minutes: agent fan-outs (count, model), e2e against live services.
   One line, then wait for the word; never start it in the same breath.
 - Models: Fable for planning sessions, Opus for execution, Sonnet only for named mechanical lanes (a lane the plan lists by name).
   Subagents default to opus (`CLAUDE_CODE_SUBAGENT_MODEL`) and never inherit the session model; at most 6 at once.
@@ -86,8 +87,12 @@ the api writes, and only to `dq`; only the engine reads `hr`.
 | Errors the user sees, testing strategy | [architecture.md §12–13](../docs/architecture.md) |
 | Compose, manual path, configuration | [architecture.md §14](../docs/architecture.md) |
 | Assignment checklist, the five tasks and their gates | [architecture.md §18–19](../docs/architecture.md), [kickoff](../dev/briefs/cbs-kickoff.md) |
+| Both HTTP APIs: paths, payloads, statuses | [contracts/api.md](../contracts/api.md) (it wins over the architecture) |
+| Error codes, reason keys, the matched, NULL and rendering rules | [contracts/errors.md](../contracts/errors.md) |
+| Scripts, logins, planted and boundary rows per example | [sql/README.md](../sql/README.md) |
+| Visual direction, tokens, screens | [docs/design.md](../docs/design.md) |
 
-As they land, `contracts/api.md`, `contracts/errors.md`, `docs/design.md` and the §17 documents get rows here.
+As they land, the §17 documents get rows here.
 
 ## Skills
 

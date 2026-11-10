@@ -1,0 +1,41 @@
+{
+  "id": "department-without-active-employees",
+  "name": { "he": "מחלקות פעילות ללא עובדים פעילים" },
+  "description": {
+    "he": "איתור מחלקות פעילות שאין בהן אף עובד פעיל."
+  },
+  "runDate": "2026-11-01",
+  "heuristic": true,
+  "definition": {
+    "schemaVersion": 1,
+    "rootEntity": "department",
+    "where": {
+      "type": "group",
+      "op": "and",
+      "children": [
+        { "type": "condition", "id": "c1", "left": { "field": "is_active" }, "operator": "eq", "value": true },
+        {
+          "type": "related",
+          "id": "r1",
+          "relationship": "department.employees",
+          "quantifier": "none",
+          "where": {
+            "type": "group",
+            "op": "and",
+            "children": [
+              { "type": "condition", "id": "c2", "left": { "field": "status" }, "operator": "eq", "value": "active" }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "expected": {
+    "total": 3,
+    "violations": [
+      { "key": "104", "matched": ["c1", "r1"] },
+      { "key": "204", "matched": ["c1", "r1"] },
+      { "key": "403", "matched": ["c1", "r1"] }
+    ]
+  }
+}

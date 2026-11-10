@@ -1,6 +1,35 @@
 dev/**/screenshots/
+dev/active/design/
 .env
 **/.venv/
 **/node_modules/
 **/bin/
 **/obj/
+
+# Python (engine)
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+.coverage.*
+htmlcov/
+*.egg-info/
+
+# .NET (api)
+TestResults/
+*.user
+.vs/
+
+# Angular and Node (web)
+.angular/
+dist/
+coverage/
+npm-debug.log*
+
+# Playwright
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/

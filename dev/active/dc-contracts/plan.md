@@ -23,10 +23,10 @@ From the interview (Kfir, 2026-11-10):
 2. **Examples 5 and 6**: `department-without-active-employees` (root Department, one-to-many `none`) and
    `inactive-ministry-salary-out-of-range` (root Employee, two-hop path, nested OR). (With examples 1 to 4 they use
    every node type, both relationship kinds and two root entities; rejected: a manager example, a nested-related one.)
-3. **Reason and rule-sentence text has one source, the glossary.** The engine renders it; `he.json` and `en.json`
-   hold screen and error text only. (Rejected: `reasons.*` keys in the i18n files as §5.1 and §8 say; two copies drift.)
+3. **Reason and rule-sentence text has one source, the glossary.** The engine renders it; `he.json`
+   holds screen and error text only. (Rejected: `reasons.*` keys in the i18n files as §5.1 and §8 say; two copies drift.)
 4. **"No department" is a glossary field, not a new node kind**: a visible employee field `department_assignment`
-   (column `department_id`, label "שיוך למחלקה" / "Department assignment", operators only `is_null` and
+   (column `department_id`, label "שיוך למחלקה", operators only `is_null` and
    `is_not_null` through the §4.3 override). §5 does not change and the compiler needs nothing new. (Kfir's design;
    rejected: a `related` node on a many-to-one relationship, a NULL check on the department's name.)
 5. **Expected sets list the matched condition ids per record**, and db-check's hand-written SQL prints the same.
@@ -48,8 +48,9 @@ Contract design settled here, inside the architecture:
     total count cannot be expressed in the schema. The schema repeats the two it can express and the contracts check
     asserts they agree.
 12. **Operator text model**: each operator has `label`, `sentence` and `reason`, each with variants (`default`,
-    `<type>`, `field`, `<type>.field`), so Hebrew can say "מוקדם מ" for dates and "קטן מ" for numbers. Templates use
-    a colon-neutral style ("{field}: {value}") wherever gender agreement would break.
+    `<type>`, `field`, `<type>.field`), so Hebrew can say "לפני" for dates and "מתחת ל־" for numbers. No text
+    agrees with the gender of the field: comparisons use prepositions, the rest a colon style ("{field}: {value}",
+    "שכר: חסר"). (Kfir's final wording at the Gate read; the first version said "מוקדם מ" and "קטן מ".)
 13. **The engine returns everything rendered** (rule `sentence`, a `sentence` per condition, a `text` per reason,
     `reasonText`), so no client has to render. Re-rendering from the served templates is allowed, never required.
 14. **`hr` carries structural constraints only** (keys, FKs, the status domain) and explicit ids without IDENTITY.
@@ -86,9 +87,9 @@ Contract design settled here, inside the architecture:
 From the planning of dc-engine (Kfir, 2026-11-10; the shapes are in Design H, which wins where it differs from B to F):
 
 26. **The glossary carries what the suggestion generators need and no rule parameters**: `lifecycle` per entity,
-    `required` per field, and the he/en text of suggestions and of their evidence. With no LLM key the engine must
-    reproduce examples 2, 3, 4 and 5 from them. Example 1's thresholds (18 and 15,000) are business knowledge: they
-    may come only from the LLM path and stay out of the glossary. (Rejected: `range` declarations; profiling only.)
+    `required` per field, and the text of suggestions and of their evidence. The engine must
+    reproduce examples 2, 3, 4 and 5 from them. Example 1's thresholds (18 and 15,000) are business knowledge: no
+    generator invents them, and they stay out of the glossary. (Rejected: `range` declarations; profiling only.)
 27. **Sentences and reasons are also returned as parts** (`sentenceParts`, `textParts`), because a single string
     cannot carry the condition marks that `docs/design.md` asks for. The engine stays the only renderer (decision 13).
 28. **`limits.maxTotalValues` (500) and a `comparable` field flag.** SQL Server accepts 2,100 parameters per
@@ -96,6 +97,50 @@ From the planning of dc-engine (Kfir, 2026-11-10; the shapes are in Design H, wh
     and the public glossary hides `computed`, so the editor needs the flag.
 29. **Four clarifications**: node types by `if`/`then` instead of `oneOf`; depth and condition count defined; which
     nodes `conditions[]` lists; `/debug/compile` returns both statements.
+
+From the planning of dc-web (Kfir, 2026-11-10, given with the word to execute):
+
+30. **The Hebrew date pattern is `dd.MM.yyyy`** (`formats.he.date`). (The `en` format went with the English values:
+    decision 37.)
+31. **Identifying fields are name first**: employee `first_name`, `last_name`, `employee_number`; department `name`,
+    `department_number`. `display_text` is those values joined by one space, in that order.
+
+From the review of the branch (2026-11-10; made by the orchestrator while fixing findings, open to Kfir's objection
+at the Gate read):
+
+32. **A number field may be marked `identifier: true`** (employee and department numbers, the two assignment
+    fields): it names a record and is written digit for digit, never with a thousands separator, which is also how
+    `display_text` holds it. (A meaning the glossary carries; rejected: a client that special-cases field keys.)
+33. **The two related `sentence` phrases bracket `{conditions}`**, so a condition that follows a related node cannot
+    be read into it. The renderer still adds no bracket of its own, and the reasons are unchanged.
+34. **`is_null` says "חסר" for every type**; "ריק" is the word of `is_empty` alone. A
+    bool's value labels agree with the field label before the colon ("סטטוס: פעיל"), not with the entity.
+35. **Passwords reach sqlcmd through the environment**, never on a command line, and `.env.example` holds none.
+36. **`NETWORK_ERROR` is a client-derived code** in `errors.md`, beside `ROW_CAP_EXCEEDED`; `REQUEST_INVALID` also
+    answers 413 and 415; `page` is 1 to 1,000,000; a number literal stays below 10^15; a `definition` that is not a
+    JSON object is a malformed request (400), not a schema violation.
+
+Scope decision (Kfir, 2026-11-10, after the review and before the push; carried by this session through
+`contracts/`, `docs/`, `.claude/` and the five plans):
+
+37. **Hebrew only.** The language mechanism stays as designed: texts keyed by language, `languages` and
+    `defaultLanguage` in the glossary, `Accept-Language`, the run's language. Only the English values went:
+    `languages` is `["he"]`, every text is an object with the one key `he`, `formats` holds `he` alone, and the
+    examples carry Hebrew names and descriptions. A request for a language that is not listed gets the default.
+    No `en.json`, no language switch, no English test or screenshot.
+38. **Suggestions are heuristics only.** No LLM lane and no contract member that existed only for it: the
+    `source` member of `/suggest` and the keyed timing are gone. `docs/architecture.md` §6 keeps the LLM step as a
+    design that is not built.
+39. **Delivery has two paths**: Docker, and short from-source instructions. The offline Windows bundle is gone
+    from the delivery plan and from every plan that served it.
+40. **Web screenshots at 390 and 1440 only.**
+
+Not touched by 37 to 40, on purpose: `README.md` (Kfir's word), `sql/` (the `language` column still accepts `he`
+and `en`), `dev/briefs/`, the notes of the other four tasks.
+
+Execution (Kfir, 2026-11-10): the whole task in one run on Fable, three Opus lanes (phase 1; phase 2; the phase 4
+documents) beside the orchestrator's phase 3, no per-phase review, one review over the whole branch at the end,
+then the Gate, the push and the PR. No merge.
 
 ## Phases
 
@@ -105,28 +150,28 @@ Every phase ends the same way: tick the steps as they finish, `/check --tests`, 
 costs minutes, then wait for the word. The Design section below is the specification each step builds from.
 
 ### Phase 0: path-scoped skills in the harness
-- [ ] `.claude/skills/task-plan/SKILL.md` line 20: replace "Call the Skill tool with the matching domain skill" by
+- [x] `.claude/skills/task-plan/SKILL.md` line 20: replace "Call the Skill tool with the matching domain skill" by
       an instruction to read `.claude/skills/dc-<area>/SKILL.md` with the Read tool, and say why (a skill with
       `paths:` cannot be loaded through the Skill tool before a file of its area is touched).
-- [ ] `.claude/README.md` line 18: "or on demand" becomes "or by reading the file".
+- [x] `.claude/README.md` line 18: "or on demand" becomes "or by reading the file".
 
 Verify: `node --test .claude/hooks/tests/*.test.mjs`
 Commit: `chore(claude): read path-scoped dc skills by file in task-plan` (no review: two lines of text)
 
 ### Phase 1: skeleton and database structure
-- [ ] Root files: `.gitattributes` (`* text=auto eol=lf`, so `.sh` and `.sql` survive a Windows checkout),
+- [x] Root files: `.gitattributes` (`* text=auto eol=lf`, so `.sh` and `.sql` survive a Windows checkout),
       `.editorconfig` (UTF-8, LF, final newline; 2 spaces, 4 for `.py`, `.sql`, `.cs`), and the build and cache
       folders of all three stacks in `.gitignore`, so the parallel tasks do not each edit it.
-- [ ] `.env.example` per Design A, and a local `.env` copied from it (ignored by git).
-- [ ] `docker-compose.yml` per Design A.
-- [ ] `scripts/db-init.sh` per Design A (executable).
-- [ ] `sql/00_database.sql`, `10_schemas.sql`, `20_hr_tables.sql`, `30_dq_tables.sql`, `40_logins.sql`,
+- [x] `.env.example` per Design A, and a local `.env` copied from it (ignored by git).
+- [x] `docker-compose.yml` per Design A.
+- [x] `scripts/db-init.sh` per Design A (executable).
+- [x] `sql/00_database.sql`, `10_schemas.sql`, `20_hr_tables.sql`, `30_dq_tables.sql`, `40_logins.sql`,
       `50_indexes.sql` and `sql/cleanup_runs.sql` per Design A and `.claude/rules/sql.md`.
-- [ ] `scripts/db-check.sh` with the sections `structure` and `permissions` per Design A (executable).
-- [ ] `README.md` skeleton: the §17 headings, the database quick start, the repository map, and one line per later
+- [x] `scripts/db-check.sh` with the sections `structure` and `permissions` per Design A (executable).
+- [x] `README.md` skeleton: the §17 headings, the database quick start, the repository map, and one line per later
       section naming the task that fills it. `sql/README.md`: script order, what each script creates, the two
       logins, `--reset`, and running the scripts by hand in SSMS (SQLCMD Mode for the password variables).
-- [ ] `.claude/skills/dc-sql/SKILL.md`: correct the facts this phase changed (the fixed compose project name,
+- [x] `.claude/skills/dc-sql/SKILL.md`: correct the facts this phase changed (the fixed compose project name,
       `--reset`, the worktree refusal inside the script).
 
 Verify:
@@ -140,21 +185,22 @@ Review: `/phase-review sql infra`
 Commit: `feat(sql): database skeleton, hr and dq schemas, two logins`
 
 ### Phase 2: definition schema and glossary
-- [ ] `contracts/control-definition.schema.json` per Design C.
-- [ ] `contracts/glossary.json` per Design B, with Hebrew and English for every label and template.
-- [ ] `scripts/contracts-check.py` per Design G, checks 1 to 3.
-- [ ] pkgmap: a `contracts-check` row in the default column for `contracts/**` and `scripts/contracts-check.py`,
+- [x] `contracts/control-definition.schema.json` per Design C.
+- [x] `contracts/glossary.json` per Design B, with a text per language for every label and template (Hebrew alone
+      since decision 37).
+- [x] `scripts/contracts-check.py` per Design G, checks 1 to 3.
+- [x] pkgmap: a `contracts-check` row in the default column for `contracts/**` and `scripts/contracts-check.py`,
       with a skip line when `uv` is missing. Update `pkgmap.test.mjs` (the "contracts prose -> nothing" case
       changes), the matrix and `allowed-tools` in `.claude/skills/check/SKILL.md`, the map in `.claude/README.md`
       and the Verify list in CLAUDE.md.
-- [ ] `scripts/db-check.sh` section `glossary`: every table and column the glossary names exists in
+- [x] `scripts/db-check.sh` section `glossary`: every table and column the glossary names exists in
       `INFORMATION_SCHEMA` as `dq_engine_ro` sees it. One static query dumps the columns and jq compares the sets;
       no SQL is built from the glossary.
-- [ ] Amendments per Design H1, H3 and H4a: `lifecycle`, `required`, `comparable`, `limits.maxTotalValues` and the
+- [x] Amendments per Design H1, H3 and H4a: `lifecycle`, `required`, `comparable`, `limits.maxTotalValues` and the
       `suggestions` block in the glossary; node types by `if`/`then` in the schema; checks 2 and 3 extended.
-- [ ] Design I1 for the schema: a member that is not allowed is `false` under `properties` or falls to
+- [x] Design I1 for the schema: a member that is not allowed is `false` under `properties` or falls to
       `additionalProperties: false`; no `not`, `anyOf` or `oneOf` anywhere, and check 1 fails on any of the three.
-- [ ] `docs/architecture.md` §4.3: the operator text model, `limits`, and `lifecycle`, `required` and `comparable`
+- [x] `docs/architecture.md` §4.3: the operator text model, `limits`, and `lifecycle`, `required` and `comparable`
       (decisions 11, 12, 26 and 28).
 
 Verify: `uv run scripts/contracts-check.py` · `scripts/db-check.sh` · `node --test .claude/hooks/tests/*.test.mjs`
@@ -162,18 +208,18 @@ Review: `/phase-review engine api web infra` (the glossary and the schema are re
 Commit: `feat(contracts): definition schema and business glossary`
 
 ### Phase 3: seed, examples and the oracle
-- [ ] `sql/60_seed_hr.sql` per Design D: one transaction, keyed inserts, a `-- PLANTED <example-id>: …` or
+- [x] `sql/60_seed_hr.sql` per Design D: one transaction, keyed inserts, a `-- PLANTED <example-id>: …` or
       `-- BOUNDARY <example-id>: …` comment above every row an example must or must not flag.
-- [ ] `contracts/examples/<id>.json`, six files per Design D, expected sets taken from the PLANTED comments.
-- [ ] `sql/checks/<id>.sql`, six hand-written SELECTs per Design D that return the key and one contributing flag
+- [x] `contracts/examples/<id>.json`, six files per Design D, expected sets taken from the PLANTED comments.
+- [x] `sql/checks/<id>.sql`, six hand-written SELECTs per Design D that return the key and one contributing flag
       per condition id.
-- [ ] `scripts/db-check.sh` sections `hebrew` (no `?` in a seeded name, first letters in the Hebrew block) and
+- [x] `scripts/db-check.sh` sections `hebrew` (no `?` in a seeded name, first letters in the Hebrew block) and
       `examples` (prints key, name and matched ids per violating record; fails on any difference from the example
       file; runs example 1 on both of its dates).
-- [ ] `scripts/contracts-check.py` check 4 and `--render` per Design G.
-- [ ] `sql/README.md`: the planted and boundary rows per example, and the stability window of decision 1.
-- [ ] CLAUDE.md: the Hebrew gotcha names `contracts/examples/` (control names are data), per decision 7.
-- [ ] Design H1 for the examples and the seed: `heuristic: true` on examples 2 to 5, the seed sanity lines in
+- [x] `scripts/contracts-check.py` check 4 and `--render` per Design G.
+- [x] `sql/README.md`: the planted and boundary rows per example, and the stability window of decision 1.
+- [x] CLAUDE.md: the Hebrew gotcha names `contracts/examples/` (control names are data), per decision 7.
+- [x] Design H1 for the examples and the seed: `heuristic: true` on examples 2 to 5, the seed sanity lines in
       `sql/README.md`, check 4 accepting the key.
 
 Verify:
@@ -187,32 +233,32 @@ Review: `/phase-review sql engine`
 Commit: `feat(sql): hebrew seed with planted violations and six example controls`
 
 ### Phase 4: HTTP APIs and error catalogue
-- [ ] `contracts/errors.md` per Design F, in the strict table format the check parses.
-- [ ] `contracts/api.md` per Design E.
-- [ ] `contracts/examples/invalid/*.json` per Design F, and check 5 in `scripts/contracts-check.py`.
-- [ ] Harness lines for decision 3: `.claude/rules/typescript.md` line 21, `.claude/skills/dc-web/SKILL.md` lines
+- [x] `contracts/errors.md` per Design F, in the strict table format the check parses.
+- [x] `contracts/api.md` per Design E.
+- [x] `contracts/examples/invalid/*.json` per Design F, and check 5 in `scripts/contracts-check.py`.
+- [x] Harness lines for decision 3: `.claude/rules/typescript.md` line 21, `.claude/skills/dc-web/SKILL.md` lines
       45 and 68, `.claude/skills/ship/SKILL.md` line 29 (reason text comes from the glossary, not from i18n).
-- [ ] CLAUDE.md "Where to read": rows for `contracts/api.md`, `contracts/errors.md` and `sql/README.md`. The file
+- [x] CLAUDE.md "Where to read": rows for `contracts/api.md`, `contracts/errors.md` and `sql/README.md`. The file
       must stay at or under 100 lines (an infra test enforces it; it has 94 today).
-- [ ] Design H in `contracts/api.md` and `contracts/errors.md`: parts (H2), the evidence keys (H1), the params of
+- [x] Design H in `contracts/api.md` and `contracts/errors.md`: parts (H2), the evidence keys (H1), the params of
       `TOO_MANY_VALUES` and `FIELD_COMPARISON_NOT_ALLOWED` (H3), depth and count, `conditions[]` and
       `/debug/compile` (H4b to H4d).
-- [ ] Design I in `contracts/api.md`, `contracts/errors.md` and the fixtures: the two decisions, the three lines
+- [x] Design I in `contracts/api.md`, `contracts/errors.md` and the fixtures: the two decisions, the three lines
       of I1 for `errors.md` and the fixtures, and the pinned details I2 to I14.
-- [ ] `docs/architecture.md`: the lines of §4.2, §5.1, §6, §7 and §8 that decisions 3, 8, 15, 22 and 27 change.
+- [x] `docs/architecture.md`: the lines of §4.2, §5.1, §6, §7 and §8 that decisions 3, 8, 15, 22 and 27 change.
       (The dc-engine gate line of §19 changes in the engine task, with decision 26.)
-- [ ] `README.md`: the contracts section (what each file fixes, how a contract change is made).
+- [x] `README.md`: the contracts section (what each file fixes, how a contract change is made).
 
 Verify: `uv run scripts/contracts-check.py` · `node --test .claude/hooks/tests/*.test.mjs` · `/check all --tests`
 Review: `/phase-review api web engine`
 Commit: `feat(contracts): http api and error catalogue`
 
 ### Gate
-- [ ] From a clean container: `docker compose down -v`, `docker compose up -d db && scripts/db-init.sh`,
+- [x] From a clean container: `docker compose down -v`, `docker compose up -d db && scripts/db-init.sh`,
       `scripts/db-init.sh` again, `scripts/db-check.sh`, `uv run scripts/contracts-check.py`,
       `node --test .claude/hooks/tests/*.test.mjs`. Save the output as `gates/final.txt`.
-- [ ] Kfir reads `uv run scripts/contracts-check.py --render`: the rule sentence and the reasons of the six
-      examples in Hebrew and English. This is the last moment a wording change is free.
+- [x] Kfir reads `uv run scripts/contracts-check.py --render`: the rule sentence and the reasons of the six
+      examples, in Hebrew. This is the last moment a wording change is free.
 - [ ] `/ship`, then the PR and the merge on Kfir's word.
 - [ ] After the merge, on main: `scripts/db-init.sh --reset` if the seed changed since the last init, then the
       three worktrees of kickoff §5, with `.env` copied into each (it is ignored by git, so a new worktree has none).
@@ -279,15 +325,16 @@ error 229 on a read of `dq.Control`, on an UPDATE of `hr.Employee` and on a CREA
 
 Top-level keys: `glossaryVersion` (`"1.0.0"`), `languages`, `defaultLanguage` (`"he"`), `limits`
 (`maxDepth 4`, `maxConditions 30`, `maxListValues 100`, `maxPathHops 2`, `maxTotalValues 500`: Design H3), `formats` (per language: the date pattern,
-`dd/MM/yyyy` for he and `yyyy-MM-dd` for en; numbers with `,` grouping and trailing zeros trimmed), `phrases`,
-`operators`, `entities`, `relationships`, `suggestions` (Design H1). Every label is `{ "he": …, "en": … }`.
+`dd.MM.yyyy` for he (decision 30); numbers with `,` grouping and trailing zeros trimmed), `phrases`,
+`operators`, `entities`, `relationships`, `suggestions` (Design H1). Every label is an object keyed by language:
+`{ "he": … }`, with one key per entry of `languages` (decision 37).
 
 **Entities** (each: `key`, `table { schema, name }`, `keyColumn`, `label { singular, plural }`, `description`,
 `rootable`, `visible`, `identifyingFields`, `fields`):
 
 | Entity | Field key | Type | Column | Nullable | Notes |
 |---|---|---|---|---|---|
-| `employee` (hr.Employee, rootable; identifying: `employee_number`, `first_name`, `last_name`) | `employee_number` | number | `id` | no | |
+| `employee` (hr.Employee, rootable; identifying: `first_name`, `last_name`, `employee_number`: decision 31) | `employee_number` | number | `id` | no | |
 | | `national_id` | text | `national_id` | no | |
 | | `first_name`, `last_name` | text | same name | no | |
 | | `email` | text | `email` | yes | |
@@ -295,10 +342,10 @@ Top-level keys: `glossaryVersion` (`"1.0.0"`), `languages`, `defaultLanguage` (`
 | | `age` | number | computed `age_years` over `birth_date` | no | whole years on the run date |
 | | `hire_date` | date | `hire_date` | no | |
 | | `termination_date` | date | `termination_date` | yes | |
-| | `salary` | number | `salary` | yes | unit ₪ / ILS |
+| | `salary` | number | `salary` | yes | unit ₪ |
 | | `status` | enum | `status` | no | values `active`, `inactive` with labels |
 | | `department_assignment` | number | `department_id` | yes | operators `is_null`, `is_not_null` only; label "שיוך למחלקה" |
-| `department` (hr.Department, rootable; identifying: `department_number`, `name`) | `department_number` | number | `id` | no | |
+| `department` (hr.Department, rootable; identifying: `name`, `department_number`) | `department_number` | number | `id` | no | |
 | | `name` | text | `name` | no | |
 | | `is_active` | bool | `is_active` | no | value labels for true and false |
 | | `manager_assignment` | number | `manager_employee_id` | yes | operators `is_null`, `is_not_null` only |
@@ -327,7 +374,7 @@ Without an override a field's operators are those whose `types` include its type
 | `is_null`, `is_not_null` | 0 | every type | no |
 | `is_empty`, `is_not_empty` | 0 | text (NULL, empty or spaces only) | no |
 
-**Text**: `label`, `sentence` and `reason` are each an object of variants, every variant `{ he, en }`. Lookup
+**Text**: `label`, `sentence` and `reason` are each an object of variants, every variant keyed by language. Lookup
 order: `<type>.field`, `field`, `<type>`, `default` (the two `field` variants only when the right side is a field).
 Placeholders: `{field}`, `{value}`, `{value2}`, `{values}`, `{actual}`, `{other}`, `{otherActual}`. `phrases`
 holds `and`, `or`, `groupOpen`, `groupClose`, `listSeparator`, `reasonSeparator`, `fieldOnPath` (a field label
@@ -354,7 +401,7 @@ required (§5); a `related` node names a one-to-many relationship that starts at
 
 ### D. Examples and seed
 
-**Example file**: `{ id, name { he, en }, description { he, en }, runDate, definition, expected { total,
+**Example file**: `{ id, name { he }, description { he }, runDate, definition, expected { total,
 violations: [{ key, matched: [id] }] }, alternateRuns?: [{ runDate, expected }] }`. `id` equals the file name;
 violations are ordered by the root key as the database orders it.
 
@@ -414,7 +461,7 @@ date arrives as the sqlcmd variable `$(RUN_DATE)`, read from the example file. "
 
 ### E. HTTP APIs (`contracts/api.md`)
 
-Common to both: JSON, camelCase; `Accept-Language: he | en` (anything else is `he`); `X-Correlation-Id` created by
+Common to both: JSON, camelCase; `Accept-Language`: a language the glossary lists, anything else its default (`he`); `X-Correlation-Id` created by
 the api when missing, forwarded to the engine and returned; timestamps in ISO 8601 UTC, dates as `YYYY-MM-DD`.
 Every error is problem details: `{ type: "about:blank", title: <code>, status, code, params, errors?,
 correlationId }`, with no prose. A definition error is `{ code, path, nodeId?, params }`, `path` being a JSON
@@ -433,7 +480,7 @@ params, text }], reasonText }`. Reason `params` are `{ left, actual, value | val
 | `GET /glossary` | | the glossary without `table`, `keyColumn`, `column`, `computed` or `join`, hidden fields and entities removed, every field with its resolved `operators` | |
 | `POST /validate` | `{ definition }` | `{ valid: true, sentence, conditions: [{ id, sentence }] }` | 422 `DEFINITION_INVALID` |
 | `POST /run` | `{ definition, runDate?, rowCap? }` | `{ runDate, totalCount, returnedCount, capExceeded, durationMs, engineVersion, glossaryVersion, sentence, conditions: [{ id, sentence, count }], violations }` | 422 · 504 `QUERY_TIMEOUT` · 503 `DATABASE_UNAVAILABLE` |
-| `POST /suggest` | `{ rootEntity?, max? }` | `{ source: "heuristics" \| "heuristics+llm", items: [{ name, description, rationale, evidence: [{ key, params, text }], definition, sentence }] }` | 503 |
+| `POST /suggest` | `{ rootEntity?, max? }` | `{ items: [{ name, description, rationale, evidence: [{ key, params, text }], definition, sentence }] }` | 503 |
 | `POST /debug/compile` | `{ definition, runDate? }` | `{ sql, params }` | 404 `DEBUG_DISABLED` · 422 |
 
 `conditions[].count` is the number of violations in which that condition is matched (decision 8), over all
@@ -516,7 +563,7 @@ failures come last.
 
 1. The schema is a valid draft 2020-12 schema.
 2. Glossary integrity: unique keys; relationships name existing entities; identifying fields exist; operator
-   overrides name existing operators; every label and template has `he` and `en`; templates use only the
+   overrides name existing operators; every label and template has a text for every language of `languages`; templates use only the
    placeholders of Design B.
 3. Agreement: the schema's operator enum equals the glossary's operator keys; the schema's list and path limits
    equal `limits`.
@@ -526,7 +573,7 @@ failures come last.
 5. Invalid fixtures: every schema-layer one fails validation, every semantic-layer one passes it, and every
    expected code is a row of `contracts/errors.md`.
 
-`--render` prints, for each example, the rule sentence and one reason per condition in Hebrew and English with a
+`--render` prints, for each example, the rule sentence and one reason per condition in every language the glossary lists with a
 plain placeholder substitution. It is a reading aid for the copy review, not the specification of the renderer.
 
 ### H. Amendments from dc-engine planning (2026-11-10, decisions 26 to 29)
@@ -543,7 +590,7 @@ engine assumes; a change here after that task starts is a contract change.
   a `lifecycle`). Seed glossary: employee `email`, `salary` and `department_assignment` are `"active"`,
   `termination_date` is `"inactive"`, and nothing else is marked. No threshold, range or other rule parameter goes
   into the glossary.
-- Top level: `suggestions { kinds, evidence }`, every leaf `{ he, en }`. `kinds.<kind>` has `name`, `description`
+- Top level: `suggestions { kinds, evidence }`, every leaf keyed by language. `kinds.<kind>` has `name`, `description`
   and `rationale`:
 
   | Kind | The engine proposes | Placeholders |
@@ -566,7 +613,7 @@ engine assumes; a change here after that task starts is a contract change.
   `contracts/errors.md` gets a fourth table, "Evidence keys", with these rows. In the API `params.field` is a
   field key; the label is in the text.
 - Examples: `heuristic: true` in the wrapper of examples 2, 3, 4 and 5. The engine must reproduce each of those
-  definitions node for node with no LLM key, so they follow its conventions: ids `c1..` and `r1..` in document
+  definitions node for node, so they follow its conventions: ids `c1..` and `r1..` in document
   order, fields in glossary order (`email` before `salary` before `department_assignment`), the active branch
   before the inactive one, a root that is always a group, "inactive" as `eq false` on a bool and `eq inactive` on
   the two-valued status. The table of Design D already has that shape; do not reshape those four without a line to
@@ -577,7 +624,7 @@ engine assumes; a change here after that task starts is a contract change.
   and nothing else.
 - `scripts/contracts-check.py`, check 2: `lifecycle.field` exists and is bool or enum, and `active` is one of its
   values; `required` holds a legal value and, for `active` and `inactive`, the entity has a `lifecycle`; every kind
-  and evidence key above is present with `he` and `en` and uses only its placeholders. Check 4 accepts `heuristic`.
+  and evidence key above is present in every language and uses only its placeholders. Check 4 accepts `heuristic`.
   `--render` also prints the three texts of each kind.
 
 **H2. Sentence and reason parts** (decision 27; `api.md` and `errors.md` in phase 4)
@@ -680,8 +727,7 @@ runs, in both services, and `errors.md` gives its path.
     that item's definition. At most 20 items.
 12. 201 responses carry `Location`. `GET /api/v1/health` is always 200.
 13. `api.md` states the engine's worst-case time. The engine plan gives 30 s per statement and two statements per
-    run, so about 60 s for `/run`, and up to 25 s for `/suggest` with a key. The api's attempt timeout, 75 s by
-    default, sits above both.
+    run, so about 60 s for `/run`. The api's attempt timeout, 75 s by default, sits above it.
 14. A name has 1 to 200 characters and a description at most 1000 (the column sizes). Names are not unique.
 
 Seen while planning, for the web task: the States table of `docs/design.md` names `GLOSSARY_MISMATCH` for a
@@ -704,7 +750,7 @@ control whose field left the glossary. In Design F that state is the run error `
 - **Time**: if the day runs out, cut in this order and record it in notes: `--render`, the semantic-layer invalid
   fixtures, `manager_assignment`, `sql/cleanup_runs.sql` (it can move to dc-api). The gate items are never cut.
 - **The stability window ends 2027-12-31**, when the youngest planted minor approaches 18. `sql/README.md` says so.
-- **The amendments of Design H add about an hour and a half**, most of it he/en templates. If the day runs out,
+- **The amendments of Design H add about an hour and a half**, most of it templates. If the day runs out,
   `missing_optional` and its texts go first. The dc-engine and dc-web plans are built on `lifecycle`, `required`,
   `maxTotalValues` and the parts in `api.md`, so those are not candidates for a cut.
 
@@ -712,6 +758,7 @@ control whose field left the glossary. In Design F that state is the run error `
 
 - Engine, api and web code, their Dockerfiles and their compose services (tasks 2 to 5).
 - The §17 documents other than the README skeleton and `sql/README.md`; trimming `docs/architecture.md`; the
-  manual-path `run-all` script (all dc-delivery).
+  manual-path instructions (all dc-delivery).
 - `docs/design.md` (kickoff §4; needed before dc-web starts, in any session).
 - A `department.manager` relationship, relative date values such as "today", a "rule must hold" mode, CI.
+- English texts, an LLM step in the suggestions, an offline bundle (decisions 37 to 39).

@@ -1,0 +1,51 @@
+# phase 2 verify, 2026-11-10T20:35Z, branch feat/contracts at 43745cc
+$ uv run scripts/contracts-check.py
+contracts-check: ok, 3 checks passed (schema, glossary, agreement); skipped: examples (arrives with phase 3), invalid fixtures (arrives with phase 4)
+exit=0
+$ scripts/db-check.sh structure permissions glossary
+PASS structure: database collation
+PASS structure: server collation, which tempdb and #temp tables share
+PASS structure: schemas hr and dq
+PASS structure: the seven tables of hr and dq, and no other
+PASS structure: the indexes of 50_indexes.sql
+PASS permissions: dq_engine_ro reads hr.Employee
+PASS permissions: dq_engine_ro is refused a read of dq.Control (error 229)
+PASS permissions: dq_engine_ro is refused an UPDATE of hr.Employee (error 229)
+PASS permissions: dq_engine_ro is refused CREATE TABLE (error 262)
+PASS permissions: dq_app inserts into dq.Control (rolled back)
+PASS permissions: dq_app is refused a read of hr.Employee (error 229)
+PASS permissions: dq_app is refused CREATE TABLE (error 262)
+PASS permissions: public holds no permission on hr or dq
+PASS glossary: all 19 columns the glossary names exist for dq_engine_ro
+PASS glossary: every stored field's type fits its column
+PASS glossary: dq_engine_ro sees hr alone in INFORMATION_SCHEMA
+db-check: 16 passed, 0 failed (structure permissions glossary)
+exit=0
+$ node --test .claude/hooks/tests/*.test.mjs
+  duration_ms: 237.646168
+  type: 'suite'
+  ...
+# Subtest: stop-check without jq reports and exits 0 (2026-11-01 fail-open)
+    # Subtest: prints the install hint instead of pretending to check
+    ok 1 - prints the install hint instead of pretending to check
+      ---
+      duration_ms: 58.491868
+      type: 'test'
+      ...
+    1..1
+ok 36 - stop-check without jq reports and exits 0 (2026-11-01 fail-open)
+  ---
+  duration_ms: 58.584125
+  type: 'suite'
+  ...
+1..36
+# tests 226
+# suites 36
+# pass 226
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 5673.369245
+exit=0
+overall=0

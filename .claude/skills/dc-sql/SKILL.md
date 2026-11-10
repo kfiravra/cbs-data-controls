@@ -30,8 +30,10 @@ numbers leave gaps for later inserts, and every script is re-runnable.
 60_seed_hr.sql    the Hebrew seed with planted violations
 ```
 
-Retention cleanup is a separate script outside the init order. `sql/README.md` documents the order, the cleanup and
-the expected violations per example.
+Only top-level `sql/NN_*.sql` files are in the order (`sql/checks/` is not). Retention cleanup is
+`sql/cleanup_runs.sql`, outside the init order. `scripts/db-init.sh --reset` drops `DataControls` and runs the
+order again: a changed seed row needs it (inserts are keyed), and it deletes every session's `dq` rows.
+`sql/README.md` documents the order, the cleanup and the expected violations per example.
 
 ## Naming
 
@@ -87,9 +89,12 @@ it; `GETDATE()` scattered through the seed makes the expected keys drift with th
   nothing is granted to `public`. `db-check.sh` proves the denials as well as the violations.
 - `INFORMATION_SCHEMA` shows each login only what it may read, so the engine's startup check sees `hr` alone, by
   design.
-- One container per machine, started and initialised from the main tree. A compose run in a worktree starts a second
-  container under another project name and collides on :1433; pkgmap skips `sql-init` in worktrees, and the git
-  guard asks before `docker compose down` (`down -v` deletes the seeded database).
+- One container per machine, started and initialised from the main tree. The compose project name is fixed
+  (`name: data-controls`), so compose in a worktree addresses that same container instead of starting a second one:
+  `exec`, `ps` and `scripts/db-check.sh` work from anywhere (with `.env` copied in), but `down` stops it for every
+  session, and `up` from a worktree whose `docker-compose.yml` differs recreates it. `scripts/db-init.sh` refuses
+  to run in a linked worktree (the test of `dc_linked_worktree`), pkgmap skips `sql-init` there, and the git guard
+  asks before `docker compose down` (`down -v` deletes the seeded database).
 
 ## Read before changing
 
