@@ -179,13 +179,13 @@ Playwright run, a reviewer, a critique) and wait for the word. The Design sectio
 step builds from.
 
 ### Phase 0: worktree (from the main tree, no commit)
-- [ ] Kfir's docs+infra commit is on main: `git log -1 --format='%h %s' main -- docs/design.md docs/PRODUCT.md`
+- [x] Kfir's docs+infra commit is on main: `git log -1 --format='%h %s' main -- docs/design.md docs/PRODUCT.md`
       prints it. Not there: stop, nothing starts.
-- [ ] `git worktree add ../cbs-web -b feat/web main`
-- [ ] Move this folder, so one live copy exists: `mkdir -p ../cbs-web/dev/active && mv dev/active/dc-web
+- [x] `git worktree add ../cbs-web -b feat/web main`
+- [x] Move this folder, so one live copy exists: `mkdir -p ../cbs-web/dev/active && mv dev/active/dc-web
       ../cbs-web/dev/active/`. Copy `.claude/settings.local.json` to `../cbs-web/.claude/` (ignored by git: local
       permissions and the impeccable hooks).
-- [ ] A new session in `../cbs-web` on Opus, `/resume dc-web`.
+- [x] A new session in `../cbs-web` on Opus, `/resume dc-web`.
 
 The design reference stays in the main tree and is read by absolute path:
 `/home/kfir/projects/cbs-data-controls/dev/active/design/` (`mock/*.html`, `mock/app.css`, `mock/tokens.css` and the

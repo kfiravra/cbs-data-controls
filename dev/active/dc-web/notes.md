@@ -1,24 +1,26 @@
 # dc-web notes
 
 ## State
-Phase 0 not started. The plan was written on Fable 5.2 on 2026-11-10 in the main tree and amended the same evening
-on two asks from dc-delivery (plan.md decisions 22 to 27). Execution is for Opus in the `../cbs-web` worktree,
-which does not exist yet. `web/` and `contracts/` do not exist. This folder still sits in the main tree
-(`dev/active/dc-web/`) and moves into the worktree in phase 0.
+Phase 1 in progress (2026-11-11, unattended night run on Kfir's word). Phase 0 was done by Kfir: the worktree
+`../cbs-web` on `feat/web` is cut from main at `f9928bf`, which already holds dc-contracts (#1), `docs/design.md`
+and `docs/PRODUCT.md`; this folder came from git, `.env` and `.claude/settings.local.json` are in place.
 
 ## Next
-1. Wait for Kfir's docs+infra commit on main: `git log -1 --format='%h %s' main -- docs/design.md docs/PRODUCT.md`
-   must print it. Both files were untracked on 2026-11-10.
-2. Phase 0, from the main tree: `git worktree add ../cbs-web -b feat/web main`, then
-   `mkdir -p ../cbs-web/dev/active && mv dev/active/dc-web ../cbs-web/dev/active/` and
-   `cp .claude/settings.local.json ../cbs-web/.claude/`.
-3. In `../cbs-web`: switch to Opus, `/resume dc-web`, phase 1. Its first step is the scaffold: state the npm
-   install (about two minutes, about 400 MB) and wait for the word.
+1. Phase 1: scaffold `web/`, tokens, shell, i18n, the shell spec.
+2. Phases 2 to 6 in order, each with its review, fix commit and ticks.
+3. Phase 7: write the gate specs; run them only when the api and the engine are on main.
 
 ## Blockers
-- Phase 2 onward: dc-contracts must be merged to main (`contracts/` on the branch). Phase 1 is not blocked.
-- Phase 7: the api and the engine, merged or running from their worktrees, the engine with no `ANTHROPIC_API_KEY`.
-  Posting the six examples into the dev `dq` there needs Kfir's word (plan.md phase 7).
+- Phase 7 runs (the gate on the real stack, the pre-load, the hosted build): the api and the engine are not on
+  main (`git log main` ends at `f9928bf` on 2026-11-11). Kfir's word for tonight: wait for the merge, start no
+  service from another worktree.
+
+## Decisions taken unattended (2026-11-11, Kfir asleep: "decide, write it in notes.md, continue")
+1. The session runs on Fable 5.2, not Opus as decision 21 says: a session cannot switch its own model and nobody
+   is awake to do it. Reviewer and critique agents stay on opus.
+2. A cost line (npm install, a Playwright run, a reviewer, a critique) is written to the Log and the run starts
+   at once; nothing waits for a word tonight.
+3. Phase 2's `git merge main` is a no-op: the branch was cut after dc-contracts merged.
 
 ## Last reviewed
 (none)
@@ -97,3 +99,7 @@ rewrote. A review that found nothing, or did not run, is logged as that.
   loaded, the suggestions made without a key repeat the rules of examples 2 to 5 (plan.md Risks); step 3 of
   `/ship` tells a session to apply documentation edits itself and its PR body has four headings, which decisions
   23 and 26 override for this task. No review has run on this plan in Claude Code.
+- 2026-11-11 resumed on Fable 5.2 for an unattended run to the final gate, on Kfir's pasted instructions: no
+  questions, no stop at phase gates, decisions written here, steps that need the api or the engine wait for their
+  merge, the shared SQL Server container is never touched, `contracts/` is frozen, scope is the plan as it is,
+  push and PR only if the gate passes (his word given in that message), no merge. Phase 0 found done on disk.
