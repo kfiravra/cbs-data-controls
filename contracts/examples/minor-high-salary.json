@@ -1,0 +1,43 @@
+{
+  "id": "minor-high-salary",
+  "name": { "he": "קטינים בשכר גבוה", "en": "Minors with a high salary" },
+  "description": {
+    "he": "איתור עובדים שגילם נמוך מ־18 ושכרם גבוה מ־15,000 ש\"ח.",
+    "en": "Find employees who are under 18 and whose salary is above 15,000 ILS."
+  },
+  "runDate": "2026-11-01",
+  "definition": {
+    "schemaVersion": 1,
+    "rootEntity": "employee",
+    "where": {
+      "type": "group",
+      "op": "and",
+      "children": [
+        { "type": "condition", "id": "c1", "left": { "field": "age" }, "operator": "lt", "value": 18 },
+        { "type": "condition", "id": "c2", "left": { "field": "salary" }, "operator": "gt", "value": 15000 }
+      ]
+    }
+  },
+  "expected": {
+    "total": 3,
+    "violations": [
+      { "key": "1051", "matched": ["c1", "c2"] },
+      { "key": "1052", "matched": ["c1", "c2"] },
+      { "key": "1053", "matched": ["c1", "c2"] }
+    ]
+  },
+  "alternateRuns": [
+    {
+      "runDate": "2026-10-31",
+      "expected": {
+        "total": 4,
+        "violations": [
+          { "key": "1051", "matched": ["c1", "c2"] },
+          { "key": "1052", "matched": ["c1", "c2"] },
+          { "key": "1053", "matched": ["c1", "c2"] },
+          { "key": "1054", "matched": ["c1", "c2"] }
+        ]
+      }
+    }
+  ]
+}

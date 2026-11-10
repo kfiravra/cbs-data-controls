@@ -39,8 +39,8 @@ the api writes, and only to `dq`; only the engine reads `hr`.
 - `dir="rtl"` for Hebrew, the default language, and logical CSS only (`margin-inline-start`, `inset-inline-end`,
   `text-align: start`); a physical `left` or `right` is an RTL bug.
 - English-only code, identifiers, logs, comments and tests. Hebrew text lives only in `web/src/assets/i18n/*.json`
-  and `contracts/glossary.json` (seed values in `sql/` are data and may be Hebrew). Only keys and parameters cross
-  a service boundary; the client renders the text.
+  and `contracts/glossary.json`; seed values in `sql/` and control names in `contracts/examples/` are data and may be
+  Hebrew. Errors cross a service boundary as codes and parameters; sentences and reasons come rendered by the engine.
 - A contract change is one commit to `contracts/` on main plus one line pasted into the other sessions; nothing
   else coordinates the worktrees.
 - Port 8000 may be held by another project's container on this machine (`docker ps`); ask before stopping it.

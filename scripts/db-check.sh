@@ -6,8 +6,8 @@
 #
 # Passwords come from .env (a variable already set in the environment wins). sqlcmd runs inside the db
 # container through `docker compose exec`, so the host needs no SQL Server tools; the sections that read
-# contracts/ need jq. Every query is static text:
-# values reach the SQL as sqlcmd variables, never spliced into it. The script shares no code with the engine.
+# contracts/ need jq. Every query is static text: values reach the SQL as sqlcmd variables, never spliced
+# into it. The script shares no code with the engine.
 #
 # Adding a section: write a function section_<name> and add <name> to SECTIONS.
 #
@@ -37,7 +37,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DATABASE=DataControls
 SQLCMD=/opt/mssql-tools18/bin/sqlcmd
 
-SECTIONS=(structure permissions glossary)
+SECTIONS=(structure permissions glossary hebrew examples)
 
 SECTION=""
 TALLY=""
@@ -320,6 +320,123 @@ section_glossary() {
   else
     pass "dq_engine_ro sees hr alone in INFORMATION_SCHEMA"
   fi
+}
+
+# --- hebrew: the seeded names survived the trip through sqlcmd ---
+# A missing N prefix or a wrong code page turns Hebrew into question marks on the way in; a wrong code page on the
+# way out turns it into mojibake. The names are compared with the bytes of the seed file, so this script holds no
+# Hebrew text of its own.
+
+SEED_FILE=sql/60_seed_hr.sql
+
+section_hebrew() {
+  local counts total marks foreign names name lost=""
+
+  counts=$(sql_query dq_engine_ro "
+    WITH n (name) AS (
+      SELECT m.name FROM hr.Ministry AS m
+      UNION ALL SELECT d.name FROM hr.Department AS d
+      UNION ALL SELECT e.first_name FROM hr.Employee AS e
+      UNION ALL SELECT e.last_name FROM hr.Employee AS e
+    )
+    SELECT COUNT(*),
+           COALESCE(SUM(CASE WHEN n.name LIKE N'%?%' THEN 1 ELSE 0 END), 0),
+           COALESCE(SUM(CASE WHEN UNICODE(LEFT(n.name, 1)) NOT BETWEEN 1488 AND 1514 THEN 1 ELSE 0 END), 0)
+    FROM n;") || counts=""
+  IFS='|' read -r total marks foreign <<<"$counts"
+  if [[ ! "$total" =~ ^[1-9][0-9]*$ ]]; then
+    fail "the seed is loaded: expected names in hr, got '${total:-nothing}' (scripts/db-init.sh runs $SEED_FILE)"
+    return 0
+  fi
+  pass "the seed is loaded: $total names in hr"
+  check_equal "no seeded name holds a question mark" 0 "$marks"
+  check_equal "every seeded name starts with a letter of the Hebrew block" 0 "$foreign"
+
+  names=$(sql_query dq_engine_ro "
+    SELECT m.name FROM hr.Ministry AS m UNION ALL SELECT d.name FROM hr.Department AS d;") || names=""
+  while IFS= read -r name; do
+    [[ -n "$name" ]] || continue
+    grep -qF -- "N'$name'" "$SEED_FILE" || lost+="[$name] "
+  done <<<"$names"
+  if [[ -n "$names" && -z "$lost" ]]; then
+    pass "ministry and department names read back byte for byte as $SEED_FILE writes them"
+  else
+    fail "ministry and department names read back as written in $SEED_FILE: differ ${lost:-(no names returned)}"
+  fi
+}
+
+# --- examples: each example control flags exactly the records its file expects ---
+# The oracle of an example is sql/checks/<id>.sql, a hand-written query that shares nothing with the engine. It
+# returns key|name|matched ids per violating record, ordered by key. The run date of the example reaches it as
+# the sqlcmd variable RUN_DATE.
+
+EXAMPLES_DIR=contracts/examples
+CHECKS_DIR=sql/checks
+
+# check_example_run <id> <run date> <expected lines "key|id,id"> <expected total>
+check_example_run() {
+  local id=$1 run_date=$2 expected=$3 total=$4 rows actual count
+  if [[ ! "$run_date" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+    fail "$id: runDate '$run_date' is not YYYY-MM-DD"
+    return 0
+  fi
+  rows=$(sql_file dq_engine_ro "$CHECKS_DIR/$id.sql" "RUN_DATE=$run_date") || {
+    fail "$id on $run_date: the oracle query failed (see above)"
+    return 0
+  }
+  if [[ -n "$rows" ]]; then
+    printf '%s\n' "$rows" | awk -F'|' '{ printf "       %-6s %s  [%s]\n", $1, $2, $3 }'
+  fi
+  actual=$(printf '%s\n' "$rows" | awk -F'|' 'NF { print $1 "|" $3 }')
+  count=$(printf '%s\n' "$actual" | grep -c . || true)
+  if [[ "$actual" == "$expected" && "$count" == "$total" ]]; then
+    pass "$id on $run_date: $count records, keys and matched ids as the example expects"
+  elif [[ "$count" != "$total" && "$actual" == "$expected" ]]; then
+    fail "$id on $run_date: expected.total is $total but the example lists $count violations"
+  elif [[ "$(sorted_lines "$actual")" == "$(sorted_lines "$expected")" ]]; then
+    fail "$id on $run_date: the same records in another order (the example lists them by key)"
+  else
+    check_same_lines "$id on $run_date: keys and matched ids (key|ids)" "$expected" "$actual"
+  fi
+}
+
+section_examples() {
+  local file id run_date expected total n i found=0
+  command -v jq >/dev/null 2>&1 || { fail "jq is not on PATH: it reads the example files"; return 0; }
+
+  for file in "$EXAMPLES_DIR"/*.json; do
+    [[ -f "$file" ]] || continue
+    found=$((found + 1))
+    id=$(jq -r '.id' "$file")
+    if [[ ! "$id" =~ ^[a-z][a-z0-9-]*$ || "$EXAMPLES_DIR/$id.json" != "$file" ]]; then
+      fail "$file: its id '$id' is not its file name"
+      continue
+    fi
+    if [[ ! -f "$CHECKS_DIR/$id.sql" ]]; then
+      fail "$id: no oracle query at $CHECKS_DIR/$id.sql"
+      continue
+    fi
+    run_date=$(jq -r '.runDate' "$file")
+    expected=$(jq -r '.expected.violations[] | "\(.key)|\(.matched | join(","))"' "$file")
+    total=$(jq -r '.expected.total' "$file")
+    check_example_run "$id" "$run_date" "$expected" "$total"
+
+    n=$(jq -r '(.alternateRuns // []) | length' "$file")
+    for ((i = 0; i < n; i++)); do
+      run_date=$(jq -r --argjson i "$i" '.alternateRuns[$i].runDate' "$file")
+      expected=$(jq -r --argjson i "$i" \
+        '.alternateRuns[$i].expected.violations[] | "\(.key)|\(.matched | join(","))"' "$file")
+      total=$(jq -r --argjson i "$i" '.alternateRuns[$i].expected.total' "$file")
+      check_example_run "$id" "$run_date" "$expected" "$total"
+    done
+  done
+
+  for file in "$CHECKS_DIR"/*.sql; do
+    [[ -f "$file" ]] || continue
+    id=$(basename "$file" .sql)
+    [[ -f "$EXAMPLES_DIR/$id.json" ]] || fail "$file: no example at $EXAMPLES_DIR/$id.json"
+  done
+  if ((found == 0)); then fail "no example files in $EXAMPLES_DIR"; fi
 }
 
 main() {

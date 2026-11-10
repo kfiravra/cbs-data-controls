@@ -67,3 +67,13 @@ Held for the review-fix commit (found by the orchestrator, not by a reviewer):
   where the assignment says "נמוך מ" and "גבוה מ"; `is_active` is labelled "סטטוס"; a two-hop path names the last
   relationship only ("סטטוס של המשרד"). For the engine session: the glossary has entity `description` and field
   `label` and `description`, which its plan's list (Design J) leaves out; `arity` is 0, 1, 2 or the string "list".
+- 2026-11-10 phase 3 done (orchestrator, Fable 5.2): `gates/phase-3.txt`, db-check 27 passed, 0 failed over five
+  sections after `db-init.sh --reset` and a second init; contracts-check 4 checks passed. Seed: 5 ministries, 16
+  departments, 85 employees; expected totals 3 (4 on 2026-10-31), 3, 6, 10, 3, 3, each matched by its hand-written
+  query; the first example holds its three records to 2027-12-31 and drops to two on 2028-01-01. Seed sanity: 22 of
+  25 terminations on or after the hire date (21 after, 1 same day, 3 before). Choices of the orchestrator: only
+  department 204 has no manager, so the engine's `missing_optional` has one record to find; the oracle returns
+  `key|name|matched ids` (the flags per condition id live in its CTE); examples omit `path` for a field of the
+  scope's own entity; `--render` takes the actual values of its reasons from a small table in the script (the
+  first planted record per example). Check 4 was mutation-tested: 19 mutations of the examples, each reported.
+  Phase 3's verify used `--reset` instead of `down -v`; the clean-container run is the Gate's.

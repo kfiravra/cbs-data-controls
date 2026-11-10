@@ -68,8 +68,10 @@ The engine and api blocks are filled by dc-engine and dc-api.
 
 ## Running the tests
 
-- Database: `scripts/db-check.sh` (structure and permissions now; the glossary, Hebrew and example checks follow
-  in dc-contracts).
+- Database: `scripts/db-check.sh` (needs `jq`). Five sections: `structure`, `permissions`, `glossary` (every table
+  and column the glossary names exists as the engine's login sees it), `hebrew` (the seeded names survived sqlcmd)
+  and `examples` (each of the six example controls flags exactly the records its file expects, checked by a
+  hand-written query per example).
 - Engine, api and web: one command each, filled by dc-engine, dc-api and dc-web.
 
 ## Demo walkthrough

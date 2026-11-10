@@ -1,0 +1,43 @@
+{
+  "id": "inactive-ministry-salary-out-of-range",
+  "name": { "he": "חריגות שכר במשרד לא פעיל", "en": "Salary out of range in an inactive ministry" },
+  "description": {
+    "he": "איתור עובדים פעילים במשרד שאינו פעיל ששכרם נמוך מ־6,000 ש\"ח או גבוה מ־40,000 ש\"ח.",
+    "en": "Find active employees of an inactive ministry whose salary is below 6,000 ILS or above 40,000 ILS."
+  },
+  "runDate": "2026-11-01",
+  "definition": {
+    "schemaVersion": 1,
+    "rootEntity": "employee",
+    "where": {
+      "type": "group",
+      "op": "and",
+      "children": [
+        { "type": "condition", "id": "c1", "left": { "field": "status" }, "operator": "eq", "value": "active" },
+        {
+          "type": "condition",
+          "id": "c2",
+          "left": { "path": ["employee.department", "department.ministry"], "field": "is_active" },
+          "operator": "eq",
+          "value": false
+        },
+        {
+          "type": "group",
+          "op": "or",
+          "children": [
+            { "type": "condition", "id": "c3", "left": { "field": "salary" }, "operator": "lt", "value": 6000 },
+            { "type": "condition", "id": "c4", "left": { "field": "salary" }, "operator": "gt", "value": 40000 }
+          ]
+        }
+      ]
+    }
+  },
+  "expected": {
+    "total": 3,
+    "violations": [
+      { "key": "1111", "matched": ["c1", "c2", "c3"] },
+      { "key": "1112", "matched": ["c1", "c2", "c4"] },
+      { "key": "1117", "matched": ["c1", "c2", "c3"] }
+    ]
+  }
+}

@@ -108,6 +108,50 @@ SQLCMDPASSWORD="$DQ_APP_PASSWORD" docker compose exec -T -e SQLCMDPASSWORD db \
 
 ## Planted and boundary rows
 
-<!-- dc-contracts phase 3 fills this section: the planted and boundary rows per example, the run date and its
-stability window, and the seed sanity lines. -->
-To be written with the seed in dc-contracts.
+`60_seed_hr.sql` holds 5 ministries, 16 departments and 85 employees, all invented. National ids fail the
+control-digit check on purpose, emails are ASCII at `example.org`, and nobody is born on 29 February. Forty
+employees (1001 to 1040) are a clean baseline; the rest are placed for the six example controls of
+`contracts/examples/`. Above every such row the seed carries a comment:
+
+```sql
+-- PLANTED minor-high-salary: 16 on the run date, salary 16,500 [c1, c2]
+-- BOUNDARY minor-high-salary: a minor at exactly 15,000 (greater-than is strict)
+```
+
+`PLANTED` rows are exactly the records an example expects, with the condition ids that match; `BOUNDARY` rows are
+the near misses that a wrong operator, a wrong NULL rule or a wrong join would flag.
+
+| Example | Flags | Planted (matched ids) | Boundary rows, not flagged |
+|---|---|---|---|
+| `minor-high-salary` | 3 employees | 1051, 1052, 1053 (c1, c2) | 1054 turns 18 on the run date; 1055 turned 18 the day before; 1056 earns exactly 15,000; 1057 earns 9,000; 1058 has no salary |
+| `termination-before-hire` | 3 employees | 1061, 1062, 1063 (c1) | 1064 terminated on the hire date; 1065 one day after it; every employee without a termination date |
+| `active-in-inactive-department` | 6 employees | 1071, 1072 in department 103; 1076, 1077 in 402; 1117, 1118 in 502 (c1, c2) | 1073, 1074, 1075, 1078: inactive employees of inactive departments; 1085 has no department |
+| `missing-mandatory-data` | 10 employees | 1081, 1082, 1083: no email, an empty one, spaces only (c1, c2); 1058, 1084, 1115: no salary (c1, c3); 1085: no department (c1, c4); 1086: no email and no salary (c1, c2, c3); 1087, 1088: inactive with no termination date (c5, c6) | 1089: inactive with an empty email; 1090: inactive with no salary. 1088 also has an empty email, which is not one of its reasons: that condition sits under the "active" branch |
+| `department-without-active-employees` | 3 departments | 104 and 403: only inactive employees; 204: no employees (c1, r1) | 303 has one active employee; 103, 203, 402 and 502 are inactive departments |
+| `inactive-ministry-salary-out-of-range` | 3 employees | 1111: 4,500 (c1, c2, c3); 1112: 52,000 (c1, c2, c4); 1117: 3,000 (c1, c2, c3) | 1113 earns exactly 6,000; 1114 exactly 40,000; 1115 has no salary; 1116 is inactive; 1118 is in range; 1023 (5,500) and 1026 (45,000) work in active ministries |
+
+A matched id is a condition that is true while every group above it is true (`contracts/errors.md`).
+
+### The run date and its window
+
+The seed uses absolute dates and every example carries `runDate: "2026-11-01"`. Only `minor-high-salary` depends
+on the date, through the age. The planted minors are born on 2010-01-01 or later, so each example flags the same
+records on every run date from 2026-11-01 to 2027-12-31; on 2028-01-01 employee 1053 turns 18 and the first
+example drops to two records. Employee 1054 turns 18 on 2026-11-01 itself: the example's alternate run of
+2026-10-31 expects four records, 1054 among them.
+
+### What the checks prove
+
+`scripts/db-check.sh examples` runs one hand-written query per example (`sql/checks/<id>.sql`) as `dq_engine_ro`
+and compares its rows, key by key and matched id by matched id, with the example file; `minor-high-salary` runs on
+both of its dates. The queries share no code with the engine, so they are an independent statement of what each
+rule means. `scripts/db-check.sh hebrew` proves that the names survived the trip through sqlcmd. A seed edit that
+changes a flagged record changes the example file in the same commit, and needs `scripts/db-init.sh --reset`.
+
+### What the suggestion heuristics rely on
+
+- Of the 25 employees who have both a hire date and a termination date, 22 have the termination on or after the
+  hire (21 after it, one on the same day) and three before it: the planted rows of `termination-before-hire`.
+  That is 88%, above the 80% the engine's date-order heuristic asks for before it proposes that rule.
+- Nobody is hired or terminated on or before their birth date, so no other pair of dates is proposed.
+- Department 204 is the only one without a manager.

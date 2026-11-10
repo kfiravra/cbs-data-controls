@@ -172,18 +172,18 @@ Review: `/phase-review engine api web infra` (the glossary and the schema are re
 Commit: `feat(contracts): definition schema and business glossary`
 
 ### Phase 3: seed, examples and the oracle
-- [ ] `sql/60_seed_hr.sql` per Design D: one transaction, keyed inserts, a `-- PLANTED <example-id>: …` or
+- [x] `sql/60_seed_hr.sql` per Design D: one transaction, keyed inserts, a `-- PLANTED <example-id>: …` or
       `-- BOUNDARY <example-id>: …` comment above every row an example must or must not flag.
-- [ ] `contracts/examples/<id>.json`, six files per Design D, expected sets taken from the PLANTED comments.
-- [ ] `sql/checks/<id>.sql`, six hand-written SELECTs per Design D that return the key and one contributing flag
+- [x] `contracts/examples/<id>.json`, six files per Design D, expected sets taken from the PLANTED comments.
+- [x] `sql/checks/<id>.sql`, six hand-written SELECTs per Design D that return the key and one contributing flag
       per condition id.
-- [ ] `scripts/db-check.sh` sections `hebrew` (no `?` in a seeded name, first letters in the Hebrew block) and
+- [x] `scripts/db-check.sh` sections `hebrew` (no `?` in a seeded name, first letters in the Hebrew block) and
       `examples` (prints key, name and matched ids per violating record; fails on any difference from the example
       file; runs example 1 on both of its dates).
-- [ ] `scripts/contracts-check.py` check 4 and `--render` per Design G.
-- [ ] `sql/README.md`: the planted and boundary rows per example, and the stability window of decision 1.
-- [ ] CLAUDE.md: the Hebrew gotcha names `contracts/examples/` (control names are data), per decision 7.
-- [ ] Design H1 for the examples and the seed: `heuristic: true` on examples 2 to 5, the seed sanity lines in
+- [x] `scripts/contracts-check.py` check 4 and `--render` per Design G.
+- [x] `sql/README.md`: the planted and boundary rows per example, and the stability window of decision 1.
+- [x] CLAUDE.md: the Hebrew gotcha names `contracts/examples/` (control names are data), per decision 7.
+- [x] Design H1 for the examples and the seed: `heuristic: true` on examples 2 to 5, the seed sanity lines in
       `sql/README.md`, check 4 accepting the key.
 
 Verify:

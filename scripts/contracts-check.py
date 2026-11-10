@@ -6,6 +6,7 @@
 """Check the contracts every service builds against.
 
     uv run scripts/contracts-check.py [--root DIR]
+    uv run scripts/contracts-check.py --render     the sentences and reasons of the examples, to read
 
 Paths resolve from this script's location (or --root), so the working directory does not matter.
 
@@ -13,11 +14,16 @@ Paths resolve from this script's location (or --root), so the working directory 
                      subset both validators report alike: no not, anyOf or oneOf anywhere (Design I1).
 2. glossary          contracts/glossary.json integrity (Design B, with H1 and H3).
 3. agreement         the schema and the glossary agree on operators, arities, limits and key patterns.
-4. examples          contracts/examples/*.json (arrives with phase 3).
+4. examples          contracts/examples/*.json: the wrapper, the definition against the schema and the
+                     glossary, the expected sets (Design D and G).
 5. invalid fixtures  contracts/examples/invalid/*.json and contracts/errors.md (arrives with phase 4).
 
 Output: one line per failure, each starting with the file path, printed after everything else (the Stop
 hook shows the last lines of a failed check). Exit 1 on any failure, else 0 with a one-line summary.
+
+--render runs no check. It prints, per example, the rule sentence and one reason per node in every language,
+by the rendering rules of contracts/errors.md. It is a reading aid for the copy review; the engine's explainer
+is the renderer, and this is not its specification.
 """
 
 from __future__ import annotations
@@ -28,6 +34,8 @@ import re
 import sys
 from collections.abc import Callable, Iterator
 from dataclasses import dataclass, field
+from datetime import date
+from decimal import Decimal
 from pathlib import Path
 from typing import Any, NamedTuple
 
@@ -98,6 +106,12 @@ LATIN_LETTER = re.compile(r"[A-Za-z]")
 IDENTIFIER = re.compile(r"^[A-Za-z_][A-Za-z0-9_]{0,127}$")
 SEMVER = re.compile(r"^\d+\.\d+\.\d+$")
 LANGUAGE = re.compile(r"^[a-z]{2}$")
+ISO_DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+
+# Design D: the wrapper of an example control.
+EXAMPLE_MEMBERS = ("id", "name", "description", "runDate", "definition", "expected")
+EXAMPLE_OPTIONAL = ("heuristic", "alternateRuns")
+EXAMPLE_ID = re.compile(r"^[a-z][a-z0-9-]{0,63}$")
 
 
 # ---------------------------------------------------------------------------------------------------------
@@ -685,7 +699,7 @@ def check_phrases(c: Collector, g: dict[str, Any], languages: list[str]) -> None
     """Phrases: the joining words and separators, fieldOnPath and the two related phrases."""
     phrases = g.get("phrases")
     names = (*PLAIN_PHRASES, "fieldOnPath", *RELATED_PHRASES)
-    if not check_members(c, "/phrases", phrases, names):
+    if not check_members(c, "/phrases", phrases, names) or not isinstance(phrases, dict):
         return
     for name in PLAIN_PHRASES:
         check_text(c, pointer("phrases", name), phrases.get(name), languages, padded=name in PADDED_PHRASES)
@@ -704,7 +718,7 @@ def check_suggestions(c: Collector, g: dict[str, Any], languages: list[str]) -> 
     """Suggestion texts (H1): the five kinds with name, description and rationale, the three evidence keys,
     each with only its own placeholders (evidence with all of them)."""
     sug = g.get("suggestions")
-    if not check_members(c, "/suggestions", sug, ("kinds", "evidence")):
+    if not check_members(c, "/suggestions", sug, ("kinds", "evidence")) or not isinstance(sug, dict):
         return
     if check_members(c, "/suggestions/kinds", sug.get("kinds"), tuple(SUGGESTION_KINDS)):
         for kind, allowed in SUGGESTION_KINDS.items():
@@ -841,13 +855,281 @@ def check_agreement(ctx: Context) -> CheckResult:
 
 
 # ---------------------------------------------------------------------------------------------------------
-# Checks 4 and 5: stubs
+# Check 4: the example controls
+
+
+def is_iso_date(value: Any) -> bool:
+    """A string holding a real YYYY-MM-DD date."""
+    if not isinstance(value, str) or not ISO_DATE.match(value):
+        return False
+    try:
+        date.fromisoformat(value)
+    except ValueError:
+        return False
+    return True
+
+
+def literal_problem(fld: dict[str, Any], value: Any) -> str | None:
+    """Why a literal does not fit the type of the field it is compared with, or None when it fits (errors.md,
+    VALUE_TYPE_MISMATCH and UNKNOWN_ENUM_VALUE)."""
+    kind = fld.get("type")
+    if kind == "number":
+        fits = isinstance(value, (int, float)) and not isinstance(value, bool)
+    elif kind == "bool":
+        fits = isinstance(value, bool)
+    elif kind == "date":
+        fits = is_iso_date(value)
+    elif kind == "enum":
+        if isinstance(value, str) and value not in {v.get("value") for v in fld.get("enumValues", [])}:
+            return f"{value!r} is not an enum value of field {fld.get('key')!r}"
+        fits = isinstance(value, str)
+    else:
+        fits = isinstance(value, str)
+    return None if fits else f"{value!r} is not a {kind} literal (field {fld.get('key')!r})"
+
+
+class DefinitionWalk:
+    """Walks a schema-valid definition against the glossary and records what it finds wrong. Afterwards `ids`
+    holds every node id, `matchable` the ids that can be matched (errors.md, Matched), in document order."""
+
+    def __init__(self, c: Collector, where: str, glossary: dict[str, Any]) -> None:
+        self.c = c
+        self.where = where
+        self.g = glossary
+        self.ids: list[str] = []
+        self.matchable: list[str] = []
+        self.depth = 0
+        self.values = 0
+
+    def run(self, definition: dict[str, Any]) -> None:
+        """Checks the root entity, the whole tree, the uniqueness of ids and the three limits of the tree."""
+        root = entity(self.g, definition.get("rootEntity", ""))
+        if root is None or not root.get("visible"):
+            self.c.add(self.where + "/rootEntity", f"no visible entity {definition.get('rootEntity')!r} in the glossary")
+            return
+        if not root.get("rootable"):
+            self.c.add(self.where + "/rootEntity", f"entity {root.get('key')!r} may not be a root entity")
+        tree = self.where + "/where"
+        self.group(tree, root, definition["where"], 1, False)
+        for node_id in sorted({i for i in self.ids if self.ids.count(i) > 1}):
+            self.c.add(tree, f"node id {node_id!r} is used more than once")
+        limits = self.g.get("limits", {})
+        for actual, key, what in ((self.depth, "maxDepth", "groups deep"), (len(self.ids), "maxConditions", "nodes"),
+                                  (self.values, "maxTotalValues", "literal values")):
+            if is_int(limits.get(key)) and actual > limits[key]:
+                self.c.add(tree, f"{actual} {what}; limits.{key} is {limits[key]}")
+
+    def group(self, where: str, scope: dict[str, Any], node: dict[str, Any], depth: int, in_related: bool) -> None:
+        """A group: `depth` counts the groups from the root down to this one (errors.md, Depth)."""
+        self.depth = max(self.depth, depth)
+        for i, child in enumerate(node.get("children", [])):
+            child_where = where + pointer("children", i)
+            if child.get("type") == "group":
+                self.group(child_where, scope, child, depth + 1, in_related)
+            elif child.get("type") == "condition":
+                self.condition(child_where, scope, child, in_related)
+            else:
+                self.related(child_where, scope, child, depth, in_related)
+
+    def note_id(self, node: dict[str, Any], in_related: bool) -> None:
+        """Records a node id; a node inside a related sub-tree is never matched."""
+        self.ids.append(node["id"])
+        if not in_related:
+            self.matchable.append(node["id"])
+
+    def field(self, where: str, scope: dict[str, Any], ref: dict[str, Any]) -> dict[str, Any] | None:
+        """The glossary field a field reference names from `scope`, or None after recording why not."""
+        current = scope
+        for hop in ref.get("path", []):
+            rel = relationship(self.g, hop)
+            if rel is None:
+                self.c.add(where, f"unknown relationship {hop!r}")
+                return None
+            if rel.get("from") != current.get("key"):
+                self.c.add(where, f"relationship {hop!r} does not start at entity {current.get('key')!r}")
+                return None
+            if rel.get("cardinality") == "one_to_many":
+                self.c.add(where, f"relationship {hop!r} is one_to_many: it belongs in a related node, not in a path")
+                return None
+            target = entity(self.g, rel.get("to", ""))
+            if target is None:
+                return None
+            current = target
+        fld = field_of(current, ref.get("field", ""))
+        if fld is None or not fld.get("visible"):
+            self.c.add(where, f"entity {current.get('key')!r} has no visible field {ref.get('field')!r}")
+            return None
+        return fld
+
+    def condition(self, where: str, scope: dict[str, Any], node: dict[str, Any], in_related: bool) -> None:
+        """A condition: the left field, the operator for its type, and the operand against that type."""
+        self.note_id(node, in_related)
+        literals = [("/value", node["value"])] if "value" in node else []
+        literals += [(pointer("values", i), v) for i, v in enumerate(node.get("values", []))]
+        self.values += len(literals)
+        left = self.field(where + "/left", scope, node["left"])
+        op = operator(self.g, node["operator"])
+        if left is None or op is None:
+            return
+        if node["operator"] not in resolved_operators(self.g, left):
+            self.c.add(where + "/operator", f"operator {node['operator']!r} is not allowed for field "
+                       f"{left.get('key')!r} of type {left.get('type')!r}")
+            return
+        if "right" in node:
+            right = self.field(where + "/right", scope, node["right"])
+            if not op.get("fieldComparable"):
+                self.c.add(where + "/right", f"operator {node['operator']!r} does not compare two fields")
+            elif right is not None:
+                for side, fld in (("left", left), ("right", right)):
+                    if fld.get("comparable") is False:
+                        self.c.add(where + pointer(side), f"field {fld.get('key')!r} is not comparable with another field")
+                if left.get("type") != right.get("type"):
+                    self.c.add(where + "/right", f"compares a {left.get('type')} field with a {right.get('type')} field")
+        problems = [(w, literal_problem(left, v)) for w, v in literals]
+        for literal_where, problem in problems:
+            if problem:
+                self.c.add(where + literal_where, problem)
+        if op.get("arity") == 2 and len(literals) == 2 and not any(problem for _, problem in problems):
+            if literals[0][1] > literals[1][1]:
+                self.c.add(where + "/values", "the first value is above the second")
+
+    def related(self, where: str, scope: dict[str, Any], node: dict[str, Any], depth: int, in_related: bool) -> None:
+        """A related node: a one-to-many relationship that starts at the scope entity, and its sub-tree."""
+        self.note_id(node, in_related)
+        rel = relationship(self.g, node["relationship"])
+        if rel is None:
+            self.c.add(where + "/relationship", f"unknown relationship {node['relationship']!r}")
+            return
+        if rel.get("from") != scope.get("key"):
+            self.c.add(where + "/relationship", f"relationship {node['relationship']!r} does not start at entity "
+                       f"{scope.get('key')!r}")
+            return
+        if rel.get("cardinality") != "one_to_many":
+            self.c.add(where + "/relationship", f"relationship {node['relationship']!r} is {rel.get('cardinality')}; "
+                       "a related node needs a one_to_many relationship")
+            return
+        target = entity(self.g, rel.get("to", ""))
+        if target is not None:
+            self.group(where + "/where", target, node["where"], depth + 1, True)
+
+
+def key_order(key: str) -> tuple[int, int, str]:
+    """Record keys in the order the database returns them: integer keys by value, any other key as text."""
+    return (0, int(key), "") if key.isdigit() else (1, 0, key)
+
+
+def check_expected(c: Collector, where: str, expected: Any, matchable: list[str] | None) -> None:
+    """An expected set: `total` equals the number of violations; keys are unique strings in key order; every
+    `matched` lists ids that can be matched, once each, in document order. `matchable` is None when the
+    definition could not be walked."""
+    if not check_members(c, where, expected, ("total", "violations")):
+        return
+    violations = expected.get("violations")
+    if not isinstance(violations, list):
+        c.add(where + "/violations", "must be a list")
+        return
+    if not is_int(expected.get("total")) or expected.get("total") != len(violations):
+        c.add(where + "/total", f"is {expected.get('total')!r}; the example lists {len(violations)} violations")
+    keys: list[str] = []
+    for i, violation in enumerate(violations):
+        item = where + pointer("violations", i)
+        if not check_members(c, item, violation, ("key", "matched")):
+            continue
+        key, matched = violation.get("key"), violation.get("matched")
+        if isinstance(key, str) and key:
+            keys.append(key)
+        else:
+            c.add(item + "/key", "must be a non-empty string (record keys are strings)")
+        if not isinstance(matched, list) or not matched or not all(isinstance(m, str) for m in matched):
+            c.add(item + "/matched", "must be a non-empty list of node ids")
+        elif matchable is not None:
+            unknown = [m for m in matched if m not in matchable]
+            if unknown:
+                c.add(item + "/matched", f"{', '.join(unknown)}: not a node of the definition that can be matched "
+                      "(a node inside a related sub-tree never is)")
+            elif matched != [m for m in matchable if m in matched]:
+                c.add(item + "/matched", "must list each id once, in document order")
+    if len(set(keys)) != len(keys):
+        c.add(where + "/violations", "a record key appears twice")
+    elif keys != sorted(keys, key=key_order):
+        c.add(where + "/violations", "must be ordered by record key")
+
+
+def check_example(c: Collector, glossary: dict[str, Any], validator: Draft202012Validator, stem: str,
+                  doc: Any) -> None:
+    """One example file: the wrapper, the definition against the schema and then the glossary, the expected
+    set of its run date and of every alternate run."""
+    languages = [lang for lang in glossary.get("languages", []) if isinstance(lang, str)] or ["he", "en"]
+    if not check_members(c, "", doc, EXAMPLE_MEMBERS, EXAMPLE_OPTIONAL):
+        return
+    if doc.get("id") != stem or not EXAMPLE_ID.match(stem):
+        c.add("/id", f"must equal the file name {stem!r}: lower-case letters, digits and hyphens")
+    check_text(c, "/name", doc.get("name"), languages)
+    check_text(c, "/description", doc.get("description"), languages)
+    if not is_iso_date(doc.get("runDate")):
+        c.add("/runDate", "must be a real YYYY-MM-DD date")
+    if "heuristic" in doc and not isinstance(doc["heuristic"], bool):
+        c.add("/heuristic", "must be true or false")
+
+    matchable: list[str] | None = None
+    errors = schema_errors(validator, doc.get("definition"))
+    for where, message in errors:
+        c.add("/definition" + where, f"schema: {message}")
+    if not errors:
+        walk = DefinitionWalk(c, "/definition", glossary)
+        walk.run(doc["definition"])
+        matchable = walk.matchable
+
+    check_expected(c, "/expected", doc.get("expected"), matchable)
+    runs = doc.get("alternateRuns", [])
+    if not isinstance(runs, list) or ("alternateRuns" in doc and not runs):
+        c.add("/alternateRuns", "must be a non-empty list when present")
+        return
+    run_dates = [doc.get("runDate")]
+    for i, run in enumerate(runs):
+        where = pointer("alternateRuns", i)
+        if not check_members(c, where, run, ("runDate", "expected")):
+            continue
+        if not is_iso_date(run.get("runDate")):
+            c.add(where + "/runDate", "must be a real YYYY-MM-DD date")
+        elif run["runDate"] in run_dates:
+            c.add(where + "/runDate", f"{run['runDate']} is already a run date of this example")
+        run_dates.append(run.get("runDate"))
+        check_expected(c, where + "/expected", run.get("expected"), matchable)
+
+
+def example_files(ctx: Context) -> list[Path]:
+    """The example files, by name; contracts/examples/invalid/ is not among them."""
+    directory = ctx.file(EXAMPLES_DIR)
+    return sorted(directory.glob("*.json")) if directory.is_dir() else []
 
 
 def check_examples(ctx: Context) -> CheckResult:
-    """Check 4 (Design G): the wrapper shape of contracts/examples/*.json, the definition against the schema,
-    the glossary references, expected.total and unique ids. Arrives with phase 3."""
-    return Skipped("arrives with phase 3")
+    """Check 4 (Design D and G): every contracts/examples/*.json has the wrapper shape, a definition that passes
+    the schema and names only what the glossary allows, unique node ids, and expected sets whose total, key
+    order and matched ids hold together."""
+    schema, glossary = ctx.schema, ctx.glossary
+    if not isinstance(schema, dict) or not isinstance(glossary, dict):
+        return Skipped("the schema or the glossary did not load")
+    files = example_files(ctx)
+    if not files:
+        return [fail(EXAMPLES_DIR, "no example files")]
+    validator = schema_validator(schema)
+    failures: list[Failure] = []
+    for path in files:
+        rel = f"{EXAMPLES_DIR}/{path.name}"
+        doc, failure = load_json(path)
+        if failure:
+            failures.append(fail(rel, failure.message))
+            continue
+        c = Collector(rel)
+        check_example(c, glossary, validator, path.stem, doc)
+        failures += c.failures
+    return failures
+
+
+# ---------------------------------------------------------------------------------------------------------
+# Check 5: stub
 
 
 def check_invalid_fixtures(ctx: Context) -> CheckResult:
@@ -863,6 +1145,215 @@ CHECKS: list[tuple[str, Callable[[Context], CheckResult]]] = [
     ("examples", check_examples),
     ("invalid fixtures", check_invalid_fixtures),
 ]
+
+
+# ---------------------------------------------------------------------------------------------------------
+# --render: the sentences and reasons of the examples, to read
+
+# A reason shows what a record holds, and this script reads no database. These are the values of the first
+# planted record of each example in sql/60_seed_hr.sql, by node id: the left value, or (left, right) for a
+# field-to-field comparison. A node without a sample keeps its {actual} placeholder in the output.
+RENDER_SAMPLES: dict[str, dict[str, Any]] = {
+    "minor-high-salary": {"c1": 16, "c2": 16500},
+    "termination-before-hire": {"c1": ("2012-06-01", "2015-06-01")},
+    "active-in-inactive-department": {"c1": "active", "c2": False},
+    "missing-mandatory-data": {"c1": "active", "c5": "inactive"},
+    "department-without-active-employees": {"c1": True},
+    "inactive-ministry-salary-out-of-range": {"c1": "active", "c2": False, "c3": 4500, "c4": 52000},
+}
+
+# What the placeholders of the suggestion texts stand for in the reading aid: glossary keys and seed counts.
+RENDER_SUGGESTIONS: dict[str, dict[str, Any]] = {
+    "missing_required": {"entity": "employee"},
+    "date_order": {"entity": "employee", "earlier": ("employee", "hire_date"),
+                   "later": ("employee", "termination_date")},
+    "active_under_inactive": {"entity": "employee", "relationship": "employee.department"},
+    "active_without_active_children": {"entity": "department", "relationship": "department.employees"},
+    "missing_optional": {"entity": "department", "field": ("department", "manager_assignment")},
+    "violations_found": {"count": 3, "total": 85},
+    "field_missing": {"field": ("employee", "email"), "count": 4},
+    "date_order_split": {"count": 3, "total": 25},
+}
+
+
+def fill(template: str, values: dict[str, str]) -> str:
+    """A template with its placeholders replaced; a placeholder without a value stays as written."""
+    return PLACEHOLDER.sub(lambda m: values.get(m.group(1), m.group(0)), template)
+
+
+class Renderer:
+    """Renders sentences and reasons in one language by the rules of contracts/errors.md (Rendering), as plain
+    strings. The engine's explainer is the renderer of the system; this one exists for the copy review."""
+
+    def __init__(self, glossary: dict[str, Any], lang: str) -> None:
+        self.g = glossary
+        self.lang = lang
+        self.phrases = glossary["phrases"]
+        self.format = glossary["formats"][lang]
+
+    def number(self, value: int | float) -> str:
+        """Groups of three integer digits, the fraction without trailing zeros."""
+        whole, _, fraction = f"{Decimal(str(value)):f}".partition(".")
+        grouped = f"{int(whole):,}".replace(",", self.format["groupSeparator"])
+        fraction = fraction.rstrip("0")
+        return grouped + (self.format["decimalSeparator"] + fraction if fraction else "")
+
+    def literal(self, fld: dict[str, Any], value: Any) -> str:
+        """A value of a field: by its type, with the field's unit after it; NULL is nothing."""
+        if value is None:
+            return ""
+        kind = fld.get("type")
+        if kind == "bool" and isinstance(value, bool):
+            text = fld["valueLabels"]["true" if value else "false"][self.lang]
+        elif kind == "enum":
+            labels = {v["value"]: v["label"][self.lang] for v in fld.get("enumValues", [])}
+            text = labels.get(value, str(value))
+        elif kind == "date" and is_iso_date(value):
+            year, month, day = value.split("-")
+            text = self.format["date"].replace("yyyy", year).replace("MM", month).replace("dd", day)
+        elif kind == "number" and isinstance(value, (int, float)) and not isinstance(value, bool):
+            text = self.number(value)
+        else:
+            text = str(value)
+        return f"{text} {fld['unit'][self.lang]}" if "unit" in fld else text
+
+    def field(self, scope: dict[str, Any], ref: dict[str, Any]) -> tuple[str, dict[str, Any]]:
+        """A field reference as (text, field): the label, through fieldOnPath with the last relationship of the
+        path when it has one."""
+        path = ref.get("path", [])
+        target = follow_path(self.g, scope["key"], path)
+        fld = field_of(target, ref["field"])
+        if fld is None:
+            return ref["field"], {}
+        label = fld["label"][self.lang]
+        if path:
+            rel = relationship(self.g, path[-1])
+            label = fill(self.phrases["fieldOnPath"][self.lang],
+                         {"field": label, "relationship": rel["label"][self.lang] if rel else path[-1]})
+        return label, fld
+
+    def condition(self, scope: dict[str, Any], node: dict[str, Any], kind: str, sample: Any = None) -> str:
+        """A condition's `sentence` or `reason` variant, filled."""
+        op = operator(self.g, node["operator"]) or {}
+        label, fld = self.field(scope, node["left"])
+        variant = pick_variant(op.get(kind, {}), fld.get("type", ""), "right" in node)
+        if variant is None:
+            return f"{label} {node['operator']}"
+        values = {"field": label}
+        if "value" in node:
+            values["value"] = self.literal(fld, node["value"])
+        if "values" in node and op.get("arity") == 2:
+            values["value"], values["value2"] = (self.literal(fld, v) for v in node["values"])
+        elif "values" in node:
+            values["values"] = self.phrases["listSeparator"][self.lang].join(self.literal(fld, v) for v in node["values"])
+        actual, other_actual = sample if isinstance(sample, tuple) else (sample, None)
+        if "right" in node:
+            values["other"], other = self.field(scope, node["right"])
+            if other_actual is not None:
+                values["otherActual"] = self.literal(other, other_actual)
+        if actual is not None:
+            values["actual"] = self.literal(fld, actual)
+        return fill(variant[self.lang], values)
+
+    def related(self, node: dict[str, Any], kind: str) -> str:
+        """A related node: relatedAny or relatedNone, with its sub-tree as {conditions}, not bracketed."""
+        rel = relationship(self.g, node["relationship"]) or {}
+        target = entity(self.g, rel.get("to", "")) or {}
+        phrase = self.phrases["relatedAny" if node["quantifier"] == "any" else "relatedNone"][kind][self.lang]
+        return fill(phrase, {"relationship": rel.get("label", {}).get(self.lang, node["relationship"]),
+                             "conditions": self.group(target, node["where"])})
+
+    def node(self, scope: dict[str, Any], node: dict[str, Any], kind: str = "sentence", sample: Any = None) -> str:
+        """One node rendered alone."""
+        if node["type"] == "condition":
+            return self.condition(scope, node, kind, sample)
+        if node["type"] == "related":
+            return self.related(node, kind)
+        return self.group(scope, node)
+
+    def group(self, scope: dict[str, Any], node: dict[str, Any]) -> str:
+        """A group: its children joined by its operator's word, a child group in brackets."""
+        parts = []
+        for child in node["children"]:
+            text = self.node(scope, child)
+            if child["type"] == "group":
+                text = self.phrases["groupOpen"][self.lang] + text + self.phrases["groupClose"][self.lang]
+            parts.append(text)
+        return self.phrases[node["op"]][self.lang].join(parts)
+
+    def suggestion_values(self, sample: dict[str, Any]) -> dict[str, str]:
+        """The placeholder values of a suggestion text: plural entity labels, field and relationship labels,
+        numbers."""
+        values: dict[str, str] = {}
+        for name, key in sample.items():
+            if isinstance(key, tuple):
+                fld = field_of(entity(self.g, key[0]), key[1])
+                values[name] = fld["label"][self.lang] if fld else key[1]
+            elif isinstance(key, int):
+                values[name] = self.number(key)
+            elif name == "entity":
+                ent = entity(self.g, key)
+                values[name] = ent["label"]["plural"][self.lang] if ent else key
+            else:
+                rel = relationship(self.g, key)
+                values[name] = rel["label"][self.lang] if rel else key
+        return values
+
+
+def matchable_nodes(scope: dict[str, Any], group: dict[str, Any]) -> Iterator[tuple[dict[str, Any], dict[str, Any]]]:
+    """(scope entity, node) for every condition and related node outside a related sub-tree, in document order."""
+    for child in group["children"]:
+        if child["type"] == "group":
+            yield from matchable_nodes(scope, child)
+        else:
+            yield scope, child
+
+
+def render(ctx: Context) -> int:
+    """Prints the reading aid: per example and language the name, the rule sentence and, per node that can be
+    matched, its sentence and its reason; then the suggestion texts. Returns the exit code."""
+    glossary = ctx.glossary
+    if ctx.load_failures or not isinstance(glossary, dict):
+        for failure in ctx.load_failures:
+            print(f"{failure.path}: {failure.message}")
+        return 1
+    languages = glossary["languages"]
+    for path in example_files(ctx):
+        doc, failure = load_json(path)
+        if failure:
+            print(f"{failure.path}: {failure.message}")
+            return 1
+        definition = doc["definition"]
+        root = entity(glossary, definition["rootEntity"])
+        if root is None:
+            print(f"{EXAMPLES_DIR}/{path.name}: unknown root entity (run the check without --render)")
+            return 1
+        samples = RENDER_SAMPLES.get(doc["id"], {})
+        print(f"== {doc['id']} (root: {definition['rootEntity']}, run date {doc['runDate']}, "
+              f"{doc['expected']['total']} records) ==")
+        for lang in languages:
+            r = Renderer(glossary, lang)
+            print(f"[{lang}] name:        {doc['name'][lang]}")
+            print(f"[{lang}] description: {doc['description'][lang]}")
+            print(f"[{lang}] sentence:    {r.group(root, definition['where'])}")
+            for scope, node in matchable_nodes(root, definition["where"]):
+                print(f"[{lang}]   {node['id']} sentence: {r.node(scope, node)}")
+                print(f"[{lang}]   {node['id']} reason:   {r.node(scope, node, 'reason', samples.get(node['id']))}")
+        print()
+    suggestions = glossary["suggestions"]
+    print("== suggestion kinds ==")
+    for kind, texts in suggestions["kinds"].items():
+        for lang in languages:
+            values = Renderer(glossary, lang).suggestion_values(RENDER_SUGGESTIONS.get(kind, {}))
+            for name in KIND_TEXTS:
+                print(f"[{lang}] {kind} {name}: {fill(texts[name][lang], values)}")
+    print()
+    print("== suggestion evidence ==")
+    for key, text in suggestions["evidence"].items():
+        for lang in languages:
+            values = Renderer(glossary, lang).suggestion_values(RENDER_SUGGESTIONS.get(key, {}))
+            print(f"[{lang}] {key}: {fill(text[lang], values)}")
+    return 0
 
 
 # ---------------------------------------------------------------------------------------------------------
@@ -885,15 +1376,20 @@ def load_context(root: Path) -> Context:
 
 def main(argv: list[str] | None = None) -> int:
     """Runs every check and prints the failures last; 1 on any failure, else 0."""
-    parser = argparse.ArgumentParser(description="Check contracts/: the definition schema, the glossary and "
-                                                 "their agreement.")
+    parser = argparse.ArgumentParser(description="Check contracts/: the definition schema, the glossary, their "
+                                                 "agreement and the example controls.")
     parser.add_argument("--root", type=Path, default=DEFAULT_ROOT,
                         help="repository root holding contracts/ (default: the parent of scripts/)")
+    parser.add_argument("--render", action="store_true",
+                        help="print the rule sentence and the reasons of every example in each language, and "
+                             "run no check")
     args = parser.parse_args(argv)
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
     ctx = load_context(args.root.resolve())
+    if args.render:
+        return render(ctx)
     failures = list(ctx.load_failures)
     passed: list[str] = []
     skipped: list[str] = []
