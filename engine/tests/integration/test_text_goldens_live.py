@@ -14,7 +14,7 @@ import pytest
 from starlette.testclient import TestClient
 
 from tests.conftest import example_files, read_json
-from tests.golden.test_goldens import as_json, check_golden
+from tests.golden.files import as_json, check_golden
 
 pytestmark = pytest.mark.integration
 

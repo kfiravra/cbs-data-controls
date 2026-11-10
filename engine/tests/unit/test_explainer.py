@@ -12,8 +12,7 @@ from typing import Any
 import pytest
 
 from app.compiler import CompiledPlan, compile_definition
-from app.explainer import Explainer, TextPart, describe, format_number, format_value
-from app.explainer.parts import fill, rendered
+from app.explainer import Explainer, describe, format_number, format_value
 from app.glossary import Glossary
 from app.validator import DefinitionSchema, validate_definition
 from tests.builders import all_of, any_of, cond, definition, ref, related
@@ -202,15 +201,17 @@ def test_values_are_written_as_their_field_asks(english_glossary: Glossary) -> N
     assert written(None, ticket["priority"]) == ""  # NULL is nothing, and no unit stands alone
 
 
-def test_empty_text_gives_no_part() -> None:
-    parts = fill("{field}: {actual}{unit}", {"field": [TextPart("salary", "c1", "field")], "actual": []}, "c1")
-    assert [(part.text, part.role) for part in parts] == [("salary", "field"), (": ", None)]
-    assert rendered([TextPart(""), TextPart("x"), TextPart("")]).parts == (TextPart("x"),)
-
-
-def test_template_is_used_exactly_as_written() -> None:
-    parts = fill("  {a}--{b}  ", {"a": [TextPart("A", "n", "field")], "b": [TextPart("B", "n", "value")]}, "n")
-    assert "".join(part.text for part in parts) == "  A--B  "
+def test_null_renders_as_nothing_and_leaves_no_empty_part(english_glossary: Glossary, schema: DefinitionSchema) -> None:
+    # A row no real run returns (a comparison never matches a NULL), built to show what a NULL does to a text.
+    plan = plan_of(definition("ticket", all_of(cond("c1", "priority", "gt", 5))), english_glossary, schema)
+    row = row_of(plan, key=1, display={"title": None, "number": 1}, matched=["c1"], actual={"c1": None})
+    violation = Explainer(english_glossary, LANGUAGE).violation(plan, row, RUN_DATE)
+    (reason,) = violation["reasons"]
+    assert reason["text"] == "priority is  (above 5 pt)"  # the template as written, with nothing for the value
+    assert [part["text"] for part in reason["textParts"]] == ["priority", " is ", " (above ", "5 pt", ")"]
+    assert all(part["text"] for part in reason["textParts"])
+    assert reason["params"]["actual"] is None
+    assert violation["display"] == {"title": None, "number": 1}
 
 
 # --- reasons and violations -----------------------------------------------------------------------------------

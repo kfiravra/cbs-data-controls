@@ -8,6 +8,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from datetime import date
+from types import MappingProxyType
 from typing import Any
 
 from app.compiler import CompiledPlan, NodeColumns
@@ -21,7 +22,7 @@ Matchable = VCondition | VRelated
 
 _FIELD_VARIANT = "field"
 _DEFAULT_VARIANT = "default"
-_RELATED_REASON_KEYS = {"any": "related_any", "none": "related_none"}
+_RELATED_REASON_KEYS: Mapping[str, str] = MappingProxyType({"any": "related_any", "none": "related_none"})
 
 
 @dataclass(frozen=True, slots=True)

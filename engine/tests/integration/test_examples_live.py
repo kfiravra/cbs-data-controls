@@ -12,9 +12,12 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from sqlalchemy import Connection
+from sqlalchemy.exc import OperationalError
 from starlette.testclient import TestClient
 
 from app import ENGINE_VERSION
+from app.main import create_app
 from app.services import today_in
 from app.settings import Settings
 from tests.conftest import CONTRACTS_DIR, example_files, invalid_files, read_json
@@ -111,10 +114,38 @@ def test_row_cap_cuts_the_rows_and_never_the_counts(live_client: TestClient) -> 
     assert capped["conditions"] == whole["conditions"], "counts are over all violations, whatever the cap"
 
 
-def test_row_cap_above_the_ceiling_is_the_ceiling(live_client: TestClient, live_settings: Settings) -> None:
+def test_row_cap_above_the_ceiling_is_the_ceiling(live_settings: Settings) -> None:
+    """With ENGINE_ROW_CAP at 2, a request for more rows, or for none in particular, gets two."""
     case = example(MISSING_DATA)
-    answer = run(live_client, case["definition"], runDate=case["runDate"], rowCap=live_settings.row_cap * 1000)
-    assert answer["returnedCount"] == case["expected"]["total"]
+    with TestClient(create_app(live_settings.model_copy(update={"row_cap": 2}))) as capped:
+        for members in ({"rowCap": 5_000_000}, {"rowCap": 3}, {}):
+            answer = run(capped, case["definition"], runDate=case["runDate"], **members)
+            assert (answer["returnedCount"], answer["capExceeded"]) == (2, True), members
+            assert answer["totalCount"] == case["expected"]["total"]
+        assert run(capped, case["definition"], runDate=case["runDate"], rowCap=1)["returnedCount"] == 1
+
+
+def test_statement_that_runs_past_the_timeout_is_a_query_timeout(
+    live_client: TestClient, live_settings: Settings, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The driver's timeout error is fabricated (a read-only login cannot run a slow statement on purpose);
+    the connection, the executor and the answer are the real ones."""
+
+    def times_out(_connection: Any, statement: Any, *_args: Any, **_kwargs: Any) -> Any:
+        driver_error = Exception("HYT00", "[HYT00] Query timeout expired, with server names in it")
+        raise OperationalError(str(statement), {}, driver_error)
+
+    monkeypatch.setattr(Connection, "execute", times_out)
+    case = example(MISSING_DATA)
+    response = live_client.post("/run", json={"definition": case["definition"], "runDate": case["runDate"]})
+    problem = response.json()
+    assert response.status_code == 504
+    assert response.headers["content-type"] == "application/problem+json"
+    assert (problem["code"], problem["params"]) == (
+        "QUERY_TIMEOUT",
+        {"timeoutSeconds": live_settings.query_timeout_seconds},
+    )
+    assert "HYT00" not in response.text and "server names" not in response.text
 
 
 def test_run_date_defaults_to_today_in_the_configured_zone(live_client: TestClient, live_settings: Settings) -> None:

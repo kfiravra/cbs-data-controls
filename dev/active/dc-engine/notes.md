@@ -179,7 +179,8 @@ says, what is true now. The list goes into the PR body under this heading at `/s
   seed), each under the statement timeout.
 
 ## Last reviewed
-`a9b3ec8` (phase 3), report in `reviews/phase-3.md`; phases 1 and 2 in `reviews/phase-1.md` and `reviews/phase-2.md`.
+`a49c710` (phase 4), report in `reviews/phase-4.md`; phases 1 to 3 in `reviews/phase-1.md` to `phase-3.md`.
+Phase 5 (`57e3e28`) is with the reviewer.
 
 ## Log
 - 2026-11-10 created plan. Interview in two rounds (plan.md Decisions 1 to 5). Kfir chose `lifecycle` and
@@ -312,3 +313,20 @@ says, what is true now. The list goes into the PR body under this heading at `/s
   termination date 2, the counts of the example file), termination before hire 3 of the 25 rows with both
   dates. The generators and the pipeline are also tested on the synthetic glossary in English with stand-ins
   for the data: the seven proposals expected there are written out by hand from Design H's conventions.
+- 2026-11-11 review of phase 4 (`642f140..a49c710`, one reviewer on opus, `reviews/phase-4.md`): 0 critical,
+  1 warning, 11 info. Warning: `tests/integration/test_examples_live.py:114` the row-cap test passed for any
+  cap of ten or more, so the clamp was unproven; fixed: the test now starts the engine with `ENGINE_ROW_CAP`
+  at 2 and asks for 5,000,000, for 3 and for nothing (two rows each time), and for 1. Info, fixed:
+  `executor/database.py:149` no fabricated timeout went through the executor or `/run`: a live test now
+  raises a fabricated `HYT00` from the connection and gets 504 with `timeoutSeconds`;
+  `test_semantics_live.py:211` a field key spelled in a test, now read from the example;
+  `test_explainer.py:16` two tests on names outside the public surface, replaced by one through `violation`
+  (a NULL value leaves no empty part); `render.py:24` a mutable dict for a closed set, now immutable;
+  `test_text_goldens_live.py:17` helpers imported from a test module, moved to `tests/golden/files.py`;
+  `test_examples_live.py:136` `/validate` never tried without a database, now six unit tests on a client that
+  never connected; `README.md:113,134,75` the `ENGINE_PORT` row, where the text goldens run, and the Windows
+  spelling of the venv command, reworded. Info, no change needed: `executor/database.py:104`
+  `count_compiled` had no caller: phase 5 calls it. Info, left by the session: `explainer/__init__.py:40`,
+  `render.py:195` the explainer builds the answer's dicts itself: the shapes of api.md are the renderer's
+  output, and moving them to the routes would put rendering knowledge in two modules. All of it in the
+  review-fix commit that follows this line.

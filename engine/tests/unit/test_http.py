@@ -13,6 +13,7 @@ from app.glossary import Glossary, public_view
 from app.main import create_app
 from app.settings import Settings
 from app.web import MAX_BODY_BYTES, RunRequest, SuggestRequest, resolve_language
+from tests.conftest import example_files, invalid_files, read_json
 
 PROBLEM_KEYS = {"type", "title", "status", "code", "params", "correlationId"}
 HEX_32 = re.compile(r"^[0-9a-f]{32}$")
@@ -257,3 +258,27 @@ def test_glossary_endpoint_serves_the_public_view(client: TestClient, glossary: 
     assert response.status_code == 200
     assert response.headers["content-type"] == "application/json"
     assert response.json() == public_view(glossary)
+
+
+# --- validate: a dry compile ----------------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("path", example_files(), ids=lambda path: path.stem)
+def test_validate_answers_without_a_database(path: Any, client: TestClient) -> None:
+    """The unit client never opened a connection: `/health` says so, and `/validate` answers all the same."""
+    response = client.post("/validate", json={"definition": read_json(path)["definition"]})
+    body = response.json()
+    assert response.status_code == 200
+    assert set(body) == {"valid", "sentence", "sentenceParts", "conditions"}
+    assert body["valid"] is True and body["sentence"]
+    assert all("count" not in condition for condition in body["conditions"])
+    assert client.get("/health").status_code == 503
+
+
+def test_validate_lists_the_errors_of_an_invalid_definition(client: TestClient) -> None:
+    fixture = read_json(next(path for path in invalid_files() if path.stem == "unknown-field"))
+    response = client.post("/validate", json={"definition": fixture["definition"]})
+    assert_problem(response, 422, "DEFINITION_INVALID", with_errors=True)
+    assert [(error["code"], error["path"]) for error in response.json()["errors"]] == [
+        (fixture["expected"]["code"], fixture["expected"]["path"])
+    ]

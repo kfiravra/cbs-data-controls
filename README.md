@@ -68,7 +68,8 @@ It needs:
 - The database of [Quick start](#the-database-available-now), initialised, and `.env` in the repository root with
   `DQ_ENGINE_RO_PASSWORD` and the engine block of `.env.example`.
 
-Start it with Python and pip alone. On Windows the interpreter of the environment is `.venv\Scripts\python`:
+Start it with Python and pip alone. On Windows the first command is `py -m venv .venv` and the interpreter of the
+environment is `.venv\Scripts\python`:
 
 ```sh
 cd engine
@@ -110,7 +111,7 @@ default, and the login is always `dq_engine_ro`:
 | `ENGINE_DB_PORT` | empty | empty: no port in `Server=` (1433 over TCP, or the named instance's own protocol); a number from 1 to 65535: `host,port` |
 | `ENGINE_DB_NAME` | `DataControls` | the database |
 | `ENGINE_DB_DRIVER` | empty | empty: ODBC Driver 18 for SQL Server when it is installed, else 17; set: that driver name as written |
-| `ENGINE_PORT` | `8000` | the port the start command gives to `--port`; the engine itself does not read it |
+| `ENGINE_PORT` | `8000` | the port to give to `--port` when starting the engine (the commands above write 8000); the engine itself does not read it |
 | `ENGINE_ROW_CAP` | `5000` | default and maximum of a run's `rowCap`; the total count stays exact above it |
 | `ENGINE_QUERY_TIMEOUT_SECONDS` | `30` | per statement; a run sends two |
 | `ENGINE_STARTUP_DB_WAIT_SECONDS` | `30` | how long startup waits for the database before it exits |
@@ -131,9 +132,10 @@ uv run ruff check .
 uv run pyright
 ```
 
-`pytest` runs the unit tests, the golden tests (the SQL and the Hebrew text each example of `contracts/examples/`
-compiles and renders to, in `engine/tests/golden/`) and the integration tests, which run every example against
-the seeded database and compare the flagged records with the example files. The integration tests fail, and
+`pytest` runs the unit tests, the golden tests (the SQL and the parameters each example of `contracts/examples/`
+compiles to, in `engine/tests/golden/*.sql` and `*.params.json`) and the integration tests. Those run every
+example against the seeded database, compare the flagged records with the example files and the rendered Hebrew
+text with `engine/tests/golden/*.text.json`, and check `/suggest` against the examples. They fail, and
 never skip, when the database is down. One path is proven without the database: a statement that runs past the
 timeout is answered `QUERY_TIMEOUT`, and that mapping is tested on a fabricated driver error, because the
 read-only login has no way to run a slow statement on purpose.

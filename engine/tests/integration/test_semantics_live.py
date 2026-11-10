@@ -208,7 +208,7 @@ def test_key_or_id_that_carries_sql_is_rejected_before_anything_runs(live_client
     for document in (
         definition(ROOT + "; DROP TABLE hr.Employee", all_of(condition("c1", TEXT, "is_empty"))),
         definition(ROOT, all_of(condition("c1; DROP TABLE hr.Employee", TEXT, "is_empty"))),
-        definition(ROOT, all_of(condition("c1", {"field": "email; DROP TABLE hr.Employee"}, "is_empty"))),
+        definition(ROOT, all_of(condition("c1", {"field": TEXT["field"] + "; DROP TABLE hr.Employee"}, "is_empty"))),
     ):
         response = live_client.post("/run", json={"definition": document, "runDate": RUN_DATE})
         assert response.status_code == 422
