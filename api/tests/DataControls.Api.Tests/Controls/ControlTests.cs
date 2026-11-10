@@ -29,7 +29,7 @@ public sealed class ControlTests(ApiFixture fixture)
         Assert.Equal(ControlRequests.PathOf(id), response.Headers.Location?.OriginalString);
         Assert.Equal(name, control.GetProperty("name").GetString());
         Assert.Equal(JsonValueKind.Null, control.GetProperty("description").ValueKind);
-        Assert.Equal("employee", control.GetProperty("rootEntity").GetString());
+        Assert.Equal(Examples.RootEntity(Examples.First), control.GetProperty("rootEntity").GetString());
         Assert.Equal(1, control.GetProperty("version").GetInt32());
         Assert.True(control.GetProperty("isActive").GetBoolean());
         Assert.Matches(Timestamp, control.GetProperty("createdAt").GetString());
@@ -107,7 +107,7 @@ public sealed class ControlTests(ApiFixture fixture)
     }
 
     [Fact]
-    public async Task Create_accepts_a_name_of_exactly_200_characters()
+    public async Task Create_returns_201_when_the_name_has_exactly_200_characters()
     {
         var name = TestData.Name(_testId, string.Empty).PadRight(200, 'x');
 
@@ -172,12 +172,26 @@ public sealed class ControlTests(ApiFixture fixture)
     [InlineData("0")]
     [InlineData("-1")]
     [InlineData("1.5")]
-    [InlineData("99999999999")]
+    [InlineData("1e3")]
     public async Task Get_returns_404_not_found_when_the_id_segment_is_not_a_positive_integer(string segment)
     {
         var response = await _client.GetAsync($"{ControlRequests.Path}/{segment}");
 
         await HttpAssert.ProblemAsync(response, HttpStatusCode.NotFound, "NOT_FOUND");
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("/versions")]
+    [InlineData("/versions/1")]
+    public async Task Get_returns_404_control_not_found_with_the_id_when_the_id_is_a_positive_integer_no_row_can_have(string rest)
+    {
+        const long beyondTheColumn = 99_999_999_999;
+
+        var response = await _client.GetAsync($"{ControlRequests.Path}/{beyondTheColumn}{rest}");
+
+        var problem = await HttpAssert.ProblemAsync(response, HttpStatusCode.NotFound, "CONTROL_NOT_FOUND");
+        HttpAssert.JsonEqual($$"""{"id":{{beyondTheColumn}} }""", problem.GetProperty("params").GetRawText());
     }
 
     [Fact]
@@ -215,11 +229,14 @@ public sealed class ControlTests(ApiFixture fixture)
         var noControlList = await _client.GetAsync($"{ControlRequests.PathOf(NoSuchId)}/versions");
         var noControl = await _client.GetAsync($"{ControlRequests.PathOf(NoSuchId)}/versions/1");
         var noVersion = await _client.GetAsync($"{ControlRequests.PathOf(id)}/versions/2");
+        var noSuchVersionNumber = await _client.GetAsync($"{ControlRequests.PathOf(id)}/versions/99999999999");
 
         await HttpAssert.ProblemAsync(noControlList, HttpStatusCode.NotFound, "CONTROL_NOT_FOUND");
         await HttpAssert.ProblemAsync(noControl, HttpStatusCode.NotFound, "CONTROL_NOT_FOUND");
         var problem = await HttpAssert.ProblemAsync(noVersion, HttpStatusCode.NotFound, "VERSION_NOT_FOUND");
         HttpAssert.JsonEqual($$"""{"id":{{id}},"version":2}""", problem.GetProperty("params").GetRawText());
+        var beyond = await HttpAssert.ProblemAsync(noSuchVersionNumber, HttpStatusCode.NotFound, "VERSION_NOT_FOUND");
+        HttpAssert.JsonEqual($$"""{"id":{{id}},"version":99999999999}""", beyond.GetProperty("params").GetRawText());
     }
 
     [Fact]

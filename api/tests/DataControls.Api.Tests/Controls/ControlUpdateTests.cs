@@ -31,7 +31,8 @@ public sealed class ControlUpdateTests(ApiFixture fixture)
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var updated = await response.ReadJsonAsync();
         Assert.Equal(2, updated.GetProperty("version").GetInt32());
-        Assert.Equal("department", updated.GetProperty("rootEntity").GetString());
+        Assert.NotEqual(Examples.RootEntity(Examples.First), Examples.RootEntity(OtherExample));
+        Assert.Equal(Examples.RootEntity(OtherExample), updated.GetProperty("rootEntity").GetString());
         HttpAssert.JsonEqual(newDefinition, updated.GetProperty("definition").GetRawText());
         Assert.NotEqual(created.GetProperty("concurrencyToken").GetString(), updated.GetProperty("concurrencyToken").GetString());
 
@@ -66,13 +67,8 @@ public sealed class ControlUpdateTests(ApiFixture fixture)
     public async Task Update_keeps_the_version_when_the_definition_differs_only_in_key_order_and_layout()
     {
         var created = await CreateAsync();
-        const string sameRule = """
-            { "where": { "children": [
-                  { "value": 18, "operator": "lt", "left": { "field": "age" }, "id": "c1", "type": "condition" },
-                  { "id": "c2", "type": "condition", "left": { "field": "salary" }, "operator": "gt", "value": 15000 } ],
-                "op": "and", "type": "group" },
-              "rootEntity": "employee", "schemaVersion": 1 }
-            """;
+        var sameRule = Examples.Reordered(created.GetProperty("definition").GetRawText());
+        Assert.NotEqual(created.GetProperty("definition").GetRawText(), sameRule);
         _engine.Reset();
 
         var response = await ControlRequests.UpdateAsync(_client, created, definitionJson: sameRule);
@@ -156,7 +152,7 @@ public sealed class ControlUpdateTests(ApiFixture fixture)
     }
 
     [Fact]
-    public async Task Update_checks_the_request_before_it_looks_for_the_control_and_the_token_before_the_definition()
+    public async Task Update_answers_in_the_contract_order_when_more_than_one_check_would_fail()
     {
         var created = await CreateAsync();
         await ControlRequests.UpdateAsync(_client, created, name: TestData.Name(_testId, "moves the token on"));
@@ -233,6 +229,30 @@ public sealed class ControlUpdateTests(ApiFixture fixture)
             scope.ServiceProvider.GetRequiredService<ControlService>().UpdateAsync(id, request, CancellationToken.None));
 
         Assert.Equal((409, "CONCURRENCY_CONFLICT"), (failure.Status, failure.Code));
+    }
+
+    [Fact]
+    public async Task Update_returns_409_when_two_saves_of_a_new_definition_race_for_the_same_version_number()
+    {
+        var created = await CreateAsync();
+        var id = created.GetProperty("id").GetInt32();
+        await using var scope = fixture.Factory.Services.CreateAsyncScope();
+        await scope.ServiceProvider.GetRequiredService<DqDbContext>().Controls.SingleAsync(control => control.Id == id);
+        var winner = await ControlRequests.UpdateAsync(_client, created, definitionJson: Examples.Definition(OtherExample));
+        using var lateDefinition = JsonDocument.Parse(Examples.Definition("termination-before-hire"));
+        var request = new UpdateControlRequest(
+            created.GetProperty("name").GetString(),
+            null,
+            lateDefinition.RootElement,
+            created.GetProperty("concurrencyToken").GetString());
+
+        var failure = await Assert.ThrowsAsync<ApiException>(() =>
+            scope.ServiceProvider.GetRequiredService<ControlService>().UpdateAsync(id, request, CancellationToken.None));
+
+        Assert.Equal(HttpStatusCode.OK, winner.StatusCode);
+        Assert.Equal((409, "CONCURRENCY_CONFLICT"), (failure.Status, failure.Code));
+        var versions = await (await _client.GetAsync($"{ControlRequests.PathOf(id)}/versions")).ReadJsonAsync();
+        Assert.Equal(2, versions.GetArrayLength());
     }
 
     [Fact]

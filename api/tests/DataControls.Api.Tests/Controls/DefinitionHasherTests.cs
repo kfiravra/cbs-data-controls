@@ -20,7 +20,7 @@ public sealed class DefinitionHasherTests
     [Theory]
     [InlineData("""{"a":{"c":true,"d":null},"b":[1,2.50,"x"]}""")]
     [InlineData("""{ "b" : [ 1, 2.50, "x" ],   "a" : { "c" : true, "d" : null } }""")]
-    [InlineData("""{"b":[1,2.50,"x"],"a":{"d":null,"c":true}}""")]
+    [InlineData("{\"b\":[1,2.50,\"\\u0078\"],\"a\":{\"d\":null,\"c\":true}}")]
     public void Hash_is_equal_when_only_key_order_layout_or_the_spelling_of_a_string_differs(string other)
     {
         Assert.Equal(DefinitionHasher.Hash(Parse(Reference)), DefinitionHasher.Hash(Parse(other)));

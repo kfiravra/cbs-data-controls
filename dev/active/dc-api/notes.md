@@ -87,8 +87,19 @@ wait for a merge: commit, no push.
 18. **Response types are named `ControlResponse`, `ControlSummaryResponse` and so on**, because the contract's
     names (`Control`, `ControlVersion`) are the entities' names; the JSON members are the contract's.
 
+19. **An id or a version in the path is a positive integer of any size up to 64 bits.** `contracts/api.md` answers
+    404 `NOT_FOUND` only for a segment "that is not a positive integer", so `99999999999` is an id no control has
+    (`CONTROL_NOT_FOUND` with that id), not an unknown path. A number of more than 19 digits no longer fits the
+    route's type and is `NOT_FOUND`.
+20. **`lastRun` is read in a second query, for the page's controls only**, instead of the correlated subquery of
+    Design F. EF turns that subquery into a ROW_NUMBER over the whole of `dq.Run`; restricted to the page's ids
+    it enters the index on `(control_id, started_at DESC)` once per control. The id stays as the tie-break of two
+    runs started in the same millisecond.
+21. **Two saves that race to add the same version number are a 409 as well**: the second insert meets the first
+    one's key, and that is answered `CONCURRENCY_CONFLICT`, not 500.
+
 ## Last reviewed
-`b89bd0b` (Phase 2), fixes in `638787d`; `8e80f74` (Phase 1), fixes in `a781c91`
+`96bc1e9` (Phase 3), fixes in the commit after it; `b89bd0b` (Phase 2), fixes in `638787d`; `8e80f74` (Phase 1), fixes in `a781c91`
 
 ## Docs for dc-delivery
 Kept as the work goes (plan.md decision 26) and copied into the PR body under this heading at `/ship`. The
@@ -226,3 +237,22 @@ warning by file, what the fix changed, what was left and why, what Kfir rejected
   `RunStatus` and `RunFailure` and its run column has no caller until Phase 4 (info), because the plan asks for
   one table. Kfir rejected or rewrote: nothing; he was not present.
 - 2026-11-11 02:25 Phase 3 gate green: build, format, 239 tests, print guard (`gates/phase-3.txt`).
+- 2026-11-11 03:05 Phase 3 review (diff `638787d..96bc1e9`, one reviewer on opus): standards 0 critical, 3
+  warning, 3 info; plan 0, 2, 2. Warnings: `Controls/ControlUpdateTests.cs` a hand-typed copy of an example's
+  definition and hard-coded entity keys in three test files (genericity); `Controls/DefinitionHasherTests.cs` no
+  case with a string spelled by an escape; `Controls/ControlService.cs` `ListAsync` 61 lines in five phases;
+  `ControlService.cs` the `lastRun` subquery is not served by the index as Design F says;
+  `Controls/ControlsController.cs` an id beyond 32 bits answered `NOT_FOUND` where the contract's wording gives
+  `CONTROL_NOT_FOUND`. Fixed in the commit `fix(api): review fixes` after `96bc1e9`: the reordered definition is
+  built from the example and entity keys are read from the examples; the escape case is in the file (the
+  finding was right: the escape had been decoded on its way into the file, so the case was a duplicate of the
+  reference); `ListAsync` split into filter, page, last runs and mapping; last runs read for the page's ids
+  with four columns (decision 20; the SQL was printed with `ToQueryString` and read: ROW_NUMBER partitioned by
+  control, restricted by `control_id IN (...)`; `LIKE @p ESCAPE '\'` for the search; `OPENJSON` for the
+  condition filter); ids and versions bound as 64-bit (decision 19). Info fixed: the redundant
+  `OriginalValue = token` removed (the check before it already proved the token is the loaded row version);
+  five test names given a condition; the wildcard search test now searches by its own test id; a duplicate
+  version key in a race answers 409 (decision 21), with a test of two racing definition changes. Left:
+  `LastRunResponse` uses `Persistence.RunStatus` on the wire (info), because the enum's four names are the
+  contract's and the column's, and a second enum would only be converted to and from the first. Kfir rejected
+  or rewrote: nothing; he was not present.

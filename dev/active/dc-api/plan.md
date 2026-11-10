@@ -470,8 +470,9 @@ with the `id` of the nearest enclosing node as `nodeId`. The engine is not calle
   description are trimmed and stored. Nothing changed: 200 with the row as it is and no write.
 - Archive: sets `is_active` to 0; 204 on a repeat; 404 for an unknown id.
 - List: `active=true` unless asked, `search` on the name, `rootEntity` exact, ordered by name then id; `lastRun`
-  from a correlated subquery (newest `started_at`, any status), served by the index on `(control_id,
-  started_at DESC)`.
+  (newest `started_at`, any status) from a second query restricted to the page's control ids, which is what
+  lets the index on `(control_id, started_at DESC)` serve it (corrected in the Phase 3 review: the correlated
+  subquery this line first asked for is translated to a ROW_NUMBER over the whole table).
 - Versions: newest first. `POST /controls/validate`: schema, then the engine's 200 body unchanged, or 422.
 
 **Runs.**

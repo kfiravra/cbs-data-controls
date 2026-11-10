@@ -29,32 +29,32 @@ public sealed class ControlsController(ControlService controls, DefinitionChecke
         return Created(Location(control.Id), control);
     }
 
-    [HttpGet("{id:int:min(1)}")]
-    public Task<ControlResponse> Get(int id, CancellationToken cancellationToken) =>
+    [HttpGet("{id:long:min(1)}")]
+    public Task<ControlResponse> Get(long id, CancellationToken cancellationToken) =>
         controls.GetAsync(id, cancellationToken);
 
     /// <summary>Saves a control; a changed definition becomes a new version.</summary>
-    [HttpPut("{id:int:min(1)}")]
+    [HttpPut("{id:long:min(1)}")]
     public Task<ControlResponse> Update(
-        int id,
+        long id,
         [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] UpdateControlRequest? request,
         CancellationToken cancellationToken) =>
         controls.UpdateAsync(id, request, cancellationToken);
 
     /// <summary>Archives the control. Its versions and runs stay readable.</summary>
-    [HttpDelete("{id:int:min(1)}")]
-    public async Task<IActionResult> Archive(int id, CancellationToken cancellationToken)
+    [HttpDelete("{id:long:min(1)}")]
+    public async Task<IActionResult> Archive(long id, CancellationToken cancellationToken)
     {
         await controls.ArchiveAsync(id, cancellationToken);
         return NoContent();
     }
 
-    [HttpGet("{id:int:min(1)}/versions")]
-    public Task<IReadOnlyList<ControlVersionSummaryResponse>> Versions(int id, CancellationToken cancellationToken) =>
+    [HttpGet("{id:long:min(1)}/versions")]
+    public Task<IReadOnlyList<ControlVersionSummaryResponse>> Versions(long id, CancellationToken cancellationToken) =>
         controls.GetVersionsAsync(id, cancellationToken);
 
-    [HttpGet("{id:int:min(1)}/versions/{version:int:min(1)}")]
-    public Task<ControlVersionResponse> Version(int id, int version, CancellationToken cancellationToken) =>
+    [HttpGet("{id:long:min(1)}/versions/{version:long:min(1)}")]
+    public Task<ControlVersionResponse> Version(long id, long version, CancellationToken cancellationToken) =>
         controls.GetVersionAsync(id, version, cancellationToken);
 
     /// <summary>Checks a definition without storing anything and returns the engine's preview of it.</summary>

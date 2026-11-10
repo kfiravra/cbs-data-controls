@@ -12,17 +12,27 @@ internal static class SqlFailure
     private static readonly HashSet<int> _connectionNumbers =
         [-2, -1, 2, 53, 64, 233, 258, 4060, 10053, 10054, 10060, 10061, 11001, 18456];
 
+    // A primary key or a unique index refused a second row with the same key.
+    private static readonly HashSet<int> _duplicateKeyNumbers = [2601, 2627];
+
+    /// <summary>True when a row was refused because its key already exists.</summary>
+    public static bool IsDuplicateKey(Exception exception) =>
+        Find(exception) is { } sql && _duplicateKeyNumbers.Contains(sql.Number);
+
     /// <summary>True when the failure is the database not answering, not a statement it refused.</summary>
-    public static bool IsConnectionLevel(Exception exception)
+    public static bool IsConnectionLevel(Exception exception) =>
+        Find(exception) is { } sql && (sql.Class >= FatalSeverity || _connectionNumbers.Contains(sql.Number));
+
+    private static SqlException? Find(Exception exception)
     {
         for (var current = exception; current is not null; current = current.InnerException)
         {
             if (current is SqlException sql)
             {
-                return sql.Class >= FatalSeverity || _connectionNumbers.Contains(sql.Number);
+                return sql;
             }
         }
 
-        return false;
+        return null;
     }
 }

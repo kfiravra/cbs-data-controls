@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace DataControls.Api.Tests.Support;
 
@@ -22,6 +23,24 @@ internal static class Examples
 
     /// <summary>A definition as compact JSON text, ready to sit inside a request body.</summary>
     public static string Definition(string id) => Example(id).GetProperty("definition").GetRawText();
+
+    /// <summary>The root entity key of an example's definition.</summary>
+    public static string RootEntity(string id) =>
+        Example(id).GetProperty("definition").GetProperty("rootEntity").GetString()!;
+
+    /// <summary>
+    /// The same definition with every object's members in the opposite order and with indentation: another
+    /// text of the same rule.
+    /// </summary>
+    public static string Reordered(string definitionJson) =>
+        Reverse(JsonNode.Parse(definitionJson)!).ToJsonString(new JsonSerializerOptions { WriteIndented = true });
+
+    private static JsonNode Reverse(JsonNode node) => node switch
+    {
+        JsonObject members => new JsonObject(members.Reverse().Select(member => KeyValuePair.Create(member.Key, member.Value is null ? null : (JsonNode?)Reverse(member.Value)))),
+        JsonArray items => new JsonArray([.. items.Select(item => item is null ? null : Reverse(item))]),
+        _ => node.DeepClone(),
+    };
 
     private static IEnumerable<string> Names(string directory) =>
         Directory.GetFiles(directory, "*.json").Select(file => Path.GetFileNameWithoutExtension(file)!).Order(StringComparer.Ordinal);

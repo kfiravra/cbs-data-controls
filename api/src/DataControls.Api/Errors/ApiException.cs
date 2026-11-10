@@ -35,9 +35,9 @@ public sealed class ApiException : Exception
 
     public static ApiException NotFound() => new(ErrorCodes.NotFound);
 
-    public static ApiException ControlNotFound(int id) => new(ErrorCodes.ControlNotFound, new { id });
+    public static ApiException ControlNotFound(long id) => new(ErrorCodes.ControlNotFound, new { id });
 
-    public static ApiException VersionNotFound(int id, int version) => new(ErrorCodes.VersionNotFound, new { id, version });
+    public static ApiException VersionNotFound(long id, long version) => new(ErrorCodes.VersionNotFound, new { id, version });
 
     /// <summary>An archived control can be read but not changed or run.</summary>
     public static ApiException ControlArchived(int id) => new(ErrorCodes.ControlArchived, new { id });

@@ -90,7 +90,7 @@ public sealed class ControlListTests(ApiFixture fixture)
     }
 
     [Fact]
-    public async Task List_accepts_the_largest_page_and_page_size()
+    public async Task List_returns_200_when_page_and_page_size_are_at_their_maximum()
     {
         var response = await _client.GetAsync($"{ControlRequests.Path}?search={_testId}&page=1000000&pageSize=200");
 
@@ -98,38 +98,31 @@ public sealed class ControlListTests(ApiFixture fixture)
     }
 
     [Fact]
-    public async Task List_keeps_only_the_root_entity_asked_for()
+    public async Task List_keeps_only_matching_controls_when_a_root_entity_is_asked_for()
     {
         var employee = await CreateAsync("employee rule");
         var department = await ControlRequests.CreateAsync(_client, TestData.Name(_testId, "department rule"), Examples.Definition(DepartmentExample));
 
-        var departments = await ControlRequests.ListAsync(_client, _testId, "&rootEntity=department");
-        var employees = await ControlRequests.ListAsync(_client, _testId, "&rootEntity=employee");
+        var departments = await ControlRequests.ListAsync(_client, _testId, $"&rootEntity={Examples.RootEntity(DepartmentExample)}");
+        var employees = await ControlRequests.ListAsync(_client, _testId, $"&rootEntity={Examples.RootEntity(Examples.First)}");
 
         Assert.Equal([Id(department)], Ids(departments));
         Assert.Equal([Id(employee)], Ids(employees));
     }
 
     [Theory]
-    [InlineData("100%", "percent")]
-    [InlineData("a_b", "underscore")]
-    [InlineData("[x]", "bracket")]
-    public async Task List_search_takes_wildcard_characters_literally(string search, string expectedLabel)
+    [InlineData("pct 100% sure", "pct 100 or so sure")]
+    [InlineData("und a_b end", "und axb end")]
+    [InlineData("brk [x] end", "brk x end")]
+    public async Task List_search_takes_a_wildcard_character_literally_when_the_name_contains_it(string label, string whatAWildcardWouldAlsoMatch)
     {
-        var expected = new Dictionary<string, JsonElement>
-        {
-            ["percent"] = await CreateAsync("is 100% sure"),
-            ["underscore"] = await CreateAsync("has a_b inside"),
-            ["bracket"] = await CreateAsync("with [x] marks"),
-            ["plain"] = await CreateAsync("100 axb x"),
-        };
+        var literal = await CreateAsync(label);
+        await CreateAsync(whatAWildcardWouldAlsoMatch);
 
-        // The search is the wildcard text alone, so other tests' controls may match too; only this test's count.
-        var response = await _client.GetAsync($"{ControlRequests.Path}?pageSize=200&search={Uri.EscapeDataString(search)}");
-        var found = await response.ReadJsonAsync();
+        // The search carries this test's id, so it sees only the two controls above.
+        var found = await ControlRequests.ListAsync(_client, $"{_testId}-{label}", "&active=all");
 
-        var mine = found.GetProperty("items").EnumerateArray().Where(item => item.GetProperty("name").GetString()!.Contains(_testId)).Select(Id);
-        Assert.Equal([Id(expected[expectedLabel])], mine);
+        Assert.Equal([Id(literal)], Ids(found));
     }
 
     [Fact]
@@ -155,7 +148,7 @@ public sealed class ControlListTests(ApiFixture fixture)
               "id": {{Id(created)}},
               "name": {{created.GetProperty("name").GetRawText()}},
               "description": "described",
-              "rootEntity": "employee",
+              "rootEntity": "{{Examples.RootEntity(Examples.First)}}",
               "version": 1,
               "isActive": true,
               "createdAt": {{created.GetProperty("createdAt").GetRawText()}},
