@@ -1,31 +1,25 @@
 # dc-contracts notes
 
 ## State
-Executing the whole task in one run on Fable 5.2 (Kfir's word, 2026-11-10): three Opus lanes in the main tree
-(lane 1: phase 1; lane 2: phase 2; lane 3: the phase 4 documents) beside the orchestrator's phase 3. No per-phase
-review; one review over the branch at the end, then the Gate, the push and the PR. No merge.
-
-In the tree, uncommitted: the six examples (`contracts/examples/`), the six oracle queries (`sql/checks/`), the
-decision-3 harness lines, architecture §4.3. The seed is drafted outside the tree (session scratchpad) until lane 1
-finishes, because `db-init.sh` runs every `sql/NN_*.sql` it finds.
+Every phase is done and committed on `feat/contracts`: `43745cc` (phase 1), `b0d3015` (phase 2), `16824ce`
+(phase 3), `aafe9ca` (phase 4), then one review-fix commit. One review over the branch by area ran on `aafe9ca`
+(five Opus reviewers); its findings and what happened to each are in the Log. The Gate ran from a clean container on
+the tree of the fix commit: `gates/final.txt`, db-check 27 passed, contracts-check 5 checks, hook tests 226 pass.
+The branch is pushed and the PR to main is open, on Kfir's word. Not merged.
 
 ## Next
-1. Lane 1 reports: check its verify output, commit phase 1 (task folder and `.gitignore` staged by name).
-2. Lane 2 reports: add the `glossary` section of db-check, commit phase 2 with architecture §4.3.
-3. Phase 3: seed into `sql/`, db-check `hebrew` and `examples`, contracts-check 4 and `--render`, `sql/README.md`.
-4. Phase 4: check 5 over lane 3's files, CLAUDE.md rows, the remaining architecture lines, the README section.
-5. One review by area, one fix commit, the Gate from a clean container, push, PR. Show Kfir the `--render` output.
-
-Held for the review-fix commit (found by the orchestrator, not by a reviewer):
-- `.env.example` carries working passwords. `/ship` step 2 stops on `MSSQL_SA_PASSWORD=` with a value and the
-  dc-delivery plan (decision at its line 44) wants placeholders: empty the three values, and say in the README quick
-  start that they are set after the copy. The local `.env` keeps its values.
+1. Kfir reads `uv run scripts/contracts-check.py --render`: the last moment a wording change is free. Open wording
+   questions are in the Log (the review line): the gender of the predicates, "קטן מ" against the assignment's
+   "נמוך מ", the brackets around related conditions.
+2. The merge, on Kfir's word. Then on main: `scripts/db-init.sh --reset` (the seed is new there), and the three
+   worktrees of kickoff §5 with `.env` copied into each.
+3. One line to each session before it starts (the Log's review line has the full list): engine, api, web.
 
 ## Blockers
 (none)
 
 ## Last reviewed
-(none)
+`aafe9ca` (2026-11-10, sql, engine, api, web, infra; the fix commit is not re-reviewed)
 
 ## Log
 - 2026-11-10 created plan. Interview in two rounds, seven decisions by Kfir (plan.md Decisions 1 to 7); `main`
@@ -93,3 +87,61 @@ Held for the review-fix commit (found by the orchestrator, not by a reviewer):
   plan (line 531) assumes an error path ends in `left`, `operator`, `value`, `values`, `right` or `relationship`,
   but schema-layer paths and `DUPLICATE_NODE_ID` end elsewhere; `docs/design.md` (lines 654, 657) still contradicts
   the contract on breakdown counts and on `GLOSSARY_MISMATCH`.
+- 2026-11-10 one review over `main...aafe9ca` by area, five `reviewer` agents on Opus (four at once, infra after the
+  first returned), then one fix commit. Findings and what happened to each:
+  - **infra, critical**: `contracts-check.py` ended in a traceback on a malformed glossary or schema (six cases),
+    losing the failure lines. Fixed: lookups go through `dig`, the checks after schema and glossary are skipped
+    while those two have failures, and a check that raises becomes a failure line. Twelve malformed cases re-run:
+    failure lines, no traceback.
+  - **infra, warning**: semantic fixtures were matched by path and not by code. Fixed: the walk records the
+    definition error code of every fault and check 5 compares both; four relabelled fixtures are now reported.
+  - **infra, warning**: `check_field` (77 lines) and `check_agreement` (71) over the size standard. Fixed: split.
+    The file stays one file of about 1,640 lines, as Design G asks; not changed.
+  - **infra, warning**: architecture §6 listed `ROW_CAP_EXCEEDED` as an engine code. Fixed.
+  - **infra, info**: the no-uv test dropped the whole directory that holds uv (fixed: a mirror without uv); the
+    Verify line and two README sentences were stale (fixed). The README's 2.2 GB is the image's real size.
+  - **sql, warning**: the two login passwords were on the sqlcmd command line. Fixed: sqlcmd reads them from the
+    environment (proved from a clean container); the Windows example in `sql/README.md` does the same.
+  - **sql, warning, not verified**: Git Bash would rewrite the container paths in db-check. Added
+    `MSYS_NO_PATHCONV` and `MSYS2_ARG_CONV_EXCL` to that call; there is no Git Bash here to prove it.
+  - **sql, info**: nothing enforced the password rule (fixed: both scripts refuse spaces, quotes, `$`, `;`, a
+    backslash); the wait loop hid sqlcmd's error and miscounted its two minutes (fixed: real seconds, last error
+    shown); `dbo` owns both schemas, so a module would pass the DENY by ownership chaining (documented in
+    `sql/README.md`; no module exists); one stale line in `sql/README.md` (fixed). The seed and the six oracle
+    queries were checked row by row: clean.
+  - **api, warning**: the standards said no text crosses a service boundary (fixed in CODING-STANDARDS and the
+    reviewer agent: errors as codes, rendered sentences and reasons as the one exception); a run whose snapshot
+    cannot be stored had no state (pinned: closed `failed` with `INTERNAL_ERROR`); a non-object `definition` was
+    400 in `api.md` and "goes to the schema" in `errors.md` (now 400 in both); no code for an oversized body or a
+    wrong content type (pinned: `REQUEST_INVALID` with 413 and 415); `page` unbounded (1 to 1,000,000); record keys
+    had no length (64, the column). `Run.rootEntity` is not a column: answered with a note that it is read from
+    the version's definition; no column added.
+  - **api, info**: two lists repeated glossary data (reworded); results search now takes `[` literally and is
+    trimmed. The fallback language stays `he`: the api plan's `Runs:DefaultLanguage` must default to it.
+  - **engine, warning**: the age rule was written for the field `age` (reworded for the function `age_years`); the
+    enum label had no fallback under the case-insensitive collation (pinned: found without regard to case, else
+    shown as stored); the placeholders of suggestion texts were defined only in the plan (a Suggestions rule in
+    Rendering); number literals were unbounded (below 10^15, else `VALUE_TYPE_MISMATCH`). `actual` and
+    `rightActual` are on every reason also when the template shows neither: kept and said outright; the engine
+    plan fetches less today.
+  - **engine, info**: errors sharing a path had no order (now the order of the code table, then `params.index`);
+    a related node's conditions read into the sibling after it (also lane 2 and the web reviewer; decision 33).
+    Kept as the contract has them, for the engine session: `/suggest` may answer 504; a bad related relationship
+    is `UNKNOWN_RELATIONSHIP` or `PATH_NOT_REACHABLE`, not `RELATIONSHIP_NOT_QUANTIFIABLE`.
+  - **web, warning**: identifiers got thousands separators while `display_text` held plain digits (decision 32);
+    no code for "the api did not answer" (`NETWORK_ERROR`, client-derived); the public glossary had no shape table
+    (added to `api.md`). Wording fixed: the department's value labels, `ne` before a Hebrew word, "חסר" against
+    "ריק" (decision 34), the reasons of `in` and `not_in`, "שהמחלקה שלהן", the quoted field name in two suggestion
+    texts, the maqaf on picker labels that end in a prefix.
+  - **web, not changed, for Kfir**: every predicate outside the colon style is masculine singular, which holds only
+    because all eighteen labels are masculine; the reviewer proposes wording without gender ("מתחת ל־", "מעל",
+    "לכל היותר", "לפחות", "לפני"). Decision 12 names today's words, so they stand until Kfir says otherwise. The
+    descriptions of examples 1 and 6 say ש"ח where the sentences say ₪: example 1 quotes the assignment.
+  - **web, for the web session**: `Run.status` can be `running` (another user's run, or a crashed one) and the
+    plan has no screen state for it; set `dir` from `Run.language` on stored text and keep a value part on one
+    line; `docs/design.md` draws a reason as "גיל [15] נמוך מ־16" where the engine renders "גיל: 15 (קטן מ־16)".
+  - **found by the orchestrator against `/ship`**: `.env.example` carried working passwords. Emptied (decision 35).
+- 2026-11-10 the Gate from a clean container, on the tree of the fix commit: `gates/final.txt`. `down -v`, `up`,
+  init twice (7 scripts each), db-check 27 passed 0 failed, contracts-check 5 checks passed, hook tests 226 pass 0
+  fail. Mutation runs after the fixes: 16 malformed or relabelled cases, 19 example mutations, 12 fixture and
+  catalogue mutations, each reported.

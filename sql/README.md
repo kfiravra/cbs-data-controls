@@ -36,15 +36,20 @@ are not part of the init.
 
 Neither has DDL or `EXECUTE`, and nothing is granted to `public`. Permissions are granted on schemas, so a table
 added later inherits them. The passwords arrive as the sqlcmd variables `DQ_APP_PASSWORD` and
-`DQ_ENGINE_RO_PASSWORD` and are never written into a script. `scripts/db-check.sh permissions` proves each grant
-and each refusal: a denied read or write must fail with error 229, a `CREATE TABLE` with error 262.
+`DQ_ENGINE_RO_PASSWORD` and are never written into a script; `db-init.sh` hands them to sqlcmd through the
+environment, so they are on no command line. `scripts/db-check.sh permissions` proves each grant and each
+refusal: a denied read or write must fail with error 229, a `CREATE TABLE` with error 262.
+
+Both schemas are owned by `dbo`, and they hold tables only. Keep it so: a view or a procedure in one schema that
+reads the other would pass the `DENY` through ownership chaining. If a module is ever needed, give the two
+schemas separate owners first.
 
 ## Running the scripts
 
 ```sh
 scripts/db-init.sh            # create what is missing
 scripts/db-init.sh --reset    # drop DataControls and build it again
-scripts/db-check.sh           # structure and permissions (and, as they land, glossary, hebrew, examples)
+scripts/db-check.sh           # structure, permissions, glossary, hebrew, examples (needs jq)
 ```
 
 `db-init.sh` decides by where it runs. With `DB_HOST` set in the environment and `sqlcmd` available, it runs the
@@ -79,10 +84,13 @@ own SQL Server and sqlcmd. Otherwise it runs `docker compose run --rm db-init`, 
    reopen it with **File > Open > File…**, the arrow beside **Open**, **Open With… > SQL Query Editor with
    Encoding**, and **Unicode (UTF-8 without signature) - Codepage 65001**.
 
-The same order works with sqlcmd on Windows, for example with a Windows administrator login:
+The same order works with sqlcmd on Windows, for example with a Windows administrator login. sqlcmd reads its
+variables from the environment, which keeps the two passwords off the command line:
 
 ```
-sqlcmd -S localhost -E -b -I -f 65001 -v DQ_APP_PASSWORD=<password> -v DQ_ENGINE_RO_PASSWORD=<password> -i sql\00_database.sql
+set DQ_APP_PASSWORD=<the dq_app password>
+set DQ_ENGINE_RO_PASSWORD=<the dq_engine_ro password>
+sqlcmd -S localhost -E -b -I -f 65001 -i sql\00_database.sql
 ```
 
 and so on for each script in order.

@@ -27,7 +27,7 @@ is the service that answers with the code: `engine`, `api`, `both`, or `client` 
 
 | Code | Status | From | Run error | Params | Meaning |
 |---|---|---|---|---|---|
-| `REQUEST_INVALID` | 400 | both | no | none; the problem's `errors` lists the faults (Request error codes) | The request is malformed: a member missing or of the wrong form, a value out of range, a bad query parameter |
+| `REQUEST_INVALID` | 400 (413 for a body over the size limit, 415 for a body that is not JSON) | both | no | none; the problem's `errors` lists the faults (Request error codes) | The request is malformed: a member missing or of the wrong form, a value out of range, a bad query parameter |
 | `DEFINITION_INVALID` | 422 | both | no | none, or `index` on `POST /api/v1/suggestions/accept`; the problem's `errors` lists the definition errors | The definition fails the schema or the glossary |
 | `CONTROL_NOT_FOUND` | 404 | api | no | `id` | No control has this id |
 | `VERSION_NOT_FOUND` | 404 | api | no | `id`, `version` | The control exists and has no such version |
@@ -42,6 +42,7 @@ is the service that answers with the code: `engine`, `api`, `both`, or `client` 
 | `QUERY_TIMEOUT` | 504 | both | yes | `timeoutSeconds` | A statement ran past the engine's statement timeout; the run's status is `timed_out` |
 | `INTERNAL_ERROR` | 500 | both | yes | none | Anything else; the details are logged with the correlation id and never returned |
 | `CONTROL_DEFINITION_OUTDATED` | none (run error only) | api | yes | `errors`: the engine's definition errors | The saved definition no longer validates (a glossary key it uses has gone or changed) |
+| `NETWORK_ERROR` | none | client | no | none | The api did not answer, or answered with something that is not a `Problem` (no connection, a gateway error); the client derives it and no service sends it |
 | `ROW_CAP_EXCEEDED` | none (informational) | client | no | `total`, `stored` | The run found more violations than it stored; the client shows it when `Run.capExceeded` is true, from `totalCount` and `storedCount` |
 
 ## Definition error codes
@@ -74,7 +75,7 @@ of the list is named by `params.index`, from 0), `<node>/relationship`, `<node>/
 | `RELATIONSHIP_NOT_QUANTIFIABLE` | semantic | `relationship`, `cardinality` | `<node>/relationship` | A related node names a relationship that is not one-to-many |
 | `OPERATOR_NOT_ALLOWED` | semantic | `operator`, `field`, `type` | `<node>/operator` | The operator is not among the field's resolved operators (by its type, or by the field's override) |
 | `OPERAND_MISMATCH` | semantic | `operator`, `arity` (`0`, `1`, `2` or `list`) | the condition node | The operand does not fit the operator's arity in the glossary. The schema already enforces the operand shape per operator, so this code guards a schema and a glossary that disagree |
-| `VALUE_TYPE_MISMATCH` | semantic | `field`, `type`, `index` (in a list only) | `<node>/value`, or `<node>/values` with `index` | A literal is not of the field's type: a JSON number (never a boolean) for `number`, a string for `text` and `enum`, a string holding a real `YYYY-MM-DD` date for `date`, a boolean for `bool` |
+| `VALUE_TYPE_MISMATCH` | semantic | `field`, `type`, `index` (in a list only) | `<node>/value`, or `<node>/values` with `index` | A literal is not of the field's type: a JSON number (never a boolean) whose absolute value is below 10^15 for `number`, a string for `text` and `enum`, a string holding a real `YYYY-MM-DD` date for `date`, a boolean for `bool` |
 | `UNKNOWN_ENUM_VALUE` | semantic | `field`, `value`, `index` (in a list only) | `<node>/value`, or `<node>/values` with `index` | The string is not one of the field's `enumValues` |
 | `FIELD_COMPARISON_NOT_ALLOWED` | semantic | `operator`, or `field` | `<node>/right` with `operator`; the field reference of that field with `field` | A field-to-field comparison the glossary does not allow (Rules, Field comparisons) |
 | `FIELD_TYPE_MISMATCH` | semantic | `leftType`, `rightType` | `<node>/right` | The two fields of a comparison have different types |
@@ -91,10 +92,13 @@ condition reason are keys and raw values, never labels or formatted text:
 
 - `left`: the left field reference as the definition has it (`{ "path"?: [...], "field": ... }`).
 - `actual`: the record's value of the left field as a JSON scalar: a number, a string, a boolean, an enum value, a
-  date as `YYYY-MM-DD`, or null; for `age`, the whole years (Rules, Age).
+  date as `YYYY-MM-DD`, or null; for a computed field, the computed value (Rules, Age).
 - `value`: the operand as the definition has it; `values`: the operand list as the definition has it.
 - `right`: the right field reference as the definition has it; `rightActual`: the record's value of the right field,
   as for `actual`.
+
+Every condition reason carries `actual`, and every field comparison `rightActual`, also when the template shows
+neither.
 
 The text is the operator's `reason` template (Rules, Rendering), or `phrases.relatedAny.reason` and
 `phrases.relatedNone.reason` for the two related keys.
@@ -188,9 +192,12 @@ department is NULL). Text comparisons follow the database collation (`Hebrew_CI_
 
 ### Age
 
-`age` is a computed number field of `employee`: the whole years on the run date, `run.year - birth.year`, minus one
-when the run date's (month, day) is before the birth date's. An employee born on 2008-11-01 is 18 on 2026-11-01 and
-17 on 2026-10-31. `age` is not comparable (Field comparisons), and its `actual` in a reason is that number.
+A computed field has `computed { function, over }` in the glossary in place of a column, and the engine implements
+its function. The one function is `age_years`, a number: the whole years from the date in the column `over` to the
+run date, `run.year - date.year`, minus one when the run date's (month, day) is before that date's. Over a birth
+date of 2008-11-01 it is 18 on 2026-11-01 and 17 on 2026-10-31. The rule belongs to the function, not to a field
+key: the glossary's `age` of `employee` is one use of it. A computed field is never comparable (Field
+comparisons), and its `actual` in a reason is the computed value.
 
 ### Depth and condition count
 
@@ -210,17 +217,17 @@ repeats the list limit, so an over-long list is normally reported by the schema 
 ### Field comparisons
 
 A condition with `right` compares two fields. It is allowed only when the operator's `fieldComparable` is true and
-neither field is marked `comparable: false` (an absent flag means true; `age`, `department_assignment`,
-`manager_assignment` and every computed field are false). When the operator is not `fieldComparable`, the error is
+neither field is marked `comparable: false` (an absent flag means true; the glossary marks every computed field
+and every field that only says whether a link exists). When the operator is not `fieldComparable`, the error is
 one `FIELD_COMPARISON_NOT_ALLOWED` with `{ operator }` at `<node>/right`, and the fields are not checked further.
 Otherwise there is one `FIELD_COMPARISON_NOT_ALLOWED` with `{ field }` (a field key) per field that is not
-comparable, at that field's reference, the left one first. The two fields must have the same type:
-`FIELD_TYPE_MISMATCH`.
+comparable, at that field's reference. The two fields must have the same type: `FIELD_TYPE_MISMATCH`.
 
 ### Order of checks
 
 1. `UNSUPPORTED_SCHEMA_VERSION`, before the schema runs, in both services. When it applies it is the only error. A
-   definition that is not an object, or that has no `schemaVersion`, goes to the schema.
+   definition without a `schemaVersion` goes to the schema. A `definition` that is not a JSON object never gets
+   here: the request is malformed (400 `REQUEST_INVALID` with `MALFORMED`; api.md, Definitions).
 2. The schema layer: every `SCHEMA_VIOLATION`. Any schema error ends validation; the semantic layer runs only on a
    schema-valid definition. The api answers this layer itself and does not call the engine for a definition that
    fails it.
@@ -228,7 +235,8 @@ comparable, at that field's reference, the left one first. The two fields must h
    resolve (an unknown root entity, relationship or field) is skipped; every other check runs.
 
 Errors are listed in document order: the order in which their paths appear in the definition's JSON text, an object
-before the members inside it. Several semantic errors may share a path; they keep the order of the checks above.
+before the members inside it. Errors that share a path are listed in the order of the Definition error codes table,
+and several of one code by `params.index`.
 
 ### Schema violations
 
@@ -258,8 +266,8 @@ before the members inside it. Several semantic errors may share a path; they kee
 - **Placeholders** of operator templates: `{field}` the left field, `{value}` the operand of arity 1 or the first of
   arity 2, `{value2}` the second of arity 2, `{values}` the list, `{actual}` the record's left value (reasons only),
   `{other}` the right field, `{otherActual}` the record's right value (reasons only). `phrases.relatedAny` and
-  `phrases.relatedNone` (each `{ sentence, reason }`) take `{relationship}` and `{conditions}`. Suggestion kinds and
-  evidence take the placeholders of their own tables in the glossary's `suggestions`.
+  `phrases.relatedNone` (each `{ sentence, reason }`) take `{relationship}` and `{conditions}`. Suggestion texts have
+  their own placeholders (Suggestions, below).
 - **Fields.** A field is its label. A field reached through a `path` is `phrases.fieldOnPath` with `{field}` the
   field's label and `{relationship}` the label of the last relationship on the path; the result is one part, with
   the role `field` or `other`. A relationship is its `label`.
@@ -268,20 +276,32 @@ before the members inside it. Several semantic errors may share a path; they kee
   has `formats.<language>.groupSeparator` between groups of three integer digits and
   `formats.<language>.decimalSeparator` before the fraction (currently `,` and `.` in both languages), with the
   trailing zeros of the fraction removed and the separator with them (`15000` is `15,000`, `15000.50` is
-  `15,000.5`). An enum value is the `label` of its `enumValues` entry; a bool is
+  `15,000.5`). A number of a field marked `identifier: true` in the glossary names a record and is not a quantity:
+  it is written digit for digit, with no separator (`1051`), which is also how `display_text` holds it. An enum value is the `label` of its `enumValues` entry, found without
+  regard to case, as the database compares it; a stored value with no entry is shown as stored. A bool is
   `valueLabels.true` or `valueLabels.false`; text is shown as stored. A value of a field with a `unit` is followed by
   one space and the unit in the language, inside the same part (`15,000 ILS`). A NULL value renders as nothing.
 - **Lists.** `{values}` renders each item as a part with the role `value`, with `phrases.listSeparator` between them
   as parts without a role.
 - **Sentences.** A condition renders its operator's `sentence` variant. A related node renders
   `phrases.relatedAny.sentence` or `phrases.relatedNone.sentence`, with `{relationship}` its relationship's label and
-  `{conditions}` its `where` group rendered as below, not bracketed. A group renders its children joined by
+  `{conditions}` its `where` group rendered as below. The renderer puts no bracket around it: the glossary's two
+  related `sentence` phrases bracket `{conditions}` themselves, so a sibling that follows a related node cannot be
+  read into it. A group renders its children joined by
   `phrases.and` or `phrases.or` (by its `op`); a child group is wrapped in `phrases.groupOpen` and
   `phrases.groupClose`. The rule sentence is the root group. A condition sentence in `conditions[]` is that node
   rendered alone.
 - **Reasons.** A matched condition renders its operator's `reason` variant, a matched related node
   `phrases.relatedAny.reason` or `phrases.relatedNone.reason`. `reasonText` is the reasons' texts joined by
   `phrases.reasonSeparator`.
+- **Suggestions.** A suggestion's `name`, `description` and `rationale` are the three texts of its kind in
+  `suggestions.kinds`, and the text of an evidence item is `suggestions.evidence.<key>`; all four are plain strings
+  without parts. `{entity}` is the plural label of the suggestion's root entity. `{relationship}` is the label of
+  the relationship the rule goes through: the last of the path, or the related node's. `{earlier}`, `{later}` and
+  `{field}` are field labels; in an evidence text `{field}` is the label of `params.field`, and `{count}` and
+  `{total}` are numbers in the number format of Values. The kinds take: `missing_required` `{entity}`; `date_order`
+  `{entity}`, `{earlier}`, `{later}`; `active_under_inactive` and `active_without_active_children` `{entity}`,
+  `{relationship}`; `missing_optional` `{entity}`, `{field}`.
 - **As written.** Templates and phrases are used exactly as the glossary writes them; the renderer adds no space or
   punctuation of its own.
 - **Parts.** A template is split at its placeholders: template text gives parts with no role, a placeholder gives a

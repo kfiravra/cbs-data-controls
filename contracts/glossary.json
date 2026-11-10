@@ -22,11 +22,11 @@
     "reasonSeparator": { "he": "; ", "en": "; " },
     "fieldOnPath": { "he": "{field} של {relationship}", "en": "{relationship} › {field}" },
     "relatedAny": {
-      "sentence": { "he": "יש {relationship} עם {conditions}", "en": "at least one {relationship} where {conditions}" },
+      "sentence": { "he": "יש {relationship} עם ({conditions})", "en": "at least one {relationship} where ({conditions})" },
       "reason": { "he": "יש {relationship} עם {conditions}", "en": "at least one {relationship} where {conditions}" }
     },
     "relatedNone": {
-      "sentence": { "he": "אין {relationship} עם {conditions}", "en": "no {relationship} where {conditions}" },
+      "sentence": { "he": "אין {relationship} עם ({conditions})", "en": "no {relationship} where ({conditions})" },
       "reason": { "he": "אין {relationship} עם {conditions}", "en": "no {relationship} where {conditions}" }
     }
   },
@@ -37,7 +37,7 @@
       "types": ["number", "text", "date", "bool", "enum"],
       "fieldComparable": true,
       "label": {
-        "default": { "he": "שווה ל", "en": "equals" }
+        "default": { "he": "שווה ל־", "en": "equals" }
       },
       "sentence": {
         "default": { "he": "{field}: {value}", "en": "{field} is {value}" },
@@ -54,14 +54,20 @@
       "types": ["number", "text", "date", "bool", "enum"],
       "fieldComparable": true,
       "label": {
-        "default": { "he": "שונה מ", "en": "does not equal" }
+        "default": { "he": "שונה מ־", "en": "does not equal" }
       },
       "sentence": {
         "default": { "he": "{field} שונה מ־{value}", "en": "{field} is not {value}" },
+        "text": { "he": "{field} שונה מ”{value}”", "en": "{field} is not “{value}”" },
+        "enum": { "he": "{field} שונה מ”{value}”", "en": "{field} is not {value}" },
+        "bool": { "he": "{field} שונה מ”{value}”", "en": "{field} is not {value}" },
         "field": { "he": "{field} שונה מ{other}", "en": "{field} differs from {other}" }
       },
       "reason": {
         "default": { "he": "{field}: {actual} (שונה מ־{value})", "en": "{field}: {actual} (not {value})" },
+        "text": { "he": "{field}: {actual} (שונה מ”{value}”)", "en": "{field}: {actual} (not “{value}”)" },
+        "enum": { "he": "{field}: {actual} (שונה מ”{value}”)", "en": "{field}: {actual} (not {value})" },
+        "bool": { "he": "{field}: {actual} (שונה מ”{value}”)", "en": "{field}: {actual} (not {value})" },
         "field": { "he": "{field}: {actual} (שונה מ{other}: {otherActual})", "en": "{field}: {actual} (differs from {other}: {otherActual})" }
       }
     },
@@ -71,8 +77,8 @@
       "types": ["number", "date"],
       "fieldComparable": true,
       "label": {
-        "default": { "he": "קטן מ", "en": "less than" },
-        "date": { "he": "מוקדם מ", "en": "earlier than" }
+        "default": { "he": "קטן מ־", "en": "less than" },
+        "date": { "he": "מוקדם מ־", "en": "earlier than" }
       },
       "sentence": {
         "default": { "he": "{field} קטן מ־{value}", "en": "{field} is less than {value}" },
@@ -93,8 +99,8 @@
       "types": ["number", "date"],
       "fieldComparable": true,
       "label": {
-        "default": { "he": "לא גדול מ", "en": "at most" },
-        "date": { "he": "לא מאוחר מ", "en": "on or before" }
+        "default": { "he": "לא גדול מ־", "en": "at most" },
+        "date": { "he": "לא מאוחר מ־", "en": "on or before" }
       },
       "sentence": {
         "default": { "he": "{field} לא גדול מ־{value}", "en": "{field} is at most {value}" },
@@ -115,8 +121,8 @@
       "types": ["number", "date"],
       "fieldComparable": true,
       "label": {
-        "default": { "he": "גדול מ", "en": "greater than" },
-        "date": { "he": "מאוחר מ", "en": "later than" }
+        "default": { "he": "גדול מ־", "en": "greater than" },
+        "date": { "he": "מאוחר מ־", "en": "later than" }
       },
       "sentence": {
         "default": { "he": "{field} גדול מ־{value}", "en": "{field} is greater than {value}" },
@@ -137,8 +143,8 @@
       "types": ["number", "date"],
       "fieldComparable": true,
       "label": {
-        "default": { "he": "לא קטן מ", "en": "at least" },
-        "date": { "he": "לא מוקדם מ", "en": "on or after" }
+        "default": { "he": "לא קטן מ־", "en": "at least" },
+        "date": { "he": "לא מוקדם מ־", "en": "on or after" }
       },
       "sentence": {
         "default": { "he": "{field} לא קטן מ־{value}", "en": "{field} is at least {value}" },
@@ -189,13 +195,13 @@
       "types": ["number", "text", "enum"],
       "fieldComparable": false,
       "label": {
-        "default": { "he": "אחד מ", "en": "is one of" }
+        "default": { "he": "אחד מהערכים", "en": "is one of" }
       },
       "sentence": {
         "default": { "he": "{field} אחד מהערכים: {values}", "en": "{field} is one of: {values}" }
       },
       "reason": {
-        "default": { "he": "{field}: {actual} (ברשימה)", "en": "{field}: {actual} (in the list)" }
+        "default": { "he": "{field}: {actual} (אחד מהערכים)", "en": "{field}: {actual} (one of the values)" }
       }
     },
     {
@@ -204,13 +210,13 @@
       "types": ["number", "text", "enum"],
       "fieldComparable": false,
       "label": {
-        "default": { "he": "אינו אחד מ", "en": "is none of" }
+        "default": { "he": "לא אחד מהערכים", "en": "is none of" }
       },
       "sentence": {
-        "default": { "he": "{field} אינו אחד מהערכים: {values}", "en": "{field} is none of: {values}" }
+        "default": { "he": "{field} לא אחד מהערכים: {values}", "en": "{field} is none of: {values}" }
       },
       "reason": {
-        "default": { "he": "{field}: {actual} (לא ברשימה)", "en": "{field}: {actual} (not in the list)" }
+        "default": { "he": "{field}: {actual} (לא אחד מהערכים)", "en": "{field}: {actual} (none of the values)" }
       }
     },
     {
@@ -249,7 +255,7 @@
       "types": ["text"],
       "fieldComparable": false,
       "label": {
-        "default": { "he": "מתחיל ב", "en": "starts with" }
+        "default": { "he": "מתחיל ב־", "en": "starts with" }
       },
       "sentence": {
         "default": { "he": "{field} מתחיל ב־”{value}”", "en": "{field} starts with “{value}”" }
@@ -264,7 +270,7 @@
       "types": ["text"],
       "fieldComparable": false,
       "label": {
-        "default": { "he": "מסתיים ב", "en": "ends with" }
+        "default": { "he": "מסתיים ב־", "en": "ends with" }
       },
       "sentence": {
         "default": { "he": "{field} מסתיים ב־”{value}”", "en": "{field} ends with “{value}”" }
@@ -279,16 +285,13 @@
       "types": ["number", "text", "date", "bool", "enum"],
       "fieldComparable": false,
       "label": {
-        "default": { "he": "ריק", "en": "is empty" },
-        "text": { "he": "חסר", "en": "is missing" }
+        "default": { "he": "חסר", "en": "is missing" }
       },
       "sentence": {
-        "default": { "he": "{field} ריק", "en": "{field} is empty" },
-        "text": { "he": "{field} חסר", "en": "{field} is missing" }
+        "default": { "he": "{field} חסר", "en": "{field} is missing" }
       },
       "reason": {
-        "default": { "he": "{field}: ריק", "en": "{field}: empty" },
-        "text": { "he": "{field}: חסר", "en": "{field}: missing" }
+        "default": { "he": "{field}: חסר", "en": "{field}: missing" }
       }
     },
     {
@@ -297,12 +300,10 @@
       "types": ["number", "text", "date", "bool", "enum"],
       "fieldComparable": false,
       "label": {
-        "default": { "he": "לא ריק", "en": "is not empty" },
-        "text": { "he": "לא חסר", "en": "is not missing" }
+        "default": { "he": "לא חסר", "en": "is not missing" }
       },
       "sentence": {
-        "default": { "he": "{field} לא ריק", "en": "{field} is not empty" },
-        "text": { "he": "{field} לא חסר", "en": "{field} is not missing" }
+        "default": { "he": "{field} לא חסר", "en": "{field} is not missing" }
       },
       "reason": {
         "default": { "he": "{field}: {actual}", "en": "{field}: {actual}" }
@@ -361,7 +362,8 @@
           "type": "number",
           "column": "id",
           "nullable": false,
-          "visible": true
+          "visible": true,
+          "identifier": true
         },
         {
           "key": "national_id",
@@ -465,14 +467,15 @@
         {
           "key": "department_assignment",
           "label": { "he": "שיוך למחלקה", "en": "Department assignment" },
-          "description": { "he": "האם העובד משויך למחלקה; ניתן לבדוק רק אם השיוך ריק או לא ריק.", "en": "Whether the employee is assigned to a department; it can only be checked for being empty or not." },
+          "description": { "he": "האם העובד משויך למחלקה; ניתן לבדוק רק אם השיוך חסר או לא חסר.", "en": "Whether the employee is assigned to a department; it can only be checked for being missing or not." },
           "type": "number",
           "column": "department_id",
           "nullable": true,
           "visible": true,
           "operators": ["is_null", "is_not_null"],
           "required": "active",
-          "comparable": false
+          "comparable": false,
+          "identifier": true
         }
       ]
     },
@@ -497,7 +500,8 @@
           "type": "number",
           "column": "id",
           "nullable": false,
-          "visible": true
+          "visible": true,
+          "identifier": true
         },
         {
           "key": "name",
@@ -517,20 +521,21 @@
           "nullable": false,
           "visible": true,
           "valueLabels": {
-            "true": { "he": "פעילה", "en": "Active" },
-            "false": { "he": "לא פעילה", "en": "Inactive" }
+            "true": { "he": "פעיל", "en": "Active" },
+            "false": { "he": "לא פעיל", "en": "Inactive" }
           }
         },
         {
           "key": "manager_assignment",
           "label": { "he": "שיוך מנהל", "en": "Manager assignment" },
-          "description": { "he": "האם הוגדר מנהל למחלקה; ניתן לבדוק רק אם השיוך ריק או לא ריק.", "en": "Whether the department has a manager; it can only be checked for being empty or not." },
+          "description": { "he": "האם הוגדר מנהל למחלקה; ניתן לבדוק רק אם השיוך חסר או לא חסר.", "en": "Whether the department has a manager; it can only be checked for being missing or not." },
           "type": "number",
           "column": "manager_employee_id",
           "nullable": true,
           "visible": true,
           "operators": ["is_null", "is_not_null"],
-          "comparable": false
+          "comparable": false,
+          "identifier": true
         }
       ]
     },
@@ -611,7 +616,7 @@
     "kinds": {
       "missing_required": {
         "name": { "he": "{entity} עם נתוני חובה חסרים", "en": "{entity} with missing mandatory data" },
-        "description": { "he": "איתור {entity} עם שדה חובה ריק במצב שבו השדה נדרש.", "en": "Finds {entity} with a mandatory field left empty in the state that requires it." },
+        "description": { "he": "איתור {entity} עם שדה חובה חסר במצב שבו השדה נדרש.", "en": "Finds {entity} with a mandatory field missing in the state that requires it." },
         "rationale": { "he": "השדות מסומנים במילון המונחים כשדות חובה, בהתאם למצב הרשומה.", "en": "The business glossary marks these fields as mandatory, depending on the record's state." }
       },
       "date_order": {
@@ -621,7 +626,7 @@
       },
       "active_under_inactive": {
         "name": { "he": "{entity} במצב פעיל כש{relationship} במצב לא פעיל", "en": "Active {entity} under an inactive {relationship}" },
-        "description": { "he": "איתור רשומות פעילות של {entity} כש{relationship} שלהן במצב לא פעיל.", "en": "Finds active {entity} whose {relationship} is inactive." },
+        "description": { "he": "איתור רשומות פעילות של {entity} ש{relationship} שלהן במצב לא פעיל.", "en": "Finds active {entity} whose {relationship} is inactive." },
         "rationale": { "he": "מצב פעיל של רשומה אינו מתיישב עם מצב לא פעיל של {relationship} שלה; ייתכן שעדכון לא הושלם.", "en": "An active record does not fit an inactive {relationship}; an update may not have been completed." }
       },
       "active_without_active_children": {
@@ -631,8 +636,8 @@
       },
       "missing_optional": {
         "name": { "he": "{entity} ללא {field}", "en": "{entity} without {field}" },
-        "description": { "he": "איתור רשומות של {entity} שבהן השדה {field} ריק.", "en": "Finds {entity} where {field} is empty." },
-        "rationale": { "he": "השדה {field} אינו שדה חובה, אך ברוב הרשומות הוא מלא; הרשומות שבהן הוא ריק מוצגות לבדיקה.", "en": "{field} is not mandatory, but most records hold it; the records where it is empty are listed for review." }
+        "description": { "he": "איתור רשומות של {entity} שבהן השדה ”{field}” חסר.", "en": "Finds {entity} where {field} is missing." },
+        "rationale": { "he": "השדה ”{field}” אינו שדה חובה, אך ברוב הרשומות הוא מלא; הרשומות שבהן הוא חסר מוצגות לבדיקה.", "en": "{field} is not mandatory, but most records hold it; the records where it is missing are listed for review." }
       }
     },
     "evidence": {

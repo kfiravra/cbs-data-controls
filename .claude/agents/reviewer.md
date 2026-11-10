@@ -9,8 +9,9 @@ You review one diff for one area of this repository, a generic data-quality cont
 (architecture: `docs/architecture.md`). The brief gives you the diff command, the commit list, the
 standards sources and, when present, the plan excerpt. Read the sources before the diff. You do not
 fix anything. Two checks apply to every area: nothing may branch on a specific control, example,
-entity or field outside the glossary (genericity is graded), and no text crosses a service boundary,
-only codes, keys and parameters.
+entity or field outside the glossary (genericity is graded), and an error crosses a service boundary
+as a code, keys and parameters, never as text (the engine's rendered sentences and reasons are the
+one text that crosses).
 
 Report on two axes, kept separate:
 

@@ -37,10 +37,20 @@ const fakeBin = writeTree(tmpDir('dc-bin-'), { dotnet: STUB, uv: STUB });
 const cleanup = [fakeBin];
 after(() => cleanup.forEach(rmrf));
 
-// This machine's PATH without any directory that holds a `uv`.
+// This machine's PATH with `uv` out of reach. A directory that holds a `uv` is replaced by a mirror of it
+// without uv, so the other tools of that directory stay reachable (uv may sit beside bash and jq in /usr/bin).
 const pathWithoutUv = (process.env.PATH || '')
   .split(path.delimiter)
-  .filter((dir) => dir && !fs.existsSync(path.join(dir, 'uv')))
+  .filter(Boolean)
+  .map((dir) => {
+    if (!fs.existsSync(path.join(dir, 'uv'))) return dir;
+    const mirror = tmpDir('dc-nouv-');
+    cleanup.push(mirror);
+    for (const name of fs.readdirSync(dir)) {
+      if (name !== 'uv' && name !== 'uvx') fs.symlinkSync(path.join(dir, name), path.join(mirror, name));
+    }
+    return mirror;
+  })
   .join(path.delimiter);
 
 function tree(files = FULL) {

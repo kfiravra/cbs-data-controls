@@ -24,7 +24,8 @@ Anything a tool already enforces is listed first so reviewers skip it.
 - A new entity is a glossary change and a `sql/` change, nothing else. A diff that adds an entity and touches the
   compiler is a finding unless it adds an operator or a computed kind.
 - The definition JSON is the source of truth; SQL is derived at run time and never stored or sent.
-- Text never crosses a service boundary: codes, keys and parameters only, rendered at the edge.
+- An error crosses a service boundary as a code, keys and parameters, and its text is the client's. Rule sentences
+  and reasons are the one exception: the engine renders them from the glossary and they cross as text and parts.
 
 ## Size and structure
 

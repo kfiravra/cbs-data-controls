@@ -59,28 +59,43 @@ load_env() {
   done < "$file"
 }
 
+# A password ends up inside N'...' in sql/40_logins.sql, and compose and this script read quotes in .env
+# differently: refuse what would break either, before anything runs.
+check_password() {
+  local name=$1 value=${!1:-} unsafe='[[:space:]"'\''$;\\]'
+  [[ -n "$value" ]] || die "$name is not set: copy .env.example to .env and set it, or export it"
+  if [[ "$value" =~ $unsafe ]]; then
+    die "$name may not contain spaces, quotes, \$, ; or a backslash (.env.example says why)"
+  fi
+}
+
 # Runs the scripts with sqlcmd; DB_HOST is set.
 run_direct() {
   local sqlcmd=$1 reset=$2
   load_env
   local var
   for var in MSSQL_SA_PASSWORD DQ_APP_PASSWORD DQ_ENGINE_RO_PASSWORD; do
-    [[ -n "${!var:-}" ]] || die "$var is not set: copy .env.example to .env, or export it"
+    check_password "$var"
   done
 
   local server=$DB_HOST
   if [[ -n "${DB_PORT:-}" ]]; then server="$DB_HOST,$DB_PORT"; fi
-  # sqlcmd reads the sa password from SQLCMDPASSWORD, which keeps it off the command line.
+  # No password goes on a command line, where `ps` would show it: sqlcmd reads the sa password from
+  # SQLCMDPASSWORD and resolves $(DQ_APP_PASSWORD) and $(DQ_ENGINE_RO_PASSWORD) from the environment.
   export SQLCMDPASSWORD=$MSSQL_SA_PASSWORD
+  export DQ_APP_PASSWORD DQ_ENGINE_RO_PASSWORD
   # -b stops at the first error, -m 1 hides informational messages ("Changed database context"), -I sets
   # QUOTED_IDENTIFIER ON as the services' drivers do, -f 65001 reads and writes UTF-8, -C trusts the server's
   # self-signed certificate.
   local base=("$sqlcmd" -S "$server" -U sa -C -b -m 1 -I -f 65001)
 
-  local tries=0
-  until "${base[@]}" -d master -l 5 -Q "SELECT 1" >/dev/null 2>&1; do
-    tries=$((tries + 1))
-    if ((tries >= 60)); then die "no answer from SQL Server at $server after 2 minutes"; fi
+  # A server that is still starting refuses connections and logins for a while, so every failure is retried;
+  # the last error is shown when the wait runs out (a wrong sa password reads "Login failed").
+  local deadline=$((SECONDS + 120)) answer
+  until answer=$("${base[@]}" -d master -l 5 -Q "SELECT 1" 2>&1); do
+    if ((SECONDS >= deadline)); then
+      die "no answer from SQL Server at $server after 120 seconds. Last error: ${answer:-none}"
+    fi
     sleep 2
   done
 
@@ -95,10 +110,7 @@ run_direct() {
   [[ -e "${files[0]}" ]] || die "no sql/NN_*.sql scripts under $ROOT/sql"
   for file in "${files[@]}"; do
     printf 'db-init: %s\n' "${file#"$ROOT"/}"
-    "${base[@]}" -d master \
-      -v DQ_APP_PASSWORD="$DQ_APP_PASSWORD" \
-      -v DQ_ENGINE_RO_PASSWORD="$DQ_ENGINE_RO_PASSWORD" \
-      -i "$file" \
+    "${base[@]}" -d master -i "$file" \
       || die "${file#"$ROOT"/} failed (the scripts before it have run; fix it and run db-init again)"
   done
   printf 'db-init: DataControls is ready on %s (%d scripts)\n' "$server" "${#files[@]}"

@@ -30,6 +30,7 @@ is the renderer, and this is not its specification.
 from __future__ import annotations
 
 import argparse
+import io
 import json
 import re
 import sys
@@ -81,7 +82,7 @@ ENTITY_MEMBERS = ("key", "label", "description", "table", "keyColumn", "rootable
                   "identifyingFields", "fields")
 ENTITY_OPTIONAL = ("lifecycle",)
 FIELD_MEMBERS = ("key", "label", "type", "nullable", "visible")
-FIELD_OPTIONAL = ("description", "column", "computed", "operators", "unit", "enumValues", "valueLabels",
+FIELD_OPTIONAL = ("description", "column", "computed", "operators", "unit", "enumValues", "valueLabels", "identifier",
                   "required", "comparable")
 RELATIONSHIP_MEMBERS = ("key", "from", "to", "cardinality", "join", "label")
 PLAIN_PHRASES = ("and", "or", "groupOpen", "groupClose", "listSeparator", "reasonSeparator")
@@ -108,6 +109,7 @@ IDENTIFIER = re.compile(r"^[A-Za-z_][A-Za-z0-9_]{0,127}$")
 SEMVER = re.compile(r"^\d+\.\d+\.\d+$")
 LANGUAGE = re.compile(r"^[a-z]{2}$")
 ISO_DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+NUMBER_BOUND = 10**15  # errors.md, VALUE_TYPE_MISMATCH: a number literal stays below this in absolute value
 
 # Design D: the wrapper of an example control.
 EXAMPLE_MEMBERS = ("id", "name", "description", "runDate", "definition", "expected")
@@ -222,6 +224,20 @@ def placeholders(template: str) -> set[str]:
     return set(PLACEHOLDER.findall(template))
 
 
+def dig(node: Any, *names: str) -> Any:
+    """The value at a chain of member names, or None as soon as a step is not an object or lacks the member."""
+    for name in names:
+        if not isinstance(node, dict):
+            return None
+        node = node.get(name)
+    return node
+
+
+def as_list(value: Any) -> list[Any]:
+    """The value when it is a list, else an empty list."""
+    return value if isinstance(value, list) else []
+
+
 def by_key(items: Any, key: str) -> dict[str, Any] | None:
     """The member of a list of objects whose `key` is `key`, or None."""
     if isinstance(items, list):
@@ -269,11 +285,12 @@ def resolved_operators(glossary: dict[str, Any], fld: dict[str, Any]) -> list[st
     if isinstance(fld.get("operators"), list):
         return list(fld["operators"])
     keys = []
-    for op in glossary.get("operators", []):
-        if fld.get("type") in op.get("types", []):
+    for op in glossary.get("operators") or []:
+        types = dig(op, "types")
+        if isinstance(types, list) and fld.get("type") in types:
             if op.get("key") in NULL_OPERATORS and not fld.get("nullable"):
                 continue
-            keys.append(op["key"])
+            keys.append(op.get("key"))
     return keys
 
 
@@ -356,12 +373,14 @@ def resolve_ref(schema: dict[str, Any], ref: str) -> Any:
 def operand_rule(schema: dict[str, Any], arity_def: str) -> dict[str, Any] | None:
     """The `then` of the node's operand rule whose `if` names the operator list `#/$defs/<arity_def>` and asks
     for nothing else beyond type and operator; None when the schema has no such rule."""
-    for rule in schema.get("$defs", {}).get("node", {}).get("allOf", []):
-        cond = rule.get("if", {}) if isinstance(rule, dict) else {}
-        props = cond.get("properties", {})
-        if props.get("operator", {}).get("$ref") == f"#/$defs/{arity_def}" and set(cond.get("required", [])) == {
-            "type", "operator"} and set(props) == {"type", "operator"}:
-            return rule.get("then")
+    rules = dig(schema, "$defs", "node", "allOf")
+    for rule in rules if isinstance(rules, list) else []:
+        props, required = dig(rule, "if", "properties"), dig(rule, "if", "required")
+        if (isinstance(props, dict) and set(props) == {"type", "operator"}
+                and dig(props, "operator", "$ref") == f"#/$defs/{arity_def}"
+                and isinstance(required, list) and set(map(str, required)) == {"type", "operator"}):
+            then = dig(rule, "then")
+            return then if isinstance(then, dict) else None
     return None
 
 
@@ -548,41 +567,34 @@ def check_operators(c: Collector, g: dict[str, Any], languages: list[str]) -> No
                 check_text(c, where + pointer(kind, name), text, languages, allowed, required)
 
 
-def check_field(c: Collector, g: dict[str, Any], ent: dict[str, Any], where: str, fld: Any,
-                languages: list[str]) -> None:
-    """One field: type, its column or computed source, flags, labels, values and the H1/H3 members."""
-    if not check_members(c, where, fld, FIELD_MEMBERS, FIELD_OPTIONAL):
-        return
-    ftype = fld.get("type")
-    if ftype not in FIELD_TYPES:
-        c.add(where + "/type", f"{ftype!r} is not one of {', '.join(FIELD_TYPES)}")
-    check_text(c, where + "/label", fld.get("label"), languages)
-    if "description" in fld:
-        check_text(c, where + "/description", fld["description"], languages)
-    for flag in ("nullable", "visible"):
-        if not isinstance(fld.get(flag), bool):
-            c.add(where + pointer(flag), "must be true or false")
+def check_field_source(c: Collector, ent: dict[str, Any], where: str, fld: dict[str, Any]) -> None:
+    """Where a field's values come from: exactly one of a column and a computed source over a stored column of
+    the right type. A computed field is never comparable (H3)."""
     has_column, has_computed = "column" in fld, "computed" in fld
     if has_column == has_computed:
         c.add(where, "needs exactly one of column and computed")
     if has_column:
         check_identifier(c, where + "/column", fld["column"])
-    if has_computed:
-        comp = fld["computed"]
-        if check_members(c, where + "/computed", comp, ("function", "over")):
-            function = comp.get("function")
-            if function not in COMPUTED_FUNCTIONS:
-                c.add(where + "/computed/function", f"{function!r} is not one of {', '.join(COMPUTED_FUNCTIONS)}")
-            sources = [f for f in ent.get("fields", []) if isinstance(f, dict) and "column" in f
-                       and f.get("column") == comp.get("over")]
-            if not sources:
-                c.add(where + "/computed/over", f"{comp.get('over')!r} is not the column of a stored field here")
-            elif function in COMPUTED_FUNCTIONS and sources[0].get("type") != COMPUTED_FUNCTIONS[function]:
-                c.add(where + "/computed/over", f"{function} needs a {COMPUTED_FUNCTIONS[function]} column")
-        if fld.get("comparable") is not False:
-            c.add(where, "a computed field needs comparable: false (H3)")
-    if "comparable" in fld and not isinstance(fld["comparable"], bool):
-        c.add(where + "/comparable", "must be true or false")
+    if not has_computed:
+        return
+    comp = fld["computed"]
+    if check_members(c, where + "/computed", comp, ("function", "over")):
+        function = comp.get("function")
+        needs = COMPUTED_FUNCTIONS.get(function) if isinstance(function, str) else None
+        if needs is None:
+            c.add(where + "/computed/function", f"{function!r} is not one of {', '.join(COMPUTED_FUNCTIONS)}")
+        sources = [f for f in as_list(ent.get("fields")) if isinstance(f, dict) and "column" in f and f.get("column") == comp.get("over")]
+        if not sources:
+            c.add(where + "/computed/over", f"{comp.get('over')!r} is not the column of a stored field here")
+        elif needs is not None and sources[0].get("type") != needs:
+            c.add(where + "/computed/over", f"{function} needs a {needs} column")
+    if fld.get("comparable") is not False:
+        c.add(where, "a computed field needs comparable: false (H3)")
+
+
+def check_field_values(c: Collector, where: str, fld: dict[str, Any], languages: list[str]) -> None:
+    """What a field's values look like: the unit of a number, the values of an enum, the two labels of a bool."""
+    ftype = fld.get("type")
     if "unit" in fld:
         if ftype != "number":
             c.add(where + "/unit", "only a number field has a unit")
@@ -590,17 +602,19 @@ def check_field(c: Collector, g: dict[str, Any], ent: dict[str, Any], where: str
     if (ftype == "enum") != ("enumValues" in fld):
         c.add(where, "enumValues belongs to, and is required on, every enum field and no other")
     if isinstance(fld.get("enumValues"), list) and fld["enumValues"]:
-        seen: set[Any] = set()
+        seen: set[str] = set()
         for j, item in enumerate(fld["enumValues"]):
-            iw = where + pointer("enumValues", j)
-            if check_members(c, iw, item, ("value", "label")):
-                value = item.get("value")
-                if not isinstance(value, str) or not value:
-                    c.add(iw + "/value", "must be a non-empty string")
-                elif value in seen:
-                    c.add(iw + "/value", f"duplicate enum value {value!r}")
+            item_where = where + pointer("enumValues", j)
+            if not check_members(c, item_where, item, ("value", "label")):
+                continue
+            value = item.get("value")
+            if not isinstance(value, str) or not value:
+                c.add(item_where + "/value", "must be a non-empty string")
+            elif value in seen:
+                c.add(item_where + "/value", f"duplicate enum value {value!r}")
+            else:
                 seen.add(value)
-                check_text(c, iw + "/label", item.get("label"), languages)
+            check_text(c, item_where + "/label", item.get("label"), languages)
     elif "enumValues" in fld:
         c.add(where + "/enumValues", "must be a non-empty list")
     if (ftype == "bool") != ("valueLabels" in fld):
@@ -608,6 +622,11 @@ def check_field(c: Collector, g: dict[str, Any], ent: dict[str, Any], where: str
     if "valueLabels" in fld and check_members(c, where + "/valueLabels", fld["valueLabels"], ("true", "false")):
         for b in ("true", "false"):
             check_text(c, where + pointer("valueLabels", b), fld["valueLabels"].get(b), languages)
+
+
+def check_field_rules(c: Collector, g: dict[str, Any], ent: dict[str, Any], where: str, fld: dict[str, Any]) -> None:
+    """What may be done with a field: its operator override, `required`, `comparable` and `identifier`."""
+    ftype = fld.get("type")
     if "operators" in fld:
         override = fld["operators"]
         if not isinstance(override, list) or not override or len(set(map(str, override))) != len(override):
@@ -615,16 +634,57 @@ def check_field(c: Collector, g: dict[str, Any], ent: dict[str, Any], where: str
         else:
             for j, key in enumerate(override):
                 op = operator(g, key) if isinstance(key, str) else None
+                types = dig(op, "types")
                 if op is None:
                     c.add(where + pointer("operators", j), f"unknown operator {key!r}")
-                elif ftype not in op.get("types", []):
+                elif not isinstance(types, list) or ftype not in types:
                     c.add(where + pointer("operators", j), f"{key} does not apply to the type {ftype}")
     if "required" in fld:
         state = fld["required"]
-        if state not in REQUIRED_STATES:
+        if not isinstance(state, str) or state not in REQUIRED_STATES:
             c.add(where + "/required", f"{state!r} is not one of {', '.join(REQUIRED_STATES)}")
         elif state != "always" and "lifecycle" not in ent:
             c.add(where + "/required", f"{state!r} needs a lifecycle on the entity (H1)")
+    for flag in ("comparable", "identifier"):
+        if flag in fld and not isinstance(fld[flag], bool):
+            c.add(where + pointer(flag), "must be true or false")
+    if fld.get("identifier") is True and (ftype != "number" or "unit" in fld):
+        c.add(where + "/identifier", "only a number field without a unit can be an identifier")
+
+
+def check_field(c: Collector, g: dict[str, Any], ent: dict[str, Any], where: str, fld: Any,
+                languages: list[str]) -> None:
+    """One field: its members, type, labels and flags, then its source, its values and its rules."""
+    if not check_members(c, where, fld, FIELD_MEMBERS, FIELD_OPTIONAL):
+        return
+    if not isinstance(fld.get("type"), str) or fld["type"] not in FIELD_TYPES:
+        c.add(where + "/type", f"{fld.get('type')!r} is not one of {', '.join(FIELD_TYPES)}")
+    check_text(c, where + "/label", fld.get("label"), languages)
+    if "description" in fld:
+        check_text(c, where + "/description", fld["description"], languages)
+    for flag in ("nullable", "visible"):
+        if not isinstance(fld.get(flag), bool):
+            c.add(where + pointer(flag), "must be true or false")
+    check_field_source(c, ent, where, fld)
+    check_field_values(c, where, fld, languages)
+    check_field_rules(c, g, ent, where, fld)
+
+
+def check_lifecycle(c: Collector, ent: dict[str, Any], where: str) -> None:
+    """An entity's lifecycle (H1): a visible stored bool or enum field, and the value of it that means active."""
+    life = ent["lifecycle"]
+    if not check_members(c, where, life, ("field", "active")):
+        return
+    fld = field_of(ent, life.get("field")) if isinstance(life.get("field"), str) else None
+    active = life.get("active")
+    if fld is None:
+        c.add(where + "/field", f"unknown field {life.get('field')!r}")
+    elif fld.get("type") not in ("bool", "enum") or "computed" in fld or fld.get("visible") is not True:
+        c.add(where + "/field", "must be a visible stored bool or enum field (H1)")
+    elif fld.get("type") == "bool" and not isinstance(active, bool):
+        c.add(where + "/active", "must be true or false for a bool field")
+    elif fld.get("type") == "enum" and active not in [dig(v, "value") for v in as_list(fld.get("enumValues"))]:
+        c.add(where + "/active", f"{active!r} is not a value of {fld.get('key')}")
 
 
 def check_entities(c: Collector, g: dict[str, Any], languages: list[str]) -> None:
@@ -667,19 +727,8 @@ def check_entities(c: Collector, g: dict[str, Any], languages: list[str]) -> Non
                     c.add(where + pointer("identifyingFields", j), f"unknown field {key!r}")
                 elif fld.get("visible") is not True:
                     c.add(where + pointer("identifyingFields", j), f"{key} is not visible")
-        if "lifecycle" in ent and check_members(c, where + "/lifecycle", ent["lifecycle"], ("field", "active")):
-            life = ent["lifecycle"]
-            fld = field_of(ent, life.get("field")) if isinstance(life.get("field"), str) else None
-            active = life.get("active")
-            if fld is None:
-                c.add(where + "/lifecycle/field", f"unknown field {life.get('field')!r}")
-            elif fld.get("type") not in ("bool", "enum") or "computed" in fld or fld.get("visible") is not True:
-                c.add(where + "/lifecycle/field", "must be a visible stored bool or enum field (H1)")
-            elif fld.get("type") == "bool" and not isinstance(active, bool):
-                c.add(where + "/lifecycle/active", "must be true or false for a bool field")
-            elif fld.get("type") == "enum" and active not in [
-                    v.get("value") for v in fld.get("enumValues", []) if isinstance(v, dict)]:
-                c.add(where + "/lifecycle/active", f"{active!r} is not a value of {fld.get('key')}")
+        if "lifecycle" in ent:
+            check_lifecycle(c, ent, where + "/lifecycle")
 
 
 def check_relationships(c: Collector, g: dict[str, Any], languages: list[str]) -> None:
@@ -791,31 +840,31 @@ def check_glossary(ctx: Context) -> CheckResult:
 # Check 3: agreement between the schema and the glossary
 
 
-def check_agreement(ctx: Context) -> CheckResult:
-    """The schema's operator enum equals the glossary's operator keys, its four arity lists equal the glossary's
-    arities, its list, path and children limits equal `limits`, and every glossary key fits the key pattern."""
-    schema, g = ctx.schema, ctx.glossary
-    if not isinstance(schema, dict) or not isinstance(g, dict):
-        return Skipped("the schema or the glossary did not load")
-    c = Collector(SCHEMA_FILE)
-    defs = schema.get("$defs", {})
-    ops = [op for op in g.get("operators", []) if isinstance(op, dict)]
-    glossary_keys = [op.get("key") for op in ops]
-    schema_keys = defs.get("operator", {}).get("enum")
-    if not isinstance(schema_keys, list):
-        c.add("/$defs/operator/enum", "missing")
-        schema_keys = []
-    for key in sorted(set(glossary_keys) - set(schema_keys), key=str):
+ARITY_DEFS: dict[int | str, str] = {0: "operatorArity0", 1: "operatorArity1", 2: "operatorArity2",
+                                    "list": "operatorArityList"}
+
+
+def enum_of(c: Collector, schema: dict[str, Any], name: str) -> list[Any]:
+    """The `enum` of `#/$defs/<name>`, or an empty list after recording that it is missing."""
+    listed = dig(schema, "$defs", name, "enum")
+    if not isinstance(listed, list):
+        c.add(pointer("$defs", name, "enum"), "missing")
+        return []
+    return listed
+
+
+def agree_operators(c: Collector, schema: dict[str, Any], ops: list[dict[str, Any]]) -> None:
+    """The schema's operator enum equals the glossary's operator keys, and its four arity lists split that enum
+    as the glossary's arities do."""
+    schema_keys = enum_of(c, schema, "operator")
+    glossary_keys = {op.get("key") for op in ops}
+    for key in sorted(glossary_keys - set(schema_keys), key=str):
         c.add("/$defs/operator/enum", f"lacks the glossary operator {key!r}")
-    for key in sorted(set(schema_keys) - set(glossary_keys), key=str):
+    for key in sorted(set(schema_keys) - glossary_keys, key=str):
         c.add("/$defs/operator/enum", f"has {key!r}, which the glossary does not define")
-    arity_defs = {0: "operatorArity0", 1: "operatorArity1", 2: "operatorArity2", "list": "operatorArityList"}
     covered: list[Any] = []
-    for arity, name in arity_defs.items():
-        listed = defs.get(name, {}).get("enum")
-        if not isinstance(listed, list):
-            c.add(pointer("$defs", name, "enum"), "missing")
-            continue
+    for arity, name in ARITY_DEFS.items():
+        listed = enum_of(c, schema, name)
         covered += listed
         expected = {op.get("key") for op in ops if op.get("arity") == arity and is_int(op.get("arity")) == (
             arity != "list")}
@@ -825,43 +874,60 @@ def check_agreement(ctx: Context) -> CheckResult:
             c.add(pointer("$defs", name, "enum"), f"has {key!r}, which does not have arity {arity!r} in the glossary")
     if sorted(covered, key=str) != sorted(schema_keys, key=str):
         c.add("/$defs", "the four arity lists do not partition /$defs/operator/enum")
-    limits = g.get("limits", {}) if isinstance(g.get("limits"), dict) else {}
+
+
+def agree_limits(c: Collector, schema: dict[str, Any], limits: dict[str, Any]) -> None:
+    """The three limits the schema can express equal the glossary's: list values, path hops, children."""
     list_rule = operand_rule(schema, "operatorArityList")
-    list_max = (list_rule or {}).get("properties", {}).get("values", {}).get("maxItems")
+    list_max = dig(list_rule, "properties", "values", "maxItems")
     if list_rule is None:
         c.add("/$defs/node/allOf", "no operand rule for #/$defs/operatorArityList")
     elif list_max != limits.get("maxListValues"):
         c.add("/$defs/node/allOf", f"the list operators take at most {list_max!r} values; "
               f"limits.maxListValues is {limits.get('maxListValues')!r}")
-    path_max = defs.get("fieldRef", {}).get("properties", {}).get("path", {}).get("maxItems")
-    if path_max != limits.get("maxPathHops"):
-        c.add("/$defs/fieldRef/properties/path/maxItems",
-              f"is {path_max!r}; limits.maxPathHops is {limits.get('maxPathHops')!r}")
-    children_max = defs.get("node", {}).get("properties", {}).get("children", {}).get("maxItems")
-    if children_max != limits.get("maxConditions"):
-        c.add("/$defs/node/properties/children/maxItems",
-              f"is {children_max!r}; limits.maxConditions is {limits.get('maxConditions')!r}")
-    key_pattern = defs.get("key", {}).get("pattern")
-    if isinstance(key_pattern, str):
-        rx = re.compile(key_pattern)
-        gc = Collector(GLOSSARY_FILE)
-        for i, ent in enumerate(g.get("entities", [])):
-            if not isinstance(ent, dict):
-                continue
-            keys = [(pointer("entities", i, "key"), ent.get("key"))]
-            keys += [(pointer("entities", i, "fields", j, "key"), f.get("key"))
-                     for j, f in enumerate(ent.get("fields", [])) if isinstance(f, dict)]
-            for where, key in keys:
-                if not isinstance(key, str) or not rx.match(key):
-                    gc.add(where, f"{key!r} does not match the schema's key pattern {key_pattern}")
-        for i, rel in enumerate(g.get("relationships", [])):
-            key = rel.get("key") if isinstance(rel, dict) else None
-            if not isinstance(key, str) or not rx.match(key):
-                gc.add(pointer("relationships", i, "key"), f"{key!r} does not match the schema's key pattern")
-        c.failures += gc.failures
-    else:
+    for where, names, key in (
+            ("/$defs/fieldRef/properties/path/maxItems", ("fieldRef", "properties", "path", "maxItems"), "maxPathHops"),
+            ("/$defs/node/properties/children/maxItems", ("node", "properties", "children", "maxItems"),
+             "maxConditions")):
+        found = dig(schema, "$defs", *names)
+        if found != limits.get(key):
+            c.add(where, f"is {found!r}; limits.{key} is {limits.get(key)!r}")
+
+
+def agree_keys(c: Collector, schema: dict[str, Any], g: dict[str, Any]) -> list[Failure]:
+    """Every entity, field and relationship key of the glossary fits the schema's key pattern. The failures are
+    about the glossary file and are returned; a missing pattern is recorded on the schema's collector."""
+    key_pattern = dig(schema, "$defs", "key", "pattern")
+    if not isinstance(key_pattern, str):
         c.add("/$defs/key/pattern", "missing")
-    return c.failures
+        return []
+    rx = re.compile(key_pattern)
+    gc = Collector(GLOSSARY_FILE)
+    keys: list[tuple[str, Any]] = []
+    for i, ent in enumerate(g.get("entities") or []):
+        keys.append((pointer("entities", i, "key"), dig(ent, "key")))
+        fields = dig(ent, "fields")
+        keys += [(pointer("entities", i, "fields", j, "key"), dig(f, "key"))
+                 for j, f in enumerate(fields if isinstance(fields, list) else [])]
+    keys += [(pointer("relationships", i, "key"), dig(rel, "key")) for i, rel in enumerate(g.get("relationships") or [])]
+    for where, key in keys:
+        if not isinstance(key, str) or not rx.match(key):
+            gc.add(where, f"{key!r} does not match the schema's key pattern {key_pattern}")
+    return gc.failures
+
+
+def check_agreement(ctx: Context) -> CheckResult:
+    """The schema and the glossary agree: on the operator keys and their arities, on the limits the schema can
+    express, and on the pattern every key must fit."""
+    schema, g = ctx.schema, ctx.glossary
+    if not isinstance(schema, dict) or not isinstance(g, dict):
+        return Skipped("the schema or the glossary did not load")
+    c = Collector(SCHEMA_FILE)
+    ops = [op for op in g.get("operators") or [] if isinstance(op, dict)]
+    agree_operators(c, schema, ops)
+    agree_limits(c, schema, g["limits"] if isinstance(g.get("limits"), dict) else {})
+    key_failures = agree_keys(c, schema, g)
+    return c.failures + key_failures
 
 
 # ---------------------------------------------------------------------------------------------------------
@@ -879,53 +945,63 @@ def is_iso_date(value: Any) -> bool:
     return True
 
 
-def literal_problem(fld: dict[str, Any], value: Any) -> str | None:
-    """Why a literal does not fit the type of the field it is compared with, or None when it fits (errors.md,
-    VALUE_TYPE_MISMATCH and UNKNOWN_ENUM_VALUE)."""
+def literal_problem(fld: dict[str, Any], value: Any) -> tuple[str, str] | None:
+    """Why a literal does not fit the type of the field it is compared with, as (definition error code, text),
+    or None when it fits (errors.md, VALUE_TYPE_MISMATCH and UNKNOWN_ENUM_VALUE)."""
     kind = fld.get("type")
     if kind == "number":
-        fits = isinstance(value, (int, float)) and not isinstance(value, bool)
+        fits = isinstance(value, (int, float)) and not isinstance(value, bool) and abs(value) < NUMBER_BOUND
     elif kind == "bool":
         fits = isinstance(value, bool)
     elif kind == "date":
         fits = is_iso_date(value)
     elif kind == "enum":
-        if isinstance(value, str) and value not in {v.get("value") for v in fld.get("enumValues", [])}:
-            return f"{value!r} is not an enum value of field {fld.get('key')!r}"
+        if isinstance(value, str) and value not in {dig(v, "value") for v in as_list(fld.get("enumValues"))}:
+            return "UNKNOWN_ENUM_VALUE", f"{value!r} is not an enum value of field {fld.get('key')!r}"
         fits = isinstance(value, str)
     else:
         fits = isinstance(value, str)
-    return None if fits else f"{value!r} is not a {kind} literal (field {fld.get('key')!r})"
+    return None if fits else ("VALUE_TYPE_MISMATCH", f"{value!r} is not a {kind} literal (field {fld.get('key')!r})")
 
 
 class DefinitionWalk:
-    """Walks a schema-valid definition against the glossary and records what it finds wrong. Afterwards `ids`
-    holds every node id, `matchable` the ids that can be matched (errors.md, Matched), in document order."""
+    """Walks a schema-valid definition against the glossary, as the semantic layer of errors.md describes it,
+    and records every fault it finds with its definition error code. Afterwards `faults` holds (JSON Pointer
+    into the definition, code), `ids` every node id and `matchable` the ids that can be matched (errors.md,
+    Matched), in document order. The glossary must have passed check 2."""
 
     def __init__(self, c: Collector, where: str, glossary: dict[str, Any]) -> None:
         self.c = c
         self.where = where
         self.g = glossary
+        self.faults: list[tuple[str, str]] = []
         self.ids: list[str] = []
         self.matchable: list[str] = []
         self.depth = 0
         self.values = 0
 
+    def fault(self, code: str, path: str, message: str) -> None:
+        """Records a fault at `path` (a JSON Pointer into the definition) under its definition error code."""
+        self.faults.append((path, code))
+        self.c.add(self.where + path, f"{code}: {message}")
+
     def run(self, definition: dict[str, Any]) -> None:
-        """Checks the root entity, the whole tree, the uniqueness of ids and the three limits of the tree."""
+        """Checks the root entity, the whole tree and the three limits of the tree."""
         root = entity(self.g, definition.get("rootEntity", ""))
         if root is None or not root.get("visible"):
-            self.c.add(self.where + "/rootEntity", f"no visible entity {definition.get('rootEntity')!r} in the glossary")
+            self.fault("UNKNOWN_ENTITY", "/rootEntity", f"no visible entity {definition.get('rootEntity')!r}")
             return
         if not root.get("rootable"):
-            self.c.add(self.where + "/rootEntity", f"entity {root.get('key')!r} may not be a root entity")
-        tree = self.where + "/where"
-        self.group(tree, root, definition["where"], 1, False)
-        limits = self.g.get("limits", {})
-        for actual, key, what in ((self.depth, "maxDepth", "groups deep"), (len(self.ids), "maxConditions", "nodes"),
-                                  (self.values, "maxTotalValues", "literal values")):
+            self.fault("ENTITY_NOT_ROOTABLE", "/rootEntity", f"entity {root.get('key')!r} may not be a root entity")
+        self.group("/where", root, definition["where"], 1, False)
+        limits = self.g.get("limits")
+        if not isinstance(limits, dict):
+            limits = {}
+        for code, actual, key, what in (("TOO_DEEP", self.depth, "maxDepth", "groups deep"),
+                                        ("TOO_MANY_CONDITIONS", len(self.ids), "maxConditions", "nodes"),
+                                        ("TOO_MANY_VALUES", self.values, "maxTotalValues", "literal values")):
             if is_int(limits.get(key)) and actual > limits[key]:
-                self.c.add(tree, f"{actual} {what}; limits.{key} is {limits[key]}")
+                self.fault(code, "/where", f"{actual} {what}; limits.{key} is {limits[key]}")
 
     def group(self, where: str, scope: dict[str, Any], node: dict[str, Any], depth: int, in_related: bool) -> None:
         """A group: `depth` counts the groups from the root down to this one (errors.md, Depth)."""
@@ -940,10 +1016,10 @@ class DefinitionWalk:
                 self.related(child_where, scope, child, depth, in_related)
 
     def note_id(self, where: str, node: dict[str, Any], in_related: bool) -> None:
-        """Records a node id, and a failure when an earlier node already carries it; a node inside a related
+        """Records a node id, and a fault when an earlier node already carries it; a node inside a related
         sub-tree is never matched."""
         if node["id"] in self.ids:
-            self.c.add(where + "/id", f"node id {node['id']!r} is already used by an earlier node")
+            self.fault("DUPLICATE_NODE_ID", where + "/id", f"node id {node['id']!r} is already used by an earlier node")
         self.ids.append(node["id"])
         if not in_related:
             self.matchable.append(node["id"])
@@ -954,13 +1030,15 @@ class DefinitionWalk:
         for hop in ref.get("path", []):
             rel = relationship(self.g, hop)
             if rel is None:
-                self.c.add(where, f"unknown relationship {hop!r}")
+                self.fault("UNKNOWN_RELATIONSHIP", where, f"unknown relationship {hop!r}")
                 return None
             if rel.get("from") != current.get("key"):
-                self.c.add(where, f"relationship {hop!r} does not start at entity {current.get('key')!r}")
+                self.fault("PATH_NOT_REACHABLE", where,
+                           f"relationship {hop!r} does not start at entity {current.get('key')!r}")
                 return None
             if rel.get("cardinality") == "one_to_many":
-                self.c.add(where, f"relationship {hop!r} is one_to_many: it belongs in a related node, not in a path")
+                self.fault("PATH_NOT_TRAVERSABLE", where,
+                           f"relationship {hop!r} is one_to_many: it belongs in a related node, not in a path")
                 return None
             target = entity(self.g, rel.get("to", ""))
             if target is None:
@@ -968,9 +1046,25 @@ class DefinitionWalk:
             current = target
         fld = field_of(current, ref.get("field", ""))
         if fld is None or not fld.get("visible"):
-            self.c.add(where, f"entity {current.get('key')!r} has no visible field {ref.get('field')!r}")
+            self.fault("UNKNOWN_FIELD", where, f"entity {current.get('key')!r} has no visible field {ref.get('field')!r}")
             return None
         return fld
+
+    def comparison(self, where: str, scope: dict[str, Any], node: dict[str, Any], op: dict[str, Any],
+                   left: dict[str, Any]) -> None:
+        """A field-to-field comparison (errors.md, Field comparisons)."""
+        right = self.field(where + "/right", scope, node["right"])
+        if not op.get("fieldComparable"):
+            self.fault("FIELD_COMPARISON_NOT_ALLOWED", where + "/right",
+                       f"operator {node['operator']!r} does not compare two fields")
+        elif right is not None:
+            for side, fld in (("left", left), ("right", right)):
+                if fld.get("comparable") is False:
+                    self.fault("FIELD_COMPARISON_NOT_ALLOWED", where + pointer(side),
+                               f"field {fld.get('key')!r} is not comparable with another field")
+            if left.get("type") != right.get("type"):
+                self.fault("FIELD_TYPE_MISMATCH", where + "/right",
+                           f"compares a {left.get('type')} field with a {right.get('type')} field")
 
     def condition(self, where: str, scope: dict[str, Any], node: dict[str, Any], in_related: bool) -> None:
         """A condition: the left field, the operator for its type, and the operand against that type."""
@@ -983,45 +1077,36 @@ class DefinitionWalk:
         if left is None or op is None:
             return
         if node["operator"] not in resolved_operators(self.g, left):
-            self.c.add(where + "/operator", f"operator {node['operator']!r} is not allowed for field "
-                       f"{left.get('key')!r} of type {left.get('type')!r}")
+            self.fault("OPERATOR_NOT_ALLOWED", where + "/operator", f"operator {node['operator']!r} is not allowed "
+                       f"for field {left.get('key')!r} of type {left.get('type')!r}")
             return
         if "right" in node:
-            right = self.field(where + "/right", scope, node["right"])
-            if not op.get("fieldComparable"):
-                self.c.add(where + "/right", f"operator {node['operator']!r} does not compare two fields")
-            elif right is not None:
-                for side, fld in (("left", left), ("right", right)):
-                    if fld.get("comparable") is False:
-                        self.c.add(where + pointer(side), f"field {fld.get('key')!r} is not comparable with another field")
-                if left.get("type") != right.get("type"):
-                    self.c.add(where + "/right", f"compares a {left.get('type')} field with a {right.get('type')} field")
+            self.comparison(where, scope, node, op, left)
         problems = [(member, prefix, literal_problem(left, v)) for member, prefix, v in literals]
         for member, prefix, problem in problems:
             if problem:
-                self.c.add(where + member, prefix + problem)
-        if op.get("arity") == 2 and len(literals) == 2 and not any(problem for _, _, problem in problems):
-            if literals[0][2] > literals[1][2]:
-                self.c.add(where + "/values", "the first value is above the second")
+                self.fault(problem[0], where + member, prefix + problem[1])
+        in_order = op.get("arity") != 2 or len(literals) != 2 or any(problem for _, _, problem in problems)
+        if not in_order and literals[0][2] > literals[1][2]:
+            self.fault("RANGE_INVALID", where + "/values", "the first value is above the second")
 
     def related(self, where: str, scope: dict[str, Any], node: dict[str, Any], depth: int, in_related: bool) -> None:
         """A related node: a one-to-many relationship that starts at the scope entity, and its sub-tree."""
         self.note_id(where, node, in_related)
         rel = relationship(self.g, node["relationship"])
+        at = where + "/relationship"
         if rel is None:
-            self.c.add(where + "/relationship", f"unknown relationship {node['relationship']!r}")
-            return
-        if rel.get("from") != scope.get("key"):
-            self.c.add(where + "/relationship", f"relationship {node['relationship']!r} does not start at entity "
+            self.fault("UNKNOWN_RELATIONSHIP", at, f"unknown relationship {node['relationship']!r}")
+        elif rel.get("from") != scope.get("key"):
+            self.fault("PATH_NOT_REACHABLE", at, f"relationship {node['relationship']!r} does not start at entity "
                        f"{scope.get('key')!r}")
-            return
-        if rel.get("cardinality") != "one_to_many":
-            self.c.add(where + "/relationship", f"relationship {node['relationship']!r} is {rel.get('cardinality')}; "
-                       "a related node needs a one_to_many relationship")
-            return
-        target = entity(self.g, rel.get("to", ""))
-        if target is not None:
-            self.group(where + "/where", target, node["where"], depth + 1, True)
+        elif rel.get("cardinality") != "one_to_many":
+            self.fault("RELATIONSHIP_NOT_QUANTIFIABLE", at, f"relationship {node['relationship']!r} is "
+                       f"{rel.get('cardinality')}; a related node needs a one_to_many relationship")
+        else:
+            target = entity(self.g, rel.get("to", ""))
+            if target is not None:
+                self.group(where + "/where", target, node["where"], depth + 1, True)
 
 
 def key_order(key: str) -> tuple[int, int, str]:
@@ -1184,7 +1269,7 @@ def check_fixture(c: Collector, glossary: dict[str, Any], validator: Draft202012
                   codes: dict[str, str], doc: Any) -> None:
     """One invalid fixture: the wrapper; a code of the catalogue whose layer is the fixture's; a schema-layer
     definition fails the schema with one error, at the expected path; a semantic-layer definition passes the
-    schema and the glossary walk of check 4 finds a fault at the expected path."""
+    schema and the glossary walk of check 4 finds the expected code at the expected path."""
     if not check_members(c, "", doc, ("layer", "expected", "definition")):
         return
     layer, expected = doc.get("layer"), doc.get("expected")
@@ -1213,12 +1298,11 @@ def check_fixture(c: Collector, glossary: dict[str, Any], validator: Draft202012
         c.add("/definition", "a semantic-layer fixture must pass the schema; it fails at "
               + ", ".join(repr(where) for where, _ in errors))
         return
-    walked = Collector(c.path)
-    DefinitionWalk(walked, "", glossary).run(doc["definition"])
-    found = [failure.message.split(": ", 1)[0] for failure in walked.failures]
-    if path not in found:
-        c.add("/definition", f"the glossary must reject it at {path!r}; the walk finds "
-              + (", ".join(repr(where) for where in found) if found else "no fault"))
+    walk = DefinitionWalk(Collector(c.path), "", glossary)
+    walk.run(doc["definition"])
+    if (path, code) not in walk.faults:
+        c.add("/definition", f"the glossary must reject it with {code} at {path!r}; the walk finds "
+              + (", ".join(f"{found} at {where!r}" for where, found in walk.faults) if walk.faults else "no fault"))
 
 
 def check_invalid_fixtures(ctx: Context) -> CheckResult:
@@ -1272,6 +1356,32 @@ CHECKS: list[tuple[str, Callable[[Context], CheckResult]]] = [
     ("examples", check_examples),
     ("invalid fixtures", check_invalid_fixtures),
 ]
+FOUNDATION = ("schema", "glossary")  # the checks after these two read both documents and trust their shape
+SCRIPT_FILE = "scripts/contracts-check.py"
+
+
+def run_checks(ctx: Context) -> tuple[list[Failure], list[str], list[str]]:
+    """Runs the checks in order and returns (failures, the names that passed, the skipped with their reason).
+    A check after the foundation is skipped while the schema or the glossary has failures, and a check that
+    raises becomes a failure line, so no finding is ever lost to a traceback."""
+    failures = list(ctx.load_failures)
+    passed: list[str] = []
+    skipped: list[str] = []
+    for name, check in CHECKS:
+        if name not in FOUNDATION and failures:
+            skipped.append(f"{name} (the schema or the glossary has failures)")
+            continue
+        try:
+            result = check(ctx)
+        except Exception as e:  # noqa: BLE001 - the boundary of the script: report, never crash
+            result = [fail(SCRIPT_FILE, f"the {name} check stopped on {type(e).__name__}: {e}")]
+        if isinstance(result, Skipped):
+            skipped.append(f"{name} ({result.reason})")
+        elif result:
+            failures += result
+        else:
+            passed.append(name)
+    return failures, passed, skipped
 
 
 # ---------------------------------------------------------------------------------------------------------
@@ -1339,7 +1449,7 @@ class Renderer:
             year, month, day = value.split("-")
             text = self.format["date"].replace("yyyy", year).replace("MM", month).replace("dd", day)
         elif kind == "number" and isinstance(value, (int, float)) and not isinstance(value, bool):
-            text = self.number(value)
+            text = str(value) if fld.get("identifier") else self.number(value)
         else:
             text = str(value)
         return f"{text} {fld['unit'][self.lang]}" if "unit" in fld else text
@@ -1511,26 +1621,16 @@ def main(argv: list[str] | None = None) -> int:
                         help="print the rule sentence and the reasons of every example in each language, and "
                              "run no check")
     args = parser.parse_args(argv)
-    if hasattr(sys.stdout, "reconfigure"):
+    if isinstance(sys.stdout, io.TextIOWrapper):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
     ctx = load_context(args.root.resolve())
     if args.render:
         return render(ctx)
-    failures = list(ctx.load_failures)
-    passed: list[str] = []
-    skipped: list[str] = []
-    for name, check in CHECKS:
-        result = check(ctx)
-        if isinstance(result, Skipped):
-            skipped.append(f"{name} ({result.reason})")
-        elif result:
-            failures += result
-        else:
-            passed.append(name)
-
+    failures, passed, skipped = run_checks(ctx)
     if failures:
-        print(f"contracts-check: {len(failures)} failure{'s' if len(failures) != 1 else ''}")
+        print(f"contracts-check: {len(failures)} failure{'s' if len(failures) != 1 else ''}"
+              + (f"; skipped: {', '.join(skipped)}" if skipped else ""))
         for f in failures:
             print(f"{f.path}: {f.message}")
         return 1

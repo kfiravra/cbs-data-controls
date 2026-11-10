@@ -24,7 +24,7 @@ Needs Docker with Compose v2. The SQL Server 2022 image is x86-64 only: on Apple
 under emulation. The first pull takes about 2.2 GB of disk.
 
 ```sh
-cp .env.example .env        # development passwords for a container bound to 127.0.0.1
+cp .env.example .env        # then set the three passwords in .env: the example file holds none
 docker compose up -d db     # SQL Server on 127.0.0.1:1433 (DB_PORT in .env moves it)
 scripts/db-init.sh          # creates DataControls; running it again changes nothing
 scripts/db-check.sh         # one PASS or FAIL line per assertion, exit 1 on any FAIL
@@ -81,7 +81,7 @@ Create a control, run it, read the results and their reasons, try the suggestion
 ## Contracts
 
 `contracts/` is the only channel between the three services. No service imports another's code and no SQL text
-crosses a boundary: the engine, the api and the client were each built against these files alone.
+crosses a boundary: the engine, the api and the client are each built against these files alone.
 
 | File | What it fixes |
 |---|---|
@@ -92,12 +92,12 @@ crosses a boundary: the engine, the api and the client were each built against t
 | [`api.md`](contracts/api.md) | Both HTTP APIs: the engine's and the application's (`/api/v1`), every request, response and error |
 | [`errors.md`](contracts/errors.md) | The closed lists: error codes, definition error codes, reason keys, evidence keys and part roles, with their parameters, and the rules they share (what "matched" means, NULL, depth and count, rendering) |
 
-Two checks keep the folder honest:
+Two checks keep the folder honest, and one command prints its text to read:
 
 ```sh
 uv run scripts/contracts-check.py            # the schema, the glossary, the examples and the fixtures agree
-uv run scripts/contracts-check.py --render   # the rule sentence and the reasons of each example, he and en
 scripts/db-check.sh examples                 # each example flags exactly its expected records in the database
+uv run scripts/contracts-check.py --render   # no check: the rule sentence and the reasons of each example, he and en
 ```
 
 A contract change is one commit to `contracts/` on `main`, with both checks green, and one line to every session

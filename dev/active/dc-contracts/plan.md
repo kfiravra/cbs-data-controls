@@ -103,6 +103,21 @@ From the planning of dc-web (Kfir, 2026-11-10, given with the word to execute):
 31. **Identifying fields are name first**: employee `first_name`, `last_name`, `employee_number`; department `name`,
     `department_number`. `display_text` is those values joined by one space, in that order.
 
+From the review of the branch (2026-11-10; made by the orchestrator while fixing findings, open to Kfir's objection
+at the Gate read):
+
+32. **A number field may be marked `identifier: true`** (employee and department numbers, the two assignment
+    fields): it names a record and is written digit for digit, never with a thousands separator, which is also how
+    `display_text` holds it. (A meaning the glossary carries; rejected: a client that special-cases field keys.)
+33. **The two related `sentence` phrases bracket `{conditions}`**, so a condition that follows a related node cannot
+    be read into it. The renderer still adds no bracket of its own, and the reasons are unchanged.
+34. **`is_null` says "חסר" / "is missing" for every type**; "ריק" / "is empty" is the word of `is_empty` alone. A
+    bool's value labels agree with the field label before the colon ("סטטוס: פעיל"), not with the entity.
+35. **Passwords reach sqlcmd through the environment**, never on a command line, and `.env.example` holds none.
+36. **`NETWORK_ERROR` is a client-derived code** in `errors.md`, beside `ROW_CAP_EXCEEDED`; `REQUEST_INVALID` also
+    answers 413 and 415; `page` is 1 to 1,000,000; a number literal stays below 10^15; a `definition` that is not a
+    JSON object is a malformed request (400), not a schema violation.
+
 Execution (Kfir, 2026-11-10): the whole task in one run on Fable, three Opus lanes (phase 1; phase 2; the phase 4
 documents) beside the orchestrator's phase 3, no per-phase review, one review over the whole branch at the end,
 then the Gate, the push and the PR. No merge.
@@ -218,7 +233,7 @@ Review: `/phase-review api web engine`
 Commit: `feat(contracts): http api and error catalogue`
 
 ### Gate
-- [ ] From a clean container: `docker compose down -v`, `docker compose up -d db && scripts/db-init.sh`,
+- [x] From a clean container: `docker compose down -v`, `docker compose up -d db && scripts/db-init.sh`,
       `scripts/db-init.sh` again, `scripts/db-check.sh`, `uv run scripts/contracts-check.py`,
       `node --test .claude/hooks/tests/*.test.mjs`. Save the output as `gates/final.txt`.
 - [ ] Kfir reads `uv run scripts/contracts-check.py --render`: the rule sentence and the reasons of the six

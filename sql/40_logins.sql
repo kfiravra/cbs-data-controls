@@ -1,6 +1,7 @@
 -- The two application logins, their database users and their permissions. Re-runnable: an existing login gets
 -- its password reset. The passwords arrive as the sqlcmd variables DQ_APP_PASSWORD and DQ_ENGINE_RO_PASSWORD
--- (sqlcmd -v, or :setvar in SSMS SQLCMD Mode); they are never written into this file.
+-- (from the environment, as scripts/db-init.sh passes them, or :setvar in SSMS SQLCMD Mode); they are never
+-- written into this file.
 --   dq_app        the api: reads and writes schema dq, nothing on hr
 --   dq_engine_ro  the engine: reads schema hr, nothing else
 -- Permissions go on schemas, so tables added later inherit them. No DDL, no EXECUTE, nothing to public.

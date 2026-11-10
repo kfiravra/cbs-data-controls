@@ -97,8 +97,9 @@ run_sql() {
   local vars=() var
   for var in "$@"; do vars+=(-v "$var"); done
   # NOCOUNT is set in a batch of its own and holds for the session; the password travels in the environment.
+  # The two MSYS variables stop Git Bash from rewriting the container paths into Windows paths.
   { printf 'SET NOCOUNT ON;\nGO\n'; cat; printf '\n'; } |
-    SQLCMDPASSWORD=$password docker compose exec -T -e SQLCMDPASSWORD db \
+    SQLCMDPASSWORD=$password MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL='*' docker compose exec -T -e SQLCMDPASSWORD db \
       "$SQLCMD" -C -S localhost -U "$login" -d "$DATABASE" -b -r1 -I -f 65001 -h -1 -W -s '|' \
       ${vars[@]+"${vars[@]}"} -i /dev/stdin
 }
@@ -135,9 +136,13 @@ load_env() {
 db_check_setup() {
   cd "$ROOT"
   load_env
-  local var
+  local var unsafe='[[:space:]"'\''$;\\]'
   for var in MSSQL_SA_PASSWORD DQ_APP_PASSWORD DQ_ENGINE_RO_PASSWORD; do
-    [[ -n "${!var:-}" ]] || die "$var is not set: copy .env.example to .env (a new worktree has none)"
+    [[ -n "${!var:-}" ]] || die "$var is not set: copy .env.example to .env and set it (a new worktree has none)"
+    # compose strips quotes around a value in .env and this script does not: refuse what would differ.
+    if [[ "${!var}" =~ $unsafe ]]; then
+      die "$var may not contain spaces, quotes, \$, ; or a backslash (.env.example says why)"
+    fi
   done
   command -v docker >/dev/null 2>&1 || die "docker is not on PATH"
   if [[ -z "$(docker compose ps --status running --quiet db 2>/dev/null)" ]]; then

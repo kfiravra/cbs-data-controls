@@ -18,7 +18,9 @@ the complete list of what is served under `/api/v1`.
 
 - **Format.** JSON in UTF-8 with camelCase member names. A request sends `Content-Type: application/json`; a success
   answers `application/json`, an error `application/problem+json`. Glossary keys, node ids and record keys are data
-  and keep their own spelling (`display` is keyed by field keys such as `first_name`).
+  and keep their own spelling (`display` is keyed by field keys such as `first_name`). A body over the service's
+  size limit (1 MB in the api) answers 413 and a body that is not JSON 415, each as a `Problem` with the code
+  `REQUEST_INVALID` and no `errors`.
 - **Notation.** In the shape tables `name?` marks a member that may be absent: a response leaves it out when it has
   no value and never sends it as null. `T or null` marks a member that is always present. In a request an optional
   member may be absent or null, and both mean "not given". `date` is a `YYYY-MM-DD` string, `timestamp` an ISO 8601
@@ -31,8 +33,8 @@ the complete list of what is served under `/api/v1`.
   `correlationId`, and forwarded by the api on every engine call.
 - **Time.** Timestamps are UTC with `Z`, to the millisecond (`2026-11-10T19:44:03.120Z`). Dates must be real calendar
   dates. "Today" is the current date in `Asia/Jerusalem` (configurable in both services).
-- **Ids and keys.** Control and run ids are positive integers. Record keys are strings (`"1051"`) everywhere, so a key
-  that is not an integer needs no contract change.
+- **Ids and keys.** Control and run ids are positive integers. Record keys are strings (`"1051"`) of at most 64
+  characters everywhere, so a key that is not an integer needs no contract change.
 - **Definitions.** `definition` in a request must be a JSON object: absent or null is `REQUIRED`, any other value
   `MALFORMED` (400 `REQUEST_INVALID`). Everything about the object itself is a definition check, answered 422
   `DEFINITION_INVALID` with `DefinitionError` items (errors.md, Order of checks).
@@ -131,9 +133,9 @@ per-condition breakdown; the order of all nodes comes from the definition.
 | `reasons` | Reason[] | one per id of `matched`, in the same order |
 | `reasonText` | string | the reasons' texts joined by `phrases.reasonSeparator` |
 
-The identifying fields are name first: employee `first_name`, `last_name`, `employee_number`; department `name`,
-`department_number`; ministry `name`. A JSON object has no order, so a client lays out `display` in
-`identifyingFields` order. The api stores, per violation, `display_text`: the `display` values in `identifyingFields`
+The glossary lists an entity's identifying fields name first (in glossary 1.0.0 an employee is `first_name`,
+`last_name`, `employee_number`). A JSON object has no order, so a client lays out `display` in `identifyingFields`
+order. The api stores, per violation, `display_text`: the `display` values in `identifyingFields`
 order joined by one space (a number as in JSON, a date as `YYYY-MM-DD`, a boolean as `true` or `false`, a null left
 out), cut to 400 characters. Results `search` and `sort=display` read it (§4, results).
 
@@ -175,8 +177,8 @@ A `Violation` as the engine returned it, plus `seq`:
 | `page` | integer | as asked, from 1 |
 | `pageSize` | integer | as asked |
 
-Query parameters of every paged endpoint: `page?` integer, at least 1, default 1; `pageSize?` integer, 1 to 200,
-default 25. A value outside its range is 400 (`OUT_OF_RANGE`), one that is not an integer 400 (`MALFORMED`); a page
+Query parameters of every paged endpoint: `page?` integer, 1 to 1,000,000, default 1; `pageSize?` integer, 1 to
+200, default 25. A value outside its range is 400 (`OUT_OF_RANGE`), one that is not an integer 400 (`MALFORMED`); a page
 past the end is 200 with empty `items`.
 
 ### `Control`
@@ -228,7 +230,7 @@ past the end is 200 with empty `items`.
 | `controlId` | integer | |
 | `controlName` | string | the control's current name |
 | `controlVersion` | integer | the version that ran |
-| `rootEntity` | string | that version's root entity key |
+| `rootEntity` | string | that version's root entity key: the `rootEntity` of the version's stored definition (no column holds it, and the control's own root entity is the current version's) |
 | `runDate` | date | the date the rules were evaluated on |
 | `language` | string | `he` or `en`: the language its text was rendered and stored in |
 | `startedAt` | timestamp | |
@@ -247,7 +249,9 @@ past the end is 200 with empty `items`.
 `RunError` is `{ code, params }`, a code of errors.md marked "Run error": `QUERY_TIMEOUT` with `{ timeoutSeconds }`
 (status `timed_out`); `CONTROL_DEFINITION_OUTDATED` with `{ errors: DefinitionError[] }`, `DATABASE_UNAVAILABLE`,
 `ENGINE_UNAVAILABLE` and `INTERNAL_ERROR` with `{}` (status `failed`). Which engine answer gives which is in §4,
-Engine failures. A run is `running` only while its request is in progress, or after a crash cut it off.
+Engine failures. A run is `running` only while its request is in progress, or after a crash cut it off: when the
+engine answered and storing the snapshot fails, the api closes the run `failed` with `INTERNAL_ERROR` and stores no
+rows.
 
 `PreviousRun`:
 
@@ -284,14 +288,44 @@ the database (checked again at most once a minute).
 
 ### `GET /glossary`
 
-200 the public glossary: `contracts/glossary.json` with `table`, `keyColumn`, `column`, `computed` and `join` removed;
-entities and fields with `visible: false` removed, and the relationships that start or end at a removed entity; and
-every field given `operators`, its resolved operator keys (the field's override, else every operator whose `types`
-include the field's type, minus `is_null` and `is_not_null` when the field is not nullable). Everything else is served
-as in the file: `glossaryVersion`, `languages`, `defaultLanguage`, `limits`, `formats`, `phrases`, `operators`,
-`suggestions`, and per entity and field `label`, `identifyingFields`, `rootable`, `lifecycle`, `required`,
-`comparable` (absent means true), `unit`, `enumValues` and `valueLabels`. Labels and templates come in both
-languages; nothing is rendered.
+200 the public glossary: `contracts/glossary.json` without its physical names, without what is hidden, and with
+every field's operators resolved. Labels and templates come in both languages; nothing is rendered.
+
+| Member | Type | Notes |
+|---|---|---|
+| `glossaryVersion` | string | |
+| `languages` | string[] | |
+| `defaultLanguage` | string | |
+| `limits` | object | `maxDepth`, `maxConditions`, `maxListValues`, `maxPathHops`, `maxTotalValues` |
+| `formats` | object | per language `{ date, groupSeparator, decimalSeparator }` |
+| `phrases` | object | as in the file |
+| `operators` | object[] | each `{ key, arity, types, fieldComparable, label, sentence, reason }`; `arity` is 0, 1, 2 or `"list"` |
+| `entities` | object[] | the entities with `visible: true`, shaped as below |
+| `relationships` | object[] | each `{ key, from, to, cardinality, label }`; one that starts or ends at a hidden entity is left out |
+| `suggestions` | object | as in the file |
+
+An entity is `{ key, label { singular, plural }, description, rootable, visible, identifyingFields, lifecycle?, fields }`,
+without `table` and `keyColumn`. A field is the file's field without `column` and `computed`, and only when its
+`visible` is true:
+
+| Field member | Type | Notes |
+|---|---|---|
+| `key` | string | |
+| `label` | text | `{ he, en }` |
+| `description?` | text | |
+| `type` | string | `number`, `text`, `date`, `bool` or `enum` |
+| `nullable` | boolean | |
+| `visible` | boolean | always true here |
+| `operators` | string[] | always present: the resolved operator keys, in glossary order. The field's own list when the file gives one, else every operator whose `types` include the field's type, minus `is_null` and `is_not_null` when the field is not nullable |
+| `comparable?` | boolean | absent means true; false keeps the field out of a field-to-field comparison (errors.md, Field comparisons) |
+| `identifier?` | boolean | absent means false; true on a number that names a record: it is written digit for digit (errors.md, Rendering) |
+| `unit?` | text | follows the field's values |
+| `enumValues?` | object[] | `{ value, label }`, for `enum` |
+| `valueLabels?` | object | `{ "true": text, "false": text }`, for `bool` |
+| `required?` | string | `always`, `active` or `inactive` |
+
+A relationship carries no `join`. A client tells a computed field only by what it may do with it (`operators`,
+`comparable`).
 
 ### `POST /validate`
 
@@ -519,7 +553,7 @@ Served from the run's stored snapshot; the engine is not called. A run with no s
 
 | Query parameter | Type | Notes |
 |---|---|---|
-| `search?` | string | a substring of the violation's `display_text` (`Violation`) or of its `reasonText`; case-insensitive, `%` and `_` taken literally |
+| `search?` | string | a substring of the violation's `display_text` (`Violation`) or of its `reasonText`; case-insensitive, with `%`, `_` and `[` taken literally. It is trimmed first, and an empty one filters nothing |
 | `condition?` | string | a node id: keeps the violations whose `matched` holds it |
 | `sort?` | string | `key` (default): the engine's order, `seq`; `display`: `display_text`, then `seq` |
 | `dir?` | string | `asc` (default) or `desc`, applied to both sort keys |
