@@ -13,4 +13,9 @@ describe('pluralKeys', () => {
     expect(pluralKeys('list.count', 23, 'he')).toEqual(['list.count.other']);
     expect(pluralKeys('list.count', 0, 'he')).toEqual(['list.count.other']);
   });
+
+  it('asks only for the other form when the count is a fraction, which is written as a number', () => {
+    expect(pluralKeys('results.seconds', 0.4, 'he')).toEqual(['results.seconds.other']);
+    expect(pluralKeys('results.seconds', 1.5, 'he')).toEqual(['results.seconds.other']);
+  });
 });

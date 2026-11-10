@@ -1,0 +1,70 @@
+<div class="table-bleed">
+  <table class="table table--records" data-testid="results-table" [attr.aria-busy]="loading()">
+    <thead>
+      <tr>
+        @for (column of columns(); track column.key; let first = $first) {
+          <th scope="col" class="col-id" [attr.aria-sort]="first ? ariaSort() : null">
+            @if (first) {
+              <button class="th-sort" type="button" data-testid="sort-display" (click)="cycleSort()">
+                {{ column.label }}<app-icon size="sm" [name]="sortIcon()" />
+              </button>
+            } @else {
+              {{ column.label }}
+            }
+          </th>
+        }
+        <th scope="col">{{ 'results.table.reasons' | translate }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      @if (loading()) {
+        @for (skeleton of skeletons; track $index) {
+          <tr aria-hidden="true" data-testid="skeleton-row">
+            @for (column of columns(); track column.key; let first = $first) {
+              <td [class.cell-title]="first" [class.cell-meta]="!first">
+                <app-skeleton [width]="first ? skeleton.name : 'calc(var(--space-7))'" />
+              </td>
+            }
+            <td class="cell-full"><app-skeleton [width]="skeleton.reasons" /></td>
+          </tr>
+        }
+      } @else {
+        @for (row of rows(); track row.seq) {
+          <tr data-testid="result-row" [attr.data-key]="row.key">
+            @for (column of columns(); track column.key; let first = $first) {
+              <td [class.cell-title]="first" [class.cell-meta]="!first" [class.num]="!first">
+                <bdi>{{ value(row, column) }}</bdi>
+              </td>
+            }
+            <td class="cell-full">
+              <div class="reasons">
+                @for (reason of row.reasons; track reason.conditionId) {
+                  <p
+                    class="reason"
+                    data-testid="reason"
+                    [attr.data-node]="reason.conditionId"
+                    (pointerenter)="trace.emit(reason.conditionId)"
+                    (pointerleave)="trace.emit(null)"
+                  >
+                    <app-mark
+                      [label]="marks().get(reason.conditionId) ?? ''"
+                      [state]="
+                        active() === reason.conditionId
+                          ? 'active'
+                          : traced() === reason.conditionId
+                            ? 'traced'
+                            : 'resting'
+                      "
+                      [name]="'common.condition' | translate: { mark: marks().get(reason.conditionId) ?? '' }"
+                    />
+                    <span><app-text-parts [parts]="reason.textParts" [markValues]="true" /></span>
+                  </p>
+                }
+              </div>
+            </td>
+          </tr>
+        }
+      }
+    </tbody>
+  </table>
+</div>

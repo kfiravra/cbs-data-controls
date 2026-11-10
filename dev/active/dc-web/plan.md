@@ -297,16 +297,16 @@ Review: `/phase-review web`
 Commit: `feat(web): control editor with the engine's sentence, save and run`
 
 ### Phase 5: run results
-- [ ] `ResultsStore` with the query parameters of Design D; page head, plain sentence, run summary, breakdown,
+- [x] `ResultsStore` with the query parameters of Design D; page head, plain sentence, run summary, breakdown,
       toolbar, results table and card rows, table foot.
-- [ ] Reasons from `textParts` with the actual values marked; marks from the definition of the version that ran;
+- [x] Reasons from `textParts` with the actual values marked; marks from the definition of the version that ran;
       the trace across breakdown, sentence and reasons; the active mark while a condition filters.
-- [ ] The states of Design L: loading and re-run skeletons, no violations, cap exceeded, timed out, outdated
+- [x] The states of Design L: loading and re-run skeletons, no violations, cap exceeded, timed out, outdated
       definition, failed otherwise, a search that matches nothing, run not found.
-- [ ] Sort (cut 4): the first column's header, and the sort select on a phone.
-- [ ] Specs: the results table (marks, marked values, `<bdi>`), the breakdown filter, the state chosen from a run.
-- [ ] `e2e/mocked/results.spec.ts`: every state above; screenshots.
-- [ ] `docs/design.md`: the rows of the States table that decisions 15 and 16 change.
+- [x] Sort (cut 4): the first column's header, and the sort select on a phone.
+- [x] Specs: the results table (marks, marked values, `<bdi>`), the breakdown filter, the state chosen from a run.
+- [x] `e2e/mocked/results.spec.ts`: every state above; screenshots.
+- [x] `docs/design.md`: the rows of the States table that decisions 15 and 16 change.
 
 Verify: `/check --tests` · `cd web && npx playwright test e2e/mocked/results.spec.ts`
 Review: `/phase-review web`

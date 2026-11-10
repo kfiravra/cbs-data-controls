@@ -9,7 +9,9 @@ export interface StoredRun {
   readonly results: readonly ResultItem[];
 }
 
-export const engine = new FakeEngine(glossaryFile, loadSeed());
+const seed = loadSeed();
+
+export const engine = new FakeEngine(glossaryFile, seed);
 
 const RUN_DATE = '2026-11-10';
 
@@ -73,6 +75,18 @@ export function succeededRun(control: Control, id: number, options: RunOptions =
     },
     results,
   };
+}
+
+/**
+ * As many flagged records as asked, taken from the seed in key order, each matched by the control's first
+ * condition: enough rows to page, sort and search through. The fake engine decides no violation, so the
+ * records are not the ones a real run would flag.
+ */
+export function manyViolations(control: Control, count: number): ExpectedViolation[] {
+  const file = glossaryFile as { entities: { key: string; table: { name: string }; keyColumn: string }[] };
+  const root = file.entities.find((entity) => entity.key === control.rootEntity)!;
+  const first = engine.sentenceOf(control.definition).conditions[0].id;
+  return seed[root.table.name].slice(0, count).map((row) => ({ key: String(row[root.keyColumn]), matched: [first] }));
 }
 
 function stoppedRun(control: Control, id: number, status: Run['status'], error: RunError | null): StoredRun {

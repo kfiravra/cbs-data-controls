@@ -668,10 +668,14 @@ Every empty, waiting and failed state, and what it says. The error codes are tho
 | Never run | A list row | Text | `טרם הורצה` as the last run; a dash as the result | Run |
 | Run in progress | List row, results | Disabled button with spinner; skeleton rows in the table | `ההרצה מתבצעת` | Wait |
 | No violations | Results | State panel, Success | That the control was checked against every record and none matched | Run again; back to the list |
-| More violations than the cap, `ROW_CAP_EXCEEDED` | Results, above the table | Banner, Warning | The exact total and how many are shown; the breakdown counts the shown rows | Edit the conditions |
+| More violations than the cap, `ROW_CAP_EXCEEDED` | Results, above the table | Banner, Warning | The exact total and how many are shown; the figure and the breakdown count all violations, the table holds the stored rows | Edit the conditions |
 | Run timed out, `QUERY_TIMEOUT` | Results; the list row shows `ההרצה נעצרה` | State panel, Danger | After how long it stopped, and that nothing was checked | Edit the conditions; run again |
-| Engine or database not answering, `DATABASE_UNAVAILABLE` | Any screen, under the page head | Banner, Danger | What still works (reading) and what waits (run, save) | Try again |
-| A field left the glossary, `GLOSSARY_MISMATCH` | Results, editor | State panel, Warning | Which field, by its last known label | Edit the control |
+| Run failed for another reason (a run error other than the two beside it) | Results; the list row shows `ההרצה נעצרה` | State panel, Danger | That the run did not complete, and why in the words of its code | Run again |
+| Run still in progress when its results are opened (`running`) | Results | State panel, neutral, no icon | That the results appear when the run ends | Look again |
+| Engine, database or network not answering, `ENGINE_UNAVAILABLE`, `DATABASE_UNAVAILABLE`, `NETWORK_ERROR` | Any screen, under the page head | Banner, Danger | What still works (reading) and what waits (run, save) | Try again |
+| The saved definition no longer fits the glossary, `CONTROL_DEFINITION_OUTDATED` | Results: state panel, Warning. Editor: banner, Warning, and the error on the row | Which condition, by its mark: the label of a field that left the glossary no longer exists, and a key never reaches the screen | Edit the control |
+| Control archived, `CONTROL_ARCHIVED` | Editor, results | Banner, Warning; the editor shows the control as text | That it can be read but not changed or run | Duplicate into a new control |
+| No such control, run or page | In place of the screen | State panel, neutral | That the address may be wrong or the thing gone | Back to the list |
 | Definition not valid, `DEFINITION_INVALID` | Editor | Field error on the row; status line on the sentence field | What is missing on that condition | Fix the row |
 | Saved elsewhere meanwhile (conflict) | Editor, under the page head | Banner, Warning | That this screen's changes are not saved | Load the current version |
 | Search or filter matches nothing | Under a toolbar | State panel, neutral, no icon | The term searched and what the search looks in | Clear the search |

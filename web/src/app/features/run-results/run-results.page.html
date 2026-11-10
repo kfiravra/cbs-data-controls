@@ -1,0 +1,218 @@
+@if (store.loadState() === 'notFound') {
+  <app-not-found />
+} @else {
+  @let run = store.run();
+  <app-page-head [title]="run?.controlName ?? ('results.title' | translate)" [meta]="meta()" [back]="true">
+    @if (run) {
+      <a class="btn btn--tonal" data-testid="edit-control" [routerLink]="['/controls', run.controlId]">
+        <app-icon name="edit" />{{ 'results.actions.edit' | translate }}
+      </a>
+      <button
+        class="btn btn--primary"
+        type="button"
+        data-testid="rerun"
+        [disabled]="store.rerunning()"
+        (click)="rerun()"
+      >
+        @if (store.rerunning()) {
+          <span class="spinner" aria-hidden="true"></span>{{ 'results.actions.running' | translate }}
+        } @else {
+          <app-icon name="play_arrow" />{{ 'results.actions.rerun' | translate }}
+        }
+      </button>
+    }
+  </app-page-head>
+
+  <div class="stack page-banners">
+    @if (store.failure(); as error) {
+      <app-error-banner [error]="error" (retry)="reload()" />
+    }
+  </div>
+
+  @if (run?.sentenceParts; as parts) {
+    <p class="sentence" data-testid="run-sentence">
+      <app-text-parts
+        [parts]="parts"
+        [marks]="store.marks()"
+        [traced]="store.traced()"
+        [active]="view().condition"
+        (trace)="store.traced.set($event)"
+      />
+    </p>
+  }
+
+  @switch (store.state()) {
+    @case ('violations') {
+      <section class="section" aria-labelledby="s-summary">
+        <h2 class="sr-only" id="s-summary">{{ 'results.summary.title' | translate }}</h2>
+        <app-run-summary [figure]="capParams().total" [noun]="noun()" [facts]="facts()" [previous]="previous()" />
+      </section>
+
+      <div class="split section">
+        <aside class="split__side" aria-labelledby="s-by">
+          <div class="panel">
+            <div class="panel__head">
+              <h2 class="t-title" id="s-by">{{ 'results.breakdown.title' | translate }}</h2>
+              <p class="muted t-small">{{ 'results.breakdown.hint' | translate }}</p>
+            </div>
+            <app-breakdown
+              [conditions]="run!.conditions ?? []"
+              [total]="run!.totalCount ?? 0"
+              [marks]="store.marks()"
+              [active]="view().condition"
+              [traced]="store.traced()"
+              (filter)="go({ condition: $event })"
+              (trace)="store.traced.set($event)"
+            />
+          </div>
+        </aside>
+
+        <section class="split__main" aria-labelledby="s-rows">
+          <h2 class="t-title" id="s-rows">{{ 'results.table.title' | translate }}</h2>
+          @if (run!.capExceeded) {
+            <app-banner
+              tone="warning"
+              data-testid="cap-banner"
+              [title]="'errors.ROW_CAP_EXCEEDED.title' | translate: capParams()"
+              [body]="'errors.ROW_CAP_EXCEEDED.body' | translate"
+              [actionLabel]="'results.actions.editConditions' | translate"
+              (action)="editControl()"
+            />
+          }
+          <app-toolbar
+            [search]="view().search"
+            [searchLabel]="'results.search.label' | translate"
+            [placeholder]="'results.search.placeholder' | translate"
+            [filtersLabel]="'results.sort.label' | translate"
+            (searchChange)="go({ search: $event.trim() })"
+          >
+            <mat-form-field class="toolbar__filter only-narrow" appearance="outline" subscriptSizing="dynamic">
+              <mat-select
+                data-testid="sort-select"
+                [aria-label]="'results.sort.label' | translate"
+                [value]="displaySort() ?? 'key'"
+                (selectionChange)="setSort($event.value === 'key' ? null : $event.value)"
+              >
+                <mat-option value="key">{{ 'results.sort.key' | translate }}</mat-option>
+                <mat-option value="asc">{{ 'results.sort.asc' | translate: { column: columns()[0]?.label } }}</mat-option>
+                <mat-option value="desc">{{ 'results.sort.desc' | translate: { column: columns()[0]?.label } }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </app-toolbar>
+
+          @if (nothingMatches() && !store.rowsLoading()) {
+            <app-state-panel
+              data-testid="no-match"
+              [title]="
+                view().search
+                  ? ('results.noMatch.title' | translate: { term: view().search })
+                  : ('results.noMatch.titleFilter' | translate)
+              "
+            >
+              <p>{{ 'results.noMatch.body' | translate }}</p>
+              <button actions class="btn btn--tonal" type="button" (click)="go({ search: '', condition: null })">
+                {{ 'results.noMatch.clear' | translate }}
+              </button>
+            </app-state-panel>
+          } @else {
+            <app-results-table
+              [rows]="store.rows()?.items ?? []"
+              [columns]="columns()"
+              [marks]="store.marks()"
+              [traced]="store.traced()"
+              [active]="view().condition"
+              [sort]="displaySort()"
+              [loading]="store.rows() === null || store.rerunning()"
+              (sortChange)="setSort($event)"
+              (trace)="store.traced.set($event)"
+            />
+            @if (store.rows(); as rows) {
+              <app-table-foot
+                rangeKey="results.range"
+                [total]="rows.total"
+                [page]="rows.page"
+                [pageSize]="rows.pageSize"
+                [pageSizes]="pageSizes"
+                (pageChange)="go({ page: $event })"
+                (pageSizeChange)="go({ size: $event })"
+              />
+            }
+          }
+        </section>
+      </div>
+    }
+    @case ('noViolations') {
+      <app-state-panel
+        tone="success"
+        icon="check_circle"
+        data-testid="state-no-violations"
+        [title]="'results.none.title' | translate"
+      >
+        <p>{{ 'results.none.body' | translate: { entity: entityLabel() } }}</p>
+        <button actions class="btn btn--tonal" type="button" [disabled]="store.rerunning()" (click)="rerun()">
+          <app-icon name="play_arrow" />{{ 'results.actions.rerun' | translate }}
+        </button>
+        <a actions class="btn btn--text" routerLink="/">{{ 'results.actions.toList' | translate }}</a>
+      </app-state-panel>
+    }
+    @case ('timedOut') {
+      <app-state-panel
+        tone="danger"
+        icon="error"
+        data-testid="state-timed-out"
+        [title]="'errors.QUERY_TIMEOUT.title' | translate: timeoutParams()"
+      >
+        <p>{{ 'errors.QUERY_TIMEOUT.body' | translate }}</p>
+        <a actions class="btn btn--tonal" [routerLink]="['/controls', run!.controlId]">
+          <app-icon name="edit" />{{ 'results.actions.editConditions' | translate }}
+        </a>
+        <button actions class="btn btn--tonal" type="button" [disabled]="store.rerunning()" (click)="rerun()">
+          <app-icon name="play_arrow" />{{ 'results.actions.rerun' | translate }}
+        </button>
+      </app-state-panel>
+    }
+    @case ('outdated') {
+      <app-state-panel
+        tone="warning"
+        icon="link_off"
+        data-testid="state-outdated"
+        [title]="'errors.CONTROL_DEFINITION_OUTDATED.title' | translate"
+      >
+        <p>{{ outdatedText() }}</p>
+        <a actions class="btn btn--tonal" [routerLink]="['/controls', run!.controlId]">
+          <app-icon name="edit" />{{ 'results.actions.edit' | translate }}
+        </a>
+      </app-state-panel>
+    }
+    @case ('failed') {
+      <app-state-panel
+        tone="danger"
+        icon="error"
+        data-testid="state-failed"
+        [title]="'results.failed.title' | translate"
+      >
+        <p>{{ 'errors.' + (run!.error?.code ?? 'INTERNAL_ERROR') + '.body' | translate }}</p>
+        <button actions class="btn btn--tonal" type="button" [disabled]="store.rerunning()" (click)="rerun()">
+          <app-icon name="play_arrow" />{{ 'results.actions.rerun' | translate }}
+        </button>
+      </app-state-panel>
+    }
+    @case ('running') {
+      <app-state-panel data-testid="state-running" [title]="'results.running.title' | translate">
+        <p>{{ 'results.running.body' | translate }}</p>
+        <button actions class="btn btn--tonal" type="button" (click)="reload()">
+          {{ 'results.running.reload' | translate }}
+        </button>
+      </app-state-panel>
+    }
+    @default {
+      @if (store.loadState() === 'loading') {
+        <div class="stack section" aria-hidden="true" data-testid="results-loading">
+          <app-skeleton width="58%" />
+          <app-skeleton width="34%" />
+          <app-skeleton width="46%" />
+        </div>
+      }
+    }
+  }
+}

@@ -1,14 +1,14 @@
 # dc-web notes
 
 ## State
-Phase 4 done and committed (2026-11-11, unattended night run on Kfir's word). The fixes of the phase 3 review
-are the next commit, then the phase 4 review runs in the background while phase 5 is built. The dev server
+Phase 5 done and committed (2026-11-11, unattended night run on Kfir's word). The fixes of the phase 4 review
+are the next commit, then the phase 5 review runs in the background while phase 6 is built. The dev server
 runs on :4200.
 
 ## Next
-1. `fix(web): review fixes` for the phase 3 review (findings in the Log), then `/phase-review web` on phase 4.
-2. Phase 5: the results screen (store, summary, breakdown, table, every state).
-3. Phase 6; phase 7 writes the gate specs and runs them only when the api and the engine are on main.
+1. `fix(web): review fixes` for the phase 4 review (findings in the Log), then `/phase-review web` on phase 5.
+2. Phase 6: the controls list and the suggestions dialog.
+3. Phase 7 writes the gate specs and runs them only when the api and the engine are on main.
 
 ## Blockers
 - Phase 7 runs (the gate on the real stack, the pre-load, the hosted build): the api and the engine are not on
@@ -72,6 +72,17 @@ runs on :4200.
     glossary), and otherwise asks the engine for the sentence again; a failed save is retried with Save.
 24. After a save that is followed by a run that does not start, the control stays saved, the address becomes
     the control's, and the failure is the banner.
+
+25. The results show an identifying field per column, in the glossary's order, and on a phone the same cells
+    share the card's first line (design.md draws two columns, name and number; the glossary now has three
+    identifying fields for an employee and any number for another entity).
+26. "What was checked" in the summary is the plural label of the root entity alone ("נבדקו: עובדים"), and the
+    no-violations text says "כל הרשומות ({{entity}})": the mock's "כל העובדים" would need a definite article
+    glued to a glossary label.
+27. A duration is counted as it is shown: a fraction takes the general plural form ("0.4 שניות"). Hebrew plural
+    rules put 0.4 in the same category as 1, which gave "שנייה אחת" for 412 ms before the phase gate.
+28. The sort is offered on the first identifying column only (the api sorts by the whole identifying text,
+    `sort=display`), and on a phone from a select behind the toolbar's filter button.
 
 ## Reconciliation with `contracts/` (phase 2, 2026-11-11)
 Read: `api.md`, `errors.md`, `glossary.json`, `control-definition.schema.json`, the six examples and the thirteen
@@ -266,3 +277,12 @@ rewrote. A review that found nothing, or did not run, is logged as that.
   had already been strengthened in phase 4 (the validated definition equals the example's, node for node).
   Left: the driver still focuses a control before working it with keys (it proves each control works by
   keyboard; the tab order of a row has its own test, and the pass through the whole flow is phase 8).
+- 2026-11-11 phase 5 on Fable 5.2: gate `gates/phase-5.txt` (ngc, ng lint, e2e type check, 239 unit tests in 26
+  files, ng build, print guard, `e2e/mocked` on mobile and desktop: 94 passed, 2 skipped by project on purpose:
+  the header sort is a desktop test and the sort select a phone test). `results.spec.ts` covers a run with
+  violations (marks per record against each example's `matched`), the breakdown filter, search and its
+  no-match state, paging and a reload by address, sort, the trace, no violations, the cap, timed out, outdated
+  by mark, failed otherwise, running, run again with skeleton rows, loading, not found and an archived
+  control. Screenshots in `screenshots/phase-5/`. `docs/design.md`: the States table now has the rows of
+  decisions 15 and 16, and rows for a run that failed otherwise, a run in progress, an archived control and
+  not found. No cut taken: the sort is built.
