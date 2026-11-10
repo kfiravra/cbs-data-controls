@@ -150,21 +150,21 @@ Review: `/phase-review sql infra`
 Commit: `feat(sql): database skeleton, hr and dq schemas, two logins`
 
 ### Phase 2: definition schema and glossary
-- [ ] `contracts/control-definition.schema.json` per Design C.
-- [ ] `contracts/glossary.json` per Design B, with Hebrew and English for every label and template.
-- [ ] `scripts/contracts-check.py` per Design G, checks 1 to 3.
-- [ ] pkgmap: a `contracts-check` row in the default column for `contracts/**` and `scripts/contracts-check.py`,
+- [x] `contracts/control-definition.schema.json` per Design C.
+- [x] `contracts/glossary.json` per Design B, with Hebrew and English for every label and template.
+- [x] `scripts/contracts-check.py` per Design G, checks 1 to 3.
+- [x] pkgmap: a `contracts-check` row in the default column for `contracts/**` and `scripts/contracts-check.py`,
       with a skip line when `uv` is missing. Update `pkgmap.test.mjs` (the "contracts prose -> nothing" case
       changes), the matrix and `allowed-tools` in `.claude/skills/check/SKILL.md`, the map in `.claude/README.md`
       and the Verify list in CLAUDE.md.
-- [ ] `scripts/db-check.sh` section `glossary`: every table and column the glossary names exists in
+- [x] `scripts/db-check.sh` section `glossary`: every table and column the glossary names exists in
       `INFORMATION_SCHEMA` as `dq_engine_ro` sees it. One static query dumps the columns and jq compares the sets;
       no SQL is built from the glossary.
-- [ ] Amendments per Design H1, H3 and H4a: `lifecycle`, `required`, `comparable`, `limits.maxTotalValues` and the
+- [x] Amendments per Design H1, H3 and H4a: `lifecycle`, `required`, `comparable`, `limits.maxTotalValues` and the
       `suggestions` block in the glossary; node types by `if`/`then` in the schema; checks 2 and 3 extended.
-- [ ] Design I1 for the schema: a member that is not allowed is `false` under `properties` or falls to
+- [x] Design I1 for the schema: a member that is not allowed is `false` under `properties` or falls to
       `additionalProperties: false`; no `not`, `anyOf` or `oneOf` anywhere, and check 1 fails on any of the three.
-- [ ] `docs/architecture.md` §4.3: the operator text model, `limits`, and `lifecycle`, `required` and `comparable`
+- [x] `docs/architecture.md` §4.3: the operator text model, `limits`, and `lifecycle`, `required` and `comparable`
       (decisions 11, 12, 26 and 28).
 
 Verify: `uv run scripts/contracts-check.py` · `scripts/db-check.sh` · `node --test .claude/hooks/tests/*.test.mjs`

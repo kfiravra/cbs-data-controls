@@ -7,12 +7,14 @@ import { REPO_ROOT, git, initGitRepo, rmrf, runScript, tmpDir, writeTree } from 
 const STUB = '#!/usr/bin/env bash\n';
 
 // The tree as it looks once the five tasks have landed: every part with its manifest and
-// its tools (stubs). A fake `dotnet` on PATH keeps the api rows independent of this machine.
+// its tools (stubs). A fake `dotnet` and `uv` on PATH keep the api and contracts rows
+// independent of this machine.
 const FULL = {
   'sql/00_database.sql': '',
   'scripts/db-init.sh': STUB,
   'scripts/db-check.sh': STUB,
   'docker-compose.yml': '',
+  'scripts/contracts-check.py': '',
   'contracts/glossary.json': '{}',
   'contracts/examples/ex01.json': '{}',
   'contracts/api.md': '',
@@ -31,9 +33,15 @@ const FULL = {
   'web/src/app/app.html': '',
 };
 
-const fakeBin = writeTree(tmpDir('dc-bin-'), { dotnet: STUB });
+const fakeBin = writeTree(tmpDir('dc-bin-'), { dotnet: STUB, uv: STUB });
 const cleanup = [fakeBin];
 after(() => cleanup.forEach(rmrf));
+
+// This machine's PATH without any directory that holds a `uv`.
+const pathWithoutUv = (process.env.PATH || '')
+  .split(path.delimiter)
+  .filter((dir) => dir && !fs.existsSync(path.join(dir, 'uv')))
+  .join(path.delimiter);
 
 function tree(files = FULL) {
   const root = writeTree(tmpDir('dc-map-'), files);
@@ -42,8 +50,12 @@ function tree(files = FULL) {
 }
 
 function mapIn(root, ...args) {
+  return mapWithPath(root, `${fakeBin}:${process.env.PATH}`, ...args);
+}
+
+function mapWithPath(root, PATH, ...args) {
   const r = runScript('lib/pkgmap.sh', undefined, {
-    env: { CLAUDE_PROJECT_DIR: root, PATH: `${fakeBin}:${process.env.PATH}` },
+    env: { CLAUDE_PROJECT_DIR: root, PATH },
     args,
   });
   assert.equal(r.status, 0, r.stderr);
@@ -96,11 +108,26 @@ describe('pkgmap maps touched paths to the verify matrix', () => {
     assert.ok(labels(mapIn(full, `${full}/api/src/DataControls.Api/Program.cs`)).includes('api-build'));
   });
 
-  test('contracts JSON -> the engine, api and web rows (the one channel between them); contracts prose -> nothing', () => {
+  test('contracts JSON -> contracts-check, then the engine, api and web rows (the one channel between them)', () => {
     assert.deepEqual(labels(mapIn(full, 'contracts/examples/ex01.json')), [
-      'engine-ruff', 'engine-pyright', 'api-build', 'api-format', 'web-ngc',
+      'contracts-check', 'engine-ruff', 'engine-pyright', 'api-build', 'api-format', 'web-ngc',
     ]);
-    assert.deepEqual(mapIn(full, 'contracts/api.md'), []);
+  });
+
+  test('contracts prose and the check script itself -> contracts-check alone, from the root, through uv', () => {
+    for (const p of ['contracts/api.md', 'scripts/contracts-check.py']) {
+      assert.deepEqual(mapIn(full, p), [{ label: 'contracts-check', cwd: '.', command: 'uv run scripts/contracts-check.py' }], p);
+    }
+    assert.deepEqual(labels(mapIn(full, '--tests', 'contracts/api.md')), ['contracts-check']);
+  });
+
+  test('contracts-check without uv on PATH, or without its script, is a skip line that says why', () => {
+    const noUv = mapWithPath(full, pathWithoutUv, 'contracts/api.md');
+    assert.deepEqual(labels(noUv), ['skip']);
+    assert.match(noUv[0].command, /uv not found on PATH/);
+    const noScript = mapIn(tree({ 'contracts/api.md': '' }), 'contracts/api.md');
+    assert.deepEqual(labels(noScript), ['skip']);
+    assert.match(noScript[0].command, /scripts\/contracts-check\.py missing/);
   });
 
   test('sql scripts -> nothing by default; --tests initialises the db, then checks it', () => {
@@ -123,9 +150,9 @@ describe('pkgmap maps touched paths to the verify matrix', () => {
     assert.equal(row(rows, 'web-build').command, 'npx ng build');
   });
 
-  test('--all --tests covers every part, sql first and the harness last', () => {
+  test('--all --tests covers every part, sql first, then contracts, and the harness last', () => {
     assert.deepEqual(labels(mapIn(full, '--all', '--tests')), [
-      'sql-init', 'sql-check', 'engine-ruff', 'engine-pyright', 'engine-test', 'api-build', 'api-format',
+      'sql-init', 'sql-check', 'contracts-check', 'engine-ruff', 'engine-pyright', 'engine-test', 'api-build', 'api-format',
       'api-test', 'web-ngc', 'web-eslint', 'web-test', 'web-build', 'print-guard', 'hooks',
     ]);
   });

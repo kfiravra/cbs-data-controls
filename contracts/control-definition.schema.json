@@ -1,0 +1,334 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://data-controls.example/contracts/control-definition.schema.json",
+  "title": "Control definition",
+  "description": "The structural contract of a control definition, schemaVersion 1. The api validates with JsonSchema.Net 8.0.5 and the engine with Python jsonschema; both must report a failure at the same instance location, so the schema keeps to this keyword subset: $defs, $ref, type, const, enum, if/then, properties, required, additionalProperties, items, minItems/maxItems, uniqueItems, pattern, minLength/maxLength, title and description. There is no not, anyOf or oneOf anywhere, and allOf appears only as a plain list of if/then pairs, because one object carries several of them. A member that is not allowed is either left out of properties (additionalProperties is false on every object) or set to false under properties in a then. Nodes: one node object declares every member any node type can have; an if on type picks the then of its node type, which requires that type's members and sets the members of the other two types to false. Operands follow the same technique, by the arity of the operator: arity 0 takes no operand; arity 1 takes exactly one of value and right (a right sets value to false, and with neither right nor values present value is required); arity 2 takes values with exactly two items; a list operator takes values with 1 to 100 unique items. Left to the semantic layer, which needs the glossary or the whole tree: unique node ids, depth, the number of conditions, the total number of values, whether entities, fields and relationships exist and a path connects, whether the operator is allowed for the field, whether the right side may be a field (FIELD_COMPARISON_NOT_ALLOWED, also for an arity-1 operator that is not fieldComparable), value types, enum values, real dates and the order of a range.",
+  "type": "object",
+  "required": ["schemaVersion", "rootEntity", "where"],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "description": "Always 1. Both services answer another version with UNSUPPORTED_SCHEMA_VERSION before this schema runs.",
+      "const": 1
+    },
+    "rootEntity": {
+      "description": "The glossary key of the entity whose records are checked.",
+      "$ref": "#/$defs/key"
+    },
+    "where": {
+      "description": "The root of the condition tree; always a group. A record is a violation when it is true.",
+      "$ref": "#/$defs/group"
+    }
+  },
+  "$defs": {
+    "id": {
+      "title": "Node id",
+      "description": "Stable id of a condition or related node; unique across the tree (checked by the semantic layer).",
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]{0,31}$"
+    },
+    "key": {
+      "title": "Glossary key",
+      "description": "An entity, field or relationship key of the glossary.",
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_.]{0,63}$"
+    },
+    "operator": {
+      "title": "Operator",
+      "description": "The eighteen operator keys of the glossary; the four arity lists below partition them.",
+      "enum": [
+        "eq",
+        "ne",
+        "lt",
+        "lte",
+        "gt",
+        "gte",
+        "between",
+        "not_between",
+        "in",
+        "not_in",
+        "contains",
+        "not_contains",
+        "starts_with",
+        "ends_with",
+        "is_null",
+        "is_not_null",
+        "is_empty",
+        "is_not_empty"
+      ]
+    },
+    "operatorArity0": {
+      "title": "Operators of arity 0",
+      "description": "Take no operand.",
+      "enum": ["is_null", "is_not_null", "is_empty", "is_not_empty"]
+    },
+    "operatorArity1": {
+      "title": "Operators of arity 1",
+      "description": "Take exactly one of value and right.",
+      "enum": ["eq", "ne", "lt", "lte", "gt", "gte", "contains", "not_contains", "starts_with", "ends_with"]
+    },
+    "operatorArity2": {
+      "title": "Operators of arity 2",
+      "description": "Take values with exactly two items, low then high, both included.",
+      "enum": ["between", "not_between"]
+    },
+    "operatorArityList": {
+      "title": "List operators",
+      "description": "Take values with 1 to 100 unique items.",
+      "enum": ["in", "not_in"]
+    },
+    "value": {
+      "title": "Literal value",
+      "description": "A number, a string (text, an enum value, or a date as YYYY-MM-DD) or a boolean.",
+      "type": ["number", "string", "boolean"]
+    },
+    "listValue": {
+      "title": "List item",
+      "description": "A number or a string (text, an enum value, or a date as YYYY-MM-DD).",
+      "type": ["number", "string"]
+    },
+    "fieldRef": {
+      "title": "Field reference",
+      "description": "A field of the scope entity, or of an entity reached from it through at most two many-to-one or one-to-one relationships.",
+      "type": "object",
+      "required": ["field"],
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "description": "Relationship keys from the scope entity outward; absent or empty for a field of the scope entity.",
+          "type": "array",
+          "maxItems": 2,
+          "items": { "$ref": "#/$defs/key" }
+        },
+        "field": {
+          "description": "The field key on the entity the path reaches.",
+          "$ref": "#/$defs/key"
+        }
+      }
+    },
+    "group": {
+      "title": "Group node",
+      "description": "A node whose type is group: the root of the tree and the where of a related node.",
+      "$ref": "#/$defs/node",
+      "properties": {
+        "type": { "const": "group" }
+      }
+    },
+    "node": {
+      "title": "Node",
+      "description": "A group, a condition or a related node, told apart by type.",
+      "type": "object",
+      "required": ["type"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "description": "The node type.",
+          "enum": ["group", "condition", "related"]
+        },
+        "op": {
+          "description": "Group: how the children combine.",
+          "enum": ["and", "or"]
+        },
+        "children": {
+          "description": "Group: 1 to 30 child nodes.",
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 30,
+          "items": { "$ref": "#/$defs/node" }
+        },
+        "id": {
+          "description": "Condition and related: the node id.",
+          "$ref": "#/$defs/id"
+        },
+        "left": {
+          "description": "Condition: the field the operator applies to.",
+          "$ref": "#/$defs/fieldRef"
+        },
+        "operator": {
+          "description": "Condition: the operator key.",
+          "$ref": "#/$defs/operator"
+        },
+        "value": {
+          "description": "Condition, arity 1: the literal operand.",
+          "$ref": "#/$defs/value"
+        },
+        "right": {
+          "description": "Condition, arity 1: another field as the operand.",
+          "$ref": "#/$defs/fieldRef"
+        },
+        "values": {
+          "description": "Condition, arity 2 and list: the literal operands.",
+          "type": "array",
+          "items": { "$ref": "#/$defs/listValue" }
+        },
+        "relationship": {
+          "description": "Related: a one-to-many relationship key that starts at the scope entity.",
+          "$ref": "#/$defs/key"
+        },
+        "quantifier": {
+          "description": "Related: at least one related record matches where (any), or none does (none).",
+          "enum": ["any", "none"]
+        },
+        "where": {
+          "description": "Related: the conditions on each related record.",
+          "$ref": "#/$defs/group"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "required": ["type"],
+            "properties": { "type": { "const": "group" } }
+          },
+          "then": {
+            "required": ["op", "children"],
+            "properties": {
+              "id": false,
+              "left": false,
+              "operator": false,
+              "value": false,
+              "right": false,
+              "values": false,
+              "relationship": false,
+              "quantifier": false,
+              "where": false
+            }
+          }
+        },
+        {
+          "if": {
+            "required": ["type"],
+            "properties": { "type": { "const": "condition" } }
+          },
+          "then": {
+            "required": ["id", "left", "operator"],
+            "properties": {
+              "op": false,
+              "children": false,
+              "relationship": false,
+              "quantifier": false,
+              "where": false
+            }
+          }
+        },
+        {
+          "if": {
+            "required": ["type"],
+            "properties": { "type": { "const": "related" } }
+          },
+          "then": {
+            "required": ["id", "relationship", "quantifier", "where"],
+            "properties": {
+              "op": false,
+              "children": false,
+              "left": false,
+              "operator": false,
+              "value": false,
+              "right": false,
+              "values": false
+            }
+          }
+        },
+        {
+          "if": {
+            "required": ["type", "operator"],
+            "properties": {
+              "type": { "const": "condition" },
+              "operator": { "$ref": "#/$defs/operatorArity0" }
+            }
+          },
+          "then": {
+            "properties": {
+              "value": false,
+              "right": false,
+              "values": false
+            }
+          }
+        },
+        {
+          "if": {
+            "required": ["type", "operator"],
+            "properties": {
+              "type": { "const": "condition" },
+              "operator": { "$ref": "#/$defs/operatorArity1" }
+            }
+          },
+          "then": {
+            "properties": {
+              "values": false
+            }
+          }
+        },
+        {
+          "if": {
+            "required": ["type", "operator", "right"],
+            "properties": {
+              "type": { "const": "condition" },
+              "operator": { "$ref": "#/$defs/operatorArity1" }
+            }
+          },
+          "then": {
+            "properties": {
+              "value": false
+            }
+          }
+        },
+        {
+          "if": {
+            "required": ["type", "operator"],
+            "properties": {
+              "type": { "const": "condition" },
+              "operator": { "$ref": "#/$defs/operatorArity1" },
+              "right": false,
+              "values": false
+            }
+          },
+          "then": {
+            "required": ["value"]
+          }
+        },
+        {
+          "if": {
+            "required": ["type", "operator"],
+            "properties": {
+              "type": { "const": "condition" },
+              "operator": { "$ref": "#/$defs/operatorArity2" }
+            }
+          },
+          "then": {
+            "required": ["values"],
+            "properties": {
+              "value": false,
+              "right": false,
+              "values": {
+                "minItems": 2,
+                "maxItems": 2
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": ["type", "operator"],
+            "properties": {
+              "type": { "const": "condition" },
+              "operator": { "$ref": "#/$defs/operatorArityList" }
+            }
+          },
+          "then": {
+            "required": ["values"],
+            "properties": {
+              "value": false,
+              "right": false,
+              "values": {
+                "minItems": 1,
+                "maxItems": 100,
+                "uniqueItems": true
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

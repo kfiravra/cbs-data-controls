@@ -5,7 +5,8 @@
 #   scripts/db-check.sh structure permissions   only the named sections
 #
 # Passwords come from .env (a variable already set in the environment wins). sqlcmd runs inside the db
-# container through `docker compose exec`, so the host needs no SQL Server tools. Every query is static text:
+# container through `docker compose exec`, so the host needs no SQL Server tools; the sections that read
+# contracts/ need jq. Every query is static text:
 # values reach the SQL as sqlcmd variables, never spliced into it. The script shares no code with the engine.
 #
 # Adding a section: write a function section_<name> and add <name> to SECTIONS.
@@ -36,7 +37,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DATABASE=DataControls
 SQLCMD=/opt/mssql-tools18/bin/sqlcmd
 
-SECTIONS=(structure permissions)
+SECTIONS=(structure permissions glossary)
 
 SECTION=""
 TALLY=""
@@ -256,6 +257,69 @@ section_permissions() {
     WHERE p.grantee_principal_id = DATABASE_PRINCIPAL_ID(N'public')
       AND ((p.class = 3 AND p.major_id IN (SCHEMA_ID(N'hr'), SCHEMA_ID(N'dq')))
         OR (p.class = 1 AND OBJECT_SCHEMA_NAME(p.major_id) IN (N'hr', N'dq')));"
+}
+
+# --- glossary: every table and column the glossary names exists as the engine's login sees it ---
+# The same check the engine runs at startup, made here without the engine. One static query lists the columns
+# that dq_engine_ro can see, with the type family of each; jq lists what contracts/glossary.json names. No SQL is
+# built from the glossary.
+
+GLOSSARY_FILE=contracts/glossary.json
+
+# One line per physical column the glossary names: the key column of every entity, the column of every stored
+# field, the column a computed field is derived from, and both ends of every relationship.
+GLOSSARY_COLUMNS_JQ='
+  (.entities | map({ key: .key, value: "\(.table.schema).\(.table.name)" }) | from_entries) as $table
+  | [ .entities[]
+      | "\(.table.schema).\(.table.name)" as $t
+      | "\($t).\(.keyColumn)", (.fields[] | "\($t).\(.column // .computed.over)") ]
+    + [ .relationships[] | "\($table[.from]).\(.join.fromColumn)", "\($table[.to]).\(.join.toColumn)" ]
+  | unique | .[]'
+
+# One line per stored field: its column and the type family the field's type needs (an enum is stored as text).
+GLOSSARY_TYPES_JQ='
+  [ .entities[]
+    | "\(.table.schema).\(.table.name)" as $t
+    | .fields[] | select(.column != null)
+    | "\($t).\(.column):\(if .type == "enum" then "text" else .type end)" ]
+  | unique | .[]'
+
+section_glossary() {
+  local seen expected missing
+  command -v jq >/dev/null 2>&1 || { fail "jq is not on PATH: it reads $GLOSSARY_FILE"; return 0; }
+  [[ -f "$GLOSSARY_FILE" ]] || { fail "$GLOSSARY_FILE does not exist"; return 0; }
+
+  seen=$(sql_query dq_engine_ro "
+    SELECT c.TABLE_SCHEMA + N'.' + c.TABLE_NAME + N'.' + c.COLUMN_NAME + N':' +
+           CASE WHEN c.DATA_TYPE IN (N'tinyint', N'smallint', N'int', N'bigint', N'decimal', N'numeric')
+                    THEN N'number'
+                WHEN c.DATA_TYPE IN (N'nvarchar', N'nchar') THEN N'text'
+                WHEN c.DATA_TYPE = N'date' THEN N'date'
+                WHEN c.DATA_TYPE = N'bit' THEN N'bool'
+                ELSE c.DATA_TYPE END
+    FROM INFORMATION_SCHEMA.COLUMNS AS c;") || { fail "dq_engine_ro reads INFORMATION_SCHEMA.COLUMNS"; return 0; }
+
+  expected=$(jq -r "$GLOSSARY_COLUMNS_JQ" "$GLOSSARY_FILE") || { fail "$GLOSSARY_FILE: jq cannot read it"; return 0; }
+  missing=$(LC_ALL=C comm -23 <(sorted_lines "$expected") <(sorted_lines "$(cut -d: -f1 <<<"$seen")"))
+  if [[ -z "$missing" ]]; then
+    pass "all $(sorted_lines "$expected" | wc -l | tr -d ' ') columns the glossary names exist for dq_engine_ro"
+  else
+    fail "columns the glossary names and dq_engine_ro does not see: $(joined "$missing")"
+  fi
+
+  expected=$(jq -r "$GLOSSARY_TYPES_JQ" "$GLOSSARY_FILE") || expected=""
+  missing=$(LC_ALL=C comm -23 <(sorted_lines "$expected") <(sorted_lines "$seen"))
+  if [[ -z "$missing" ]]; then
+    pass "every stored field's type fits its column"
+  else
+    fail "fields whose type does not fit the column (column:type the glossary needs): $(joined "$missing")"
+  fi
+
+  if grep -q '^dq\.' <<<"$seen"; then
+    fail "dq_engine_ro sees columns of dq in INFORMATION_SCHEMA"
+  else
+    pass "dq_engine_ro sees hr alone in INFORMATION_SCHEMA"
+  fi
 }
 
 main() {

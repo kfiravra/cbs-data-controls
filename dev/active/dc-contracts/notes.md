@@ -16,6 +16,13 @@ finishes, because `db-init.sh` runs every `sql/NN_*.sql` it finds.
 4. Phase 4: check 5 over lane 3's files, CLAUDE.md rows, the remaining architecture lines, the README section.
 5. One review by area, one fix commit, the Gate from a clean container, push, PR. Show Kfir the `--render` output.
 
+Held for the review-fix commit (found by the orchestrator, not by a reviewer):
+- `.env.example` carries working passwords. `/ship` step 2 stops on `MSSQL_SA_PASSWORD=` with a value and the
+  dc-delivery plan (decision at its line 44) wants placeholders: empty the three values, and say in the README quick
+  start that they are set after the copy. The local `.env` keeps its values.
+- The `/run` example of `api.md` uses invented names and wording: align it with the seed (1051, 1052) and with the
+  glossary's real templates once lane 2's glossary is in.
+
 ## Blockers
 (none)
 
@@ -48,3 +55,15 @@ finishes, because `db-init.sh` runs every `sql/NN_*.sql` it finds.
   that `public` holds nothing; `.env.example` carries working dev passwords (dc-delivery wants them empty later).
   Hebrew round trip through db-init and db-check proven before the seed: `-f 65001` in, UTF-8 out. Not verified:
   shellcheck (not installed), bash 3.2, a host sqlcmd, SSMS. No review here: one review at the end, on Kfir's word.
+- 2026-11-10 phase 2 done (lane 2 on Opus; the db-check `glossary` section and architecture §4.3 by the
+  orchestrator): `gates/phase-2.txt`, contracts-check 3 checks passed, db-check 16 passed, hook tests 226 pass.
+  The schema says "exactly one of value or right" with two `if`/`then` pairs and no `not`, `anyOf` or `oneOf`;
+  `allOf` holds the list of `if`/`then` pairs. `jsonschema` is pinned to 4.26.0. Lane 3 reported that 4.26.0 puts
+  a member forbidden with `properties: { member: false }` at the member; checked by the orchestrator against the
+  final schema on 4.26.0 and 4.25.1: one error at the node in both, all five schema-layer fixtures at their expected
+  path, so the schema stays. Lane 2 also ran JsonSchema.Net 8.0.5 in a scratch console app: 41 cases agree with
+  Python after the api's three corrections. db-check `glossary` also asserts the type family per stored field and
+  that `dq_engine_ro` sees `hr` alone. For Kfir's read at the Gate: numbers say "קטן מ" and "גדול מ" (decision 12)
+  where the assignment says "נמוך מ" and "גבוה מ"; `is_active` is labelled "סטטוס"; a two-hop path names the last
+  relationship only ("סטטוס של המשרד"). For the engine session: the glossary has entity `description` and field
+  `label` and `description`, which its plan's list (Design J) leaves out; `arity` is 0, 1, 2 or the string "list".

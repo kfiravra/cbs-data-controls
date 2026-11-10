@@ -1,8 +1,8 @@
 ---
 name: check
-description: Run this repo's verify matrix (sql, engine, api, web, print guard, harness) for the parts touched in the working tree, or for everything with `all`. Use before a commit, at the end of a phase, or when asked to verify the work. This is the repo-specific runner, not the bundled /verify.
+description: Run this repo's verify matrix (sql, contracts, engine, api, web, print guard, harness) for the parts touched in the working tree, or for everything with `all`. Use before a commit, at the end of a phase, or when asked to verify the work. This is the repo-specific runner, not the bundled /verify.
 argument-hint: "[all] [--tests] [path ...]"
-allowed-tools: Bash(bash .claude/hooks/lib/pkgmap.sh *), Bash(bash *print-guard.sh *), Bash(dotnet build *), Bash(dotnet format *), Bash(dotnet test*), Bash(npx *), Bash(node --test *), Bash(*/bin/ruff *), Bash(*/bin/pyright*), Bash(.venv/bin/python -m pytest*), Bash(docker compose up -d db), Bash(scripts/db-init.sh*), Bash(scripts/db-check.sh*), Bash(pgrep *)
+allowed-tools: Bash(bash .claude/hooks/lib/pkgmap.sh *), Bash(bash *print-guard.sh *), Bash(dotnet build *), Bash(dotnet format *), Bash(dotnet test*), Bash(npx *), Bash(node --test *), Bash(*/bin/ruff *), Bash(*/bin/pyright*), Bash(.venv/bin/python -m pytest*), Bash(docker compose up -d db), Bash(scripts/db-init.sh*), Bash(scripts/db-check.sh*), Bash(uv run scripts/contracts-check.py*), Bash(pgrep *)
 ---
 
 Changed files in the working tree:
@@ -31,10 +31,11 @@ Arguments: $ARGUMENTS
 | Part (touched) | Default | `--tests` adds |
 |---|---|---|
 | sql (`sql/`, `scripts/db-*.sh`, `docker-compose.yml`) | nothing | `sql-init`: `docker compose up -d db && scripts/db-init.sh` (main tree only) · `sql-check`: `scripts/db-check.sh` |
+| contracts (`contracts/**`, `scripts/contracts-check.py`) | `contracts-check`: `uv run scripts/contracts-check.py` from the root (a skip line without `uv`) | the same |
 | engine (`engine/`) | `engine-ruff`: `ruff check .` · `engine-pyright`: `pyright` (venv first) | `engine-test`: `.venv/bin/python -m pytest` |
 | api (`api/`) | `api-build`: `dotnet build -warnaserror` · `api-format`: `dotnet format --verify-no-changes` | `api-test`: `dotnet test` |
 | web (`web/`) | `web-ngc`: `npx ngc -p tsconfig.app.json --noEmit` · `web-eslint`: eslint on the touched files (`ng lint` with `all`) | `web-test`: `npx ng test --watch=false` · `web-build`: `npx ng build` |
-| `contracts/**/*.json` | the engine, api and web rows | the same |
+| `contracts/**/*.json` | `contracts-check`, then the engine, api and web rows | the same |
 | service source (`.py`, `.cs`, `.ts`) | `print-guard` on those files | |
 | `.claude/hooks/` | `hooks`: `node --test .claude/hooks/tests/*.test.mjs` | |
 

@@ -16,6 +16,7 @@ the api writes, and only to `dq`; only the engine reads `hr`.
 ## Verify (`/check` picks the right subset for the parts you touched)
 
 - sql: `docker compose up -d db && scripts/db-init.sh`, then `scripts/db-check.sh` (the violating records per example)
+- contracts: `uv run scripts/contracts-check.py` (the schema, the glossary and their agreement)
 - engine (`cd engine`): `.venv/bin/python -m pytest` · `.venv/bin/ruff check .` · `pyright` (the venv's, else PATH)
 - api (`cd api`): `dotnet build -warnaserror` · `dotnet test` · `dotnet format --verify-no-changes`
 - web (`cd web`): `npx ng lint` · `npx ng test --watch=false` · `npx ng build` · Playwright e2e (`npx playwright test`) with screenshots at 390 and 1440

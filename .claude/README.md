@@ -41,10 +41,11 @@ failure; no dependencies beyond bash, jq, git and node.
 | Part | Default (Stop hook, `/check`) | `--tests` adds |
 |---|---|---|
 | sql: `sql/`, `scripts/db-*.sh`, `docker-compose.yml` | nothing | `sql-init` (main tree only), `sql-check` |
+| contracts: `contracts/**`, `scripts/contracts-check.py` | `uv run scripts/contracts-check.py` (a skip line without `uv`) | the same |
 | engine: `engine/` | `ruff check .`, `pyright` | `pytest` |
 | api: `api/` | `dotnet build -warnaserror`, `dotnet format --verify-no-changes` | `dotnet test` |
 | web: `web/` | `ngc -p tsconfig.app.json --noEmit`, eslint on touched files | `ng test --watch=false`, `ng build` |
-| `contracts/**/*.json` | the engine, api and web rows | the same |
+| `contracts/**/*.json` | the contracts row, then the engine, api and web rows | the same |
 | service source | `print-guard.sh` | |
 | `.claude/hooks/` | the hook tests | |
 
