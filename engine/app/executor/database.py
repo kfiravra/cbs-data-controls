@@ -5,13 +5,15 @@ from __future__ import annotations
 import logging
 from collections.abc import Callable, Generator, Mapping, Sequence
 from contextlib import contextmanager
+from dataclasses import dataclass
+from datetime import date
 from typing import Any
 
 import pyodbc
 from sqlalchemy import Connection, Dialect, Engine, Select, create_engine, event
 from sqlalchemy.exc import DBAPIError
 
-from app.compiler import ReadQuery
+from app.compiler import CompiledPlan, ReadQuery
 from app.errors import DatabaseUnavailable, EngineError, InternalError, QueryTimeout
 from app.settings import Settings, choose_driver, connection_url
 
@@ -23,6 +25,22 @@ _UNAVAILABLE_STATES = frozenset({"28000", "IM002"})
 _CONNECTION_STATE_CLASS = "08"
 
 Row = Mapping[str, Any]
+
+
+@dataclass(frozen=True, slots=True)
+class Counts:
+    """What the count statement says: all violations, and per node in how many of them it is matched."""
+
+    total: int
+    matched: Mapping[str, int]
+
+
+@dataclass(frozen=True, slots=True)
+class RunRows:
+    """The outcome of one run: the exact counts, and the first rows by key up to the cap."""
+
+    counts: Counts
+    rows: tuple[Row, ...]
 
 
 def _sqlstate(error: DBAPIError) -> str | None:
@@ -82,6 +100,28 @@ class Executor:
         """Run one of the engine's own SELECTs (catalog, ping) and return its rows."""
         with self._connection() as connection:
             return self._select(connection, query.statement, query.parameters)
+
+    def count_compiled(self, plan: CompiledPlan, run_date: date) -> Counts:
+        """How many records violate the definition on the run date, and how often each node is matched."""
+        with self._connection() as connection:
+            return self._count(connection, plan, plan.parameters(run_date))
+
+    def run_compiled(self, plan: CompiledPlan, run_date: date, cap: int) -> RunRows:
+        """The count, then the page, on one connection. Each statement runs under the statement timeout.
+
+        The two run at the default isolation level: `hr` is never written by the system, so they agree.
+        """
+        parameters = plan.parameters(run_date)
+        with self._connection() as connection:
+            counts = self._count(connection, plan, parameters)
+            rows = self._select(connection, plan.page_statement(cap), parameters)
+        return RunRows(counts, tuple(rows))
+
+    def _count(self, connection: Connection, plan: CompiledPlan, parameters: Mapping[str, Any]) -> Counts:
+        (row,) = self._select(connection, plan.count, parameters)
+        # SUM over no rows is NULL: nothing is matched when nothing is found.
+        matched = {node.node_id: int(row[node.matched] or 0) for node in plan.nodes}
+        return Counts(total=int(row[plan.total]), matched=matched)
 
     def _set_statement_timeout(self, dbapi_connection: Any, _record: Any) -> None:
         # pyodbc applies Connection.timeout (seconds) to every cursor created after it.

@@ -134,3 +134,175 @@ def synthetic_document(real_document: dict[str, Any]) -> dict[str, Any]:
     document["entities"] = copy.deepcopy(ENTITIES)
     document["relationships"] = copy.deepcopy(RELATIONSHIPS)
     return document
+
+
+# --- the same glossary in another language --------------------------------------------------------------------
+#
+# English texts for every operator, phrase and suggestion, with formats that differ from the real file's, so a
+# test can state the sentence it expects in plain English and prove that no code names a language.
+
+ENGLISH = "en"
+
+ENGLISH_FORMATS = {ENGLISH: {"date": "MM/dd/yyyy", "groupSeparator": " ", "decimalSeparator": ","}}
+
+ENGLISH_PHRASES = {
+    "and": " and ",
+    "or": " or ",
+    "groupOpen": "(",
+    "groupClose": ")",
+    "listSeparator": ", ",
+    "reasonSeparator": "; ",
+    "fieldOnPath": "{field} of {relationship}",
+    "relatedAny": {
+        "sentence": "has {relationship} with ({conditions})",
+        "reason": "has {relationship} with {conditions}",
+    },
+    "relatedNone": {
+        "sentence": "has no {relationship} with ({conditions})",
+        "reason": "has no {relationship} with {conditions}",
+    },
+}
+
+
+def _comparison(word: str, date_word: str) -> dict[str, dict[str, str]]:
+    return {
+        "sentence": {
+            "default": f"{{field}} {word} {{value}}",
+            "date": f"{{field}} {date_word} {{value}}",
+            "field": f"{{field}} {word} {{other}}",
+            "date.field": f"{{field}} {date_word} {{other}}",
+        },
+        "reason": {
+            "default": f"{{field}} is {{actual}} ({word} {{value}})",
+            "date": f"{{field}} is {{actual}} ({date_word} {{value}})",
+            "field": f"{{field}} is {{actual}} ({word} {{other}}: {{otherActual}})",
+            "date.field": f"{{field}} is {{actual}} ({date_word} {{other}}: {{otherActual}})",
+        },
+    }
+
+
+def _text_test(phrase: str) -> dict[str, dict[str, str]]:
+    return {
+        "sentence": {"default": f'{{field}} {phrase} "{{value}}"'},
+        "reason": {"default": f'{{field}} is {{actual}} ({phrase} "{{value}}")'},
+    }
+
+
+ENGLISH_OPERATOR_TEXTS: dict[str, dict[str, dict[str, str]]] = {
+    "eq": {
+        "sentence": {"default": "{field} is {value}", "field": "{field} equals {other}"},
+        "reason": {"default": "{field} is {actual}", "field": "{field} is {actual} (equals {other})"},
+    },
+    "ne": {
+        "sentence": {
+            "default": "{field} is not {value}",
+            "text": '{field} is not "{value}"',
+            "field": "{field} differs from {other}",
+        },
+        "reason": {
+            "default": "{field} is {actual} (not {value})",
+            "text": '{field} is {actual} (not "{value}")',
+            "field": "{field} is {actual} (differs from {other}: {otherActual})",
+        },
+    },
+    "lt": _comparison("below", "before"),
+    "lte": _comparison("at most", "not after"),
+    "gt": _comparison("above", "after"),
+    "gte": _comparison("at least", "not before"),
+    "between": {
+        "sentence": {"default": "{field} between {value} and {value2}"},
+        "reason": {"default": "{field} is {actual} (between {value} and {value2})"},
+    },
+    "not_between": {
+        "sentence": {"default": "{field} outside {value} to {value2}"},
+        "reason": {"default": "{field} is {actual} (outside {value} to {value2})"},
+    },
+    "in": {
+        "sentence": {"default": "{field} one of: {values}"},
+        "reason": {"default": "{field} is {actual} (in the list)"},
+    },
+    "not_in": {
+        "sentence": {"default": "{field} none of: {values}"},
+        "reason": {"default": "{field} is {actual} (not in the list)"},
+    },
+    "contains": _text_test("contains"),
+    "not_contains": _text_test("does not contain"),
+    "starts_with": _text_test("starts with"),
+    "ends_with": _text_test("ends with"),
+    "is_null": {"sentence": {"default": "{field} is missing"}, "reason": {"default": "{field} is missing"}},
+    "is_not_null": {"sentence": {"default": "{field} is present"}, "reason": {"default": "{field} is {actual}"}},
+    "is_empty": {"sentence": {"default": "{field} is empty"}, "reason": {"default": "{field} is empty"}},
+    "is_not_empty": {"sentence": {"default": "{field} is not empty"}, "reason": {"default": "{field} is {actual}"}},
+}
+
+ENGLISH_SUGGESTIONS = {
+    "kinds": {
+        "missing_required": {
+            "name": "{entity} with required data missing",
+            "description": "Finds {entity} that lack a field they must have.",
+            "rationale": "The glossary marks these fields as required.",
+        },
+        "date_order": {
+            "name": "{later} before {earlier}",
+            "description": "Finds {entity} whose {later} is before their {earlier}.",
+            "rationale": "In most records {later} is not before {earlier}.",
+        },
+        "active_under_inactive": {
+            "name": "Active {entity} under an inactive {relationship}",
+            "description": "Finds active {entity} whose {relationship} is inactive.",
+            "rationale": "An active record under an inactive {relationship} suggests an update that was not finished.",
+        },
+        "active_without_active_children": {
+            "name": "Active {entity} without an active {relationship}",
+            "description": "Finds active {entity} that have no active {relationship}.",
+            "rationale": "An active record with no active {relationship} may be out of date.",
+        },
+        "missing_optional": {
+            "name": "{entity} without {field}",
+            "description": 'Finds {entity} whose "{field}" is missing.',
+            "rationale": '"{field}" is not required, yet most records have it.',
+        },
+    },
+    "evidence": {
+        "violations_found": "{count} of {total} now",
+        "field_missing": "without {field}: {count}",
+        "date_order_split": "{count} of the {total} records with both dates are reversed",
+    },
+}
+
+
+def _in_english(value: Any) -> Any:
+    """Every text leaf `{ "he": ... }` under an entity or a relationship, keyed by the other language."""
+    if isinstance(value, dict):
+        if set(value) == {"he"}:
+            return {ENGLISH: value["he"]}
+        return {name: _in_english(member) for name, member in value.items()}
+    if isinstance(value, list):
+        return [_in_english(item) for item in value]
+    return value
+
+
+def _texts(value: Any) -> Any:
+    """A tree of plain strings as a tree of texts in the one language."""
+    if isinstance(value, dict):
+        return {name: _texts(member) for name, member in value.items()}
+    return {ENGLISH: value}
+
+
+def english_document(real_document: dict[str, Any]) -> dict[str, Any]:
+    """The synthetic glossary with English as its only language; operator keys and arities stay the real ones."""
+    document = synthetic_document(real_document)
+    document["glossaryVersion"] = "synthetic-en-1"
+    document["languages"] = [ENGLISH]
+    document["defaultLanguage"] = ENGLISH
+    document["formats"] = copy.deepcopy(ENGLISH_FORMATS)
+    document["phrases"] = _texts(ENGLISH_PHRASES)
+    document["suggestions"] = _texts(ENGLISH_SUGGESTIONS)
+    document["entities"] = _in_english(document["entities"])
+    document["relationships"] = _in_english(document["relationships"])
+    for operator in document["operators"]:
+        texts = ENGLISH_OPERATOR_TEXTS[operator["key"]]
+        operator["label"] = {"default": {ENGLISH: operator["key"]}}
+        operator["sentence"] = _texts(texts["sentence"])
+        operator["reason"] = _texts(texts["reason"])
+    return document

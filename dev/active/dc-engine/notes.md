@@ -1,26 +1,30 @@
 # dc-engine notes
 
 ## State
-Phases 1 to 3 done on 2026-11-11 (gates: `gates/phase-1.txt` to `gates/phase-3.txt`, 343 tests); phase 4, the
-executor, the explainer and the `/validate` and `/run` endpoints, is next. Phases 1 and 2 are reviewed and
-their fixes committed; the phase 3 review is running. The run is unattended on Kfir's word of 2026-11-11 (the
+Phases 1 to 4 done on 2026-11-11 (gates: `gates/phase-1.txt` to `gates/phase-4.txt` and
+`gates/readme-commands.txt`, 460 tests); phase 5, the suggestions, is next. Phases 1 to 3 are reviewed and
+their fixes committed; the phase 4 review is running. The run is unattended on Kfir's word of 2026-11-11 (the
 night brief, see "Decisions taken unattended"): no questions, no stop at a phase gate, push and PR allowed once
 the gate passes, no merge.
 
-What exists: `engine/` with `pyproject.toml`, `uv.lock`, `.python-version` (3.12) and `requirements.txt`; the
-settings and the connection URL; problem details for every error; the correlation id; the glossary package; the
-executor with its guards (it runs the catalog read and the ping so far); the startup check; the validator; the
-compiler (`compile_definition`: operators, the age rewrite, joins, EXISTS, the page and count statements, a
-plan with parameter recipes); the compile cache; goldens for the six examples in `engine/tests/golden/`;
-`GET /health`, `GET /glossary`, `POST /debug/compile` (off by default). Start: `cd engine &&
+What exists: the engine of architecture §6 without `/suggest`. `engine/` holds `pyproject.toml`, `uv.lock`,
+`.python-version` (3.12) and `requirements.txt`; settings and the connection URL; problem details; the glossary
+package; the validator; the compiler and its cache; the executor (count, then page, on one connection); the
+explainer (parts, formats, sentences, reasons); `GET /health`, `GET /glossary`, `POST /validate`, `POST /run`,
+`POST /debug/compile` (off by default). The six examples flag exactly their expected records through `/run`,
+and one answer equals the example of `contracts/api.md` word for word. Goldens: SQL and parameters, and the
+Hebrew text of each example, in `engine/tests/golden/`. The README has an Engine section. Start: `cd engine &&
 .venv/bin/python -m uvicorn app.main:create_app --factory --host 127.0.0.1 --port 8000`.
 
+For Kfir's read at the gate: `engine/tests/golden/*.text.json` (six files: the rule sentence, a sentence per
+node, one reason per matched node, in Hebrew).
+
 ## Next
-1. Phase 4: the executor's count and page on one connection, the explainer (parts, formats, sentences, reasons),
-   `POST /validate` and `POST /run`, the integration tests against the seed, the text goldens, the README's
-   engine section and its commands run once in a scratch copy.
-2. Then phases 5 and 7, each closed by `/check --tests`, a reviewer on opus, one review-fix commit and a Log
-   line here.
+1. Phase 5: the profile (one aggregate SELECT per entity), the four generators, the pipeline and
+   `POST /suggest`, the gate test (examples 2 to 5 reproduced node for node), the genericity tests, then the two
+   first-cut items if nothing is late.
+2. Phase 7, the image; each phase closed by `/check --tests`, a reviewer on opus, one review-fix commit and a
+   Log line here.
 3. The gate, then push and PR (Kfir's word is in the night brief). No merge.
 
 ## Blockers
@@ -112,6 +116,13 @@ continue". He reads these first.
     an expanded list as `:p3_1, :p3_2`; `TOP n` is rendered by SQLAlchemy from the configured cap. When the
     endpoint is off no body is read, so every call is the same 404.
 
+15. The README got a new `## Engine` section, placed before `## Configuration`. Phase 4 says dc-contracts left
+    a heading for it in the skeleton; there is none, only two sentences inside Configuration and "Running the
+    tests" that name dc-engine. Those two sentences were left alone (decision 24: the rest of the README is
+    dc-delivery's) and are listed under "Docs for dc-delivery".
+16. `rowCap` above `ENGINE_ROW_CAP` is clamped, as api.md says, and `durationMs` covers validation, compiling,
+    both statements and the rendering of the answer.
+
 ## Waiting for a merge
 (none yet)
 
@@ -129,6 +140,20 @@ says, what is true now. The list goes into the PR body under this heading at `/s
   compose. The image's start command binds `0.0.0.0:8000`.
 - README manual path, Windows: `ENGINE_DB_HOST=localhost` or `.\SQLEXPRESS` with `ENGINE_DB_PORT` empty; on
   WSL or Linux against the compose database, `127.0.0.1` (decision 6 above).
+- `README.md`, Configuration, last line ("The engine and api blocks are filled by dc-engine and dc-api") and
+  "Running the tests", last bullet ("Engine, api and web: one command each, filled by dc-engine ..."): the
+  engine's variables, start commands and test commands are in the new `## Engine` section; these two
+  sentences can point there or be folded into it.
+- `README.md`, Contracts table, `glossary.json` row and the `--render` line ("Hebrew and English labels",
+  "he and en"): the glossary lists Hebrew alone (the scope decision). Not this task's text; seen while
+  writing the Engine section.
+- `docs/architecture.md` §6, compiler ("emits one computed flag per condition for reasons"): the flag columns
+  have generated labels and exist for the nodes that can be matched (conditions outside a related node, and
+  related nodes); "matched" is computed in the outer statements. §11 "Compile cache ... unchanged definitions
+  skip validation and compilation" holds as written.
+- For the limitations document: the statement timeout path is proven on a fabricated driver error only; count
+  and page run as two statements at the default isolation level, so on a database written between them they
+  could differ; an age operand beyond the range of DATE is clamped to 0001-01-01 (reviews/phase-3.md, info 3).
 - Still to come: architecture §19 and §6 on suggestions, when phase 5 lands.
 
 ## Last reviewed
@@ -244,3 +269,16 @@ says, what is true now. The list goes into the PR body under this heading at `/s
   validator can list them: it needs each node's predicate and the groups above it, which only its own walk
   has. The goldens were regenerated (the constants are now `1` and `0` in the text) and the diff read. All of
   it in the review-fix commit that follows this line.
+- 2026-11-11 phase 4, unattended, `gates/phase-4.txt` and `gates/readme-commands.txt`: ruff, pyright, 460
+  tests (334 unit and golden, 126 against the seeded database), print guard. Proven on the seed through
+  `POST /run`: every example on its run date, and example 1 on 2026-10-31, flags exactly the keys and matched
+  ids of its file; the per-node counts equal the sums over the rows; the answer to the request of
+  `contracts/api.md` §5 equals the example there in every member but `durationMs`; `rowCap: 1` returns one row
+  and the counts of all ten; `is_empty` finds NULL, the empty string and spaces (1081, 1082, 1083 and the three
+  other rows of sql/README.md); `ne`, `not_in`, `not_between` and `not_contains` never match a NULL; a field of
+  a missing parent matches no comparison, and employee 1085 is still flagged through an OR branch; `%`, `_` and
+  a bracket class in a LIKE operand match nothing; a Hebrew name read from one answer finds its record as an
+  operand; injection text returns no row and the table still holds 85; a closed port answers 503. The explainer
+  is also tested on an English glossary with other formats (`tests/synthetic.py`), so no test spells Hebrew and
+  no code names a language. Every command of the README's Engine section ran once in a scratch copy: the pip
+  path and the uv path both answer `/health` 200 and run the example.

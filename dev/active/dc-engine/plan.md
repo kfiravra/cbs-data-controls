@@ -250,20 +250,20 @@ Verify: `/check --tests` · `node --test .claude/hooks/tests/*.test.mjs`
 Commit: `feat(engine): compiler with golden tests and compile cache`
 
 ### Phase 4: executor, explainer, `/validate` and `/run` (about 2.75 h)
-- [ ] `executor/`: count, then page, on one connection; the guards; timeout and error mapping, per Design E.
-- [ ] `explainer/`: parts, formats, the rule sentence, reasons, per Design F.
-- [ ] `POST /validate` and `POST /run` per Design G.
-- [ ] Integration tests per Design I: the six examples with their exact keys and matched ids, example 1 on both
+- [x] `executor/`: count, then page, on one connection; the guards; timeout and error mapping, per Design E.
+- [x] `explainer/`: parts, formats, the rule sentence, reasons, per Design F.
+- [x] `POST /validate` and `POST /run` per Design G.
+- [x] Integration tests per Design I: the six examples with their exact keys and matched ids, example 1 on both
       of its dates; the cap; count and page agree; injection end to end; NULL semantics; LIKE wildcards stay
       literal; Hebrew round trip; the database down.
-- [ ] `tests/golden/<id>.text.json`: the rendered sentence, the per-node sentences and one reason per matched node,
+- [x] `tests/golden/<id>.text.json`: the rendered sentence, the per-node sentences and one reason per matched node,
       in every language the glossary lists (Hebrew), for the six examples. Kfir reads these at the gate. One test
       asks for a language that is not listed and gets the default.
-- [ ] `README.md`, the engine section only (dc-contracts left its heading in the skeleton): what must be installed
+- [x] `README.md`, the engine section only (dc-contracts left its heading in the skeleton): what must be installed
       (Python 3.12 or later, ODBC Driver 18 or 17), the start with Python and pip alone and the same with uv, the
       variables of Design A, the tests, and that the timeout path is proven on a fabricated error. Nothing outside
       the section is touched (decision 24).
-- [ ] Every command of that section run once as written, in a scratch copy of `engine/` (without `.venv`) and
+- [x] Every command of that section run once as written, in a scratch copy of `engine/` (without `.venv`) and
       `contracts/` with the worktree's `.env` beside them: a venv from `python3 -m venv`, `pip install -r
       requirements.txt` (state the download first), `/health` answers 200 and one example runs. Save the
       transcript as `gates/readme-commands.txt`.

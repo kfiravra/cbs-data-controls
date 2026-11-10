@@ -14,7 +14,7 @@ from app.glossary import Glossary, load_glossary, parse_glossary
 from app.main import create_app
 from app.settings import Settings, load_settings
 from app.validator import DefinitionSchema, load_schema
-from tests.synthetic import synthetic_document
+from tests.synthetic import english_document, synthetic_document
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
 CONTRACTS_DIR = REPOSITORY_ROOT / "contracts"
@@ -58,6 +58,12 @@ def glossary() -> Glossary:
 def synthetic_glossary(glossary_document: dict[str, Any]) -> Glossary:
     """A glossary about tickets and queues: what a test uses to stay clear of the real entity keys."""
     return parse_glossary(synthetic_document(glossary_document))
+
+
+@pytest.fixture(scope="session")
+def english_glossary(glossary_document: dict[str, Any]) -> Glossary:
+    """The synthetic glossary with English texts and other formats: sentences a test can spell out."""
+    return parse_glossary(english_document(glossary_document))
 
 
 @pytest.fixture(scope="session")
