@@ -274,16 +274,16 @@ application/json' -d "{\"definition\": $(jq .definition contracts/examples/minor
 Commit: `feat(engine): executor, explainer and the validate and run endpoints`
 
 ### Phase 5: suggestions (about 2 h)
-- [ ] The profile per Design H: one aggregate SELECT per entity, built in `compiler`, run by `executor`.
-- [ ] Generators `missing_required`, `date_order`, `active_under_inactive` (one hop) and
+- [x] The profile per Design H: one aggregate SELECT per entity, built in `compiler`, run by `executor`.
+- [x] Generators `missing_required`, `date_order`, `active_under_inactive` (one hop) and
       `active_without_active_children`, per Design H.
-- [ ] The pipeline (validate, compile, count, drop, evidence, text, order, cut) and `POST /suggest`.
-- [ ] The gate test: every example marked `heuristic: true` has a suggestion whose
+- [x] The pipeline (validate, compile, count, drop, evidence, text, order, cut) and `POST /suggest`.
+- [x] The gate test: every example marked `heuristic: true` has a suggestion whose
       definition equals the example's, node for node, and which flags exactly the example's records.
-- [ ] Genericity tests: every generator runs on a synthetic glossary with other entities, fields and
+- [x] Genericity tests: every generator runs on a synthetic glossary with other entities, fields and
       relationships and a stub counter, and names nothing from the real one.
-- [ ] (first cut) `active_under_inactive` over two-hop paths.
-- [ ] (first cut) Generator `missing_optional`.
+- [x] (first cut) `active_under_inactive` over two-hop paths.
+- [x] (first cut) Generator `missing_optional`.
 
 Verify: `/check --tests` · `curl -s -X POST localhost:8000/suggest -d '{}' -H 'content-type: application/json' |
 jq '[.items[].name]'`

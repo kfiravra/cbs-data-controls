@@ -1,0 +1,22 @@
+# /check --tests, phase 5, 2026-11-11T01:20:49+02:00
+== engine-ruff (engine): /home/kfir/projects/cbs-engine/engine/.venv/bin/ruff check .
+All checks passed!
+exit=0
+== engine-pyright (engine): /home/kfir/projects/cbs-engine/engine/.venv/bin/pyright
+0 errors, 0 warnings, 0 informations
+exit=0
+== engine-test (engine): .venv/bin/python -m pytest
+tests/unit/test_settings.py .......................                      [ 71%]
+tests/unit/test_startup.py ...........................                   [ 76%]
+tests/unit/test_suggestions.py ....................                      [ 80%]
+tests/unit/test_validator.py ........................................... [ 89%]
+....................                                                     [ 93%]
+tests/unit/test_validator_operands.py ...............................    [100%]
+
+============================= 493 passed in 25.09s =============================
+exit=0
+== print-guard (.): bash /home/kfir/projects/cbs-engine/.claude/hooks/print-guard.sh engine/app/suggestions/pipeline.py
+exit=0
+== print-guard --all
+exit=0
+# result: green

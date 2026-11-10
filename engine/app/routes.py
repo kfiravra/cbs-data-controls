@@ -15,7 +15,9 @@ from app.compiler import RenderedStatement, render_statement
 from app.errors import DebugDisabled
 from app.explainer import Explainer, describe
 from app.services import Services
-from app.web import DebugCompileRequest, RunRequest, ValidateRequest, resolve_language
+from app.settings import SUGGEST_MAX_CEILING
+from app.suggestions import Sources, load_profile, suggest
+from app.web import DebugCompileRequest, RunRequest, SuggestRequest, ValidateRequest, resolve_language
 
 logger = logging.getLogger(__name__)
 
@@ -43,6 +45,7 @@ def create_router(*, debug_compile: bool) -> APIRouter:
     router.add_api_route("/glossary", glossary, methods=["GET"])
     router.add_api_route("/validate", validate, methods=["POST"])
     router.add_api_route("/run", run, methods=["POST"], response_model=None)
+    router.add_api_route("/suggest", suggest_controls, methods=["POST"])
     # When it is off no body is read: every call is the same 404.
     router.add_api_route("/debug/compile", compile_for_debug if debug_compile else debug_disabled, methods=["POST"])
     return router
@@ -106,6 +109,25 @@ def run(body: RunRequest, services: ServicesDep, language: LanguageDep) -> JSONR
     )
     # Built from plain values already; handed over as it is rather than through FastAPI's model encoder.
     return JSONResponse(answer)
+
+
+def suggest_controls(body: SuggestRequest, services: ServicesDep, language: LanguageDep) -> dict[str, Any]:
+    """Controls the heuristics propose, each one valid and flagging at least one record today. Nothing is stored."""
+    asked = services.settings.suggest_max if body.max is None else body.max
+    sources = Sources(
+        plan_for=services.plan_for,
+        count=services.executor.count_compiled,
+        profile=lambda entity: load_profile(entity, services.glossary, services.executor.fetch_all),
+    )
+    items = suggest(
+        services.glossary,
+        sources,
+        language=language,
+        today=services.today(),
+        root_entity=body.root_entity,
+        limit=min(asked, SUGGEST_MAX_CEILING),
+    )
+    return {"items": items}
 
 
 def debug_disabled() -> None:

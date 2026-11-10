@@ -15,6 +15,7 @@ from app.compiler.plan import (
     parameter_count,
     render_statement,
 )
+from app.compiler.profile import PairLabels, ProfileQuery, profile_query
 from app.compiler.queries import (
     CATALOG_COLUMN,
     CATALOG_SCHEMA,
@@ -34,6 +35,8 @@ __all__ = [
     "MAX_PARAMETERS",
     "CompiledPlan",
     "NodeColumns",
+    "PairLabels",
+    "ProfileQuery",
     "ReadQuery",
     "RenderedStatement",
     "StatementParameter",
@@ -44,6 +47,7 @@ __all__ = [
     "escape_like",
     "parameter_count",
     "ping_query",
+    "profile_query",
     "render_statement",
     "unsupported",
     "years_before",

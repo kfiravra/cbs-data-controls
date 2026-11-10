@@ -36,6 +36,7 @@ from app.glossary import (
     public_view,
 )
 from app.settings import DriverNotFound, Settings
+from app.suggestions import missing_texts
 from app.validator import DefinitionSchema, load_schema, validate_definition
 
 logger = logging.getLogger(__name__)
@@ -127,9 +128,9 @@ class Services:
 def build_services(settings: Settings) -> Services:
     """Everything that needs no database: the glossary and the schema are read here, connections open later."""
     glossary = load_glossary(settings.contracts_dir / GLOSSARY_FILE)
-    gaps = unsupported(glossary)
+    gaps = unsupported(glossary) + missing_texts(glossary)
     if gaps:
-        raise GlossaryInvalid(f"glossary: the engine has no implementation for {'; '.join(gaps)}")
+        raise GlossaryInvalid(f"glossary: the engine cannot serve {'; '.join(gaps)}")
     executor = Executor(settings)
     return Services(
         settings=settings,

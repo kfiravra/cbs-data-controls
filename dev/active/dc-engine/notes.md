@@ -1,31 +1,29 @@
 # dc-engine notes
 
 ## State
-Phases 1 to 4 done on 2026-11-11 (gates: `gates/phase-1.txt` to `gates/phase-4.txt` and
-`gates/readme-commands.txt`, 460 tests); phase 5, the suggestions, is next. Phases 1 to 3 are reviewed and
-their fixes committed; the phase 4 review is running. The run is unattended on Kfir's word of 2026-11-11 (the
-night brief, see "Decisions taken unattended"): no questions, no stop at a phase gate, push and PR allowed once
-the gate passes, no merge.
+Phases 1 to 5 done on 2026-11-11 (gates: `gates/phase-1.txt` to `gates/phase-5.txt` and
+`gates/readme-commands.txt`, 493 tests); phase 7, the image, is next, then the gate. Phases 1 to 3 are
+reviewed and their fixes committed; the reviews of phases 4 and 5 are running. The run is unattended on Kfir's
+word of 2026-11-11 (the night brief, see "Decisions taken unattended"): no questions, no stop at a phase gate,
+push and PR allowed once the gate passes, no merge.
 
-What exists: the engine of architecture §6 without `/suggest`. `engine/` holds `pyproject.toml`, `uv.lock`,
+What exists: the engine of architecture §6, all six endpoints. `engine/` holds `pyproject.toml`, `uv.lock`,
 `.python-version` (3.12) and `requirements.txt`; settings and the connection URL; problem details; the glossary
-package; the validator; the compiler and its cache; the executor (count, then page, on one connection); the
-explainer (parts, formats, sentences, reasons); `GET /health`, `GET /glossary`, `POST /validate`, `POST /run`,
-`POST /debug/compile` (off by default). The six examples flag exactly their expected records through `/run`,
-and one answer equals the example of `contracts/api.md` word for word. Goldens: SQL and parameters, and the
-Hebrew text of each example, in `engine/tests/golden/`. The README has an Engine section. Start: `cd engine &&
-.venv/bin/python -m uvicorn app.main:create_app --factory --host 127.0.0.1 --port 8000`.
+package; the validator; the compiler and its cache; the executor; the explainer; the suggestions (a profile
+per entity, five generators, the pipeline); `GET /health`, `GET /glossary`, `POST /validate`, `POST /run`,
+`POST /suggest`, `POST /debug/compile` (off by default). On the seed `/suggest` returns seven proposals, four of
+them the examples marked `heuristic: true`, node for node. Start: `cd engine && .venv/bin/python -m uvicorn
+app.main:create_app --factory --host 127.0.0.1 --port 8000`.
 
 For Kfir's read at the gate: `engine/tests/golden/*.text.json` (six files: the rule sentence, a sentence per
-node, one reason per matched node, in Hebrew).
+node, one reason per matched node, in Hebrew) and one `/suggest` answer, saved as `gates/suggest-answer.json`
+at the gate.
 
 ## Next
-1. Phase 5: the profile (one aggregate SELECT per entity), the four generators, the pipeline and
-   `POST /suggest`, the gate test (examples 2 to 5 reproduced node for node), the genericity tests, then the two
-   first-cut items if nothing is late.
-2. Phase 7, the image; each phase closed by `/check --tests`, a reviewer on opus, one review-fix commit and a
-   Log line here.
-3. The gate, then push and PR (Kfir's word is in the night brief). No merge.
+1. Phase 7: `engine/Dockerfile`, build, a smoke run on the compose network.
+2. The gate: `/check all --tests`, the lock and its export, the wheel check, the suite under 3.13 and 3.14,
+   the §19 items test by test, the security auditor, the lines for dc-api and dc-delivery, `/ship`.
+3. Push and PR (Kfir's word is in the night brief). No merge.
 
 ## Blockers
 None. Steps that need another task's running service are listed under "Waiting for a merge" when they appear.
@@ -123,6 +121,20 @@ continue". He reads these first.
 16. `rowCap` above `ENGINE_ROW_CAP` is clamped, as api.md says, and `durationMs` covers validation, compiling,
     both statements and the rendering of the answer.
 
+17. The profile holds only what the generators read: the row count, the rows in which each optional field is
+    missing, and for each pair of stored date fields how many rows hold both and each order. Design H also
+    lists distinct counts, minima and maxima; no generator of the plan reads them, so they are not queried.
+18. Both first-cut items of phase 5 are built (the two-hop `active_under_inactive` and `missing_optional`):
+    nothing was late. On the seed they add three proposals to the four of the gate: active employees under
+    an inactive ministry (7 records), active departments under an inactive ministry (1), departments without
+    a manager (1). Kfir may want fewer; `max` and `rootEntity` cut the answer, and removing a generator is one
+    line of `GENERATORS`.
+19. `date_order` reads "one order holds in at least 80%" as: at most 20% of the rows that hold both dates
+    have the later one first, equal dates counting with the usual order (22 of 25 on the seed, the 88% of
+    sql/README.md).
+20. The engine refuses at startup a glossary that lacks a suggestion text it writes (a kind or an evidence
+    key), like the other "cannot serve" checks of decision 13.
+
 ## Waiting for a merge
 (none yet)
 
@@ -154,7 +166,17 @@ says, what is true now. The list goes into the PR body under this heading at `/s
 - For the limitations document: the statement timeout path is proven on a fabricated driver error only; count
   and page run as two statements at the default isolation level, so on a database written between them they
   could differ; an age operand beyond the range of DATE is clamped to 0001-01-01 (reviews/phase-3.md, info 3).
-- Still to come: architecture §19 and §6 on suggestions, when phase 5 lands.
+- `docs/architecture.md` §6, suggestions ("computes aggregate statistics on `hr` (null rates, ranges, distinct
+  counts, FK orphans, date-pair sanity)"): what is built is one aggregate SELECT per rootable entity with the
+  row count, the missing count of each optional field and the order of each pair of date fields; no ranges,
+  distinct counts or orphans. The generators are five: `missing_required`, `date_order`,
+  `active_under_inactive` (one and two hops), `active_without_active_children`, `missing_optional`.
+- `docs/architecture.md` §19, the engine gate ("`/suggest` yields examples 2 to 5"): it does, node for node,
+  and on the seed it yields three more proposals (decision 18). Example 1 is never proposed: no generator
+  writes a number into a definition.
+- For the limitations document: a suggestion is counted on today's date; the profile and each count are
+  separate statements; `/suggest` runs one statement per rootable entity and one per candidate (ten on the
+  seed), each under the statement timeout.
 
 ## Last reviewed
 `a9b3ec8` (phase 3), report in `reviews/phase-3.md`; phases 1 and 2 in `reviews/phase-1.md` and `reviews/phase-2.md`.
@@ -282,3 +304,11 @@ says, what is true now. The list goes into the PR body under this heading at `/s
   is also tested on an English glossary with other formats (`tests/synthetic.py`), so no test spells Hebrew and
   no code names a language. Every command of the README's Engine section ran once in a scratch copy: the pip
   path and the uv path both answer `/health` 200 and run the example.
+- 2026-11-11 phase 5, unattended, `gates/phase-5.txt`: ruff, pyright, 493 tests (354 unit and golden, 139
+  against the seeded database), print guard. The gate test: each of the four examples marked `heuristic: true`
+  has exactly one suggestion whose definition equals the example's, and that definition, run on the example's
+  date, flags the example's keys with its matched ids; the unmarked examples are never proposed and no proposal
+  holds a number. Evidence on the seed: missing mandatory data 10 of 85 (email 4, salary 4, department 1,
+  termination date 2, the counts of the example file), termination before hire 3 of the 25 rows with both
+  dates. The generators and the pipeline are also tested on the synthetic glossary in English with stand-ins
+  for the data: the seven proposals expected there are written out by hand from Design H's conventions.
