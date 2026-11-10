@@ -1,6 +1,6 @@
 import { join } from 'node:path';
 
-import { WEB_ROOT, listFiles, readJson, readText } from '../testing/files';
+import { CONTRACTS_ROOT, WEB_ROOT, listFiles, readJson, readText } from '../testing/files';
 
 const HEBREW = new RegExp('[\\u0590-\\u05FF]');
 const HEX_COLOUR = /#[0-9a-fA-F]{3,8}\b/;
@@ -30,6 +30,35 @@ describe('translation file', () => {
   it('holds a non-empty string under every key', () => {
     const empty = leaves(he, '').filter(([, value]) => typeof value !== 'string' || value.trim() === '');
     expect(empty.map(([key]) => key)).toEqual([]);
+  });
+});
+
+/** The codes of one catalogue table of contracts/errors.md, read as the file says to read them. */
+function codesUnder(heading: string): string[] {
+  const lines = readText(join(CONTRACTS_ROOT, 'errors.md')).split('\n');
+  const start = lines.indexOf(`## ${heading}`);
+  const end = lines.findIndex((line, index) => index > start && line.startsWith('## '));
+  return lines
+    .slice(start + 1, end === -1 ? undefined : end)
+    .flatMap((line) => /^\| `([A-Za-z_]+)` \|/.exec(line)?.[1] ?? []);
+}
+
+describe('error texts', () => {
+  const he = Object.fromEntries(leaves(readJson<Json>(join(WEB_ROOT, 'src/assets/i18n/he.json')), ''));
+
+  it('has a title and a body for every code of contracts/errors.md', () => {
+    const codes = codesUnder('Codes');
+    expect(codes.length).toBeGreaterThan(0);
+    const missing = codes.flatMap((code) =>
+      [`errors.${code}.title`, `errors.${code}.body`].filter((key) => !(key in he)),
+    );
+    expect(missing).toEqual([]);
+  });
+
+  it('has a text for every definition error code of contracts/errors.md', () => {
+    const codes = codesUnder('Definition error codes');
+    expect(codes.length).toBeGreaterThan(0);
+    expect(codes.filter((code) => !(`errors.definition.${code}` in he))).toEqual([]);
   });
 });
 

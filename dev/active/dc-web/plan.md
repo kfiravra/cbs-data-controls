@@ -223,29 +223,29 @@ Review: `/phase-review web`
 Commit: `feat(web): workspace, design tokens and hebrew rtl shell`
 
 ### Phase 2: contracts in, core logic, api layer
-- [ ] `git merge main` once dc-contracts is merged there (a local merge commit; nothing is pushed). Until then only
+- [x] `git merge main` once dc-contracts is merged there (a local merge commit; nothing is pushed). Until then only
       the two steps marked "no contracts" may run.
-- [ ] Reconcile. Read `contracts/api.md`, `contracts/errors.md`, `contracts/glossary.json` and
+- [x] Reconcile. Read `contracts/api.md`, `contracts/errors.md`, `contracts/glossary.json` and
       `contracts/control-definition.schema.json`. They carry Design E, F and H of the dc-contracts plan (H is
       "Amendments from dc-engine planning"; the plan is in `/home/kfir/projects/cbs-data-controls/dev/active/`).
       List in `notes.md` every place where they differ from Design E to M of this plan and work through the checks
       of Design P. The contracts win; anything that blocks a screen goes to Kfir as one line.
-- [ ] (no contracts) `core/definition`: the contract types from Design C of the dc-contracts plan, the draft model,
+- [x] (no contracts) `core/definition`: the contract types from Design C of the dc-contracts plan, the draft model,
       the tree operations, ids, `fromDefinition` / `toDefinition`, `checkDraft`. Test-first (`/tdd`).
-- [ ] (no contracts) `core/definition/marks.ts`. Test-first.
-- [ ] `core/api/api.types.ts`, the one mirror of `contracts/api.md`; the four api services; the two interceptors
+- [x] (no contracts) `core/definition/marks.ts`. Test-first.
+- [x] `core/api/api.types.ts`, the one mirror of `contracts/api.md`; the four api services; the two interceptors
       and `ApiError` (Design E), with `HttpTestingController` specs.
-- [ ] `core/glossary`: model, service and cache, the lookups of Design F, tested against `contracts/glossary.json`
+- [x] `core/glossary`: model, service and cache, the lookups of Design F, tested against `contracts/glossary.json`
       and against a synthetic glossary with other entities.
-- [ ] `core/definition/pointer.ts`: a definition error to its node and its input, tested with
+- [x] `core/definition/pointer.ts`: a definition error to its node and its input, tested with
       `contracts/examples/invalid/*.json`.
-- [ ] `core/text/text-parts.ts` and the shared `mark`, `value` and `text-parts` components (Design H).
-- [ ] `core/i18n/format.service.ts` (Design C).
-- [ ] `e2e/fixtures` and `e2e/support/routes.ts` per Design O: the glossary, the six examples as controls, validate
+- [x] `core/text/text-parts.ts` and the shared `mark`, `value` and `text-parts` components (Design H).
+- [x] `core/i18n/format.service.ts` (Design C).
+- [x] `e2e/fixtures` and `e2e/support/routes.ts` per Design O: the glossary, the six examples as controls, validate
       answers, runs and result pages for every state.
-- [ ] `he.json`: `errors.<CODE>` and `errors.definition.<CODE>` for every code of `contracts/errors.md`; the key
+- [x] `he.json`: `errors.<CODE>` and `errors.definition.<CODE>` for every code of `contracts/errors.md`; the key
       guard now reads that file.
-- [ ] `.claude/skills/dc-web/SKILL.md`: the facts this plan changed (text arrives as parts and the client has no
+- [x] `.claude/skills/dc-web/SKILL.md`: the facts this plan changed (text arrives as parts and the client has no
       renderer; the `mocked` and `gate` spec folders; a gate spec acts only on its own tagged controls and finds
       them by id).
 

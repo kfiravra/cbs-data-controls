@@ -1,13 +1,13 @@
 # dc-web notes
 
 ## State
-Phase 1 done and committed (2026-11-11, unattended night run on Kfir's word); its review is next, then phase 2.
-The dev server for the mocked specs runs on :4200 from this worktree.
+Phase 2 done and committed (2026-11-11, unattended night run on Kfir's word); its review is next, then phase 3,
+the condition builder. The dev server for the mocked specs runs on :4200 from this worktree.
 
 ## Next
-1. `/phase-review web` on the phase 1 commit, one `fix(web): review fixes` commit.
-2. Phase 2: reconcile with `contracts/`, core logic test-first, api layer, fixtures and routes.
-3. Phases 3 to 6 in order; phase 7 writes the gate specs and runs them only when the api and the engine are on main.
+1. `/phase-review web` on the phase 2 commit, one `fix(web): review fixes` commit.
+2. Phase 3: the builder components, `EditorStore` with the draft, the builder driver and `builder.spec.ts`.
+3. Phases 4 to 6 in order; phase 7 writes the gate specs and runs them only when the api and the engine are on main.
 
 ## Blockers
 - Phase 7 runs (the gate on the real stack, the pre-load, the hosted build): the api and the engine are not on
@@ -37,6 +37,36 @@ The dev server for the mocked specs runs on :4200 from this worktree.
     change to break the build; Playwright itself does not type-check). It is part of every phase gate here.
 12. The shell has no banner slot of its own: design.md puts a banner under the page head, so each screen renders
     its banner there (`.page-banner`).
+
+13. `Run.status` may be `running` (api.md, `Run`), and Design L has no state for it. The results screen will show
+    a neutral state panel ("the run is in progress", with reload) and a list row the same words as its last run.
+14. The mocked specs get their text from a fake engine (`web/e2e/support/fake-engine.ts`): a spec builds any
+    definition and `POST /controls/validate` must answer for it, and a fixture file may hold no Hebrew. It renders
+    from the glossary's templates by the rules of errors.md, reads records from `sql/60_seed_hr.sql`, validates
+    nothing and decides no violation (those come from each example's `expected`). It is test support, never
+    shipped; `e2e/mocked/fake-engine.spec.ts` holds it to the worked example of api.md §5. The client still has
+    no renderer (decision 1 of the plan). If Kfir would rather have canned JSON, the fake is one file to replace.
+15. The api layer follows errors.md where the plan differs: a failed response that is not a problem is
+    `NETWORK_ERROR` (Design E said `INTERNAL_ERROR`).
+
+## Reconciliation with `contracts/` (phase 2, 2026-11-11)
+Read: `api.md`, `errors.md`, `glossary.json`, `control-definition.schema.json`, the six examples and the thirteen
+invalid fixtures, as merged in `f9928bf`. Where they differ from Design E to M of the plan, the contracts were built:
+
+- Design E: a response that is not a `Problem` is `NETWORK_ERROR`, not `INTERNAL_ERROR` (errors.md, Codes).
+  `GLOSSARY_MISMATCH` and `DEBUG_DISABLED` are engine-only and never reach the client; they have texts in
+  `he.json` because the key guard asks one for every code of the table, and no screen expects them.
+- Design K: `GET /controls` searches the name only, so the search field says "by name" (the mock said "name or
+  description"). The route's `entity` and `state` map to `rootEntity` and `active` (`true`, `false`, `all`).
+- Design L: `Run.status` may be `running` (decision 13 above). The route's `size` maps to `pageSize`.
+- Design F: `cardinality` may also be `one_to_one` (errors.md, `PATH_NOT_TRAVERSABLE`), so a path follows every
+  relationship that is not `one_to_many`.
+- Design J: a `400 REQUEST_INVALID` on the name or the description is not mapped to its field; the editor
+  checks both itself (required, 200 and 1000 characters) and a 400 is the general banner.
+- Design P, the three facts: reason `params` hold keys and raw values (api.md, `Reason`); `GET /controls/{id}`
+  and its versions answer for an archived control ("archived ones included"); the public glossary serves
+  `comparable`, `limits` and `formats`. All three hold.
+- Nothing in `contracts/` looked wrong, and nothing blocks a screen: no line for Kfir from this step.
 
 ## Last reviewed
 ab0d004 (phase 1), fixed in the commit after it.
@@ -142,3 +172,9 @@ rewrote. A review that found nothing, or did not run, is logged as that.
   shown only until the translated title is set (a Hebrew title there would put Hebrew outside `he.json`); other
   dimension literals that design.md itself gives (1px lines, the 2px outline, chip and spinner sizes, the
   value's `1px 6px`) stay as they are.
+- 2026-11-11 phase 2 on Fable 5.2: gate `gates/phase-2.txt` (ngc, ng lint, e2e type check, 129 unit tests in 20
+  files, ng build, print guard, `e2e/mocked` on mobile and desktop: 10 passed). The pure logic (`core/definition`,
+  `core/text`, the glossary lookups) has its specs beside it; for the operations, the draft check, the field
+  rules, the pointer and the text parts the specs were written and seen red before the code, one module at a
+  time; for the draft, the marks and the lookups spec and code were written in one step. No screen draws a
+  themed Material field yet.

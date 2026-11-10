@@ -1,5 +1,5 @@
 import { registerLocaleData } from '@angular/common';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import localeHe from '@angular/common/locales/he';
 import {
   ApplicationConfig,
@@ -15,6 +15,8 @@ import { provideTranslateHttpLoader } from '@ngx-translate/http-loader';
 import { firstValueFrom } from 'rxjs';
 
 import { routes } from './app.routes';
+import { languageInterceptor } from './core/http/language.interceptor';
+import { problemInterceptor } from './core/http/problem.interceptor';
 import { DEFAULT_LANGUAGE } from './core/i18n/language';
 import { TranslatedTitleStrategy } from './core/i18n/title.strategy';
 import { provideIcons } from './core/icons/icons';
@@ -25,7 +27,7 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes, withComponentInputBinding()),
-    provideHttpClient(),
+    provideHttpClient(withInterceptors([languageInterceptor, problemInterceptor])),
     { provide: LOCALE_ID, useValue: DEFAULT_LANGUAGE },
     { provide: TitleStrategy, useClass: TranslatedTitleStrategy },
     provideTranslateService({

@@ -1,6 +1,5 @@
-import { expect, test } from '@playwright/test';
-
 import { t } from '../support/i18n';
+import { expect, test } from '../support/mocked';
 import { shot } from '../support/shots';
 
 test.describe('shell', () => {
