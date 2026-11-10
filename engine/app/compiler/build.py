@@ -93,13 +93,15 @@ class _Binder:
     """Names every parameter and remembers how its value is found for a run."""
 
     def __init__(self) -> None:
-        self.recipes: dict[str, Recipe] = {_ONE: Constant(1), _ZERO: Constant(0)}
-        # The two constants of every flag; one object each, so the statements name them once.
-        self.one: ColumnElement[Any] = bindparam(_ONE, type_=Integer())
-        self.zero: ColumnElement[Any] = bindparam(_ZERO, type_=Integer())
+        self.recipes: dict[str, Recipe] = {}
+        # The 1 and 0 of every flag are constants of the engine, not values of a caller. SQLAlchemy writes them
+        # into the text itself (`literal_execute`, as it does for `TOP n`): as parameters they would be sent once
+        # per use, and the matched expressions use them once per node and per group above it.
+        self.one: ColumnElement[Any] = bindparam(_ONE, 1, type_=Integer(), literal_execute=True)
+        self.zero: ColumnElement[Any] = bindparam(_ZERO, 0, type_=Integer(), literal_execute=True)
 
     def _name(self, recipe: Recipe) -> str:
-        name = f"p{len(self.recipes) - 2}"
+        name = f"p{len(self.recipes)}"
         self.recipes[name] = recipe
         return name
 
@@ -162,7 +164,6 @@ class _Builder:
         # The nodes that can be matched, in document order, each with its predicate and the groups above it
         # (the root group left out: the WHERE already holds it).
         self._matchable: list[tuple[Matchable, ColumnElement[bool], tuple[VGroup, ...]]] = []
-        self._flag_label: dict[str, str] = {}
 
     def new_alias(self, entity: Entity) -> FromClause:
         alias = self.glossary.tables[entity.key].alias(f"e{self._aliases}")
@@ -233,21 +234,17 @@ class _Builder:
         display, display_columns = self._display(root)
         nodes, actual_columns = self._node_columns(root)
         flags: list[ColumnElement[Any]] = [
-            self._binder.flag(predicate).label(f"t{index}") for index, (_, predicate, _) in enumerate(self._matchable)
+            self._binder.flag(predicate).label(_flag_label(index))
+            for index, (_, predicate, _) in enumerate(self._matchable)
         ]
         columns: list[ColumnElement[Any]] = [key, *display_columns, *actual_columns]
         source = root.from_clause()
 
-        def plan(page: Select[Any], count: Select[Any]) -> CompiledPlan:
-            return CompiledPlan(definition, page, count, dict(self._binder.recipes), _KEY, _TOTAL, display, nodes)
-
-        compiled = plan(*self._statements(source, where, columns, flags, filter_on_flags=False))
-        if _parameters_sent(compiled) > MAX_PARAMETERS:
-            # Only a definition at the edge of the limits gets here (lists of ages, two dates a value). The
-            # other shape sends every value once; it gives up the index for that one definition.
-            compiled = plan(*self._statements(source, where, columns, flags, filter_on_flags=True))
+        page, count = self._statements(source, where, columns, flags)
+        compiled = CompiledPlan(definition, page, count, dict(self._binder.recipes), _KEY, _TOTAL, display, nodes)
         sent = _parameters_sent(compiled)
         if sent > MAX_PARAMETERS:
+            # Unreachable under a glossary the engine starts with: `unsupported` refuses limits that allow it.
             logger.error("a compiled statement has too many parameters", extra={"parameters": sent})
             raise InternalError()
         return compiled
@@ -258,27 +255,17 @@ class _Builder:
         where: ColumnElement[bool],
         columns: list[ColumnElement[Any]],
         flags: list[ColumnElement[Any]],
-        *,
-        filter_on_flags: bool,
     ) -> tuple[Select[Any], Select[Any]]:
-        """The page and the count over one inner select.
+        """The page and the count over one inner select, which carries the real WHERE (an index can serve it).
 
-        Normally the inner select carries the real WHERE, which an index can serve, and each caller value is
-        sent twice: in its flag and in the WHERE. With `filter_on_flags` the inner select has no WHERE and the
-        outer statements keep the rows whose root group holds over the flags: every value is sent once.
+        A caller value is sent twice per statement, in its flag and in the WHERE; the outer statements read
+        the flags and send nothing.
         """
-        rows_select = select(*columns, *flags).select_from(source)
-        tally_select = select(*flags).select_from(source)
-        if not filter_on_flags:
-            rows_select, tally_select = rows_select.where(where), tally_select.where(where)
-        rows, tally = rows_select.subquery("q"), tally_select.subquery("q")
-
+        rows = select(*columns, *flags).select_from(source).where(where).subquery("q")
+        tally = select(*flags).select_from(source).where(where).subquery("q")
         carried: list[ColumnElement[Any]] = [rows.c[str(column.name)] for column in columns]
         page = select(*carried, *self._matched(rows, summed=False)).order_by(rows.c[_KEY])
         count = select(func.count().label(_TOTAL), *self._matched(tally, summed=True)).select_from(tally)
-        if filter_on_flags:
-            page = page.where(self._holds(self._definition.where, rows))
-            count = count.where(self._holds(self._definition.where, tally))
         return page, count
 
     def _display(self, root: _Scope) -> tuple[tuple[tuple[str, ValueColumn], ...], list[ColumnElement[Any]]]:
@@ -317,28 +304,41 @@ class _Builder:
             nodes.append(
                 NodeColumns(
                     node_id=node.id,
-                    matched=f"m{index}",
+                    matched=_matched_label(index),
                     actual=actual(node.left) if is_condition else None,
                     right_actual=actual(node.right) if is_condition else None,
                 )
             )
         return tuple(nodes), columns
 
-    def _holds(self, node: VNode, inner: Subquery) -> ColumnElement[bool]:
-        """Whether a node holds for a row, written over the `t` flags of the inner select: no caller value again."""
-        if isinstance(node, VGroup):
-            parts = [self._holds(child, inner) for child in node.children]
-            return and_(*parts) if node.op == "and" else or_(*parts)
-        return inner.c[self._flag_label[node.id]] == self._binder.one
-
     def _matched(self, inner: Subquery, *, summed: bool) -> list[ColumnElement[Any]]:
-        """`m` per node: it holds, and so does every group above it (contracts/errors.md, Matched)."""
-        self._flag_label = {node.id: f"t{index}" for index, (node, _, _) in enumerate(self._matchable)}
+        """`m` per node: it holds, and so does every group above it (contracts/errors.md, Matched).
+
+        Written over the `t` flags of the inner select, so no caller value appears a second time.
+        """
+        flag_of = {node.id: inner.c[_flag_label(index)] for index, (node, _, _) in enumerate(self._matchable)}
+
+        def holds(node: VNode) -> ColumnElement[bool]:
+            if isinstance(node, VGroup):
+                parts = [holds(child) for child in node.children]
+                return and_(*parts) if node.op == "and" else or_(*parts)
+            return flag_of[node.id] == self._binder.one
+
         columns: list[ColumnElement[Any]] = []
         for index, (node, _, above) in enumerate(self._matchable):
-            flag = self._binder.flag(and_(self._holds(node, inner), *[self._holds(group, inner) for group in above]))
-            columns.append((func.sum(flag) if summed else flag).label(f"m{index}"))
+            flag = self._binder.flag(and_(holds(node), *[holds(group) for group in above]))
+            columns.append((func.sum(flag) if summed else flag).label(_matched_label(index)))
         return columns
+
+
+def _flag_label(index: int) -> str:
+    """The inner select's column that says whether node `index` holds for the row."""
+    return f"t{index}"
+
+
+def _matched_label(index: int) -> str:
+    """The outer statements' column that says whether node `index` is matched."""
+    return f"m{index}"
 
 
 def _value_column(label: str, field: Field) -> ValueColumn:

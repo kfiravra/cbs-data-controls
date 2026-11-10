@@ -17,8 +17,11 @@ from sqlalchemy.dialects import mssql
 from app.compiler.computed import COMPUTED, years_before
 from app.validator import ValidatedDefinition
 
-# SQL Server accepts 2,100 parameters per statement; the limits of the glossary keep a plan far below this.
+# SQL Server refuses a statement with more than 2,100 parameters. Only caller values are parameters, each sent
+# twice (its flag and the WHERE), and a value of a list on an age is two dates: four parameters at the worst.
+# `unsupported` refuses a glossary whose `maxTotalValues` would let a statement pass the limit.
 MAX_PARAMETERS = 2000
+WORST_PARAMETERS_PER_VALUE = 4
 
 # Statement text for people (goldens, /debug/compile): named placeholders. For counting: one mark per value sent.
 _NAMED = mssql.dialect()

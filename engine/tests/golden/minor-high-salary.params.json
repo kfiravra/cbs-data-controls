@@ -1,16 +1,6 @@
 {
   "page": [
     {
-      "name": "one",
-      "type": "Integer",
-      "value": 1
-    },
-    {
-      "name": "zero",
-      "type": "Integer",
-      "value": 0
-    },
-    {
       "name": "p0",
       "type": "Date",
       "value": "2008-11-01"
@@ -22,16 +12,6 @@
     }
   ],
   "count": [
-    {
-      "name": "one",
-      "type": "Integer",
-      "value": 1
-    },
-    {
-      "name": "zero",
-      "type": "Integer",
-      "value": 0
-    },
     {
       "name": "p0",
       "type": "Date",

@@ -89,12 +89,16 @@ continue". He reads these first.
 9. The interactive docs of FastAPI (`/docs`, `/redoc`, `/openapi.json`) are switched off: one internal caller,
    and an unknown path must answer `NOT_FOUND`.
 
-10. A second statement shape, which the plan does not have. Design D counts a caller value as bound twice
-    (its flag and the WHERE). A value in a list on the computed age costs two dates, so four parameters: a
-    definition at `maxTotalValues` made of such lists needs 2,025 and more, past the 2,000 the compiler allows
-    (SQL Server refuses 2,100). Such a definition is valid, so it must run: when the normal shape passes 2,000
-    the compiler builds the statements without the inner WHERE and filters on the flags instead, which sends
-    every value once and gives up the index for that one definition. Everything else keeps the shape of Design D.
+10. Only caller values are parameters; the 1 and 0 of the flags are written into the text by SQLAlchemy
+    (`literal_execute`, the mechanism of `TOP n`), and the engine refuses at startup a glossary whose
+    `maxTotalValues` is above 500. This replaces what stood here before the phase 3 review, a second statement
+    shape that filtered on the flags. Why: Design D binds a value twice per statement (its flag and the WHERE)
+    and says `maxTotalValues` keeps a statement under 2,000 parameters. Two things broke that. A value of a list
+    on the computed age is two dates, so four parameters; and the constants of the flags, bound as parameters,
+    were sent once per use, which grows with conditions times depth (the reviewer's critical finding: thirty
+    conditions three groups deep passed 2,000 and answered 500). With the constants out of the parameters the
+    worst definition the limits allow sends exactly 2,000 (SQL Server refuses 2,100), so the second shape could
+    never run and was removed.
 11. "29 February becoming 28" (Design D) is applied only when the target year has no 29 February. Read
     literally it would turn S(4) of 2028-02-29 into 2024-02-28 and make somebody born on 2024-02-29 three
     years old on their fourth birthday; the contract's formula decides, and a test on real rows proves the
@@ -128,7 +132,7 @@ says, what is true now. The list goes into the PR body under this heading at `/s
 - Still to come: architecture §19 and §6 on suggestions, when phase 5 lands.
 
 ## Last reviewed
-`c96bc1d` (phase 2), report in `reviews/phase-2.md`; phase 1 (`a426451`) in `reviews/phase-1.md`.
+`a9b3ec8` (phase 3), report in `reviews/phase-3.md`; phases 1 and 2 in `reviews/phase-1.md` and `reviews/phase-2.md`.
 
 ## Log
 - 2026-11-10 created plan. Interview in two rounds (plan.md Decisions 1 to 5). Kfir chose `lifecycle` and
@@ -221,3 +225,22 @@ says, what is true now. The list goes into the PR body under this heading at `/s
   the plan (decision 10 above). Harness lines corrected: three sentences of `dc-engine/SKILL.md` (autoescape,
   the label, the two statements), the autoescape clause of `agents/security-auditor.md`, and a new fact in the
   skill about `localhost` and `::1`.
+- 2026-11-11 review of phase 3 (`e74d531..a9b3ec8`, one reviewer on opus, `reviews/phase-3.md`): 1 critical,
+  2 warnings, 5 info. Critical: `app/compiler/build.py:332,339` the flag constants were bound as parameters on
+  every use, so thirty single-value conditions three groups deep (or 26 at four) passed 2,000 parameters and a
+  valid definition answered 500; fixed: the 1 and 0 are rendered into the text by SQLAlchemy, a statement sends
+  caller values only, and tests pin the count for the deepest and widest tree the limits allow (60) and for
+  500 values on an ordinary field (1,000) and on the computed one (2,000). Warnings: decision 10's second shape
+  was sized on values alone and tested as text only: removed, since it can no longer be reached, and replaced
+  by a startup check on `maxTotalValues` (decision 10 as it now stands); `build.py:165,332,336` `_holds` read an
+  attribute only `_matched` assigned: the helper is local to `_matched` again and nothing is assigned late.
+  Info, fixed: `SKILL.md:46-48` and `:58-60` reworded to what the code does; `build.py:236,336` the `t` label
+  formatted in two places, now one function; `build.py:102` parameter names tied to the two constants, gone
+  with them; `tests/unit/test_debug_compile.py:51` computed its expectation the way the code does and would
+  raise on 29 February, now a fixed "today" and the contract's own example. Info, left by the session:
+  `computed.py:31-32` the clamp to 0001-01-01 is off by one day for a record born on that very day and an
+  operand above the run year: no real birth date is there, and the exact form needs a second kind of
+  parameter; `build.py:179-185` the builder walks the tree for the nodes that can be matched though the
+  validator can list them: it needs each node's predicate and the groups above it, which only its own walk
+  has. The goldens were regenerated (the constants are now `1` and `0` in the text) and the diff read. All of
+  it in the review-fix commit that follows this line.

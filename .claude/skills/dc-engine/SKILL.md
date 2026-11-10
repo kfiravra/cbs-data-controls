@@ -44,8 +44,9 @@ PATH (the hook's fallback) still resolves the imports.
   kinds in code (`age_years` and the like). Neither is extended from data.
 - One `Select` per compile. Many-to-one paths (two hops at most) become joins; a one-to-many `related` node becomes
   a correlated `exists()` or `~exists()`, so rows never multiply. Each node that can be matched adds a flag
-  column under a generated label (`t0`, `t1`, ...); the plan maps the labels back to node ids. A node id is
-  caller text and never becomes a label or an alias.
+  column under a generated label (`t0`, `t1`, ...) to the inner select; the outer statements turn the flags
+  into one "matched" column per node (`m0`, `m1`, ...), and the plan says which `m` column belongs to which
+  node id. A node id is caller text and never becomes a label or an alias.
 - Date math runs in Python against the run date and binds a date: `age < 18` becomes `birth_date > run_date − 18
   years`. `DATEDIFF(year, …)` counts year boundaries, not birthdays, and a function on the column defeats the index.
 - `/run` executes two statements derived from that one inner `Select` (the real WHERE and the flags): a page
@@ -55,9 +56,11 @@ PATH (the hook's fallback) still resolves the imports.
 - Every value is an explicit, typed `bindparam` with a generated name, and a compiled plan stores how to fill it
   (a constant, or the run date minus n years), so one cached plan serves every run date and every cap. A Python
   bool is never compared inline: SQLAlchemy would render `col == False` as `= 0`.
-- A statement may carry at most 2,000 parameters (SQL Server refuses 2,100). A definition that would pass that
-  (lists on a computed age at the limits) is compiled in a second shape that filters on the flags and sends
-  each value once.
+- Only caller values are parameters. The 1 and 0 of the flags are written into the text by SQLAlchemy
+  (`literal_execute`, as for `TOP n`): as parameters they would be sent once per use. A value is sent twice per
+  statement (its flag and the WHERE), and a value of a list on a computed age four times (two dates), so
+  `limits.maxTotalValues` (500) bounds a statement at 2,000 parameters. SQL Server refuses 2,100; the engine
+  refuses at startup a glossary whose limit would allow more.
 
 ## Facts that bite
 

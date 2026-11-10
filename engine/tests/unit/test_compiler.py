@@ -87,9 +87,10 @@ def assert_invariants(plan: CompiledPlan, glossary: Glossary, caller_strings: li
         )  # the outer select and the inner one; EXISTS adds more, never a second statement
         for caller_string in caller_strings:
             assert caller_string not in sql
-        # The only literals SQLAlchemy writes: the LIKE wildcard, the escape character and the row cap.
+        # The only literals, all written by SQLAlchemy and none a caller's: the LIKE wildcard and the escape
+        # character, the 1 and 0 of the flags, and the row cap.
         assert set(STRING_LITERAL.findall(sql)) <= {"'%'", "'/'"}
-        assert set(NUMBER.findall(sql)) <= {str(ROW_CAP)}
+        assert set(NUMBER.findall(sql)) <= {"0", "1", str(ROW_CAP)}
         aliases: dict[str, set[str]] = {}
         for schema_name, table_name, alias in TABLE.findall(sql):
             assert (schema_name, unquoted(table_name)) in known_tables, (
@@ -407,10 +408,10 @@ def test_matched_flag_holds_the_node_and_every_group_above_it_but_the_root(
     plan = compiled(document, synthetic_glossary, schema)
     page, count, _ = texts(plan)
     assert [(node.node_id, node.matched) for node in plan.nodes] == [("c1", "m0"), ("c2", "m1"), ("c3", "m2")]
-    assert "CASE WHEN (q.t0 = :one AND q.t0 = :one AND q.t1 = :one) THEN :one ELSE :zero END AS m0" in page
-    assert "CASE WHEN (q.t1 = :one AND q.t0 = :one AND q.t1 = :one) THEN :one ELSE :zero END AS m1" in page
-    assert "CASE WHEN (q.t2 = :one) THEN :one ELSE :zero END AS m2" in page
-    assert "sum(CASE WHEN (q.t2 = :one) THEN :one ELSE :zero END) AS m2" in count
+    assert "CASE WHEN (q.t0 = 1 AND q.t0 = 1 AND q.t1 = 1) THEN 1 ELSE 0 END AS m0" in page
+    assert "CASE WHEN (q.t1 = 1 AND q.t0 = 1 AND q.t1 = 1) THEN 1 ELSE 0 END AS m1" in page
+    assert "CASE WHEN (q.t2 = 1) THEN 1 ELSE 0 END AS m2" in page
+    assert "sum(CASE WHEN (q.t2 = 1) THEN 1 ELSE 0 END) AS m2" in count
     assert count.startswith("SELECT count(*) AS total, sum(")
     assert page.rstrip().endswith("AS q ORDER BY q.k")
 
@@ -456,35 +457,45 @@ def test_one_plan_serves_two_run_dates_and_two_caps(synthetic_glossary: Glossary
     assert "TOP" not in render_statement(plan.page, first).sql, "the plan itself holds no cap"
 
 
+def sent_by(plan: CompiledPlan) -> set[int]:
+    parameters = plan.parameters(RUN_DATE)
+    return {parameter_count(statement, parameters) for statement in (plan.page_statement(ROW_CAP), plan.count)}
+
+
+def test_only_caller_values_are_parameters_each_sent_twice(
+    synthetic_glossary: Glossary, schema: DefinitionSchema
+) -> None:
+    document = definition("ticket", all_of(cond("c1", "priority", "gt", 3), cond("c2", "state", "in", values=["open"])))
+    assert sent_by(compiled(document, synthetic_glossary, schema)) == {4}
+
+
+def test_parameter_count_does_not_grow_with_depth_or_with_the_number_of_conditions(
+    synthetic_glossary: Glossary, schema: DefinitionSchema
+) -> None:
+    limits = synthetic_glossary.limits
+    node = any_of(*[cond(f"c{n}", "priority", "gt", n) for n in range(limits.max_conditions)])
+    for _ in range(limits.max_depth - 1):
+        node = all_of(node)
+    # The deepest and widest tree the limits allow: thirty values, each in its flag and in the WHERE.
+    assert sent_by(compiled(definition("ticket", node), synthetic_glossary, schema)) == {2 * limits.max_conditions}
+
+
 def test_definition_at_the_total_values_limit_stays_under_the_parameter_cap(
     synthetic_glossary: Glossary, schema: DefinitionSchema
 ) -> None:
     per_list = synthetic_glossary.limits.max_list_values
     lists = synthetic_glossary.limits.max_total_values // per_list
-    conditions = [cond(f"c{n}", "priority", "in", values=list(range(per_list))) for n in range(lists)]
-    plan = compiled(definition("ticket", any_of(*conditions)), synthetic_glossary, schema)
-    parameters = plan.parameters(RUN_DATE)
-    for statement in (plan.page_statement(ROW_CAP), plan.count):
-        # Every value twice: in its flag and in the WHERE, which stays on the bare columns.
-        assert 2 * per_list * lists <= parameter_count(statement, parameters) <= MAX_PARAMETERS < 2100
-    page, _, _ = texts(plan)
-    assert where_clause(page).startswith("e0.priority IN (")
+    for field, per_value in (("priority", 2), ("days_open", 4)):
+        # A list on the computed field is the worst case there is: every value is two dates.
+        conditions = [cond(f"c{n}", field, "in", values=list(range(per_list))) for n in range(lists)]
+        plan = compiled(definition("ticket", any_of(*conditions)), synthetic_glossary, schema)
+        assert sent_by(plan) == {per_value * per_list * lists}
+        assert max(sent_by(plan)) <= MAX_PARAMETERS < 2100
 
 
-def test_lists_of_a_computed_field_at_the_limit_fall_back_to_one_parameter_per_date(
-    synthetic_glossary: Glossary, schema: DefinitionSchema
-) -> None:
-    per_list = synthetic_glossary.limits.max_list_values
-    lists = synthetic_glossary.limits.max_total_values // per_list
-    # The worst case there is: every value of a list on an age costs two dates.
-    conditions = [cond(f"c{n}", "days_open", "in", values=list(range(per_list))) for n in range(lists)]
-    plan = compiled(definition("ticket", any_of(*conditions)), synthetic_glossary, schema)
-    parameters = plan.parameters(RUN_DATE)
-    for statement in (plan.page_statement(ROW_CAP), plan.count):
-        assert 2 * per_list * lists <= parameter_count(statement, parameters) <= MAX_PARAMETERS
-    page, count, _ = texts(plan)
-    root_holds = " OR ".join(f"q.t{n} = :one" for n in range(lists))
-    # The inner select has no WHERE of its own; the outer statements keep the rows whose root group holds.
-    assert page.rstrip().endswith(f"FROM ops.[Ticket] AS e0) AS q \nWHERE {root_holds} ORDER BY q.k")
-    assert count.rstrip().endswith(f"FROM ops.[Ticket] AS e0) AS q \nWHERE {root_holds}")
-    assert_invariants(plan, synthetic_glossary, [])
+def test_glossary_whose_limits_could_pass_the_parameter_cap_is_reported(glossary_document: dict[str, Any]) -> None:
+    document = synthetic_document(glossary_document)
+    document["limits"]["maxTotalValues"] = MAX_PARAMETERS // 4 + 1
+    assert unsupported(parse_glossary(document)) == [
+        f"limits.maxTotalValues above {MAX_PARAMETERS // 4}: a statement could pass {MAX_PARAMETERS} parameters"
+    ]

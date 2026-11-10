@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from typing import Any
 
+import pytest
 from starlette.testclient import TestClient
 
+import app.services as services_module
 from app.main import create_app
 from app.services import today_in
 from app.settings import Settings
@@ -49,11 +51,14 @@ def test_debug_compile_shows_both_statements_with_placeholders(offline_settings:
         assert "15000" not in text and "2008" not in text and ":p0" in text and ":p1" in text
 
 
-def test_debug_compile_uses_today_when_no_run_date_is_given(offline_settings: Settings) -> None:
+def test_debug_compile_uses_today_when_no_run_date_is_given(
+    offline_settings: Settings, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # contracts/errors.md, Age: somebody born on 2008-11-01 turns 18 on 2026-11-01.
+    monkeypatch.setattr(services_module, "today_in", lambda _zone: date(2026, 11, 1))
     example = read_json(EXAMPLE)
     body = enabled(offline_settings).post("/debug/compile", json={"definition": example["definition"]}).json()
-    today = today_in(offline_settings.time_zone)
-    assert {"name": "p0", "type": "Date", "value": today.replace(year=today.year - 18).isoformat()} in body["params"]
+    assert {"name": "p0", "type": "Date", "value": "2008-11-01"} in body["params"]
 
 
 def test_debug_compile_rejects_an_invalid_definition(offline_settings: Settings) -> None:
