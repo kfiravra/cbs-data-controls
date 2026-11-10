@@ -77,6 +77,17 @@ internal sealed class RequestCheck
         return value.Value;
     }
 
+    /// <summary>An optional integer with a lower bound only; absent stays absent.</summary>
+    public int? AtLeast(string path, int? value, int min)
+    {
+        if (value < min)
+        {
+            Add(path, RequestErrorCodes.OutOfRange, min: min);
+        }
+
+        return value;
+    }
+
     public void ThrowIfInvalid()
     {
         if (_errors.Count > 0)

@@ -11,6 +11,8 @@
     <!-- 8.0.5 exactly: the last MIT release (9.0.0 and later carry a maintenance-fee licence). It brings
          JsonPointer.Net 6.0.1 and Json.More.Net 2.2.0, both MIT; do not raise any of the three. -->
     <PackageVersion Include="JsonSchema.Net" Version="[8.0.5]" />
+    <!-- The UI alone; the document is the built-in one. -->
+    <PackageVersion Include="Swashbuckle.AspNetCore.SwaggerUI" Version="10.3.1" />
   </ItemGroup>
   <ItemGroup>
     <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.15" />

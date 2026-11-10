@@ -6,6 +6,7 @@ using DataControls.Api.Health;
 using DataControls.Api.Hosting;
 using DataControls.Api.Persistence;
 using DataControls.Api.Runs;
+using DataControls.Api.Suggestions;
 
 // The content root is the app's own folder, not the working directory: a script that starts the
 // published app from elsewhere still finds the appsettings.json and the wwwroot beside it.
@@ -28,7 +29,9 @@ builder.Services
     .AddGlossary()
     .AddControls()
     .AddRuns()
-    .AddHealth();
+    .AddSuggestions()
+    .AddHealth()
+    .AddApiDocumentation();
 
 var app = builder.Build();
 
@@ -36,8 +39,11 @@ app.UseExceptionHandler(_ => { });
 app.UseMiddleware<RequestContextMiddleware>();
 app.UseMiddleware<RequestBodyGuardMiddleware>();
 app.UseStatusCodePages(StatusCodeProblems.WriteAsync);
+app.UseCors();
 
 app.MapControllers();
+app.MapApiDocumentation();
 app.MapApiNotFound();
+app.UseClientFiles();
 
 app.Run();

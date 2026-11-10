@@ -11,10 +11,16 @@ internal static class Examples
     private static readonly string _directory = Path.Combine(ContractFiles.Root, "examples");
 
     /// <summary>The six example ids, for a theory.</summary>
-    public static TheoryData<string> Ids => [.. Names(_directory)];
+    public static TheoryData<string> Ids => [.. AllIds];
+
+    /// <summary>The six example ids.</summary>
+    public static IReadOnlyList<string> AllIds => [.. Names(_directory)];
 
     /// <summary>The invalid fixtures of one layer (<c>schema</c> or <c>semantic</c>), for a theory.</summary>
-    public static TheoryData<string> InvalidOf(string layer) =>
+    public static TheoryData<string> InvalidOf(string layer) => [.. InvalidNamesOf(layer)];
+
+    /// <summary>The names of the invalid fixtures of one layer.</summary>
+    public static IReadOnlyList<string> InvalidNamesOf(string layer) =>
         [.. Names(Path.Combine(_directory, "invalid")).Where(name => Invalid(name).GetProperty("layer").GetString() == layer)];
 
     public static JsonElement Example(string id) => Parse(Path.Combine(_directory, $"{id}.json"));

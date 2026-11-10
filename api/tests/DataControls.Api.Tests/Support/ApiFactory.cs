@@ -24,6 +24,12 @@ public sealed class ApiFactory(IReadOnlyDictionary<string, string>? settings = n
         ["Engine:BreakerMinimumThroughput"] = "100000",
     };
 
+    public const string IndexPage = "<!doctype html><title>test client</title>";
+    public const string ScriptName = "main.js";
+    public const string ScriptText = "window.testClient = true;";
+
+    private readonly string _webRoot = CreateWebRoot();
+
     public EngineStub Engine { get; } = new();
 
     public TestClock Clock { get; } = new();
@@ -35,6 +41,7 @@ public sealed class ApiFactory(IReadOnlyDictionary<string, string>? settings = n
             builder.UseSetting(key, value);
         }
 
+        builder.UseWebRoot(_webRoot);
         builder.ConfigureTestServices(services =>
         {
             services.ConfigureAll<HttpClientFactoryOptions>(options =>
@@ -43,5 +50,23 @@ public sealed class ApiFactory(IReadOnlyDictionary<string, string>? settings = n
             services.AddSingleton<TimeProvider>(Clock);
             services.AddControllers().AddApplicationPart(typeof(ProbeController).Assembly);
         });
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        base.Dispose(disposing);
+        if (disposing && Directory.Exists(_webRoot))
+        {
+            Directory.Delete(_webRoot, recursive: true);
+        }
+    }
+
+    /// <summary>The repository keeps no wwwroot: the client's build is copied beside the published app by the delivery task.</summary>
+    private static string CreateWebRoot()
+    {
+        var directory = Directory.CreateTempSubdirectory("dc-api-webroot-").FullName;
+        File.WriteAllText(Path.Combine(directory, "index.html"), IndexPage);
+        File.WriteAllText(Path.Combine(directory, ScriptName), ScriptText);
+        return directory;
     }
 }

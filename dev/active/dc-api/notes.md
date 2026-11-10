@@ -1,15 +1,17 @@
 # dc-api notes
 
 ## State
-Phases 1 to 4 are built; 1 to 3 are reviewed and fixed, Phase 4 is green (290 tests) and its review is next.
-Phase 4 added `EngineClient.RunAsync`, the run service (open, engine call, snapshot and close in one save, every
-failure kind closed with its code), run history, `GET /runs/{id}` with `previousRun`, and the results query
-(paging, search, condition filter, sort). The run is unattended (Kfir's word of 2026-11-11, below).
+All five phases are built; 1 to 4 are reviewed and fixed, Phase 5 is green (344 tests pass, the 3 live tests are
+skipped without `DC_LIVE=1`) and its review is next. Phase 5 added suggestions and accept, the OpenAPI document
+with a response per status, Swagger UI at `/api/docs`, static hosting with the fallback to `index.html`, CORS
+from configuration, `api/requests.http`, the conformance tests against the contract's table, the live tests,
+the api section of the README, and the one start of the published app from another directory. The run is
+unattended (Kfir's word of 2026-11-11, below).
 
 ## Next
-1. Phase 4 review, one `fix(api): review fixes` commit, the Log line.
-2. Phase 5 (suggestions, OpenAPI, static hosting, `requests.http`, the conformance test, live tests, README, the
-   start of the published app from another directory), then the gate.
+1. Phase 5 review, one `fix(api): review fixes` commit, the Log line.
+2. The gate: `/check all --tests`, the package list, the `/ship` steps that need no other task.
+3. Waiting for the merge of `feat/engine` (no engine answers on this machine): the live pass, then push and PR.
 
 ## Blockers
 - None for the build. The live pass of the gate needs the engine (`feat/engine`, not merged): it waits, and this
@@ -118,8 +120,21 @@ wait for a merge: commit, no push.
     After the row exists no write of it takes a cancellation token, the client's or the host's, so a run stays
     `running` only when the process dies or the database is gone at the moment of closing.
 
+27. **`UseDefaultFiles` is left out.** The fallback route answers `/` with `index.html` itself, and the
+    default-files middleware does nothing once an endpoint has matched, so it would be dead.
+28. **CORS is always in the pipeline, with a policy built from `Cors:AllowedOrigins`**; with no origin it allows
+    none. Design D says "CORS when origins are configured"; the outcome is the same, and the settings are read
+    when first needed, not while the host is being composed.
+29. **`max` of a suggestions request has a lower bound only** (`OUT_OF_RANGE` with `min`); the engine caps what it
+    returns. A null item of `accept` is read as an empty one (`REQUIRED` at its name and its definition).
+30. **The README gets one section, "The api (.NET 10)"**, before the repository map. The two sentences elsewhere
+    in the README that say "filled by dc-api" (Configuration, Running the tests) are dc-delivery's to reword
+    (decision 26), and are in the list below.
+31. **A test holds `api/requests.http` to the contract's table**, one request per row, like the mapped
+    endpoints and the OpenAPI document.
+
 ## Last reviewed
-`f54d6c2` (Phase 4), fixes in the commit after it; `96bc1e9` (Phase 3), fixes in `a619323`; `b89bd0b` (Phase 2), fixes in `638787d`; `8e80f74` (Phase 1), fixes in `a781c91`
+`f54d6c2` (Phase 4), fixes in `90a5db1`; `96bc1e9` (Phase 3), fixes in `a619323`; `b89bd0b` (Phase 2), fixes in `638787d`; `8e80f74` (Phase 1), fixes in `a781c91`
 
 ## Docs for dc-delivery
 Kept as the work goes (plan.md decision 26) and copied into the PR body under this heading at `/ship`. The
@@ -152,6 +167,13 @@ happen, add what did.
   that stops during the engine call closes the run `failed` with `INTERNAL_ERROR` (decision 26). The limitation
   for `docs/assumptions-limitations-extensions.md` narrows to: a run stays `running` only after a crash, or
   when `dq` cannot be reached at the moment the run is closed.
+- `README.md`, Configuration and Running the tests: the two sentences "filled by dc-engine and dc-api" and
+  "one command each, filled by ..." can now point to the section "The api (.NET 10)", which holds the api's
+  variables, its test command and the publish command.
+- `docs/architecture.md` §8 and §14: the api serves the client's build from the `wwwroot` beside the published
+  app, which must be there before the start (a folder added later is not seen until a restart); a path with a
+  file extension that names no file is a 404 problem, every other path outside `/api` is `index.html`, served
+  with `Cache-Control: no-cache`. Swagger UI is at `/api/docs` (its page is `/api/docs/index.html`).
 - `docs/ai-usage.md`: the Log below.
 
 ## Log
@@ -285,7 +307,7 @@ warning by file, what the fix changed, what was left and why, what Kfir rejected
 - 2026-11-11 01:06 Phase 4 gate green: build, format, 290 tests, print guard (`gates/phase-4.txt`). One run of
   5,000 violations (the stub's answer of about 3 MB, parsed, 5,000 rows inserted with the provider's default
   batch size, the run read back): 2011 ms, 1813 ms and 1880 ms in three runs of the test alone.
-- 2026-11-11 01:35 Phase 4 review (diff `a619323..f54d6c2`, one reviewer on opus): plan 0 critical, 2 warning, 1
+- 2026-11-11 01:20 Phase 4 review (diff `a619323..f54d6c2`, one reviewer on opus): plan 0 critical, 2 warning, 1
   info; standards 0 critical, 3 warning, 1 info. Warnings: `Runs/RunService.cs` a host that stops during the
   engine call left the run `running` and answered 500; `RunService.cs` the catch around the snapshot save took
   only two exception types, so a raw `SqlException` skipped the close; `Runs/RunResultsTests.cs` the display
@@ -305,3 +327,20 @@ warning by file, what the fix changed, what was left and why, what Kfir rejected
   passwords in `ConfigurationTests` tripped the secrets scan of `/ship` and became one named placeholder; the
   host-stop test goes through `RunService` with a lifetime the test signals, because the test server is torn
   down at once where Kestrel drains its requests. Kfir rejected or rewrote: nothing; he was not present.
+- 2026-11-11 01:21 the start of the published app from another directory (plan Design I), once, on WSL.
+  Command: `cd api && dotnet publish src/DataControls.Api -c Release -o <dir outside the repository>/published-api`,
+  a one-line `index.html` put into its `wwwroot`, then from the working directory `<dir>/run-from-here`, with
+  an environment emptied but for `PATH`, `HOME`, `DB_HOST=localhost`, `DB_PORT` and `DQ_APP_PASSWORD` (read
+  from `.env` into the child only), `Engine__BaseUrl=http://127.0.0.1:59999` (nothing listens there),
+  `ASPNETCORE_ENVIRONMENT=Production` and `ASPNETCORE_URLS=http://127.0.0.1:5087`:
+  `dotnet <dir>/published-api/DataControls.Api.dll`. The folder held 67 files, no schema file and no `.env`.
+  Requests: `GET /api/v1/health` 200 (`database` ok, `engine` unavailable, `degraded`); `POST
+  /api/v1/controls/validate` with the fixture `value-with-is-null.json` 422 `SCHEMA_VIOLATION` (the embedded
+  schema, no engine); `GET /openapi/v1.json` 200; `GET /api/docs/index.html` 200; `GET /` and `GET /runs/1` 200
+  with the index page; `GET /api/v1/controls?pageSize=1` 200; `GET /api/v1/glossary` 503 `ENGINE_UNAVAILABLE`;
+  `GET /api/v1/nothing-here` 404 `NOT_FOUND`. The log: "Hosting environment: Production", "Content root path:"
+  the published folder, no SQL statement, no password, one `fail:` line, which is the resilience library's own
+  record of the refused connection. The process was stopped and the copied folder deleted. The same script had
+  been tried once before on a scratch copy of `api/` at 01:13, with the same answers.
+- 2026-11-11 01:22 Phase 5 gate green: build, format, 344 tests passed and 3 skipped (the live tests), print
+  guard (`gates/phase-5.txt`).

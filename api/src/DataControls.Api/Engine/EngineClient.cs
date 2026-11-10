@@ -45,6 +45,27 @@ public sealed class EngineClient(HttpClient http, IOptions<EngineOptions> option
         return EngineRunAnswer.Parse(await SendAsync(HttpMethod.Post, "/run", body, cancellationToken));
     }
 
+    /// <summary>
+    /// The engine's <c>/suggest</c> body. Exactly the two members the contract names are sent, and one
+    /// that was not given is left out: the engine refuses a member it does not know.
+    /// </summary>
+    public Task<byte[]> SuggestAsync(string? rootEntity, int? max, CancellationToken cancellationToken)
+    {
+        var body = Body(writer =>
+        {
+            if (rootEntity is not null)
+            {
+                writer.WriteString("rootEntity", rootEntity);
+            }
+
+            if (max is not null)
+            {
+                writer.WriteNumber("max", max.Value);
+            }
+        });
+        return SendAsync(HttpMethod.Post, "/suggest", body, cancellationToken);
+    }
+
     internal static bool IsProbe(HttpRequestMessage? request) =>
         request is not null && request.Options.TryGetValue(_probe, out var probe) && probe;
 

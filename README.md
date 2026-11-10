@@ -104,6 +104,91 @@ A contract change is one commit to `contracts/` on `main`, with both checks gree
 that builds against it. Adding a field, an entity or a relationship is a change to `glossary.json` (and to `sql/`
 when the column is new) and to nothing else: no service code names a table, a column or a business term.
 
+## The api (.NET 10)
+
+`api/` is the application API under `/api/v1`: controls with immutable versions, runs with their stored results,
+the glossary and the suggestions, exactly as [contracts/api.md](contracts/api.md) lists them. It is the only
+component that writes, and it writes only schema `dq`. It checks a definition against the shared JSON Schema
+itself and through the engine before anything is saved, runs a control through the engine once and answers
+every page, search, filter and sort of the results from the snapshot it stored. It also serves the built client
+from the `wwwroot` folder beside it, so one process answers both.
+
+### Run it from a checkout
+
+Needs the .NET 10 SDK, the database up and initialised (above) and `.env` at the repository root.
+
+```sh
+cd api
+dotnet run --project src/DataControls.Api    # http://localhost:5000
+```
+
+- The api starts whether or not the database and the engine answer. `GET /api/v1/health` is always 200 and says
+  which of the two is `ok`; a call that needs the one that is down answers 503 with `DATABASE_UNAVAILABLE` or
+  `ENGINE_UNAVAILABLE`.
+- `http://localhost:5000/api/docs` is Swagger UI over `/openapi/v1.json`, in every environment.
+- [`api/requests.http`](api/requests.http) holds one request per endpoint, in the contract's order.
+- Every error is a problem with a `code` and `params` and no prose; the codes are in
+  [contracts/errors.md](contracts/errors.md).
+
+### Configure
+
+Settings are environment variables. In Development the api also reads the repository's `.env`, taking only its
+own keys from it; a variable that is really set wins. Outside Development it reads no file but the
+`appsettings.json` beside it. A setting outside its bounds stops the start with a message that names it.
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `DQ_APP_PASSWORD` | none | password of the `dq_app` login; the start fails without it unless `ConnectionStrings__Dq` is set |
+| `DB_HOST`, `DB_PORT` | `localhost`, `1433` | where SQL Server listens; the connection string is built from these and the password |
+| `ConnectionStrings__Dq` | unset | replaces the built connection string whole, for a server without a port (a named instance) |
+| `Engine__BaseUrl` | `http://localhost:8000` | where the engine listens; port 8000 may be taken on a developer machine |
+| `Engine__AttemptTimeout` | `00:01:15` | the longest one engine call may take; above the engine's worst case for a run (two statements of 30 s) |
+| `Engine__BreakerMinimumThroughput`, `Engine__BreakerBreakDuration` | `5`, `00:00:15` | the circuit breaker opens after this many calls with half of them failed, for this long |
+| `Runs__RowCap` | `5000` | the most violations a run stores |
+| `Runs__TimeZone` | `Asia/Jerusalem` | the zone that decides "today" for a run without a date |
+| `Runs__DefaultLanguage` | `he` | stands in for the glossary's default language until the glossary has been read |
+| `Glossary__CacheMinutes`, `Glossary__WarmUpOnStart` | `10`, `true` | how long the glossary is cached, and whether it is fetched once at startup |
+| `Cors__AllowedOrigins__0`, `__1`, ... | none | origins allowed to call the api from a browser; none are needed behind `ng serve`, which proxies `/api` |
+| `ASPNETCORE_URLS` | `http://localhost:5000` | where the api listens; change it when the port is taken or blocked |
+
+### Test
+
+```sh
+cd api
+dotnet build -warnaserror && dotnet format --verify-no-changes && dotnet test
+```
+
+The tests run the real app against the shared `DataControls` database as `dq_app`, with the engine replaced by a
+stub shaped by the contract, so SQL Server must be up; without it they fail with one sentence that says so.
+Every control a test creates is named `zz-dc-api-test-...`, and the suite deletes those controls with their
+versions and runs before and after it runs. Expected values come from `contracts/`. Three tests go to the real
+engine and are skipped unless asked for:
+
+```sh
+DC_LIVE=1 dotnet test --filter Category=Live    # needs the engine at Engine__BaseUrl and the seeded database
+```
+
+### Publish
+
+```sh
+cd api
+dotnet publish src/DataControls.Api -c Release   # src/DataControls.Api/bin/Release/net10.0/publish/
+```
+
+The published folder stands alone: it needs the .NET 10 ASP.NET Core runtime, and at run time it opens only its
+own folder, the database and the engine. The schema is inside the assembly, and the content root is the app's
+own folder, so it can be started from any working directory:
+
+```sh
+ConnectionStrings__Dq='...' Engine__BaseUrl=http://localhost:8000 \
+ASPNETCORE_ENVIRONMENT=Production ASPNETCORE_URLS=http://localhost:5000 \
+dotnet /path/to/publish/DataControls.Api.dll
+```
+
+Copy the client build into `wwwroot` inside that folder before the start; a folder added later is not seen until
+a restart. On Linux the default time zone needs `tzdata`; on a Windows without ICU the api falls back to the
+Windows name of the default zone.
+
 ## Repository map
 
 ```

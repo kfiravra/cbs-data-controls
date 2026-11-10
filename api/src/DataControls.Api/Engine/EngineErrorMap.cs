@@ -20,13 +20,16 @@ internal static class EngineErrorMap
         [EngineFailure.Unexpected] = new(ErrorCodes.InternalError, RunStatus.Failed, ErrorCodes.InternalError),
     };
 
-    /// <summary>The problem a request answers with. The engine's errors and params travel unchanged.</summary>
-    public static ApiException ToProblem(EngineException failure)
+    /// <summary>
+    /// The problem a request answers with. The engine's errors and params travel unchanged; a rejected
+    /// definition that is one of several in the request also names its <paramref name="index"/>.
+    /// </summary>
+    public static ApiException ToProblem(EngineException failure, int? index = null)
     {
         var code = _rows[failure.Failure].RequestCode;
         return failure.Failure switch
         {
-            EngineFailure.DefinitionInvalid => ApiException.Relayed(code, errors: failure.Errors),
+            EngineFailure.DefinitionInvalid => ApiException.Relayed(code, ApiException.IndexParams(index), failure.Errors),
             EngineFailure.QueryTimeout => ApiException.Relayed(code, parameters: failure.Params),
             _ => ApiException.Relayed(code),
         };

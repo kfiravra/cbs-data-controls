@@ -1,0 +1,82 @@
+{
+  "items": [
+    {
+      "name": "סיום העסקה לפני תחילתה",
+      "description": "איתור עובדים שתאריך סיום העסקתם מוקדם מתאריך תחילת העסקתם.",
+      "rationale": "איתור עובדים שתאריך סיום העסקתם מוקדם מתאריך תחילת העסקתם.",
+      "evidence": [
+        {
+          "key": "violations_found",
+          "params": {
+            "count": 3,
+            "total": 120
+          },
+          "text": "סיום העסקה לפני תחילתה"
+        },
+        {
+          "key": "date_order_split",
+          "params": {
+            "count": 3,
+            "total": 40
+          },
+          "text": "סיום העסקה לפני תחילתה"
+        }
+      ],
+      "definition": {
+        "schemaVersion": 1,
+        "rootEntity": "employee",
+        "where": {
+          "type": "group",
+          "op": "and",
+          "children": [
+            {
+              "type": "condition",
+              "id": "c1",
+              "left": {
+                "field": "termination_date"
+              },
+              "operator": "lt",
+              "right": {
+                "field": "hire_date"
+              }
+            }
+          ]
+        }
+      },
+      "sentence": "גיל מתחת ל־18 וגם שכר מעל 15,000 ₪",
+      "sentenceParts": [
+        {
+          "text": "גיל",
+          "nodeId": "c1",
+          "role": "field"
+        },
+        {
+          "text": " מתחת ל־",
+          "nodeId": "c1"
+        },
+        {
+          "text": "18",
+          "nodeId": "c1",
+          "role": "value"
+        },
+        {
+          "text": " וגם "
+        },
+        {
+          "text": "שכר",
+          "nodeId": "c2",
+          "role": "field"
+        },
+        {
+          "text": " מעל ",
+          "nodeId": "c2"
+        },
+        {
+          "text": "15,000 ₪",
+          "nodeId": "c2",
+          "role": "value"
+        }
+      ]
+    }
+  ]
+}

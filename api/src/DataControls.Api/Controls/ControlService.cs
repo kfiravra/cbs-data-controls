@@ -30,6 +30,32 @@ public sealed class ControlService(DqDbContext db, DefinitionChecker definitions
         return ToResponse(control, stored.Json);
     }
 
+    /// <summary>
+    /// Creates several controls with one save: all of them or none. Every request fault is listed with the
+    /// item's pointer; the first definition that fails answers with its index.
+    /// </summary>
+    public async Task<IReadOnlyList<ControlResponse>> CreateManyAsync(IReadOnlyList<CreateControlRequest?> requests, CancellationToken cancellationToken)
+    {
+        var check = new RequestCheck();
+        var inputs = requests
+            .Select((request, index) => ControlInput.Read(check, $"/items/{index}", request?.Name, request?.Description, request?.Definition))
+            .ToList();
+        check.ThrowIfInvalid();
+
+        var now = clock.Now;
+        var created = new List<(Control Control, StoredDefinition Definition)>();
+        for (var index = 0; index < inputs.Count; index++)
+        {
+            await definitions.ValidateAsync(inputs[index].Definition, cancellationToken, index);
+            var stored = DefinitionHasher.ToStored(inputs[index].Definition);
+            created.Add((Control.Create(inputs[index].Name, inputs[index].Description, stored, now), stored));
+        }
+
+        db.Controls.AddRange(created.Select(item => item.Control));
+        await db.SaveChangesAsync(cancellationToken);
+        return [.. created.Select(item => ToResponse(item.Control, item.Definition.Json))];
+    }
+
     public async Task<ControlResponse> GetAsync(long id, CancellationToken cancellationToken)
     {
         var control = await FindAsync(id, cancellationToken);

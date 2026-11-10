@@ -240,19 +240,19 @@ Review: `/phase-review api`
 Commit: `feat(api): runs, result snapshots and the results query`
 
 ### Phase 5: suggestions, OpenAPI, static hosting
-- [ ] `POST /suggestions` and `POST /suggestions/accept` (Design F), the accept through `ControlService`.
-- [ ] OpenAPI: document title and version, a response type per status on every action, `MapOpenApi()` in every
+- [x] `POST /suggestions` and `POST /suggestions/accept` (Design F), the accept through `ControlService`.
+- [x] OpenAPI: document title and version, a response type per status on every action, `MapOpenApi()` in every
       environment; Swagger UI at `/api/docs` over `/openapi/v1.json`.
-- [ ] Static hosting per Design D: static files, `index.html` not cached, the SPA fallback behind the api
+- [x] Static hosting per Design D: static files, `index.html` not cached, the SPA fallback behind the api
       catch-all; CORS from `Cors:AllowedOrigins`.
-- [ ] `api/requests.http`: one request per row of the application table in `contracts/api.md`.
-- [ ] The conformance test: every method and path of that table is mapped, and nothing else is under `/api/v1`.
-- [ ] `LiveEngineTests` per Design G, skipped unless `DC_LIVE=1`.
-- [ ] `README.md`: the api section only (run, configure, test, `/api/docs`, the publish command). Nothing else
+- [x] `api/requests.http`: one request per row of the application table in `contracts/api.md`.
+- [x] The conformance test: every method and path of that table is mapped, and nothing else is under `/api/v1`.
+- [x] `LiveEngineTests` per Design G, skipped unless `DC_LIVE=1`.
+- [x] `README.md`: the api section only (run, configure, test, `/api/docs`, the publish command). Nothing else
       in the README and no file under `docs/` (decision 26).
-- [ ] The published app started once from another directory, per Design I, after the tests of this phase are
+- [x] The published app started once from another directory, per Design I, after the tests of this phase are
       green and before its review, so a fix it calls for lands in this phase.
-- [ ] Tests: `/suggestions` forwards the body and the language and returns the engine's body; accept creates
+- [x] Tests: `/suggestions` forwards the body and the language and returns the engine's body; accept creates
       all or none and names the failing index; the OpenAPI document lists every contract path; `/api/docs`
       answers; `/` and an unknown client path return `index.html`; an unknown api path is a 404 problem; a
       preflight passes only for a configured origin.

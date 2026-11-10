@@ -7,6 +7,7 @@ namespace DataControls.Api.Health;
 public sealed class HealthController(HealthService health) : ControllerBase
 {
     /// <summary>Always 200: what is down is in the body.</summary>
+    [ProducesResponseType(StatusCodes.Status200OK)]
     [HttpGet]
     public Task<HealthResponse> Get(CancellationToken cancellationToken) => health.CheckAsync(cancellationToken);
 }

@@ -19,11 +19,21 @@ public sealed class DefinitionChecker(IDefinitionSchemaValidator schema, EngineC
         return ValidateAsync(definition, cancellationToken);
     }
 
-    /// <summary>Both layers. Throws 422 from the schema; an engine failure is an <see cref="EngineException"/>.</summary>
-    public Task<byte[]> ValidateAsync(JsonElement definition, CancellationToken cancellationToken)
+    /// <summary>
+    /// Both layers. A rejection by either is a 422 problem; when the definition is one of several in the
+    /// request, <paramref name="index"/> says which. Any other engine failure is an <see cref="EngineException"/>.
+    /// </summary>
+    public async Task<byte[]> ValidateAsync(JsonElement definition, CancellationToken cancellationToken, int? index = null)
     {
-        CheckSchema(definition);
-        return AskEngineAsync(definition, cancellationToken);
+        CheckSchema(definition, index);
+        try
+        {
+            return await AskEngineAsync(definition, cancellationToken);
+        }
+        catch (EngineException failure) when (index is not null && failure.Failure == EngineFailure.DefinitionInvalid)
+        {
+            throw EngineErrorMap.ToProblem(failure, index);
+        }
     }
 
     /// <summary>The engine's layer alone, for a definition that already passed the schema.</summary>
@@ -31,12 +41,12 @@ public sealed class DefinitionChecker(IDefinitionSchemaValidator schema, EngineC
         engine.ValidateAsync(definition, cancellationToken);
 
     /// <summary>The api's own layer alone.</summary>
-    public void CheckSchema(JsonElement definition)
+    public void CheckSchema(JsonElement definition, int? index = null)
     {
         var errors = schema.Validate(definition);
         if (errors.Count > 0)
         {
-            throw ApiException.DefinitionInvalid(errors);
+            throw ApiException.DefinitionInvalid(errors, index);
         }
     }
 }

@@ -1,0 +1,54 @@
+# phase-5 gate: /check --tests (2026-11-11T01:22+0200, branch feat/api, head 90a5db1 plus the working tree)
+
+## api-build: (cd api && dotnet build -warnaserror)
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  DataControls.Api -> api/src/DataControls.Api/bin/Debug/net10.0/DataControls.Api.dll
+  DataControls.Api.Tests -> api/tests/DataControls.Api.Tests/bin/Debug/net10.0/DataControls.Api.Tests.dll
+Build succeeded.
+    0 Warning(s)
+    0 Error(s)
+Time Elapsed 00:00:02.44
+exit=0
+
+## api-format: (cd api && dotnet format --verify-no-changes)
+exit=0
+
+## api-test: (cd api && dotnet test)
+  DataControls.Api.Tests -> api/tests/DataControls.Api.Tests/bin/Debug/net10.0/DataControls.Api.Tests.dll
+Test run for api/tests/DataControls.Api.Tests/bin/Debug/net10.0/DataControls.Api.Tests.dll (.NETCoreApp,Version=v10.0)
+VSTest version 18.0.2 (x64)
+Starting test execution, please wait...
+A total of 1 test files matched the specified pattern.
+[xUnit.net 00:00:16.86]     DataControls.Api.Tests.Live.LiveEngineTests.Every_example_flags_the_expected_records_on_its_run_date_and_on_its_alternate_dates [SKIP]
+[xUnit.net 00:00:16.86]     DataControls.Api.Tests.Live.LiveEngineTests.Glossary_is_served_from_the_engine [SKIP]
+[xUnit.net 00:00:16.86]     DataControls.Api.Tests.Live.LiveEngineTests.Every_semantic_fixture_is_rejected_by_the_engine_with_its_code_and_path [SKIP]
+  Skipped DataControls.Api.Tests.Live.LiveEngineTests.Every_example_flags_the_expected_records_on_its_run_date_and_on_its_alternate_dates [1 ms]
+  Skipped DataControls.Api.Tests.Live.LiveEngineTests.Glossary_is_served_from_the_engine [1 ms]
+  Skipped DataControls.Api.Tests.Live.LiveEngineTests.Every_semantic_fixture_is_rejected_by_the_engine_with_its_code_and_path [1 ms]
+Passed!  - Failed:     0, Passed:   344, Skipped:     3, Total:   347, Duration: 26 s - DataControls.Api.Tests.dll (net10.0)
+exit=0
+
+## print-guard: (cd . && bash /home/kfir/projects/cbs-api/.claude/hooks/print-guard.sh <the touched .cs files>)
+exit=0
+
+RESULT: green
+
+## The start of the published app from another directory (plan Design I),   DataControls.Api -> /home/kfir/projects/cbs-api/api/src/DataControls.Api/bin/Release/net10.0/DataControls.Api.dll
+  DataControls.Api -> <dir outside the repository>/published-api/
+published files: 67; schema file in the folder: 0; .env in the folder: 0
+started from: <dir outside the repository>/run-from-here
+GET /api/v1/health -> 200 application/json; charset=utf-8 | {"status":"degraded","database":"ok","engine":"unavailable","version":"1.0.0"}
+POST /api/v1/controls/validate -> 422 application/problem+json | {"type":"about:blank","title":"DEFINITION_INVALID","status":422,"code":"DEFINITION_INVALID","params":{},"errors":[{"code":"SCHEMA_VIOLATION","path":"/where/chil
+GET /openapi/v1.json -> 200 application/json;charset=utf-8 | {   "openapi": "3.1.1",   "info": {     "title": "Data Controls API",     "description": "Data-quality controls: definitions, runs and their stored results. Err
+GET /api/docs/index.html -> 200 text/html;charset=utf-8 | <!-- HTML for static distribution bundle build --> <!DOCTYPE html> <html lang="en"> <head>     <meta charset="UTF-8">     <title>Swagger UI</title>     <l
+GET / -> 200 text/html | <!doctype html><title>published api trial</title> 
+GET /runs/1 -> 200 text/html | <!doctype html><title>published api trial</title> 
+GET /api/v1/controls?pageSize=1 -> 200 application/json; charset=utf-8 | {"items":[],"total":0,"page":1,"pageSize":1}
+GET /api/v1/glossary -> 503 application/problem+json | {"type":"about:blank","title":"ENGINE_UNAVAILABLE","status":503,"code":"ENGINE_UNAVAILABLE","params":{},"correlationId":"8f55d00d0b47447f87c4b4af43f3d267"}
+GET /api/v1/nothing-here -> 404 application/problem+json | {"type":"about:blank","title":"NOT_FOUND","status":404,"code":"NOT_FOUND","params":{},"correlationId":"5d2203b425a9476bb0428527a299bd9f"}
+environment line of the log:       Hosting environment: Production
+content root line of the log:       Content root path: <dir outside the repository>/published-api/
+errors in the log: 1
+password in the log: 0
+copied folder deleted
