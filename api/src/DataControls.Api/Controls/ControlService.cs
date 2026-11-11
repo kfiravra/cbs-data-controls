@@ -159,9 +159,7 @@ public sealed class ControlService(
 
         var filtered = Filter(db.Controls.AsNoTracking(), active, query.Search?.Trim(), query.RootEntity);
         var total = await filtered.CountAsync(cancellationToken);
-        var entityOrder = sort == SortByRootEntity
-            ? await glossary.EntityKeysByLabelAsync(requests.Current.Language, cancellationToken)
-            : null;
+        var entityOrder = sort == SortByRootEntity ? glossary.HeldEntityKeysByLabel(requests.Current.Language) : null;
         var page = await Order(filtered, sort, descending, entityOrder)
             .Skip(paging.Skip)
             .Take(paging.PageSize)
@@ -196,8 +194,8 @@ public sealed class ControlService(
     /// <summary>
     /// The list in the order asked for. The direction applies to the sort key; controls that are equal in it
     /// stand by name and then by id, ascending, so a page is the same page whenever it is asked for. What a
-    /// sort key cannot place comes last in both directions: a control that never ran, and under
-    /// <c>violations</c> a control whose newest run has no count, before it.
+    /// sort key cannot place comes last in both directions: a root entity the glossary does not hold, a
+    /// control that never ran, and under <c>violations</c> a control whose newest run has no count, before it.
     /// </summary>
     private IQueryable<Control> Order(IQueryable<Control> controls, string sort, bool descending, IReadOnlyList<string>? entityOrder)
     {
@@ -206,7 +204,9 @@ public sealed class ControlService(
             SortByRootEntity when entityOrder is not null => ByEntityOrder(controls, entityOrder, descending),
             SortByRootEntity => By(controls, control => control.RootEntityKey, descending),
             SortByLastRun => ThenBy(controls.OrderBy(NeverRan), NewestStart, descending),
-            SortByViolations => ThenBy(controls.OrderBy(NewestHasNoCount).ThenBy(NeverRan), NewestCount, descending),
+            // a run without a count stands where the largest count would when ascending and under the
+            // smallest when descending: last either way, and among those a control that never ran is last
+            SortByViolations => By(controls, NewestCountOr(descending ? int.MinValue : int.MaxValue), descending).ThenBy(NeverRan),
             _ => null,
         };
         return (ordered?.ThenBy(control => control.Name) ?? By(controls, control => control.Name, descending))
@@ -215,20 +215,19 @@ public sealed class ControlService(
 
     /// <summary>
     /// By the place of the root entity in <paramref name="keys"/>, which the glossary ordered by label: one
-    /// comparison with a bound key per entity, so no key and no label is written into the statement. A key
-    /// the glossary no longer holds comes after the others when ascending.
+    /// comparison with a bound key per entity, so no key and no label is written into the statement. An
+    /// entity the glossary does not hold comes after the others in both directions.
     /// </summary>
     private static IOrderedQueryable<Control> ByEntityOrder(IQueryable<Control> controls, IReadOnlyList<string> keys, bool descending)
     {
-        IOrderedQueryable<Control>? ordered = null;
+        var ordered = controls.OrderBy(control => !keys.Contains(control.RootEntityKey));
         foreach (var key in keys)
         {
             // "is this entity" sorts true last, so its own direction is the opposite of the list's
-            Expression<Func<Control, bool>> isThisEntity = control => control.RootEntityKey == key;
-            ordered = ordered is null ? By(controls, isThisEntity, !descending) : ThenBy(ordered, isThisEntity, !descending);
+            ordered = ThenBy(ordered, control => control.RootEntityKey == key, !descending);
         }
 
-        return ordered ?? By(controls, control => control.RootEntityKey, descending);
+        return ordered;
     }
 
     private Expression<Func<Control, bool>> NeverRan =>
@@ -237,21 +236,14 @@ public sealed class ControlService(
     private Expression<Func<Control, DateTime?>> NewestStart =>
         control => db.Runs.Where(run => run.ControlId == control.Id).Max(run => (DateTime?)run.StartedAt);
 
-    private Expression<Func<Control, int?>> NewestCount =>
+    /// <summary>The count of the control's newest run, or <paramref name="none"/> when it has no run or the run has no count.</summary>
+    private Expression<Func<Control, int>> NewestCountOr(int none) =>
         control => db.Runs
             .Where(run => run.ControlId == control.Id)
             .OrderByDescending(run => run.StartedAt)
             .ThenByDescending(run => run.Id)
             .Select(run => run.TotalCount)
-            .FirstOrDefault();
-
-    private Expression<Func<Control, bool>> NewestHasNoCount =>
-        control => db.Runs
-            .Where(run => run.ControlId == control.Id)
-            .OrderByDescending(run => run.StartedAt)
-            .ThenByDescending(run => run.Id)
-            .Select(run => run.TotalCount)
-            .FirstOrDefault() == null;
+            .FirstOrDefault() ?? none;
 
     private static IOrderedQueryable<Control> By<TKey>(IQueryable<Control> controls, Expression<Func<Control, TKey>> key, bool descending) =>
         descending ? controls.OrderByDescending(key) : controls.OrderBy(key);

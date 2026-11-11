@@ -476,9 +476,10 @@ copy and the engine does not answer.
 A `sort` or `dir` outside its words is 400 `MALFORMED`. 200 `Page<ControlSummary>`. Controls that are equal in the
 sort key stand by name, then id, ascending in both directions. What a key cannot place comes last in both
 directions: under `lastRun` a control that never ran; under `violations` a control whose newest run has no count
-(it failed, timed out or is running) and, after it, a control that never ran. `rootEntity` follows the labels of
-the glossary the api holds, compared without regard to case; when the api holds none and the engine does not
-answer, it follows the keys.
+(it failed, timed out or is running) and, after it, a control that never ran; under `rootEntity` a root entity
+the glossary does not hold. `rootEntity` follows the labels of the glossary the api holds, compared without
+regard to case; the engine is not called for a list, and while the api holds no glossary the list follows the
+keys.
 
 ### `POST /api/v1/controls`
 

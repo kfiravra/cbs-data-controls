@@ -462,6 +462,34 @@ th[aria-sort='descending'] .th-sort {
       text-align: center;
     }
 
+    // The ring of the keyboard is drawn by the cells of the details themselves, so it closes where they end:
+    // the stretched link lies under the run and the action cells, and a ring on it would have no end edge.
+    .row-link:focus-visible::after {
+      outline: none;
+    }
+
+    tr:has(.row-link:focus-visible) td:not(.cell-run, .cell-actions) {
+      --ring: var(--color-action);
+
+      box-shadow:
+        inset 0 2px 0 var(--ring),
+        inset 0 -2px 0 var(--ring);
+    }
+
+    tr:has(.row-link:focus-visible) td:first-child {
+      box-shadow:
+        inset 0 2px 0 var(--ring),
+        inset 0 -2px 0 var(--ring),
+        inset calc(var(--inline-end) * 2px) 0 0 var(--ring);
+    }
+
+    tr:has(.row-link:focus-visible) td.cell-result {
+      box-shadow:
+        inset 0 2px 0 var(--ring),
+        inset 0 -2px 0 var(--ring),
+        inset calc(var(--inline-end) * -2px) 0 0 var(--ring);
+    }
+
     // the details of a row that opens something answer the pointer as one part
     tr:has(.row-link:hover) td {
       border-color: var(--color-line-strong);

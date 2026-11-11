@@ -16,6 +16,12 @@ public sealed class ControlListTests(ApiFixture fixture)
     private readonly TestClock _clock = fixture.Factory.Clock;
     private readonly string _testId = TestData.NewTestId();
 
+    /// <summary>
+    /// The entities of the glossary fixture in the order of their Hebrew plural labels, written out by hand:
+    /// their keys stand in another order (department, employee, ministry), which is what the sort must not follow.
+    /// </summary>
+    private readonly string[] _entitiesByLabel = ["department", "ministry", "employee"];
+
     [Fact]
     public async Task List_shows_active_controls_only_unless_active_asks_for_archived_or_all()
     {
@@ -63,34 +69,40 @@ public sealed class ControlListTests(ApiFixture fixture)
     [Fact]
     public async Task List_is_ordered_by_the_label_of_the_root_entity_and_not_by_its_key_when_sort_is_rootEntity()
     {
-        // The glossary's labels put the three entities in another order than their keys do.
-        var byLabel = EntityKeysByLabel();
-        Assert.NotEqual(byLabel.Order(StringComparer.Ordinal), byLabel);
+        // The api orders by the glossary it holds: reading it once makes sure it holds one.
+        await _client.GetAsync("/api/v1/glossary");
+        Assert.Equal(_entitiesByLabel.Order(StringComparer.Ordinal), FixtureEntityKeys().Order(StringComparer.Ordinal));
         var created = new Dictionary<string, int>();
-        foreach (var entity in byLabel.Order(StringComparer.Ordinal))
+        foreach (var entity in _entitiesByLabel.Order(StringComparer.Ordinal))
         {
             created[entity] = Id(await ControlRequests.CreateAsync(_client, TestData.Name(_testId, entity), DefinitionOf(entity)));
         }
 
-        var second = Id(await ControlRequests.CreateAsync(_client, TestData.Name(_testId, "a second one"), DefinitionOf(byLabel[0])));
+        var second = Id(await ControlRequests.CreateAsync(_client, TestData.Name(_testId, "a second one"), DefinitionOf(_entitiesByLabel[0])));
+        // An entity the glossary does not hold: the stubbed engine accepts it, and no label can place it.
+        var unknown = Id(await ControlRequests.CreateAsync(_client, TestData.Name(_testId, "a stranger"), DefinitionOf("aardvark")));
 
         var ascending = await ControlRequests.ListAsync(_client, _testId, "&sort=rootEntity");
         var descending = await ControlRequests.ListAsync(_client, _testId, "&sort=rootEntity&dir=desc");
 
-        // Inside one entity the controls stand by name whatever the direction.
-        Assert.Equal([second, created[byLabel[0]], created[byLabel[1]], created[byLabel[2]]], Ids(ascending));
-        Assert.Equal([created[byLabel[2]], created[byLabel[1]], second, created[byLabel[0]]], Ids(descending));
+        // Inside one entity the controls stand by name whatever the direction, and the stranger is last both ways
+        // although its key and its name would both put it first.
+        Assert.Equal(
+            [second, created[_entitiesByLabel[0]], created[_entitiesByLabel[1]], created[_entitiesByLabel[2]], unknown],
+            Ids(ascending));
+        Assert.Equal(
+            [created[_entitiesByLabel[2]], created[_entitiesByLabel[1]], second, created[_entitiesByLabel[0]], unknown],
+            Ids(descending));
     }
 
     [Fact]
-    public async Task List_is_ordered_by_the_root_entity_key_when_sort_is_rootEntity_and_no_glossary_can_be_read()
+    public async Task List_is_ordered_by_the_root_entity_key_and_asks_the_engine_nothing_when_the_api_holds_no_glossary()
     {
         // The glossary cache lives as long as its host: a host of its own has never read one.
         await using var factory = new ApiFactory();
-        factory.Engine.Refuse(EngineStub.Glossary);
         var client = factory.CreateClient();
         var byKey = new List<int>();
-        foreach (var entity in EntityKeysByLabel().Order(StringComparer.Ordinal))
+        foreach (var entity in _entitiesByLabel.Order(StringComparer.Ordinal))
         {
             byKey.Add(Id(await ControlRequests.CreateAsync(client, TestData.Name(_testId, entity), DefinitionOf(entity))));
         }
@@ -100,6 +112,8 @@ public sealed class ControlListTests(ApiFixture fixture)
 
         Assert.Equal(byKey, Ids(ascending));
         Assert.Equal(byKey.AsEnumerable().Reverse(), Ids(descending));
+        // A list is answered from the store alone: it does not wait on the engine for a glossary.
+        Assert.Empty(factory.Engine.CallsTo(EngineStub.Glossary));
     }
 
     [Fact]
@@ -131,8 +145,9 @@ public sealed class ControlListTests(ApiFixture fixture)
         var neverRan = await CreateAsync("a never ran");
         var stopped = await CreateAsync("b stopped");
         var five = await CreateAsync("c five");
-        var two = await CreateAsync("d two");
+        // Two controls with one count: the later name was created first, so only the name can order them.
         var alsoTwo = await CreateAsync("e two as well");
+        var two = await CreateAsync("d two");
         _engine.Answer(EngineStub.Run, HttpStatusCode.OK, RunAnswers.Numbered(1));
         // The newest run counts, not an earlier one: this control found one, then five.
         await RunRequests.StartAsync(_client, Id(five));
@@ -157,20 +172,24 @@ public sealed class ControlListTests(ApiFixture fixture)
     [Fact]
     public async Task List_pages_a_sorted_list_without_repeating_or_dropping_a_control()
     {
-        var created = new List<int>();
-        foreach (var label in new[] { "1", "2", "3", "4", "5" })
+        var three = await CreateAsync("a three");
+        var neverRan = await CreateAsync("b never ran");
+        var one = await CreateAsync("c one");
+        var alsoNeverRan = await CreateAsync("d never ran either");
+        var two = await CreateAsync("e two");
+        foreach (var (control, count) in new[] { (three, 3), (one, 1), (two, 2) })
         {
-            created.Add(Id(await CreateAsync(label)));
+            _engine.Answer(EngineStub.Run, HttpStatusCode.OK, RunAnswers.Numbered(count));
+            await RunRequests.StartAsync(_client, Id(control));
         }
 
-        // No control here ran, so the run's start orders nothing and the name alone decides.
         var pages = new List<int>();
         foreach (var page in new[] { 1, 2, 3 })
         {
-            pages.AddRange(Ids(await ControlRequests.ListAsync(_client, _testId, $"&sort=lastRun&dir=desc&pageSize=2&page={page}")));
+            pages.AddRange(Ids(await ControlRequests.ListAsync(_client, _testId, $"&sort=violations&dir=desc&pageSize=2&page={page}")));
         }
 
-        Assert.Equal(created, pages);
+        Assert.Equal([Id(three), Id(two), Id(one), Id(neverRan), Id(alsoNeverRan)], pages);
     }
 
     [Fact]
@@ -303,14 +322,11 @@ public sealed class ControlListTests(ApiFixture fixture)
         return definition.ToJsonString();
     }
 
-    /// <summary>The entity keys of the glossary fixture in the order of their plural labels in the default language.</summary>
-    private static List<string> EntityKeysByLabel()
+    /// <summary>The entity keys of the glossary fixture, to tell when the fixture has changed under the list above.</summary>
+    private static List<string> FixtureEntityKeys()
     {
         using var glossary = JsonDocument.Parse(EngineFixtures.Read("glossary.json"));
-        var language = glossary.RootElement.GetProperty("defaultLanguage").GetString()!;
-        return [.. glossary.RootElement.GetProperty("entities").EnumerateArray()
-            .OrderBy(entity => entity.GetProperty("label").GetProperty("plural").GetProperty(language).GetString(), StringComparer.OrdinalIgnoreCase)
-            .Select(entity => entity.GetProperty("key").GetString()!)];
+        return [.. glossary.RootElement.GetProperty("entities").EnumerateArray().Select(entity => entity.GetProperty("key").GetString()!)];
     }
 
     private static int Id(JsonElement control) => control.GetProperty("id").GetInt32();

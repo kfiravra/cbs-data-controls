@@ -183,7 +183,7 @@
                     class="ideas__row"
                     type="button"
                     data-testid="ideas-toggle"
-                    aria-controls="ideas-list"
+                    [attr.aria-controls]="ideasOpen() ? 'ideas-list' : null"
                     [attr.aria-expanded]="ideasOpen()"
                     [attr.aria-disabled]="store.ideas.items().length === 0 ? 'true' : null"
                     (click)="toggleIdeas()"

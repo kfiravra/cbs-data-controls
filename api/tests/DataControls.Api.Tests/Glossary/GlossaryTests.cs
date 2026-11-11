@@ -1,4 +1,5 @@
 using System.Net;
+using System.Text.Json.Nodes;
 using DataControls.Api.Tests.Support;
 
 namespace DataControls.Api.Tests.Glossary;
@@ -28,6 +29,24 @@ public sealed class GlossaryTests : IAsyncLifetime
         Assert.Equal(EngineFixtures.ReadBytes("glossary.json"), await first.Content.ReadAsByteArrayAsync());
         Assert.Equal(EngineFixtures.ReadBytes("glossary.json"), await second.Content.ReadAsByteArrayAsync());
         Assert.Single(_factory.Engine.CallsTo(EngineStub.Glossary));
+    }
+
+    [Fact]
+    public async Task Glossary_is_served_when_an_entity_carries_no_plural_label()
+    {
+        // Only a sorted list reads the labels: a glossary without one is still the glossary.
+        var glossary = JsonNode.Parse(EngineFixtures.Read("glossary.json"))!;
+        glossary["entities"]![0]!.AsObject().Remove("label");
+        var body = glossary.ToJsonString();
+        _factory.Engine.Answer(EngineStub.Glossary, HttpStatusCode.OK, body);
+        var client = _factory.CreateClient();
+
+        var response = await client.GetAsync(Path);
+        var sorted = await client.GetAsync("/api/v1/controls?sort=rootEntity&pageSize=1");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal(body, await response.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, sorted.StatusCode);
     }
 
     [Fact]

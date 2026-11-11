@@ -40,9 +40,11 @@ import { ToastRef, ToastService } from '../../shared/toast/toast.service';
 import { ClosedDrafts } from './closed-drafts';
 import { DESCRIPTION_MAX, NAME_MAX } from './editor.messages';
 import { EditorStore } from './editor.store';
-import { EditorTarget } from './editor.types';
+import { EditorSnapshot, EditorTarget } from './editor.types';
 
 const NEW = 'new';
+/** How long the toast of a closed draft stands: twice a plain toast. */
+const CLOSED_TOAST_MS = 12_000;
 
 /**
  * The control editor, in the list's panel: the details, what the control checks (a card per entity of the
@@ -87,6 +89,8 @@ export class ControlEditorPage {
   private readonly closedDrafts = inject(ClosedDrafts);
   /** The address of the editor whose draft is on the screen (`/controls/new`, `/controls/12`). */
   private openPath: string | null = null;
+  /** A changed draft that was left while its save was on its way: offered back if that save fails. */
+  private heldWhileSaving: { readonly path: string; readonly snapshot: EditorSnapshot } | null = null;
   /**
    * The toast that offers a way back (from a removal, another choice of what to check, or a suggestion that
    * filled the conditions) and the draft that way back starts from. The offer stands only while that draft
@@ -232,6 +236,18 @@ export class ControlEditorPage {
         untracked(() => this.show(target, `/controls/${id}`));
       }
     });
+    // a closed draft asked back at the address this editor already stands at: no navigation says so
+    effect(() => {
+      const wanted = this.closedDrafts.wanted();
+      if (wanted !== null && wanted === this.openPath) {
+        untracked(() => {
+          const target = this.target(this.id(), this.from());
+          if (target) {
+            this.show(target, wanted);
+          }
+        });
+      }
+    });
     // an offered way back is withdrawn as soon as the draft is another one: edited further, read again from
     // the server, started over. The store refuses such a way back as well; this takes its button away.
     effect(() => {
@@ -258,35 +274,52 @@ export class ControlEditorPage {
 
   /**
    * Opens what the address names, or brings back the draft that was closed there when the toast's undo
-   * asked for it. A changed draft that this takes the place of is kept and offered back first.
+   * asked for it. A changed draft that this takes the place of is kept and offered back, after the one that
+   * was asked for is in hand: there is room for one.
    */
   private show(target: EditorTarget, path: string): void {
+    const closed = this.closedDrafts.take(path);
     // a first save moves the control to its own address: the same draft, which nothing takes the place of
-    const sameControl = target.id !== null && this.store.control()?.id === target.id;
+    const sameControl = closed === null && target.id !== null && this.store.control()?.id === target.id;
     if (!sameControl) {
       this.offerClosedDraft();
       this.ideasOpen.set(false);
     }
     this.openPath = path;
-    const asked = (history.state as { restoreDraft?: boolean } | null)?.restoreDraft === true;
-    const closed = asked ? this.closedDrafts.take(path) : null;
     void (closed ? this.store.restore(closed) : this.store.open(target));
   }
 
   /**
    * The screen is left, or another control takes its place. A changed draft is not asked about: it is kept,
-   * and a toast offers it back at its own address. Not while a save is on its way: that draft is being stored.
+   * and a toast offers it back at its own address. While a save is on its way the draft is only held: it is
+   * being stored, and it is offered back if that save then fails (`save`).
    */
   private offerClosedDraft(): void {
     const path = this.openPath;
-    if (path === null || !this.store.dirty() || this.store.archived() || this.busy()) {
+    if (path === null || !this.store.dirty() || this.store.archived()) {
       return;
     }
-    this.closedDrafts.keep(path, this.store.snapshot());
+    if (this.busy()) {
+      this.heldWhileSaving = { path, snapshot: this.store.snapshot() };
+    } else {
+      this.offerBackClosed(path, this.store.snapshot());
+    }
+  }
+
+  private offerBackClosed(path: string, snapshot: EditorSnapshot): void {
+    this.closedDrafts.keep(path, snapshot);
+    // longer than a plain toast: its button is the only way back, and it has to be reached
     this.toast.show(
       'editor.toast.closed',
       {},
-      { labelKey: 'editor.toast.restore', run: () => void this.router.navigateByUrl(path, { state: { restoreDraft: true } }) },
+      {
+        labelKey: 'editor.toast.restore',
+        run: () => {
+          this.closedDrafts.ask(path);
+          void this.router.navigateByUrl(path);
+        },
+      },
+      CLOSED_TOAST_MS,
     );
   }
 
@@ -356,6 +389,13 @@ export class ControlEditorPage {
     }
     // a first save gives the control its address, before anything else: the address of an unsaved control
     // (with its `from` or its suggestion) must not stay in the history, where Back would build a second copy
+    const held = this.heldWhileSaving;
+    this.heldWhileSaving = null;
+    if (held && outcome.kind === 'failed' && this.store.dirty()) {
+      // the panel was closed over a draft whose save then failed: it is not stored, so it is offered back
+      // (a save that landed before its run failed left nothing unsaved, and offers nothing)
+      this.offerBackClosed(held.path, held.snapshot);
+    }
     if (this.left) {
       // the panel is gone: the list is told, so the control's row shows what was saved and what ran
       // (also after a save whose run then failed to start: the save itself stands)

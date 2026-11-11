@@ -92,14 +92,21 @@ export class ResultsStore {
   /** The control's runs, newest first, as far as `HISTORY_SIZE`; null until read, and when they cannot be. */
   readonly history = signal<Page<Run> | null>(null);
 
-  /** Whether the control of the run on the screen is active; null until read, and when it cannot be. */
-  private readonly controlActive = signal<boolean | null>(null);
+  /**
+   * Whether a control is active, as last read beside one of its runs; null until read, and when it cannot
+   * be. Kept by the control's id, as its runs are: another run of the same control knows it at once.
+   */
+  private readonly controlState = signal<{ readonly id: number; readonly active: boolean } | null>(null);
 
   /** The control the panel is about. */
   readonly controlId = computed(() => this.run()?.controlId ?? this.control()?.id ?? null);
 
   /** The control is in the archive: its runs are read, and it is neither run nor edited. */
-  readonly archived = computed(() => (this.control()?.isActive ?? this.controlActive()) === false);
+  readonly archived = computed(() => {
+    const state = this.controlState();
+    const known = state?.id === this.controlId() ? state.active : null;
+    return (this.control()?.isActive ?? known) === false;
+  });
 
   readonly sentenceParts = computed(() => this.run()?.sentenceParts ?? this.controlSentence());
 
@@ -159,7 +166,6 @@ export class ResultsStore {
     this.rows.set(null);
     this.rowsLoading.set(false);
     this.marks.set(NO_MARKS);
-    this.controlActive.set(null);
     this.failure.set(null);
     this.rerunFailure.set(null);
     void this.glossaryService.load();
@@ -295,12 +301,12 @@ export class ResultsStore {
     try {
       const control = await firstValueFrom(this.controlsApi.get(run.controlId));
       if (this.run()?.id === run.id) {
-        this.controlActive.set(control.isActive);
+        this.controlState.set({ id: control.id, active: control.isActive });
       }
     } catch {
       // not knowing is no failure of the panel: the run stays readable, with its buttons
       if (this.run()?.id === run.id) {
-        this.controlActive.set(null);
+        this.controlState.set(null);
       }
     }
   }

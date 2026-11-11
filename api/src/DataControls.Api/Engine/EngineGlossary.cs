@@ -50,8 +50,7 @@ public sealed class EngineGlossary
             {
                 var key = Text(entity.GetProperty("key"));
                 identifyingFields[key] = Texts(entity.GetProperty("identifyingFields"));
-                entityLabels[key] = entity.GetProperty("label").GetProperty("plural").EnumerateObject()
-                    .ToDictionary(text => text.Name, text => Text(text.Value));
+                entityLabels[key] = PluralLabels(entity);
             }
 
             var languages = Texts(root.GetProperty("languages"));
@@ -73,6 +72,20 @@ public sealed class EngineGlossary
             throw EngineException.Unexpected("a glossary that is not the contract's shape", exception);
         }
     }
+
+    /// <summary>
+    /// An entity's plural label per language. Only a sorted list reads it: a glossary without it is still
+    /// served and still gives its identifying fields, and that entity is then sorted by its key.
+    /// </summary>
+    private static Dictionary<string, string> PluralLabels(JsonElement entity) =>
+        entity.TryGetProperty("label", out var label)
+        && label.ValueKind == JsonValueKind.Object
+        && label.TryGetProperty("plural", out var plural)
+        && plural.ValueKind == JsonValueKind.Object
+            ? plural.EnumerateObject()
+                .Where(text => text.Value.ValueKind == JsonValueKind.String)
+                .ToDictionary(text => text.Name, text => Text(text.Value))
+            : [];
 
     private static string Text(JsonElement element) =>
         element.GetString() ?? throw new InvalidOperationException("A null where the glossary has a string.");

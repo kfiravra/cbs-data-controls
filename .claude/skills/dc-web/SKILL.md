@@ -128,9 +128,14 @@ playwright install --with-deps chromium` needs sudo on WSL: ask the user to run 
   behind one row (`ideas-toggle`, there from the start): the options (`idea`) are in the page only while it
   is open.
 - The editor has no leave guard: the panel closes at once, and a changed draft is kept in memory
-  (`ClosedDrafts`, one draft) and offered back by a toast whose action navigates to the editor's address with
-  `state: { restoreDraft: true }`. Only the browser's own `beforeunload` prompt is left: a spec that reloads
-  or `goto`s away from a changed draft answers that dialog.
+  (`ClosedDrafts`, one draft) and offered back by a toast that stands twelve seconds. Its action asks for the
+  draft (`ClosedDrafts.ask(path)`) and navigates to the editor's address; the editor takes it in `show()`, or,
+  when it already stands at that address and no navigation happens, in the effect on `ClosedDrafts.wanted`.
+  The draft that is asked back is taken before the draft it replaces is kept: there is room for one. A draft
+  left while its save was on its way is offered back only if that save fails. Only the browser's own
+  `beforeunload` prompt is left: a spec that reloads or `goto`s away from a changed draft answers that dialog.
+- `EditorStore.save` holds the turn it was sent in: when another control took the screen meanwhile (`open`,
+  `restore`), the answer changes nothing of that control.
 - The glossary is read once per page load: a store spec that opens twice answers `/api/v1/glossary` the first
   time only.
 - The results store reads the run's control beside the run (`GET /controls/<id>`, for whether it is archived):

@@ -74,5 +74,6 @@ export interface EditorSnapshot extends Sent {
   /** The source of the draft's ids: an id given after the draft came back must not repeat one of its own. */
   readonly ids: IdSource;
   readonly fromNothing: boolean;
+  readonly advanced: boolean;
   readonly ideas: readonly SuggestionItem[];
 }

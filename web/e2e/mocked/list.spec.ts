@@ -164,8 +164,10 @@ test.describe('controls list', () => {
     api.addRun(timedOutRun(stopped, 503));
     await open(page);
     const names = () => rows(page).getByTestId('control-link').allTextContents();
+    /** The order the last page of the list was asked for in (the one-control request beside it counts the other tab, unsorted). */
     const asked = () => {
-      const query = api.callsTo('GET /controls').at(-1)!.query;
+      const pages = api.callsTo('GET /controls').filter((call) => call.query.get('pageSize') !== '1');
+      const query = pages.at(-1)!.query;
       return `${query.get('sort')}:${query.get('dir')}`;
     };
     /** Sorts as this width lets the user: the head of the table on a desk, the select of the toolbar on a phone. */
@@ -209,6 +211,9 @@ test.describe('controls list', () => {
     }
     await sortBy('name', 'control', 'desc');
     await expect.poll(asked).toBe('name:desc');
+    // the count of the other tab is asked for in no order
+    const counting = api.callsTo('GET /controls').filter((call) => call.query.get('pageSize') === '1').at(-1)!.query;
+    expect([counting.get('sort'), counting.get('dir')]).toEqual([null, null]);
     const descending = [...api.controls].sort((a, b) => b.name.localeCompare(a.name, 'he')).map((control) => control.name);
     expect(await names()).toEqual(descending);
     await page.reload();

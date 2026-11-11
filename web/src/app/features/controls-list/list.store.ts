@@ -39,6 +39,7 @@ export type TabCounts = Readonly<Record<ListState, number | null>>;
 const ACTIVE: Record<ListState, ActiveFilter> = { active: 'true', archived: 'false' };
 const OTHER: Record<ListState, ListState> = { active: 'archived', archived: 'active' };
 const UNKNOWN: TabCounts = { active: null, archived: null };
+const UNSORTED = { sort: undefined, dir: undefined };
 
 type Listed = { readonly page: Page<ControlSummary> } | { readonly failure: ApiError };
 
@@ -87,7 +88,8 @@ export class ListStore {
               map((page): Listed => ({ page })),
               catchError((error: unknown) => of<Listed>({ failure: toApiError(error) })),
             ),
-            other: this.controlsApi.list({ ...query, active: ACTIVE[OTHER[state]], page: 1, pageSize: 1 }).pipe(
+            // one control of the other tab, for its total: in no order, so the server sorts nothing for it
+            other: this.controlsApi.list({ ...query, ...UNSORTED, active: ACTIVE[OTHER[state]], page: 1, pageSize: 1 }).pipe(
               map((page): number | null => page.total),
               catchError(() => of(null)),
             ),

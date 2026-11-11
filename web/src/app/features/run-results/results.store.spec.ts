@@ -124,10 +124,11 @@ describe('ResultsStore', () => {
   // beside every run the store asks whether its control is archived: where a test does not answer that
   // itself, the control is an active one
   afterEach(() => {
-    http.match((request) => request.method === 'GET' && /\/api\/v1\/controls\/\d+$/.test(request.url)).forEach(
-      (request) => request.flush(CONTROL),
-    );
+    const unanswered = http.match((request) => request.method === 'GET' && /\/api\/v1\/controls\/\d+$/.test(request.url));
+    unanswered.forEach((request) => request.flush(CONTROL));
     http.verify();
+    // one read per run that was opened, and no test here opens more than two
+    expect(unanswered.length).toBeLessThanOrEqual(2);
   });
 
   describe('the state chosen from a run', () => {

@@ -159,10 +159,10 @@ describe('ControlsTableComponent', () => {
       const details = [...row.querySelectorAll('td:not(.cell-run, .cell-actions)')];
       expect(details.flatMap((part) => [...part.querySelectorAll('a, button')])).toEqual([cell(row, 'control-link')]);
     }
-    expect(rows().map((row) => cell(row, 'control-link')!.getAttribute('aria-description'))).toEqual([
-      t('list.actions.openResults'),
-      t('list.actions.openControl'),
-    ]);
+    const described = rows().map(
+      (row) => host().querySelector(`#${cell(row, 'control-link')!.getAttribute('aria-describedby')}`)!.textContent,
+    );
+    expect(described).toEqual([t('list.actions.openResults'), t('list.actions.openControl')]);
   });
 
   it('links the name of a control that never ran to the control\'s own results, where it can be run', async () => {

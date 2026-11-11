@@ -470,6 +470,67 @@ test.describe('control editor', () => {
     await expect(page.getByText(t('editor.toast.closed'))).toHaveCount(0);
   });
 
+  test('a draft that is asked back is not lost to the draft on the screen, which is offered back in its turn', async ({ page, api }) => {
+    const control = stored(api);
+    const other = api.controls.find((candidate) => candidate.id !== control.id)!;
+    const copyName = t('editor.copyName', { name: other.name });
+    const restore = page.getByRole('button', { name: t('editor.toast.restore'), exact: true });
+    await openStored(page, control);
+    await page.getByTestId('control-name').fill('first draft');
+    await page.getByTestId('panel-close').click();
+    await expect(ui(page)).toHaveCount(0);
+
+    // while the toast still stands, a copy of another control is opened: a changed draft from its first moment
+    await page.locator(`[data-testid="control-row"][data-id="${other.id}"]`).getByTestId('duplicate').click();
+    await expect(page.getByTestId('control-name')).toHaveValue(copyName);
+
+    await restore.click();
+    await expect(page).toHaveURL(new RegExp(`/controls/${control.id}$`));
+    await expect(page.getByTestId('control-name')).toHaveValue('first draft');
+
+    // the copy it took the place of was kept, and comes back the same way
+    await restore.click();
+    await expect(page).toHaveURL(/\/controls\/new$/);
+    await expect(page.getByTestId('control-name')).toHaveValue(copyName);
+    expect(api.callsTo('POST /controls')).toHaveLength(0);
+  });
+
+  test('a draft asked back at the address that is already open comes back there', async ({ page }) => {
+    await page.goto('/controls/new');
+    await page.getByTestId('root-entity').first().click();
+    await page.getByTestId('control-name').fill('not saved yet');
+    await page.getByTestId('panel-close').click();
+    await expect(ui(page)).toHaveCount(0);
+
+    // a new control is opened again, empty: the same address the closed draft has
+    await page.getByTestId('new-control').click();
+    await expect(page.getByTestId('control-name')).toHaveValue('');
+    await expect(page.getByTestId('builder-waiting')).toBeVisible();
+
+    await page.getByRole('button', { name: t('editor.toast.restore'), exact: true }).click();
+    await expect(page.getByTestId('control-name')).toHaveValue('not saved yet');
+    await expect(page.getByTestId('root-entity').first()).toHaveAttribute('aria-checked', 'true');
+    await expect(page.getByTestId('condition-row')).toHaveCount(1);
+  });
+
+  test('a panel closed over a save that then fails offers the draft back: it was stored nowhere', async ({ page, api }) => {
+    const control = stored(api);
+    api.delay(`PUT /controls/${control.id}`, 700);
+    api.fail(`PUT /controls/${control.id}`, problem(503, 'DATABASE_UNAVAILABLE'));
+    await openStored(page, control);
+    await page.getByTestId('control-name').fill('kept although the save failed');
+
+    await page.getByTestId('save').click();
+    await page.getByTestId('panel-close').click();
+    await expect(ui(page)).toHaveCount(0);
+
+    // the save answers with a failure after the panel is gone: the draft is offered back then
+    await expect(page.getByText(t('editor.toast.closed'))).toBeVisible();
+    await page.getByRole('button', { name: t('editor.toast.restore'), exact: true }).click();
+    await expect(page.getByTestId('control-name')).toHaveValue('kept although the save failed');
+    await expect(page).toHaveURL(new RegExp(`/controls/${control.id}$`));
+  });
+
   test('a panel that was closed while a save was on its way stays closed when the save lands', async ({ page, api }) => {
     const control = stored(api);
     api.delay(`PUT /controls/${control.id}`, 700);

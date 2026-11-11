@@ -1,3 +1,6 @@
+<!-- where a row leads, said once for the table: each row's link is described by one of the two -->
+<span id="row-opens-results" hidden>{{ 'list.actions.openResults' | translate }}</span>
+<span id="row-opens-control" hidden>{{ 'list.actions.openControl' | translate }}</span>
 <table class="table" data-testid="controls-table" [attr.aria-busy]="loading()">
   <thead>
     <tr>
@@ -49,9 +52,7 @@
               data-testid="control-link"
               [id]="'control-' + row.control.id"
               [routerLink]="row.results"
-              [attr.aria-description]="
-                (row.control.lastRun ? 'list.actions.openResults' : 'list.actions.openControl') | translate
-              "
+              [attr.aria-describedby]="row.control.lastRun ? 'row-opens-results' : 'row-opens-control'"
             >
               <bdi>{{ row.control.name }}</bdi>
             </a>

@@ -340,9 +340,9 @@ invalid fixtures, as merged in `f9928bf`. Where they differ from Design E to M o
 - Nothing in `contracts/` looked wrong, and nothing blocks a screen: no line for Kfir from this step.
 
 ## Last reviewed
-3b4013b (phase 9, the UX pass: `612b2b7..3b4013b`), fixed in the `fix(web): review fixes` commit that follows it.
-Before it: 8be9e82 (phase 7 on the real stack), and fcf0036 (phase 8) together with 44a7219 (the gate specs).
-The fix commits are not reviewed.
+`b47d203` (web) and `15658ca` (api), 2026-11-11: the phase review of the last design round, two opus
+`reviewer` sub-agents, one per area. Findings and what happened to each are in the Log. Before it:
+`3b4013b` (the UX pass).
 
 ## Hand-over to dc-delivery
 Read by its phase B0 (plan.md Design Q). Complete: phase 7 ran on the real stack on 2026-11-11.
@@ -1030,3 +1030,45 @@ rewrote. A review that found nothing, or did not run, is logged as that.
   project on purpose. With the same change: three drifts the documenter reported (two unused tokens removed,
   the bar's line height a token, a suggestion's name at the weight of a name). Screenshots at 390 and 1440:
   `screenshots/phase-10/`.
+- 2026-11-11, the phase review of phase 10: two opus `reviewer` sub-agents, read-only, in parallel. **api**
+  (`15658ca`): no critical; five warnings, all fixed. (1) A root entity the glossary does not hold sorted last
+  ascending and first descending, outside the contract's rule: it now comes last both ways (one bound
+  `Contains` before the per-entity comparisons), the contract says so, and a test creates such a control.
+  (2) and (3) The label order called the engine through `GetAsync`, swallowed its failure without a log, and
+  could hold a list for the engine's timeout: the list now uses the glossary the api already holds, whatever
+  its age, and never asks the engine (`HeldEntityKeysByLabel`); with none held it follows the keys; the
+  contract says so and a test asserts the engine was not called. (4) `violations` evaluated the newest run
+  twice per control: one subquery now, with the lack of a count placed by a bound sentinel; its cost still
+  grows with a control's run history, and the index it would want is a `sql/` change, left out and named in
+  the PR's risks. (5) The newest-run selection stood three times: two now. Tests: the expected label order is
+  written out by hand instead of computed as the code computes it; the tie is by name before id (the later
+  name is created first); paging is over real sort keys; `label.plural` is read leniently, with a test of a
+  glossary without it. Left: no test of a newest run that is still running (the tests' runs are synchronous).
+  **web** (`b47d203`): one critical, four warnings, fixed. Critical: the editor kept the draft on the screen
+  before it took the draft that was asked back, and the one place lost it (close a changed draft, open a copy,
+  press restore): the asked draft is taken first, and the copy is then kept and offered back in its turn.
+  Warnings: a draft asked back at the address already open did not come back (no navigation happens): the
+  holder now carries the question as a signal the open editor hears. A panel closed over a save that then
+  failed lost the draft silently: it is held and offered back on that failure. A save answering after another
+  control took the screen tied that control to the wrong id and token: `save` keeps its turn. The toast of a
+  closed draft stands twelve seconds (its action is the only way back). Notes fixed: the archived state is
+  kept per control, so the chip does not blink between runs; the other tab's count is asked for unsorted;
+  `aria-controls` only while the list is open; the row's ring is drawn by the detail cells and closes at
+  their end; where a row leads is said with `aria-describedby` (read by every screen reader) and not
+  `aria-description`; the snapshot carries `advanced` and asks again for suggestions it came back without;
+  stale comments. Each fix has a test: four store tests, the holder's spec rewritten, three browser specs.
+  Left, on purpose: an untouched copy or suggestion that is closed at once still says "closed without saving"
+  (it is an unsaved control); beyond the twelve seconds there is no way back to a closed draft (a limitation
+  for dc-delivery); the two unit tests that assert the removed trace stays removed pass by construction and
+  stay as guards; the test ids and keys of the run overview keep the names `run-summary` and `breakdown`
+  (stable hooks of the specs and the gate); the stretched link over a table row is tested in Chromium only.
+- 2026-11-11, after the review fixes (`gates/phase-10.txt`, its last two sections): `contracts-check` 5, the
+  api's build with warnings as errors, format and 381 tests (3 live ones skipped), the client's ngc, lint, e2e
+  types, 368 unit tests in 37 files and build, the print guard; the gate on the build the api hosts, 18 of 18,
+  with the listing of controls without a gate tag equal before and after (`phase-10-list-before-last.txt`,
+  `phase-10-list-after-last.txt`). In that run one mocked spec failed in both projects, 209 passed: the sort
+  spec read the list's last request, which since the review fix is the unsorted count of the other tab. The
+  spec now reads the last page request and asserts the count request is unsorted; the mocked suite then
+  passed, 211 with 5 skipped by project on purpose. The sql, engine and hook checks were not repeated: no
+  file of theirs changed since the first run of the phase. Secrets: the branch diff holds no token and no
+  password value. Each gate run of the phase left 18 archived `e2e-` controls in the dev `dq` (three runs).

@@ -969,8 +969,11 @@ start and says in words that they are being computed.
   button; at the bottom, at the start edge. Never for an error.
 - **Closing a changed draft never asks.** The panel closes at once, by its X, by Esc or by a click beside it,
   and a toast says so (`הבקרה נסגרה בלי שמירה`) with `שחזור`, which opens the editor again at the same address
-  with the draft as it was. One closed draft is kept, for as long as the page lives. Not while a save is on its
-  way: that draft is being stored. Leaving the page itself (closing the tab, reloading) over a changed draft is
+  with the draft as it was. That toast stands twelve seconds, twice a plain one: its button is the only way back
+  and has to be reached. One closed draft is kept, for as long as the page lives; a draft that is asked back
+  while another changed draft is on the screen takes its place, and that one is offered back in its turn. A
+  draft closed while its save was on its way is offered back only if that save fails: otherwise it is stored.
+  Leaving the page itself (closing the tab, reloading) over a changed draft is
   asked by the browser's own prompt; that is not a dialog of the application.
 - **A button made unavailable by its own press** (save, run, refresh, the last page of a pager) keeps the focus
   it holds: it is marked unavailable for assistive technology and ignores a second press, and is not removed

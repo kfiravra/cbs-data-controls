@@ -1,4 +1,4 @@
-import { control, editorHarness, sentenceOf } from '../../../testing/editor-store';
+import { SUGGEST, control, editorHarness, sentenceOf } from '../../../testing/editor-store';
 import { DraftCondition, DraftGroup } from '../../core/definition/draft';
 
 describe('EditorStore: a closed draft, and the simple and the advanced builder', () => {
@@ -27,6 +27,12 @@ describe('EditorStore: a closed draft, and the simple and the advanced builder',
       settle();
       await store.restore(closed);
       settle();
+      // a draft that starts from nothing and came back with no suggestions asks for them again
+      if (closed.fromNothing && closed.rootEntity !== null && closed.ideas.length === 0) {
+        (await next(SUGGEST)).flush({ items: [] });
+        await Promise.resolve();
+        settle();
+      }
     }
 
     it('brings a new control back as it was typed, still unsaved, and reads nothing but the glossary', async () => {
@@ -75,6 +81,44 @@ describe('EditorStore: a closed draft, and the simple and the advanced builder',
       const added = (store.draft().children.at(-1) as DraftCondition).id;
       expect(held).not.toContain(added);
       expect(store.draft().children).toHaveLength(held.length + 1);
+    });
+
+    it('brings the advanced builder back as it was left, and asks again for suggestions it came back without', async () => {
+      await h.openNew();
+      store.advanced.set(true);
+      store.setName('wide');
+      const closed = store.snapshot();
+      expect(closed.ideas).toEqual([]);
+
+      await store.open({ id: null });
+      settle();
+      await store.restore(closed);
+      const asked = await next(SUGGEST);
+
+      expect(asked.request.body).toEqual({ rootEntity: 'order', max: 3 });
+      asked.flush({ items: [] });
+      await Promise.resolve();
+      settle();
+      expect(store.view()?.advanced).toBe(true);
+    });
+
+    it('leaves the control on the screen alone when a save that was sent for another one lands', async () => {
+      await open({ id: 7 }, control());
+      answerValidate([]);
+      store.setName('renamed while it is open');
+      const saving = store.save();
+      const sent = await next('/api/v1/controls/7');
+
+      // another control takes the screen before the save answers
+      await store.open({ id: null });
+      settle();
+      sent.flush(control({ name: 'renamed while it is open', concurrencyToken: 'token-4' }));
+      const outcome = await saving;
+
+      expect(outcome.kind).toBe('saved');
+      expect(store.control()).toBeNull();
+      expect(store.name()).toBe('');
+      expect(store.saveState()).toBe('idle');
     });
 
     it('lets a newer open stand when a way back answers after it', async () => {

@@ -11,7 +11,6 @@ import { Definition } from '../../core/definition/definition.types';
 import { DraftGroup, IdSource, fromDefinition, highestId, toDefinition } from '../../core/definition/draft';
 import { DraftCheck, checkDraft } from '../../core/definition/draft.check';
 import { DraftEdit, FocusTarget, applyEdit, newDraft } from '../../core/definition/draft.edit';
-import { orderedNodeIds } from '../../core/definition/marks';
 import { MarksService } from '../../core/definition/marks.service';
 import { chainFor, rootEntities } from '../../core/glossary/glossary.lookups';
 import { GlossaryService } from '../../core/glossary/glossary.service';
@@ -24,10 +23,12 @@ import {
   LocatedError,
   descriptionIssueOf,
   errorMessage,
+  firstOpenInput,
   issueMessage,
   locateErrors,
   nameIssueOf,
   sameHeld,
+  standingErrors,
   statusOf,
 } from './editor.messages';
 import {
@@ -69,9 +70,11 @@ export class EditorStore {
    * a 422 then means the stored definition is outdated. An engine that does not answer leaves it set.
    */
   private awaitingFirstSentence = false;
-  /** Counts the calls of `open`: an older one that lands after a newer one changes nothing. */
+  /**
+   * Counts the times a control took the screen (`open`, `restore`): an older one that lands after a newer
+   * one changes nothing, and neither does a save that was sent for the control before.
+   */
   private turn = 0;
-  /** True for a new control that starts from nothing: the one that is offered suggestions for its choice. */
   private settleTimer: ReturnType<typeof setTimeout> | undefined;
 
   readonly glossary = this.glossaryService.glossary;
@@ -259,7 +262,7 @@ export class EditorStore {
    * the tree with the source of its ids, and the stored control it edits (with its token).
    */
   snapshot(): EditorSnapshot {
-    return { ...this.held(), control: this.control(), ids: this.ids, fromNothing: this.fromNothing(), ideas: this.ideas.items() };
+    return { ...this.held(), control: this.control(), ids: this.ids, fromNothing: this.fromNothing(), advanced: this.advanced(), ideas: this.ideas.items() };
   }
 
   /** The details, the choice and the tree as they are on the screen now. */
@@ -285,7 +288,8 @@ export class EditorStore {
     this.rootEntity.set(snapshot.rootEntity);
     this.draft.set(snapshot.draft);
     this.fromNothing.set(snapshot.fromNothing);
-    this.ideas.set(snapshot.ideas);
+    this.advanced.set(snapshot.advanced);
+    this.ideas.resume(snapshot.ideas, snapshot.fromNothing ? snapshot.rootEntity : null);
     this.dirty.set(true);
     this.loadState.set('ready');
   }
@@ -456,12 +460,9 @@ export class EditorStore {
     }
     this.awaitingFirstSentence = false;
     // what the server said about a row stands until the row is edited or is gone
-    const present = new Set(orderedNodeIds(result.draft));
-    const edited = 'id' in edit ? edit.id : null;
-    const stands = ({ location }: LocatedError) =>
-      location.nodeId === undefined || (present.has(location.nodeId) && location.nodeId !== edited);
-    this.serverErrors.update((errors) => errors.filter(stands));
-    this.liveErrors.update((errors) => errors.filter(stands));
+    const stands = standingErrors(result.draft, 'id' in edit ? edit.id : null);
+    this.serverErrors.update(stands);
+    this.liveErrors.update(stands);
     if (edit.kind !== 'remove' || result.draft === before.draft) {
       return null;
     }
@@ -548,6 +549,7 @@ export class EditorStore {
     }
     const before = this.control();
     const sent = this.held();
+    const turn = this.turn;
     const body = { name: sent.name.trim(), description: sent.description.trim() || null, definition };
     this.saveState.set('saving');
     this.failure.set(null);
@@ -558,14 +560,19 @@ export class EditorStore {
             this.controlsApi.update(before.id, { ...body, concurrencyToken: before.concurrencyToken }),
           )
         : await firstValueFrom(this.controlsApi.create(body));
-      this.onSaved(saved, sent);
+      if (turn === this.turn) {
+        // another control may have taken the screen meanwhile: what was saved is not that control's
+        this.onSaved(saved, sent);
+      }
       if (!run) {
         return { kind: 'saved', control: saved, created: !before, newVersion: !!before && saved.version !== before.version };
       }
       this.saveState.set('running');
       return { kind: 'ran', control: saved, run: await firstValueFrom(this.runsApi.start(saved.id)) };
     } catch (error) {
-      this.onSaveFailed(toApiError(error), definition);
+      if (turn === this.turn) {
+        this.onSaveFailed(toApiError(error), definition);
+      }
       return { kind: 'failed' };
     } finally {
       this.saveState.set('idle');
@@ -579,10 +586,9 @@ export class EditorStore {
   }
 
   private focusFirstIssue(): void {
-    const check = this.check();
-    const first = check ? orderedNodeIds(this.draft()).find((id) => check.issues.has(id)) : undefined;
-    if (this.nameIssue() === null && this.descriptionIssue() === null && first !== undefined) {
-      this.focus.set({ node: first, input: check!.issues.get(first)![0].input });
+    const first = firstOpenInput(this.check(), this.draft());
+    if (this.nameIssue() === null && this.descriptionIssue() === null && first) {
+      this.focus.set(first);
     }
   }
 

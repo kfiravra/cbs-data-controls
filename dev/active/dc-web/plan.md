@@ -456,7 +456,7 @@ Phone and the finish (item 17):
 - [x] 390: rows as cards, full-screen panels, the sticky bars in reach, no sideways scroll.
 - [x] Mocked and gate specs; the gate on the real stack; `/check all --tests`; screenshots at 390 and 1440;
       `/impeccable polish`; `docs/design.md` in line. Commit: `feat(web): the last design round`
-- [ ] `/phase-review`, one review-fix commit, the push to the PR on Kfir's word.
+- [x] `/phase-review`, one review-fix commit, the push to the PR on Kfir's word.
 - [ ] Last of all: the dev database reset from the main tree, the six examples posted again, the stack left
       running.
 

@@ -28,6 +28,17 @@ export class EditorIdeas {
     this.loading.set(false);
   }
 
+  /**
+   * Puts back the list of a draft that was closed. A draft that was closed with none (they were on their
+   * way, or there were none) asks again about its entity, when it is one that is offered suggestions.
+   */
+  resume(items: readonly SuggestionItem[], rootEntity: string | null): void {
+    this.set(items);
+    if (items.length === 0 && rootEntity !== null) {
+      void this.read(rootEntity);
+    }
+  }
+
   /** Asks the engine what it would check about an entity. Only the answer to the last question is kept. */
   async read(rootEntity: string): Promise<void> {
     this.asked = rootEntity;

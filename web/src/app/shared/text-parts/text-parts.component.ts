@@ -45,7 +45,7 @@ const NONE: ReadonlySet<string> = new Set();
 })
 export class TextPartsComponent {
   readonly parts = input.required<readonly TextPart[]>();
-  /** Node id to mark. Leave it out for a text that carries its mark elsewhere (a reason, a breakdown row). */
+  /** Node id to mark. Leave it out for a text that carries its mark elsewhere (a reason, a chip of the count by condition). */
   readonly marks = input<ReadonlyMap<string, string>>(NO_MARKS);
   readonly markValues = input(false);
   readonly open = input<ReadonlySet<string>>(NONE);

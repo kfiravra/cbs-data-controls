@@ -3,6 +3,7 @@ import { DefinitionError } from '../../core/api/api.types';
 import { Definition } from '../../core/definition/definition.types';
 import { DraftGroup } from '../../core/definition/draft';
 import { DraftCheck, DraftIssue } from '../../core/definition/draft.check';
+import { FocusTarget } from '../../core/definition/draft.edit';
 import { orderedNodeIds } from '../../core/definition/marks';
 import { ErrorLocation, locateError } from '../../core/definition/pointer';
 import { RowMessage } from '../../shared/condition-builder/builder-view';
@@ -77,4 +78,22 @@ export function statusOf(
 /** Whether the screen holds what a save sent: nothing was typed or edited while the save was on its way. */
 export function sameHeld(a: Sent, b: Sent): boolean {
   return a.name === b.name && a.description === b.description && a.draft === b.draft && a.rootEntity === b.rootEntity;
+}
+
+/** The first unfinished input of the draft, in the order of the rows: where the focus goes after a refused save. */
+export function firstOpenInput(check: DraftCheck | null, draft: DraftGroup): FocusTarget | null {
+  const first = check ? orderedNodeIds(draft).find((id) => check.issues.has(id)) : undefined;
+  return first === undefined ? null : { node: first, input: check!.issues.get(first)![0].input };
+}
+
+/**
+ * What the server said about rows, after an edit: an error stands while its row is in the draft and was not
+ * the one edited. An error that names no row stands.
+ */
+export function standingErrors(draft: DraftGroup, edited: string | null): (errors: readonly LocatedError[]) => LocatedError[] {
+  const present = new Set(orderedNodeIds(draft));
+  return (errors) =>
+    errors.filter(
+      ({ location }) => location.nodeId === undefined || (present.has(location.nodeId) && location.nodeId !== edited),
+    );
 }

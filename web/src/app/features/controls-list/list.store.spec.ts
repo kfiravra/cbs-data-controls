@@ -137,15 +137,8 @@ describe('ListStore', () => {
 
       // the same search and filter, the other state, and one control only: its total is what is wanted
       const sent = Object.fromEntries(count.request.params.keys().map((key) => [key, count.request.params.get(key)]));
-      expect(sent).toEqual({
-        search: 'pay',
-        rootEntity: 'customer',
-        active: 'false',
-        sort: 'name',
-        dir: 'asc',
-        page: '1',
-        pageSize: '1',
-      });
+      // it is asked for in no order: the total is the same however the one control is chosen
+      expect(sent).toEqual({ search: 'pay', rootEntity: 'customer', active: 'false', page: '1', pageSize: '1' });
       count.flush({ items: [summary(9)], total: 148, page: 1, pageSize: 1 });
 
       expect(store.counts()).toEqual({ active: 3, archived: 148 });
