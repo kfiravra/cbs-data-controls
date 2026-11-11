@@ -156,6 +156,18 @@ Taken on 2026-11-11 in the morning (Kfir's second message: "no questions"):
     with the client's own parameters, four invalid fixtures through `POST /controls/validate`, an unknown run,
     and a `PUT` and a run on an archived control of the gate's own (both refused, 409). Nothing was written by
     these. Every answer has the shape `api.types.ts` holds: no difference from the contracts, no line for Kfir.
+49. The before-and-after listing of Design O reads every page of the list (plan.md, Design O, rewritten): the
+    api deletes nothing, a gate run adds 18 archived controls, and at 118 controls one page of 100 dropped the
+    example that sorts last, which read as a difference. `pageSize` is at most 200.
+50. The phase's commit is `fix(web): run duration and gate shot on the real stack`, not the plan's
+    `test(web): six-example gate against the real stack`: the gate specs were committed in the night
+    (`44a7219`), and what the morning added to the code is two fixes.
+51. The task folder stays in `dev/active/dc-web/` (`/ship` offers to archive it): dc-delivery reads these notes
+    from there in its phase B0, and the merge is not done.
+52. The stack is left running on Kfir's word, for his reading: the engine on 8000 and the api on 5000, which
+    also serves this branch's build at `http://localhost:5000`. Both are this session's own processes; their
+    process ids and logs are in the session's scratch folder, and `pkill -f "uvicorn app.main"` and
+    `pkill -f DataControls.Api` stop them. The database container is not theirs to stop.
 
 ## Reconciliation with `contracts/` (phase 2, 2026-11-11)
 Read: `api.md`, `errors.md`, `glossary.json`, `control-definition.schema.json`, the six examples and the thirteen
@@ -177,8 +189,8 @@ invalid fixtures, as merged in `f9928bf`. Where they differ from Design E to M o
 - Nothing in `contracts/` looked wrong, and nothing blocks a screen: no line for Kfir from this step.
 
 ## Last reviewed
-fcf0036 (phase 8) together with 44a7219 (the gate specs of phase 7), fixed in the `fix(web): review fixes` commit
-that follows fcf0036. That fix commit is not reviewed, as the earlier ones were not.
+8be9e82 (phase 7 on the real stack), fixed in the `fix(web): review fixes` commit that follows it. Before it:
+fcf0036 (phase 8) together with 44a7219 (the gate specs), fixed in 50a4e1d. The fix commits are not reviewed.
 
 ## Hand-over to dc-delivery
 Read by its phase B0 (plan.md Design Q). Complete: phase 7 ran on the real stack on 2026-11-11.
@@ -214,8 +226,9 @@ Read by its phase B0 (plan.md Design Q). Complete: phase 7 ran on the real stack
      api's 404 problem.
   8. What this task left in the dev `dq`: the six examples, posted once on 2026-11-11 on Kfir's word from
      `contracts/examples/` as of `f9928bf`, under their Hebrew names, ids 1800 to 1805, active, version 1, never
-     run. And the gate's archived controls with `e2e-` in their names, 18 a run, with their runs. Four archived
-     controls with English names (ids 1462, 1463, 1676, 1677) were there before and are not this task's.
+     run. And the gate's archived controls with `e2e-` in their names, 18 a run, with their runs: 126 after the
+     seven runs of 2026-11-11, so the store held 136 controls when this task ended. Four archived controls with
+     English names (ids 1462, 1463, 1676, 1677) were there before and are not this task's.
   9. `npm run e2e` is the mocked suite (no service needed); `npm run preview` opens the app over the same
      in-memory api, for reading the Hebrew interface without a backend.
 - Cuts: none taken. The four of decision 7 (the archived view, the settle, "open in editor" on a suggestion,
@@ -254,6 +267,11 @@ file under `docs/`) and against what was built.
   project folder.
 - README, the demo walkthrough and the screenshots: a run on the sample data takes about 10 ms, and the summary
   says `פחות משנייה`. The list of the delivered system, six examples never run, is `gate-list.png`.
+- `dev/active/dc-delivery/plan.md`, the before-and-after listing (`...controls?active=all&pageSize=100`): it
+  reads one page. The dev store held 136 controls on 2026-11-11 and each gate run adds 18, so the listing must
+  page (the loop of this task's plan.md, Design O), or an example that sorts last drops out and reads as changed.
+- `docs/assumptions-limitations-extensions.md`: the api deletes nothing, so archived controls, the gate's among
+  them, stay in the store and in the archived view of the list.
 - `docs/assumptions-limitations-extensions.md`, on Kfir's word of 2026-11-11, as limitations: on a phone the
   breakdown stands before the records; nested groups have no name for a screen reader; a save conflict loads the
   current version and discards the draft; a list row's count may belong to an older version of the rule. The
@@ -633,3 +651,31 @@ rewrote. A review that found nothing, or did not run, is logged as that.
   on that list and once on the build the api hosts, 16 of 16 each; the listing of untagged controls after each
   run equals the one before it. Not provoked on the real stack: a timeout, a row cap, an engine or database that
   is down, a save conflict; those states are covered by the mocked specs alone.
+- 2026-11-11 /phase-review web, phase 7 (one reviewer agent, opus, 96k tokens; spend written here and started at
+  once, as in the night), diff 268a0f7..8be9e82 over `web/`, `docs/design.md` and the skill file: standards
+  0/0/5, plan 0/0/1. `run-results.page.ts`: a null duration would read as "less than a second" (cannot happen:
+  the summary is drawn for a succeeded run, which has the engine's integer); the edges 0, 49, 50 and 99 ms
+  checked by the reviewer and right. `he.json`: `durationUnder` is a value among labels and does not say under
+  what; no unit guard checks that a used key exists, only the e2e `t()`. `results.spec.ts`: a real regression
+  test, with no case at the 49/50 ms edge. `examples.spec.ts`: the toast wait is right and not flaky (only the
+  first save shows a toast; `toBeHidden` passes at once when it is gone); its 10 s equals the default and its
+  tie to the toast's six seconds was nowhere in the code. `web/README.md`: "read once at startup" said more than
+  the api does (the folder must exist at the start; files are read as asked). Plan: the commit message differs
+  from the one the plan names (decision 50). Fixed in the review-fix commit: the spec's comment names the six
+  seconds, and the README and the skill file say what the api needs. Left: the null duration (unreachable under
+  the contract), the key's name (a rename is a change to `he.json`, which Kfir is about to read), the edge case
+  (decision 46 is a rounding, checked by the reviewer by hand).
+- 2026-11-11 final gate on Fable 5.2, on the real stack, at 8be9e82: `gates/final.txt`. `/check all --tests`:
+  `sql-check` 27 assertions, `contracts-check` 5 checks, engine ruff and pyright and 521 tests, api build with
+  warnings as errors, format and 370 tests (3 live ones skipped by their own switch), ngc, ng lint, the e2e type
+  check, 296 unit tests in 30 files, ng build at 545 kB initial and 137 kB transfer, the print guard, 226 hook
+  tests; `sql-init` skipped in a worktree by the runner. Then `e2e/mocked`: 156 passed, 2 skipped by project on
+  purpose. Then `e2e/gate` behind the dev server and on the build the api hosts, on the pre-loaded list: 16 of
+  16 each. The engine's tests had `ENGINE_DB_HOST` and `ENGINE_DB_PORT` in the environment; the api of this
+  worktree was stopped for its own build and tests and started again. The script ended red on one line: the
+  listing after the hosted run differed from the one before it by the example `קטינים בשכר גבוה`. Cause: the
+  store held 118 controls and the listing read one page of 100 (decision 49); the control was unchanged, and
+  the listing over every page is equal. After the review fixes: ng lint, the e2e type check and the gate on the
+  hosted build once more, 16 of 16, with the paged listing equal before and after. Screenshots in
+  `gates/final/screenshots/`, the four gate shots of each project among them. The header's "1 changed file" is
+  the gate file itself. Secrets: the branch diff and the gate files hold no token and no password value.

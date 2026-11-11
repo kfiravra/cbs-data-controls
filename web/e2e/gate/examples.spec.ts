@@ -69,7 +69,8 @@ test.describe('the six examples on the real stack', () => {
       await expect(page.getByTestId('page-title')).toHaveText(gate.nameOf(example));
       await expectResults(page, example);
       if (number === 4) {
-        // the toast of the save rides along to this screen and would stand over the records in the shot
+        // the toast of the save rides along to this screen and would stand over the records in the shot; it
+        // lives six seconds (TOAST_MS of the toast service), and "save and run" shows none of its own
         await expect(page.getByText(t('editor.toast.saved'), { exact: true })).toBeHidden({ timeout: 10_000 });
         await shot(page, testInfo, 'gate-results');
       }

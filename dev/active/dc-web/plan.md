@@ -381,18 +381,19 @@ Review: `/phase-review web`
 Commit: `fix(web): design critique and polish`
 
 ### Gate
-Status, 2026-11-11 (unattended run): `gates/final.txt` holds `/check all --tests` and the mocked specs on both
-projects, all green, with the screenshots in `gates/final/screenshots/` (the folder name keeps them out of git).
-The gate specs on the real stack, the pre-loaded list and the hosted build wait with phase 7 for the api and the
-engine on main, so no box below is ticked and nothing is pushed. `notes.md` is complete up to phase 8; its lines
-that say "not run" change with phase 7.
+Status, 2026-11-11: `gates/final.txt` holds `/check all --tests` (the engine and the api among its parts now),
+the mocked specs and the gate specs on the real stack, behind the dev server and on the build the api hosts, on
+the pre-loaded list; all green (notes.md, Log, for the one red line of the first run and its cause). The
+screenshots are in `gates/final/screenshots/`. The steps of `/ship` were done by hand (checks, secrets, drift,
+PR body; the folder is not archived, decision 51) and the branch is pushed with its PR on Kfir's word of that
+morning. Open: his reading of the Hebrew interface, and the merge, which is his.
 
-- [ ] After phase 8: the mocked and the gate specs green on `mobile` and `desktop`, the gate on the pre-loaded
+- [x] After phase 8: the mocked and the gate specs green on `mobile` and `desktop`, the gate on the pre-loaded
       list and, where phase 7 could run it, on the build the api hosts; `/check all --tests` green. The output
       goes to `gates/final.txt`, the screenshots to `gates/final/`.
 - [ ] Kfir reads the Hebrew interface, on the preview script or the screenshots. It is the last cheap moment for a
       wording change.
-- [ ] `notes.md` is complete for dc-delivery (Design Q): the hand-over block, a Log line per review, and the drift
+- [x] `notes.md` is complete for dc-delivery (Design Q): the hand-over block, a Log line per review, and the drift
       list checked line by line against the documents on main.
 - [ ] `/ship`. Its docs-drift step edits only this task's own files (decision 26). Every other row of its table
       becomes a line under a fifth heading of the PR body, `## Docs for dc-delivery`, taken from the list in
@@ -732,11 +733,16 @@ left behind.
   `E2E_BASE_URL=http://localhost:5000` in front for the build the api hosts. One worker keeps another test's
   controls out of the list shot and the runs apart; the specs pass without the flag too.
 - **Before and after.** The listing below prints every control that carries no tag. Saved under `gates/` before a
-  gate run and after it, the two files are equal: the gate changed nothing it did not create.
+  gate run and after it, the two files are equal: the gate changed nothing it did not create. It reads every
+  page: the api deletes nothing, each gate run adds 18 archived controls, and one page of 100 dropped the
+  control that sorts last once the store held 118 (found at the final gate, 2026-11-11).
 
   ```
-  curl -s 'http://localhost:5000/api/v1/controls?active=all&pageSize=100' \
-    | jq -c '.items[] | select(.name | test(" e2e-[0-9a-z]{6}") | not) | [.id, .name, .version, .isActive, .lastRun.id]'
+  p=1; while page=$(curl -s "http://localhost:5000/api/v1/controls?active=all&pageSize=100&page=$p") \
+      && [ "$(jq '.items | length' <<<"$page")" -gt 0 ]; do
+    jq -c '.items[] | select(.name | test(" e2e-[0-9a-z]{6}") | not) | [.id, .name, .version, .isActive, .lastRun.id]' <<<"$page"
+    p=$((p+1))
+  done
   ```
 - **Pre-load** (phase 7, on Kfir's word). The committed loader is dc-delivery's `scripts/examples.py`. Until it
   exists, the six examples are posted once from the worktree root, and they stay:

@@ -91,7 +91,10 @@ playwright install --with-deps chromium` needs sudo on WSL: ask the user to run 
 - `vitest` is pinned to `~4.0.8`: npm 10.9.2 crashes resolving the peer set of 4.1.x.
 - Dev server: `ng serve` on :4200 proxies `/api` to :5000 (`proxy.conf.json`), so the api needs no CORS entry for
   it. The production build lands in `dist/web/browser/`, which the api serves from the `wwwroot` beside its own
-  app, read at startup: under `dotnet run` that is `api/src/DataControls.Api/bin/Debug/net10.0/wwwroot`.
+  app (the folder must exist when the api starts): under `dotnet run` that is
+  `api/src/DataControls.Api/bin/Debug/net10.0/wwwroot`.
+- The api deletes nothing, so every gate run adds 18 archived controls to the store. A listing of "every
+  control" must page (`pageSize` is at most 200): one page of 100 silently drops what sorts last.
 - The real engine answers the sample data in about 10 ms and the fixtures say 412: a text that formats a
   measured value needs a spec at the real size too (the summary's `results.summary.durationUnder`).
 - A toast lives six seconds and rides along through a navigation: a gate shot of the screen after a save waits

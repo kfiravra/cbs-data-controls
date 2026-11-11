@@ -21,10 +21,10 @@ npx ng build                 # production build in dist/web/browser
 ```
 
 `dist/web/browser` is the folder the api serves as static files; the build has no base path of its own, so it
-is served from the root of whatever hosts it. The api takes it from the `wwwroot` beside its own app, read once
-at startup: copy the contents of `dist/web/browser` there and then start the api. For an api started with
-`dotnet run` that is `api/src/DataControls.Api/bin/Debug/net10.0/wwwroot`; for a published one, the `wwwroot`
-of the publish folder.
+is served from the root of whatever hosts it. The api takes it from the `wwwroot` beside its own app, and the
+folder must be there when the api starts: copy the contents of `dist/web/browser` into it and then start the
+api. For an api started with `dotnet run` that is `api/src/DataControls.Api/bin/Debug/net10.0/wwwroot`; for a
+published one, the `wwwroot` of the publish folder.
 
 Without the api on port 5000 every screen shows its error state with a retry. To look at the app with no
 backend at all, `npm run preview` opens a headed Chromium over the in-memory api of the mocked specs and pauses
