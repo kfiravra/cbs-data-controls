@@ -16,3 +16,8 @@ export async function shot(page: Page, testInfo: TestInfo, name: string): Promis
     animations: 'disabled',
   });
 }
+
+/** The room the panel leaves around itself: none on a phone, where it is the whole window. */
+export function sheetInset(page: Page): Promise<number> {
+  return page.evaluate(() => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sheet-inset')) || 0);
+}

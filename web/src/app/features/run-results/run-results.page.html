@@ -35,7 +35,7 @@
         </div>
       }
       @if (run || control?.isActive) {
-        <a class="btn btn--tonal" data-testid="edit-control" [routerLink]="['/controls', store.controlId()]">
+        <a class="btn btn--secondary" data-testid="edit-control" [routerLink]="['/controls', store.controlId()]">
           <app-icon name="edit" />{{ 'results.actions.edit' | translate }}
         </a>
       }
@@ -167,7 +167,7 @@
                       : ('results.noMatch.body' | translate)
                   }}
                 </p>
-                <button actions class="btn btn--tonal" type="button" (click)="go({ search: '', condition: null })">
+                <button actions class="btn btn--secondary" type="button" (click)="go({ search: '', condition: null })">
                   {{ 'results.noMatch.clear' | translate }}
                 </button>
               </app-state-panel>
@@ -203,7 +203,7 @@
           [title]="'results.none.title' | translate"
         >
           <p>{{ 'results.none.body' | translate: { entity: entityLabel() } }}</p>
-          <button actions class="btn btn--tonal" type="button" [attr.aria-disabled]="store.rerunning() ? 'true' : null" (click)="rerun()">
+          <button actions class="btn btn--secondary" type="button" [attr.aria-disabled]="store.rerunning() ? 'true' : null" (click)="rerun()">
             <app-icon name="play_arrow" />{{ 'results.actions.rerun' | translate }}
           </button>
         </app-state-panel>
@@ -244,10 +244,10 @@
           [title]="'errors.QUERY_TIMEOUT.title' | translate: timeoutParams()"
         >
           <p>{{ 'errors.QUERY_TIMEOUT.body' | translate }}</p>
-          <a actions class="btn btn--tonal" [routerLink]="['/controls', run!.controlId]">
+          <a actions class="btn btn--secondary" [routerLink]="['/controls', run!.controlId]">
             <app-icon name="edit" />{{ 'results.actions.editConditions' | translate }}
           </a>
-          <button actions class="btn btn--tonal" type="button" [attr.aria-disabled]="store.rerunning() ? 'true' : null" (click)="rerun()">
+          <button actions class="btn btn--secondary" type="button" [attr.aria-disabled]="store.rerunning() ? 'true' : null" (click)="rerun()">
             <app-icon name="play_arrow" />{{ 'results.actions.rerun' | translate }}
           </button>
         </app-state-panel>
@@ -260,7 +260,7 @@
           [title]="'errors.CONTROL_DEFINITION_OUTDATED.title' | translate"
         >
           <p>{{ outdatedText() }}</p>
-          <a actions class="btn btn--tonal" [routerLink]="['/controls', run!.controlId]">
+          <a actions class="btn btn--secondary" [routerLink]="['/controls', run!.controlId]">
             <app-icon name="edit" />{{ 'results.actions.edit' | translate }}
           </a>
         </app-state-panel>
@@ -274,7 +274,7 @@
         >
           <!-- the run is in the past: the text says what stopped it then, not what is unavailable now -->
           <p>{{ failedReason() | translate }}</p>
-          <button actions class="btn btn--tonal" type="button" [attr.aria-disabled]="store.rerunning() ? 'true' : null" (click)="rerun()">
+          <button actions class="btn btn--secondary" type="button" [attr.aria-disabled]="store.rerunning() ? 'true' : null" (click)="rerun()">
             <app-icon name="play_arrow" />{{ 'results.actions.rerun' | translate }}
           </button>
         </app-state-panel>
@@ -282,7 +282,7 @@
       @case ('running') {
         <app-state-panel data-testid="state-running" [title]="'results.running.title' | translate">
           <p>{{ 'results.running.body' | translate }}</p>
-          <button actions class="btn btn--tonal" type="button" (click)="reload()">
+          <button actions class="btn btn--secondary" type="button" (click)="reload()">
             {{ 'results.running.reload' | translate }}
           </button>
         </app-state-panel>

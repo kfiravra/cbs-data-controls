@@ -21,7 +21,7 @@
     >
       <!-- aria-disabled while the suggestions are on their way: the pressed button keeps the focus -->
       <button
-        class="btn btn--tonal"
+        class="btn btn--secondary"
         type="button"
         data-testid="suggestions-refresh"
         [disabled]="creating()"
@@ -72,7 +72,7 @@
   </div>
 
   <footer class="sheet__foot sheet__foot--actions">
-    <button class="btn btn--tonal" type="button" data-testid="suggestions-close" [disabled]="creating()" (click)="close()">
+    <button class="btn btn--secondary" type="button" data-testid="suggestions-close" [disabled]="creating()" (click)="close()">
       {{ 'common.close' | translate }}
     </button>
     <button

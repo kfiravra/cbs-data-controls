@@ -1,13 +1,10 @@
 // The frame: the bar, the page container, the page head, the tabs of the list, and the panel that opens
 // over the list.
 
+// the bar: a card across the window with one line under it, and the name as the mark
 .appbar {
-  background: var(--color-bar);
-  color: var(--color-on-bar);
-
-  :focus-visible {
-    outline-color: var(--color-on-bar);
-  }
+  border-block-end: 1px solid var(--color-line);
+  background: var(--color-card);
 }
 
 .appbar__in {
@@ -20,22 +17,15 @@
   block-size: var(--size-bar);
 }
 
+// the mark is the name, set as a wordmark: no symbol stands beside it
 .brand {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-3);
   min-block-size: var(--size-control);
   text-decoration: none;
   font-size: var(--text-title);
-  font-weight: 500;
-}
-
-// three records and the one that differs
-.brand__mark {
-  inline-size: 22px;
-  block-size: 22px;
-  flex: none;
-  fill: currentColor;
+  font-weight: 600;
+  line-height: 1;
 }
 
 .page {
@@ -49,6 +39,11 @@
   display: grid;
   gap: var(--space-4);
   margin-block-end: var(--space-5);
+}
+
+// a title never takes a ring from the script that moves the focus to it
+.page-head h1:focus {
+  outline: none;
 }
 
 .page-head__text {
@@ -117,29 +112,41 @@
   }
 }
 
-// the two tabs of the list: one underline, and the count of each as a chip
-.tabs {
-  display: flex;
-  gap: var(--space-5);
+// The two tabs of the list, as one segmented track: the chosen tab is filled with Ink (ink selects), and
+// each says how many controls it holds. Beside them, at the end edge, the search and the filter.
+.list-bar {
+  display: grid;
+  gap: var(--space-3);
   margin-block-end: var(--space-4);
-  border-block-end: 1px solid var(--color-line-strong);
+}
+
+.tabs {
+  display: inline-grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
 }
 
 .tab {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: var(--space-2);
-  min-block-size: var(--size-control);
-  margin-block-end: -1px;
-  padding: 0 var(--space-1);
+  min-block-size: var(--size-control-sm);
+  padding: 0 var(--space-4);
   border: 0;
-  border-block-end: 2px solid transparent;
+  border-radius: var(--radius-sm);
   background: none;
+  font-size: var(--text-small);
   font-weight: 500;
   color: var(--color-muted);
+  white-space: nowrap;
   transition:
-    color var(--duration-out) var(--ease-out),
-    border-color var(--duration-out) var(--ease-out);
+    background-color var(--duration-out) var(--ease-out),
+    color var(--duration-out) var(--ease-out);
 
   &:hover {
     color: var(--color-ink);
@@ -147,21 +154,33 @@
   }
 
   &[aria-selected='true'] {
-    border-block-end-color: var(--color-ink);
-    color: var(--color-ink);
+    background: var(--color-inverse);
+    color: var(--color-on-inverse);
   }
 }
 
 .tab__count {
   display: inline-grid;
   place-items: center;
-  min-inline-size: 24px;
-  block-size: 22px;
+  min-inline-size: 22px;
+  block-size: 20px;
   padding-inline: 6px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-chip);
   background: var(--color-tonal);
   font-size: var(--text-label);
   line-height: 1;
+}
+
+.tab[aria-selected='true'] .tab__count {
+  background: var(--color-on-inverse-tonal);
+}
+
+@media (min-width: 900px) {
+  .list-bar {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: var(--space-4);
+  }
 }
 
 // The panel: a control or a run, over the list. It stands at the inline end, as tall as the window, and the
@@ -173,6 +192,7 @@
   z-index: 100;
   display: flex;
   justify-content: flex-end;
+  padding: var(--sheet-inset);
 }
 
 .sheet-scrim {
@@ -185,17 +205,21 @@
 .sheet,
 .app-sheet {
   --sheet-pad: var(--space-4);
+  --sheet-radius: 0px;
 
   container: sheet / inline-size;
 }
 
+// a card that floats over the list, with a little room around it; the whole window on a phone
 .sheet {
   position: relative;
   display: flex;
   flex-direction: column;
   inline-size: 100%;
   block-size: 100%;
-  background: var(--color-ground);
+  overflow: hidden;
+  border-radius: var(--sheet-radius);
+  background: var(--color-card);
   box-shadow: var(--shadow-overlay);
   animation: sheet-in var(--duration-panel) var(--ease-out);
 
@@ -228,14 +252,25 @@
 }
 
 .sheet__head {
-  flex: none;
-  padding: var(--space-4) var(--sheet-pad);
   // the room of the close button, which stands over the head's end
-  padding-inline-end: calc(var(--space-3) + var(--size-control) + var(--space-2));
+  --close-room: calc(var(--space-3) + var(--size-control) + var(--space-2));
+
+  flex: none;
+  padding: var(--space-5) var(--sheet-pad) var(--space-4);
   border-block-end: 1px solid var(--color-line);
 
   .page-head {
     margin-block-end: 0;
+  }
+
+  // on a narrow panel only the title's line gives way to the close button: the actions under it are a row
+  // of their own and take the panel's whole width
+  .page-head__text {
+    padding-inline-end: calc(var(--close-room) - var(--sheet-pad));
+  }
+
+  .page-head__actions {
+    flex-wrap: nowrap;
   }
 }
 
@@ -257,13 +292,13 @@
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: var(--space-3);
-  padding: var(--space-3) var(--sheet-pad);
-  border-block-start: 1px solid var(--color-line-strong);
+  padding: var(--space-4) var(--sheet-pad);
+  border-block-start: 1px solid var(--color-line);
 }
 
 .sheet__close {
   position: absolute;
-  inset-block-start: var(--space-3);
+  inset-block-start: var(--space-4);
   inset-inline-end: var(--space-3);
   z-index: 1;
 }
@@ -283,11 +318,20 @@
 @media (min-width: 640px) {
   .sheet {
     inline-size: min(1120px, 100% - clamp(48px, 22vw, 320px));
-    border-inline-start: 1px solid var(--color-line-strong);
+  }
+
+  // the actions stand at the end of the title's row: the whole head gives way to the close button
+  .sheet__head {
+    padding-inline-end: var(--close-room);
+
+    .page-head__text {
+      padding-inline-end: 0;
+    }
   }
 
   .sheet,
   .app-sheet {
     --sheet-pad: var(--space-6);
+    --sheet-radius: var(--radius-lg);
   }
 }

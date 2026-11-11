@@ -10,7 +10,7 @@ import { normalized } from '../support/definitions';
 import { t } from '../support/i18n';
 import { expect, test } from '../support/mocked';
 import { FakeApi, problem } from '../support/routes';
-import { shot } from '../support/shots';
+import { sheetInset, shot } from '../support/shots';
 
 const letters = t('common.markLetters').split(' ');
 
@@ -182,7 +182,7 @@ test.describe('control editor', () => {
     const viewport = page.viewportSize()!;
 
     // at the foot of the panel, whole, with the two buttons in it
-    expect(Math.round(before.y + before.height)).toBe(viewport.height);
+    expect(Math.round(before.y + before.height)).toBe(viewport.height - (await sheetInset(page)));
     await expect(bar.getByTestId('save')).toBeInViewport();
     await expect(bar.getByTestId('save-run')).toBeInViewport();
 

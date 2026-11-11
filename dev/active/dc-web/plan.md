@@ -406,8 +406,8 @@ Part 1, structure (`/impeccable shape` first: Design R is its brief):
 
 Part 2, look ("this design looks not 2026, quite boring"). Changed by Kfir on 2026-11-11 while part 1 was
 being built: no three directions and no stop; one direction, and straight on to part 3.
-- [ ] One visual direction dealt with the `design-taste-frontend` skill and applied as the only theme; why it
-      was chosen is in `notes.md`.
+- [x] One visual direction dealt with the `design-taste-frontend` skill and applied as the only theme; why it
+      was chosen is in `notes.md` (decisions 69 to 71).
 
 Part 3:
 - [ ] `/impeccable critique` and `/impeccable polish`, once each; `docs/design.md` in line with what is built.

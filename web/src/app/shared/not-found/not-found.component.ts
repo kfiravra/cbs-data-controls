@@ -16,7 +16,7 @@ import { StatePanelComponent } from '../state-panel/state-panel.component';
       [pageTitle]="true"
     >
       <p>{{ 'states.notFound.body' | translate }}</p>
-      <a actions class="btn btn--tonal" routerLink="/">{{ 'states.notFound.toList' | translate }}</a>
+      <a actions class="btn btn--secondary" routerLink="/">{{ 'states.notFound.toList' | translate }}</a>
     </app-state-panel>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,

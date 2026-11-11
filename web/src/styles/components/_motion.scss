@@ -14,8 +14,8 @@
     background: var(--color-action-pressed);
   }
 
-  .btn--tonal:active:not([aria-disabled='true']) {
-    background: var(--color-line-strong);
+  .btn--secondary:active:not([aria-disabled='true']) {
+    background: var(--color-surface);
   }
 
   // the settle stays off inside the sentence field too, where a second class names its keyframes

@@ -1,5 +1,6 @@
-// Global styles: the tokens, the base rules, the Material theme, the native component partials, and the
-// reduced-motion rules last.
+// Global styles: the font, the tokens, the base rules, the Material theme, the native component partials, and
+// the reduced-motion rules last.
+@use 'styles/fonts';
 @use 'styles/tokens';
 @use 'styles/base';
 @use 'styles/material-theme';

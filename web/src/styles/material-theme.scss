@@ -6,7 +6,7 @@
 @use 'sass:map';
 @use '@angular/material' as mat;
 
-$font: ('IBM Plex Sans Hebrew', 'IBM Plex Sans', system-ui, sans-serif);
+$font: ('Heebo', system-ui, sans-serif);
 
 // Hebrew is never letter-spaced: every tracking token of the type scale is zero.
 $no-tracking: ();
@@ -22,27 +22,27 @@ $system: (
   primary-container: var(--color-action-tint),
   on-primary-container: var(--color-ink),
   secondary: var(--color-ink),
-  on-secondary: var(--color-ground),
+  on-secondary: var(--color-on-inverse),
   secondary-container: var(--color-tonal),
   on-secondary-container: var(--color-ink),
   tertiary: var(--color-ink),
-  on-tertiary: var(--color-ground),
+  on-tertiary: var(--color-on-inverse),
   background: var(--color-ground),
   on-background: var(--color-ink),
-  surface: var(--color-ground),
+  surface: var(--color-card),
   surface-dim: var(--color-surface),
-  surface-bright: var(--color-ground),
+  surface-bright: var(--color-card),
   surface-variant: var(--color-surface),
-  surface-container-lowest: var(--color-ground),
-  surface-container-low: var(--color-ground),
-  surface-container: var(--color-ground),
-  surface-container-high: var(--color-ground),
+  surface-container-lowest: var(--color-card),
+  surface-container-low: var(--color-card),
+  surface-container: var(--color-card),
+  surface-container-high: var(--color-card),
   surface-container-highest: var(--color-surface),
   on-surface: var(--color-ink),
   on-surface-variant: var(--color-muted),
-  inverse-surface: var(--color-bar),
-  inverse-on-surface: var(--color-on-bar),
-  inverse-primary: var(--color-on-bar),
+  inverse-surface: var(--color-inverse),
+  inverse-on-surface: var(--color-on-inverse),
+  inverse-primary: var(--color-on-inverse),
   outline: var(--color-control-line),
   outline-variant: var(--color-line),
   error: var(--color-danger),
@@ -106,7 +106,7 @@ html {
 
   @include mat.select-overrides(
     (
-      panel-background-color: var(--color-ground),
+      panel-background-color: var(--color-card),
       container-elevation-shadow: var(--shadow-overlay),
       trigger-text-size: var(--text-body),
       trigger-text-line-height: 1.4,
@@ -118,17 +118,16 @@ html {
 
   @include mat.menu-overrides(
     (
-      container-color: var(--color-ground),
+      container-color: var(--color-card),
       container-shape: var(--radius-md),
       container-elevation-shadow: var(--shadow-overlay),
     )
   );
 
-  // the dialog: Ground, 8px, the one shadow; its Line strong edge and the Scrim come from the panel and
-  // backdrop classes below
+  // the dialog: a card, the large radius, the overlay shadow; the Scrim comes from the backdrop class below
   @include mat.dialog-overrides(
     (
-      container-color: var(--color-ground),
+      container-color: var(--color-card),
       container-shape: var(--radius-lg),
       container-elevation-shadow: var(--shadow-overlay),
       container-max-width: 640px,
@@ -138,14 +137,14 @@ html {
     )
   );
 
-  // the toast: Bar ground, one line, at most one text button
+  // the toast: the inverse ground, one line, at most one text button
   @include mat.snack-bar-overrides(
     (
-      container-color: var(--color-bar),
+      container-color: var(--color-inverse),
       container-shape: var(--radius-md),
-      supporting-text-color: var(--color-on-bar),
+      supporting-text-color: var(--color-on-inverse),
       supporting-text-size: var(--text-small),
-      button-color: var(--color-on-bar),
+      button-color: var(--color-on-inverse),
     )
   );
 
@@ -156,7 +155,7 @@ html {
       selected-hover-icon-color: var(--color-ink),
       selected-focus-icon-color: var(--color-ink),
       selected-pressed-icon-color: var(--color-ink),
-      selected-checkmark-color: var(--color-ground),
+      selected-checkmark-color: var(--color-on-inverse),
       unselected-icon-color: var(--color-control-line),
       unselected-hover-icon-color: var(--color-muted),
       unselected-focus-icon-color: var(--color-ink),
@@ -173,11 +172,11 @@ html {
     (
       shape: var(--radius-sm),
       height: var(--size-control-sm),
-      background-color: var(--color-ground),
+      background-color: var(--color-card),
       text-color: var(--color-ink),
       divider-color: var(--color-control-line),
       selected-state-background-color: var(--color-ink),
-      selected-state-text-color: var(--color-ground),
+      selected-state-text-color: var(--color-on-inverse),
       state-layer-color: var(--color-ink),
       label-text-size: var(--text-small),
       label-text-weight: 500,
@@ -188,7 +187,7 @@ html {
   @include mat.chips-overrides(
     (
       container-height: 30px,
-      container-shape-radius: var(--radius-sm),
+      container-shape-radius: var(--radius-chip),
       elevated-container-color: var(--color-tonal),
       outline-width: 0,
       label-text-color: var(--color-ink),
@@ -200,25 +199,25 @@ html {
 
   @include mat.tooltip-overrides(
     (
-      container-color: var(--color-bar),
-      container-shape: var(--radius-sm),
-      supporting-text-color: var(--color-on-bar),
+      container-color: var(--color-inverse),
+      container-shape: var(--radius-chip),
+      supporting-text-color: var(--color-on-inverse),
       supporting-text-size: var(--text-label),
     )
   );
 }
 
-// A field is a lighter well: Ground inside its outline, also on a Surface panel. The host holds only the
-// field box, because subscript sizing is dynamic and hints and errors stand outside it.
+// A field is a white well: Card inside its outline, on the ground, on a card and on a Surface panel alike.
+// The host holds only the field box, because subscript sizing is dynamic and hints and errors stand outside it.
 mat-form-field {
   inline-size: 100%;
   min-inline-size: 0;
   border-radius: var(--radius-sm);
-  background: var(--color-ground);
+  background: var(--color-card);
 
   // the soft ring: with the Action outline, at once
   &:focus-within {
-    box-shadow: 0 0 0 4px color-mix(in oklab, var(--color-action) 20%, transparent);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-action) 22%, transparent);
   }
 
   // invalid: a Danger border, doubled
@@ -233,7 +232,7 @@ mat-form-field {
     );
 
     &:focus-within {
-      box-shadow: 0 0 0 4px color-mix(in oklab, var(--color-danger) 20%, transparent);
+      box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-danger) 22%, transparent);
     }
   }
 
@@ -264,14 +263,13 @@ mat-button-toggle-group button:focus-visible {
 }
 
 mat-button-toggle-group button:is([aria-checked='true'], [aria-pressed='true']):focus-visible {
-  outline-color: var(--color-ground);
+  outline-color: var(--color-on-inverse);
 }
 
 // classes this app passes to MatDialog (panelClass, backdropClass) and MatSnackBar (panelClass)
 .app-dialog {
   inline-size: 100%;
   max-inline-size: min(640px, calc(100vw - 2 * var(--gutter)));
-  border: 1px solid var(--color-line-strong);
   border-radius: var(--radius-lg);
 }
 
@@ -297,7 +295,8 @@ mat-button-toggle-group button:is([aria-checked='true'], [aria-pressed='true']):
 }
 
 // The suggestions panel is a dialog of Material shown as the same sheet as the panel of a control or a run:
-// at the inline end (its position strategy), as tall as the window, square, with the panel's own width.
+// at the inline end (its position), as tall as the window, with the panel's own width. The dialog's own
+// container is clear; the screen inside it is the card that floats, with the panel's room around it.
 .app-sheet {
   inline-size: 100vw;
   block-size: 100dvh;
@@ -305,7 +304,9 @@ mat-button-toggle-group button:is([aria-checked='true'], [aria-pressed='true']):
 
   @include mat.dialog-overrides(
     (
+      container-color: transparent,
       container-shape: 0,
+      container-elevation-shadow: none,
       container-max-width: none,
       container-small-max-width: none,
       container-min-width: 0,
@@ -313,13 +314,17 @@ mat-button-toggle-group button:is([aria-checked='true'], [aria-pressed='true']):
   );
 
   .sheet__screen {
-    block-size: 100dvh;
+    block-size: calc(100dvh - 2 * var(--sheet-inset));
+    margin: var(--sheet-inset);
+    overflow: hidden;
+    border-radius: var(--sheet-radius);
+    background: var(--color-card);
+    box-shadow: var(--shadow-overlay);
   }
 }
 
 @media (min-width: 640px) {
   .app-sheet {
-    inline-size: min(1120px, 100vw - clamp(48px, 22vw, 320px));
-    border-inline-start: 1px solid var(--color-line-strong);
+    inline-size: min(1144px, 100vw - clamp(48px, 22vw, 320px));
   }
 }

@@ -22,7 +22,7 @@ test.describe('shell', () => {
     await page.evaluate(() => document.fonts.ready);
     // checked against Hebrew text: without it only the face that covers a space is tested
     const fontLoaded = await page.evaluate(
-      (sample) => [400, 500].every((weight) => document.fonts.check(`${weight} 16px "IBM Plex Sans Hebrew"`, sample)),
+      (sample) => [400, 500].every((weight) => document.fonts.check(`${weight} 16px "Heebo"`, sample)),
       t('app.name'),
     );
     expect(fontLoaded).toBe(true);

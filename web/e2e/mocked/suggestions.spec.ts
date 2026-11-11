@@ -4,7 +4,7 @@ import { examples } from '../fixtures/examples';
 import { t } from '../support/i18n';
 import { expect, test } from '../support/mocked';
 import { problem } from '../support/routes';
-import { shot } from '../support/shots';
+import { sheetInset, shot } from '../support/shots';
 
 const dialog = (page: Page) => page.getByTestId('suggestions-dialog');
 const drafts = (page: Page) => dialog(page).getByTestId('suggestion');
@@ -42,7 +42,7 @@ test.describe('suggestions panel', () => {
 
     // a wide panel, as tall as the window; from 900px of its width the cards stand two in a row
     const box = (await dialog(page).boundingBox())!;
-    expect(box.height).toBe(page.viewportSize()!.height);
+    expect(box.height).toBe(page.viewportSize()!.height - 2 * (await sheetInset(page)));
     const [first, second] = [(await drafts(page).nth(0).boundingBox())!, (await drafts(page).nth(1).boundingBox())!];
     if (testInfo.project.name === 'desktop') {
       expect(box.width).toBeGreaterThan(900);

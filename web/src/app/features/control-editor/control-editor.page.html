@@ -245,7 +245,7 @@
       >
         <!-- aria-disabled while a save is on its way: the pressed button keeps the focus (see _buttons.scss) -->
         <button
-          class="btn btn--on-action-tonal"
+          class="btn btn--on-inverse-quiet"
           type="button"
           data-testid="save"
           [attr.aria-disabled]="busy() ? 'true' : null"
@@ -258,7 +258,7 @@
           }
         </button>
         <button
-          class="btn btn--on-action"
+          class="btn btn--on-inverse"
           type="button"
           data-testid="save-run"
           [attr.aria-disabled]="busy() ? 'true' : null"

@@ -1,13 +1,32 @@
-// A strip of the operating grey over the table it controls; a table from 640, card rows below it.
+// A search and its filters over the table they control; a table from 640, card rows below it. The list of
+// controls stands in a card; the records of a run stand on the panel, which is one.
 
 .toolbar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-3);
-  padding: var(--space-3);
-  border-radius: var(--radius-md);
-  background: var(--color-surface);
+}
+
+// at the end edge of the list's bar, beside the tabs
+.list-bar .toolbar {
+  justify-content: flex-end;
+}
+
+.table-card {
+  overflow: hidden;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-lg);
+  background: var(--color-card);
+
+  .table tr {
+    padding-inline: var(--space-4);
+  }
+
+  .table tbody tr:last-child,
+  .table tbody tr:last-child > td {
+    border-block-end: 0;
+  }
 }
 
 .toolbar__search {
@@ -105,6 +124,12 @@
   }
 
   .cell-void {
+    display: none;
+  }
+
+  // below 640 a control that never ran says so once, beside what it checks: the dash of its result is for a
+  // table's column and takes no line of the card
+  .cell-result[data-result='never'] {
     display: none;
   }
 }
@@ -281,8 +306,8 @@ th[aria-sort='descending'] .th-sort {
     }
 
     th {
-      padding-block: var(--space-2);
-      font-size: var(--text-small);
+      padding-block: var(--space-3);
+      font-size: var(--text-label);
       font-weight: 500;
       color: var(--color-muted);
       white-space: nowrap;
@@ -328,6 +353,10 @@ th[aria-sort='descending'] .th-sort {
     .cell-void {
       display: table-cell;
       color: var(--color-muted);
+    }
+
+    .cell-result[data-result='never'] {
+      display: table-cell;
     }
 
     .cell-meta {
@@ -377,8 +406,43 @@ th[aria-sort='descending'] .th-sort {
     }
   }
 
-  // the table's text stays on the page's edge
+  // the table's text stays on the edge of what holds it
   .table-bleed {
     margin-inline: calc(-1 * var(--space-3));
+  }
+
+  // in its card the list keeps the card's own room at both edges, and its head is a quiet band
+  .table-card .table {
+    th,
+    td {
+      padding-inline: var(--space-3);
+    }
+
+    th:first-child,
+    td:first-child {
+      padding-inline-start: var(--space-5);
+    }
+
+    th:last-child,
+    td:last-child {
+      padding-inline-end: var(--space-4);
+    }
+
+    th {
+      background: var(--color-ground);
+      border-block-end-color: var(--color-line);
+    }
+
+    td {
+      padding-block: var(--space-4);
+    }
+
+    .cell-actions {
+      padding-block: var(--space-3);
+    }
+
+    .cell-meta {
+      padding-block-start: calc(var(--space-4) + 2px);
+    }
   }
 }

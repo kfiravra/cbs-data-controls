@@ -1,4 +1,4 @@
-<div class="table-bleed">
+<div class="table-card">
   <table class="table" data-testid="controls-table" [attr.aria-busy]="loading()">
     <thead>
       <tr>
@@ -84,7 +84,7 @@
                 <!-- aria-disabled, not disabled: a disabled button drops the focus it holds, and the keyboard
                      and a screen reader lose their place in the row; a second press is ignored by the store -->
                 <button
-                  class="btn btn--tonal btn--sm btn--run"
+                  class="btn btn--secondary btn--sm btn--run"
                   type="button"
                   data-testid="run"
                   [attr.aria-disabled]="row.running ? 'true' : null"

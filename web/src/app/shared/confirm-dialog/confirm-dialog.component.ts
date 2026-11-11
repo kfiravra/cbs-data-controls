@@ -32,7 +32,7 @@ export interface ConfirmDialogData {
       </div>
       <p>{{ data.body }}</p>
       <div class="dialog__foot">
-        <button class="btn btn--tonal" type="button" (click)="close(false)">
+        <button class="btn btn--secondary" type="button" (click)="close(false)">
           {{ 'common.cancel' | translate }}
         </button>
         <button class="btn btn--primary" type="button" data-testid="confirm-accept" (click)="close(true)">

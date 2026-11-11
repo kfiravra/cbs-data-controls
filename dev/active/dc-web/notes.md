@@ -218,6 +218,33 @@ Taken on 2026-11-11 in the morning (Kfir's second message: "no questions"):
     between the first commit of this phase and the second.
 68. Kfir changed part 2 while part 1 was being built (2026-11-11): one direction dealt with the
     `design-taste-frontend` skill and applied as the only theme, the reason in these notes, and no stop.
+69. The one direction, and why. It was dealt, not picked: `design-taste-frontend`'s dealer, continued from
+    the history of the first deal so nothing repeats. Its first hand for a software page was a dark one
+    (`blue-black-cornflower`); PRODUCT.md's scene is a desk in daylight and long reading of tables, which asks
+    for a light page, so the deal was run again with `--light` and its first palette taken:
+    `cool-white-slate`, "Frost and slate" (ground `#f7f9fa`, surface `#ecf0f2`, ink `#1f3038`, teal
+    `#0d7480`). Why it answers "not 2026, quite boring": the old page was two greys under a black bar with
+    square 4px corners, which reads as a form of a decade ago; this one is white cards on a frost ground,
+    soft 8/12/20 corners (the dealer's `soft`, its default), a panel that floats, and one teal that is far
+    from the three state colours, so a count is still never red. The second palette (`white-link-blue`) is
+    the blue Kfir called boring; the third (`card-pastels`) has a pink accent that would sit beside the red
+    of an error. Type: the dealt `host` has no Hebrew, and no face of the dealer but Plex (used before) has,
+    so the face is Heebo, the Hebrew-capable neo-grotesk nearest the dealt one, as one variable file per
+    script; the dealer's rule (never by taste) is kept by taking the class it dealt. Buttons `arrow` and mark
+    `wordmark` were dealt by the skill's one-liner: the name is now the mark (the dots are gone from the
+    bar), and the arrow, a device of a site's calls to action, is on no button, because the buttons of this
+    page act in place; the second button takes the system's plain form, white with a line round it.
+70. The skill's finish gate, its checker and its copy lint are for a company's website (a hero, sections a
+    screen tall, photographs). They do not apply to an application panel and were not run; the gate was armed
+    by the deal in the session's scratch folder, not in the repository. What was run instead: this repo's own
+    checks, the mocked specs at 390 and 1440, and `/impeccable critique` in part 3.
+71. What changed with the look beyond colours, each a consequence of the dealt system: the list stands in one
+    card with a quiet head band; the tabs are a segmented track and the search and filter share their row;
+    the bar of the rule in words is on the ink (it was on the accent), so the teal is spent on one button a
+    view; the selected tab, card and option are filled with the ink ("ink selects" kept); a mark is a 20px
+    badge; the summary of a run is a band and no longer two rules; the panel floats with 12px of room and the
+    large radius from 640px. The class `btn--tonal` is now `btn--secondary`, and the tokens `--color-bar` and
+    `--color-on-action-*` are `--color-inverse` and `--color-on-inverse-*`.
 
 ## Reconciliation with `contracts/` (phase 2, 2026-11-11)
 Read: `api.md`, `errors.md`, `glossary.json`, `control-definition.schema.json`, the six examples and the thirteen
@@ -771,3 +798,8 @@ rewrote. A review that found nothing, or did not run, is logged as that.
   one build; no agent. `gates/phase-9-part-1.txt`: ngc, lint, the e2e type check, 326 unit tests in 33 files,
   the build (555 kB initial, 139 kB transfer; it was 545 and 137), `e2e/mocked` 186 passed and 2 skipped by
   project on purpose. While it was being built Kfir changed part 2 (decision 68).
+- 2026-11-11 phase 9, part 2 (as Kfir changed it: one direction, no stop): dealt and applied as the only
+  theme, decisions 69 to 71. Font package swapped (`@fontsource-variable/heebo` in, the Plex package out; two
+  subsets, one variable file each). `docs/design.md` rewritten for the structure and the look, its frontmatter
+  linted with `@google/design.md` (0 errors; the warnings are the orphaned-token kind the first version had).
+  Costs said here: one npm install and uninstall, three runs of mocked specs, two unit runs, no agent.

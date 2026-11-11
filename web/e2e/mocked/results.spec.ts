@@ -15,7 +15,7 @@ import {
 import { t } from '../support/i18n';
 import { expect, test } from '../support/mocked';
 import { FakeApi, problem } from '../support/routes';
-import { shot } from '../support/shots';
+import { sheetInset, shot } from '../support/shots';
 
 const letters = t('common.markLetters').split(' ');
 const RUN = 500;
@@ -306,13 +306,16 @@ test.describe('run results', () => {
     const box = (await ui(page).boundingBox())!;
     // the window as the page is laid out in it: without the scrollbar, where the browser draws one
     const viewport = await page.evaluate(() => ({ width: document.documentElement.clientWidth, height: window.innerHeight }));
-    expect(box.height).toBe(viewport.height);
+    // the panel floats with a little room around it; on a phone it has none and is the whole window
+    const inset = await sheetInset(page);
+    expect(box.height).toBe(viewport.height - 2 * inset);
     if (testInfo.project.name === 'mobile') {
+      expect(inset).toBe(0);
       expect(box.width).toBe(viewport.width);
     } else {
       // the names of the list stay readable beside the panel, at the start edge
       expect(viewport.width - box.width).toBeGreaterThanOrEqual(300);
-      expect(box.x).toBe(0);
+      expect(box.x).toBe(inset);
     }
     // nothing in the panel is wider than the panel
     const overflow = await ui(page).evaluate((panel) => [...panel.querySelectorAll('*')].filter((el) => el.scrollWidth > panel.clientWidth + 1).length);

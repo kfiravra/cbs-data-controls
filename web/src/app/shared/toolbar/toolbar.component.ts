@@ -32,7 +32,7 @@ const SEARCH_DEBOUNCE_MS = 300;
       </mat-form-field>
       @if (filtersLabel(); as label) {
         <button
-          class="icon-btn icon-btn--tonal only-narrow"
+          class="icon-btn icon-btn--boxed only-narrow"
           type="button"
           data-testid="toolbar-filters-toggle"
           [attr.aria-label]="label"
