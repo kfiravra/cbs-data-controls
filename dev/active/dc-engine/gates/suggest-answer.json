@@ -1,0 +1,682 @@
+{
+  "items": [
+    {
+      "name": "עובדים עם נתוני חובה חסרים",
+      "description": "איתור עובדים עם שדה חובה חסר במצב שבו השדה נדרש.",
+      "rationale": "השדות מסומנים במילון המונחים כשדות חובה, בהתאם למצב הרשומה.",
+      "evidence": [
+        {
+          "key": "violations_found",
+          "params": {
+            "count": 10,
+            "total": 85
+          },
+          "text": "חריגות כעת: 10 מתוך 85"
+        },
+        {
+          "key": "field_missing",
+          "params": {
+            "field": "email",
+            "count": 4
+          },
+          "text": "ללא דואר אלקטרוני: 4"
+        },
+        {
+          "key": "field_missing",
+          "params": {
+            "field": "salary",
+            "count": 4
+          },
+          "text": "ללא שכר: 4"
+        },
+        {
+          "key": "field_missing",
+          "params": {
+            "field": "department_assignment",
+            "count": 1
+          },
+          "text": "ללא שיוך למחלקה: 1"
+        },
+        {
+          "key": "field_missing",
+          "params": {
+            "field": "termination_date",
+            "count": 2
+          },
+          "text": "ללא תאריך סיום העסקה: 2"
+        }
+      ],
+      "definition": {
+        "schemaVersion": 1,
+        "rootEntity": "employee",
+        "where": {
+          "type": "group",
+          "op": "or",
+          "children": [
+            {
+              "type": "group",
+              "op": "and",
+              "children": [
+                {
+                  "type": "condition",
+                  "id": "c1",
+                  "left": {
+                    "field": "status"
+                  },
+                  "operator": "eq",
+                  "value": "active"
+                },
+                {
+                  "type": "group",
+                  "op": "or",
+                  "children": [
+                    {
+                      "type": "condition",
+                      "id": "c2",
+                      "left": {
+                        "field": "email"
+                      },
+                      "operator": "is_empty"
+                    },
+                    {
+                      "type": "condition",
+                      "id": "c3",
+                      "left": {
+                        "field": "salary"
+                      },
+                      "operator": "is_null"
+                    },
+                    {
+                      "type": "condition",
+                      "id": "c4",
+                      "left": {
+                        "field": "department_assignment"
+                      },
+                      "operator": "is_null"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "group",
+              "op": "and",
+              "children": [
+                {
+                  "type": "condition",
+                  "id": "c5",
+                  "left": {
+                    "field": "status"
+                  },
+                  "operator": "eq",
+                  "value": "inactive"
+                },
+                {
+                  "type": "condition",
+                  "id": "c6",
+                  "left": {
+                    "field": "termination_date"
+                  },
+                  "operator": "is_null"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "sentence": "(סטטוס: פעיל וגם (דואר אלקטרוני: ריק או שכר: חסר או שיוך למחלקה: חסר)) או (סטטוס: לא פעיל וגם תאריך סיום העסקה: חסר)",
+      "sentenceParts": [
+        {
+          "text": "("
+        },
+        {
+          "text": "סטטוס",
+          "nodeId": "c1",
+          "role": "field"
+        },
+        {
+          "text": ": ",
+          "nodeId": "c1"
+        },
+        {
+          "text": "פעיל",
+          "nodeId": "c1",
+          "role": "value"
+        },
+        {
+          "text": " וגם "
+        },
+        {
+          "text": "("
+        },
+        {
+          "text": "דואר אלקטרוני",
+          "nodeId": "c2",
+          "role": "field"
+        },
+        {
+          "text": ": ריק",
+          "nodeId": "c2"
+        },
+        {
+          "text": " או "
+        },
+        {
+          "text": "שכר",
+          "nodeId": "c3",
+          "role": "field"
+        },
+        {
+          "text": ": חסר",
+          "nodeId": "c3"
+        },
+        {
+          "text": " או "
+        },
+        {
+          "text": "שיוך למחלקה",
+          "nodeId": "c4",
+          "role": "field"
+        },
+        {
+          "text": ": חסר",
+          "nodeId": "c4"
+        },
+        {
+          "text": ")"
+        },
+        {
+          "text": ")"
+        },
+        {
+          "text": " או "
+        },
+        {
+          "text": "("
+        },
+        {
+          "text": "סטטוס",
+          "nodeId": "c5",
+          "role": "field"
+        },
+        {
+          "text": ": ",
+          "nodeId": "c5"
+        },
+        {
+          "text": "לא פעיל",
+          "nodeId": "c5",
+          "role": "value"
+        },
+        {
+          "text": " וגם "
+        },
+        {
+          "text": "תאריך סיום העסקה",
+          "nodeId": "c6",
+          "role": "field"
+        },
+        {
+          "text": ": חסר",
+          "nodeId": "c6"
+        },
+        {
+          "text": ")"
+        }
+      ]
+    },
+    {
+      "name": "תאריך סיום העסקה לפני תאריך תחילת העסקה",
+      "description": "איתור עובדים עם תאריך סיום העסקה לפני תאריך תחילת העסקה.",
+      "rationale": "ברוב הרשומות שבהן שני התאריכים קיימים, תאריך סיום העסקה לא לפני תאריך תחילת העסקה; הרשומות בסדר ההפוך מוצגות לבדיקה.",
+      "evidence": [
+        {
+          "key": "violations_found",
+          "params": {
+            "count": 3,
+            "total": 85
+          },
+          "text": "חריגות כעת: 3 מתוך 85"
+        },
+        {
+          "key": "date_order_split",
+          "params": {
+            "count": 3,
+            "total": 25
+          },
+          "text": "סדר הפוך: 3 מתוך 25 רשומות עם שני התאריכים"
+        }
+      ],
+      "definition": {
+        "schemaVersion": 1,
+        "rootEntity": "employee",
+        "where": {
+          "type": "group",
+          "op": "and",
+          "children": [
+            {
+              "type": "condition",
+              "id": "c1",
+              "left": {
+                "field": "termination_date"
+              },
+              "operator": "lt",
+              "right": {
+                "field": "hire_date"
+              }
+            }
+          ]
+        }
+      },
+      "sentence": "תאריך סיום העסקה לפני תאריך תחילת העסקה",
+      "sentenceParts": [
+        {
+          "text": "תאריך סיום העסקה",
+          "nodeId": "c1",
+          "role": "field"
+        },
+        {
+          "text": " לפני ",
+          "nodeId": "c1"
+        },
+        {
+          "text": "תאריך תחילת העסקה",
+          "nodeId": "c1",
+          "role": "other"
+        }
+      ]
+    },
+    {
+      "name": "עובדים במצב פעיל כשהמחלקה במצב לא פעיל",
+      "description": "איתור רשומות פעילות של עובדים שהמחלקה שלהן במצב לא פעיל.",
+      "rationale": "מצב פעיל של רשומה אינו מתיישב עם מצב לא פעיל של המחלקה שלה; ייתכן שעדכון לא הושלם.",
+      "evidence": [
+        {
+          "key": "violations_found",
+          "params": {
+            "count": 6,
+            "total": 85
+          },
+          "text": "חריגות כעת: 6 מתוך 85"
+        }
+      ],
+      "definition": {
+        "schemaVersion": 1,
+        "rootEntity": "employee",
+        "where": {
+          "type": "group",
+          "op": "and",
+          "children": [
+            {
+              "type": "condition",
+              "id": "c1",
+              "left": {
+                "field": "status"
+              },
+              "operator": "eq",
+              "value": "active"
+            },
+            {
+              "type": "condition",
+              "id": "c2",
+              "left": {
+                "path": [
+                  "employee.department"
+                ],
+                "field": "is_active"
+              },
+              "operator": "eq",
+              "value": false
+            }
+          ]
+        }
+      },
+      "sentence": "סטטוס: פעיל וגם סטטוס של המחלקה: לא פעיל",
+      "sentenceParts": [
+        {
+          "text": "סטטוס",
+          "nodeId": "c1",
+          "role": "field"
+        },
+        {
+          "text": ": ",
+          "nodeId": "c1"
+        },
+        {
+          "text": "פעיל",
+          "nodeId": "c1",
+          "role": "value"
+        },
+        {
+          "text": " וגם "
+        },
+        {
+          "text": "סטטוס של המחלקה",
+          "nodeId": "c2",
+          "role": "field"
+        },
+        {
+          "text": ": ",
+          "nodeId": "c2"
+        },
+        {
+          "text": "לא פעיל",
+          "nodeId": "c2",
+          "role": "value"
+        }
+      ]
+    },
+    {
+      "name": "עובדים במצב פעיל כשהמשרד במצב לא פעיל",
+      "description": "איתור רשומות פעילות של עובדים שהמשרד שלהן במצב לא פעיל.",
+      "rationale": "מצב פעיל של רשומה אינו מתיישב עם מצב לא פעיל של המשרד שלה; ייתכן שעדכון לא הושלם.",
+      "evidence": [
+        {
+          "key": "violations_found",
+          "params": {
+            "count": 7,
+            "total": 85
+          },
+          "text": "חריגות כעת: 7 מתוך 85"
+        }
+      ],
+      "definition": {
+        "schemaVersion": 1,
+        "rootEntity": "employee",
+        "where": {
+          "type": "group",
+          "op": "and",
+          "children": [
+            {
+              "type": "condition",
+              "id": "c1",
+              "left": {
+                "field": "status"
+              },
+              "operator": "eq",
+              "value": "active"
+            },
+            {
+              "type": "condition",
+              "id": "c2",
+              "left": {
+                "path": [
+                  "employee.department",
+                  "department.ministry"
+                ],
+                "field": "is_active"
+              },
+              "operator": "eq",
+              "value": false
+            }
+          ]
+        }
+      },
+      "sentence": "סטטוס: פעיל וגם סטטוס של המשרד: לא פעיל",
+      "sentenceParts": [
+        {
+          "text": "סטטוס",
+          "nodeId": "c1",
+          "role": "field"
+        },
+        {
+          "text": ": ",
+          "nodeId": "c1"
+        },
+        {
+          "text": "פעיל",
+          "nodeId": "c1",
+          "role": "value"
+        },
+        {
+          "text": " וגם "
+        },
+        {
+          "text": "סטטוס של המשרד",
+          "nodeId": "c2",
+          "role": "field"
+        },
+        {
+          "text": ": ",
+          "nodeId": "c2"
+        },
+        {
+          "text": "לא פעיל",
+          "nodeId": "c2",
+          "role": "value"
+        }
+      ]
+    },
+    {
+      "name": "מחלקות במצב פעיל כשהמשרד במצב לא פעיל",
+      "description": "איתור רשומות פעילות של מחלקות שהמשרד שלהן במצב לא פעיל.",
+      "rationale": "מצב פעיל של רשומה אינו מתיישב עם מצב לא פעיל של המשרד שלה; ייתכן שעדכון לא הושלם.",
+      "evidence": [
+        {
+          "key": "violations_found",
+          "params": {
+            "count": 1,
+            "total": 16
+          },
+          "text": "חריגות כעת: 1 מתוך 16"
+        }
+      ],
+      "definition": {
+        "schemaVersion": 1,
+        "rootEntity": "department",
+        "where": {
+          "type": "group",
+          "op": "and",
+          "children": [
+            {
+              "type": "condition",
+              "id": "c1",
+              "left": {
+                "field": "is_active"
+              },
+              "operator": "eq",
+              "value": true
+            },
+            {
+              "type": "condition",
+              "id": "c2",
+              "left": {
+                "path": [
+                  "department.ministry"
+                ],
+                "field": "is_active"
+              },
+              "operator": "eq",
+              "value": false
+            }
+          ]
+        }
+      },
+      "sentence": "סטטוס: פעיל וגם סטטוס של המשרד: לא פעיל",
+      "sentenceParts": [
+        {
+          "text": "סטטוס",
+          "nodeId": "c1",
+          "role": "field"
+        },
+        {
+          "text": ": ",
+          "nodeId": "c1"
+        },
+        {
+          "text": "פעיל",
+          "nodeId": "c1",
+          "role": "value"
+        },
+        {
+          "text": " וגם "
+        },
+        {
+          "text": "סטטוס של המשרד",
+          "nodeId": "c2",
+          "role": "field"
+        },
+        {
+          "text": ": ",
+          "nodeId": "c2"
+        },
+        {
+          "text": "לא פעיל",
+          "nodeId": "c2",
+          "role": "value"
+        }
+      ]
+    },
+    {
+      "name": "מחלקות במצב פעיל ללא עובד במחלקה במצב פעיל",
+      "description": "איתור רשומות פעילות של מחלקות שאין להן אף עובד במחלקה במצב פעיל.",
+      "rationale": "רשומה במצב פעיל ללא אף עובד במחלקה במצב פעיל עשויה להעיד על נתונים שלא עודכנו.",
+      "evidence": [
+        {
+          "key": "violations_found",
+          "params": {
+            "count": 3,
+            "total": 16
+          },
+          "text": "חריגות כעת: 3 מתוך 16"
+        }
+      ],
+      "definition": {
+        "schemaVersion": 1,
+        "rootEntity": "department",
+        "where": {
+          "type": "group",
+          "op": "and",
+          "children": [
+            {
+              "type": "condition",
+              "id": "c1",
+              "left": {
+                "field": "is_active"
+              },
+              "operator": "eq",
+              "value": true
+            },
+            {
+              "type": "related",
+              "id": "r1",
+              "relationship": "department.employees",
+              "quantifier": "none",
+              "where": {
+                "type": "group",
+                "op": "and",
+                "children": [
+                  {
+                    "type": "condition",
+                    "id": "c2",
+                    "left": {
+                      "field": "status"
+                    },
+                    "operator": "eq",
+                    "value": "active"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "sentence": "סטטוס: פעיל וגם אין עובד במחלקה עם (סטטוס: פעיל)",
+      "sentenceParts": [
+        {
+          "text": "סטטוס",
+          "nodeId": "c1",
+          "role": "field"
+        },
+        {
+          "text": ": ",
+          "nodeId": "c1"
+        },
+        {
+          "text": "פעיל",
+          "nodeId": "c1",
+          "role": "value"
+        },
+        {
+          "text": " וגם "
+        },
+        {
+          "text": "אין ",
+          "nodeId": "r1"
+        },
+        {
+          "text": "עובד במחלקה",
+          "nodeId": "r1",
+          "role": "relationship"
+        },
+        {
+          "text": " עם (",
+          "nodeId": "r1"
+        },
+        {
+          "text": "סטטוס",
+          "nodeId": "c2",
+          "role": "field"
+        },
+        {
+          "text": ": ",
+          "nodeId": "c2"
+        },
+        {
+          "text": "פעיל",
+          "nodeId": "c2",
+          "role": "value"
+        },
+        {
+          "text": ")",
+          "nodeId": "r1"
+        }
+      ]
+    },
+    {
+      "name": "מחלקות ללא שיוך מנהל",
+      "description": "איתור רשומות של מחלקות שבהן השדה ”שיוך מנהל” חסר.",
+      "rationale": "השדה ”שיוך מנהל” אינו שדה חובה, אך ברוב הרשומות הוא מלא; הרשומות שבהן הוא חסר מוצגות לבדיקה.",
+      "evidence": [
+        {
+          "key": "violations_found",
+          "params": {
+            "count": 1,
+            "total": 16
+          },
+          "text": "חריגות כעת: 1 מתוך 16"
+        }
+      ],
+      "definition": {
+        "schemaVersion": 1,
+        "rootEntity": "department",
+        "where": {
+          "type": "group",
+          "op": "and",
+          "children": [
+            {
+              "type": "condition",
+              "id": "c1",
+              "left": {
+                "field": "manager_assignment"
+              },
+              "operator": "is_null"
+            }
+          ]
+        }
+      },
+      "sentence": "שיוך מנהל: חסר",
+      "sentenceParts": [
+        {
+          "text": "שיוך מנהל",
+          "nodeId": "c1",
+          "role": "field"
+        },
+        {
+          "text": ": חסר",
+          "nodeId": "c1"
+        }
+      ]
+    }
+  ]
+}

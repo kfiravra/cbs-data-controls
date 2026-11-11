@@ -15,7 +15,8 @@ Check against the four layers and the boundaries around them:
   string or a suggestion without being resolved through the loaded glossary; unknown and hidden keys are rejected.
 - Values only bound: no f-string, `%`, `.format()`, concatenation, `text()` interpolation, `literal_column()` or
   `literal_binds` on any value; operators come from the closed map; "contains" values escape `%`, `_` and `[`
-  (`autoescape=True`), because a bound wildcard is safe SQL but wrong semantics.
+  (`escape_like` in `engine/app/compiler/operators.py`, with `ESCAPE '/'`; SQLAlchemy's `autoescape=True` leaves
+  `[` alone), because a bound wildcard is safe SQL but wrong semantics.
 - Read-only execution: the engine connects only as `dq_engine_ro` and runs a single SELECT it compiled itself
   (stacked statements impossible by construction and rejected anyway). The api never builds SQL (`FromSqlRaw`,
   `ExecuteSqlRaw`, `SqlQueryRaw`, `SqlCommand`) and never reads `hr`. No SQL text travels between services.

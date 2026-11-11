@@ -177,37 +177,37 @@ A document that this task makes untrue and does not own (decision 24) gets its l
 dc-delivery" in the same step: the file and section, what it says, what is true now.
 
 ### Phase 0: preconditions (no commit)
-- [ ] dc-contracts passed its gate and is merged: `contracts/` is on `origin/main`.
-- [ ] The worktree, on Kfir's word (kickoff §5), from the main tree: `git worktree add ../cbs-engine -b feat/engine
+- [x] dc-contracts passed its gate and is merged: `contracts/` is on `origin/main`.
+- [x] The worktree, on Kfir's word (kickoff §5), from the main tree: `git worktree add ../cbs-engine -b feat/engine
       origin/main`, `cp .env ../cbs-engine/.env`, `mkdir -p ../cbs-engine/dev/active && mv dev/active/dc-engine
       ../cbs-engine/dev/active/`. This task's session runs in `../cbs-engine` on Opus.
-- [ ] Host driver: `odbcinst -q -d` lists `ODBC Driver 18 for SQL Server` (17 serves as well, decision 20).
+- [x] Host driver: `odbcinst -q -d` lists `ODBC Driver 18 for SQL Server` (17 serves as well, decision 20).
       `msodbcsql18` 18.7.1 has been on this host since 2026-11-10 20:57; it was missing when this plan was first
       written.
-- [ ] Database: the container runs from the main tree and `scripts/db-check.sh` passed there after the last seed
+- [x] Database: the container runs from the main tree and `scripts/db-check.sh` passed there after the last seed
       change. Never `db-init.sh` from the worktree.
-- [ ] Read `contracts/` against Design J and write every difference into `notes.md` before phase 1. `contracts/`
+- [x] Read `contracts/` against Design J and write every difference into `notes.md` before phase 1. `contracts/`
       wins; something the engine needs and `contracts/` lacks is a contract change (one commit on main on Kfir's
       word, one line to the other sessions).
-- [ ] Port: `ss -ltn | grep ':8000'`. If another project's container holds it, smoke runs use `ENGINE_PORT=8010`;
+- [x] Port: `ss -ltn | grep ':8000'`. If another project's container holds it, smoke runs use `ENGINE_PORT=8010`;
       ask before stopping anything.
 
 ### Phase 1: skeleton, glossary, startup check (about 2 h)
-- [ ] `engine/pyproject.toml` (`requires-python = ">=3.12"`), `.python-version` (`3.12`), `uv.lock` and `.venv`
+- [x] `engine/pyproject.toml` (`requires-python = ">=3.12"`), `.python-version` (`3.12`), `uv.lock` and `.venv`
       through `uv sync` (state the download first), per Design A.
-- [ ] `engine/requirements.txt` exported from the lock, then the Windows wheel check for 3.12, 3.13 and 3.14, both
+- [x] `engine/requirements.txt` exported from the lock, then the Windows wheel check for 3.12, 3.13 and 3.14, both
       per Design A. A package with no wheel is replaced, or pinned to a version that has one, before code depends
       on it.
-- [ ] `.env.example`: the engine block of Design A with placeholders (`ENGINE_DB_PORT=1433` written out,
+- [x] `.env.example`: the engine block of Design A with placeholders (`ENGINE_DB_PORT=1433` written out,
       `ENGINE_DB_DRIVER=` left empty); the same keys in the worktree's `.env`.
-- [ ] `app/settings.py` (the settings, the driver choice and the connection URL of Design A), `app/errors.py`
+- [x] `app/settings.py` (the settings, the driver choice and the connection URL of Design A), `app/errors.py`
       (domain exceptions and the one mapping to problem details), `app/web.py` (correlation id, language),
       `app/main.py` (`create_app(settings=None)`, lifespan) per Designs A and G.
-- [ ] `app/glossary/`: typed model, loader, resolved operators, tables, the public view, per Design B.
-- [ ] The startup check per Design B: the catalog read is built in `compiler` and run by `executor`; `glossary`
+- [x] `app/glossary/`: typed model, loader, resolved operators, tables, the public view, per Design B.
+- [x] The startup check per Design B: the catalog read is built in `compiler` and run by `executor`; `glossary`
       compares the sets.
-- [ ] `GET /health` and `GET /glossary`.
-- [ ] Tests: the loader and the resolved operators against the real glossary; the public view has no `table`,
+- [x] `GET /health` and `GET /glossary`.
+- [x] Tests: the loader and the resolved operators against the real glossary; the public view has no `table`,
       `keyColumn`, `column`, `computed` or `join` key; a doctored copy of the glossary (one column renamed) raises
       `GLOSSARY_MISMATCH` naming it and the app refuses to start; an unknown route and a malformed body answer
       problem details with a code and no prose; the connection settings of Design I.
@@ -218,11 +218,11 @@ Verify: `/check --tests` · the wheel check prints `exit=0` for each of the thre
 Commit: `feat(engine): service skeleton, glossary loader and startup check`
 
 ### Phase 2: validator (about 1.5 h)
-- [ ] The schema layer per Design C.
-- [ ] The semantic layer per Design C: scopes and paths, operators and operands, limits, ids; one check per
+- [x] The schema layer per Design C.
+- [x] The semantic layer per Design C: scopes and paths, operators and operands, limits, ids; one check per
       definition error code of `contracts/errors.md`.
-- [ ] `ValidatedDefinition` per Design C, the only input of the compiler and the explainer.
-- [ ] Tests: every `contracts/examples/*.json` is valid; every `contracts/examples/invalid/*.json` yields its
+- [x] `ValidatedDefinition` per Design C, the only input of the compiler and the explainer.
+- [x] Tests: every `contracts/examples/*.json` is valid; every `contracts/examples/invalid/*.json` yields its
       expected code and path; one more test for each definition error code the fixtures do not cover; every limit
       is read from the glossary and exceeded by one; a hidden field through a doctored glossary; `true` is not a
       number; two errors in one definition come back together, in document order.
@@ -231,18 +231,18 @@ Verify: `/check --tests`
 Commit: `feat(engine): definition validator with the full rejection catalogue`
 
 ### Phase 3: compiler, cache, goldens (about 2.5 h)
-- [ ] `compiler/operators.py`: the closed map of the eighteen operators and the LIKE escape, per Design D.
-- [ ] `compiler/computed.py`: the `age_years` table of Design D and its Python `actual`.
-- [ ] `compiler/build.py`: aliases and LEFT joins, `related` nodes as correlated `exists()`, truth columns, the
+- [x] `compiler/operators.py`: the closed map of the eighteen operators and the LIKE escape, per Design D.
+- [x] `compiler/computed.py`: the `age_years` table of Design D and its Python `actual`.
+- [x] `compiler/build.py`: aliases and LEFT joins, `related` nodes as correlated `exists()`, truth columns, the
       inner select and the two derived statements; `CompiledPlan` with parameter recipes, per Design D.
-- [ ] `cache/`: bounded, thread-safe, keyed per Design D.
-- [ ] `POST /debug/compile` behind `ENGINE_DEBUG_COMPILE`; 404 `DEBUG_DISABLED` otherwise.
-- [ ] Goldens for the six examples and the `--update-goldens` flag, per Design I.
-- [ ] Tests: the invariants of Design I on every example and on generated definitions; injection strings in
+- [x] `cache/`: bounded, thread-safe, keyed per Design D.
+- [x] `POST /debug/compile` behind `ENGINE_DEBUG_COMPILE`; 404 `DEBUG_DISABLED` otherwise.
+- [x] Goldens for the six examples and the `--update-goldens` flag, per Design I.
+- [x] Tests: the invariants of Design I on every example and on generated definitions; injection strings in
       every operand position appear only in the parameters; the age table row by row, 29 February included; LIKE
       escaping; a definition at `maxTotalValues` stays under 2,100 parameters; one plan serves two run dates and
       two caps; the join to a parent is a LEFT OUTER JOIN.
-- [ ] Harness lines this phase makes wrong: in `.claude/skills/dc-engine/SKILL.md` the `autoescape` sentence, the
+- [x] Harness lines this phase makes wrong: in `.claude/skills/dc-engine/SKILL.md` the `autoescape` sentence, the
       `.label(condition_id)` sentence and the two-statements sentence; in `.claude/agents/security-auditor.md` the
       `autoescape` clause. Then `node --test .claude/hooks/tests/*.test.mjs`.
 
@@ -250,20 +250,20 @@ Verify: `/check --tests` · `node --test .claude/hooks/tests/*.test.mjs`
 Commit: `feat(engine): compiler with golden tests and compile cache`
 
 ### Phase 4: executor, explainer, `/validate` and `/run` (about 2.75 h)
-- [ ] `executor/`: count, then page, on one connection; the guards; timeout and error mapping, per Design E.
-- [ ] `explainer/`: parts, formats, the rule sentence, reasons, per Design F.
-- [ ] `POST /validate` and `POST /run` per Design G.
-- [ ] Integration tests per Design I: the six examples with their exact keys and matched ids, example 1 on both
+- [x] `executor/`: count, then page, on one connection; the guards; timeout and error mapping, per Design E.
+- [x] `explainer/`: parts, formats, the rule sentence, reasons, per Design F.
+- [x] `POST /validate` and `POST /run` per Design G.
+- [x] Integration tests per Design I: the six examples with their exact keys and matched ids, example 1 on both
       of its dates; the cap; count and page agree; injection end to end; NULL semantics; LIKE wildcards stay
       literal; Hebrew round trip; the database down.
-- [ ] `tests/golden/<id>.text.json`: the rendered sentence, the per-node sentences and one reason per matched node,
+- [x] `tests/golden/<id>.text.json`: the rendered sentence, the per-node sentences and one reason per matched node,
       in every language the glossary lists (Hebrew), for the six examples. Kfir reads these at the gate. One test
       asks for a language that is not listed and gets the default.
-- [ ] `README.md`, the engine section only (dc-contracts left its heading in the skeleton): what must be installed
+- [x] `README.md`, the engine section only (dc-contracts left its heading in the skeleton): what must be installed
       (Python 3.12 or later, ODBC Driver 18 or 17), the start with Python and pip alone and the same with uv, the
       variables of Design A, the tests, and that the timeout path is proven on a fabricated error. Nothing outside
       the section is touched (decision 24).
-- [ ] Every command of that section run once as written, in a scratch copy of `engine/` (without `.venv`) and
+- [x] Every command of that section run once as written, in a scratch copy of `engine/` (without `.venv`) and
       `contracts/` with the worktree's `.env` beside them: a venv from `python3 -m venv`, `pip install -r
       requirements.txt` (state the download first), `/health` answers 200 and one example runs. Save the
       transcript as `gates/readme-commands.txt`.
@@ -274,16 +274,16 @@ application/json' -d "{\"definition\": $(jq .definition contracts/examples/minor
 Commit: `feat(engine): executor, explainer and the validate and run endpoints`
 
 ### Phase 5: suggestions (about 2 h)
-- [ ] The profile per Design H: one aggregate SELECT per entity, built in `compiler`, run by `executor`.
-- [ ] Generators `missing_required`, `date_order`, `active_under_inactive` (one hop) and
+- [x] The profile per Design H: one aggregate SELECT per entity, built in `compiler`, run by `executor`.
+- [x] Generators `missing_required`, `date_order`, `active_under_inactive` (one hop) and
       `active_without_active_children`, per Design H.
-- [ ] The pipeline (validate, compile, count, drop, evidence, text, order, cut) and `POST /suggest`.
-- [ ] The gate test: every example marked `heuristic: true` has a suggestion whose
+- [x] The pipeline (validate, compile, count, drop, evidence, text, order, cut) and `POST /suggest`.
+- [x] The gate test: every example marked `heuristic: true` has a suggestion whose
       definition equals the example's, node for node, and which flags exactly the example's records.
-- [ ] Genericity tests: every generator runs on a synthetic glossary with other entities, fields and
+- [x] Genericity tests: every generator runs on a synthetic glossary with other entities, fields and
       relationships and a stub counter, and names nothing from the real one.
-- [ ] (first cut) `active_under_inactive` over two-hop paths.
-- [ ] (first cut) Generator `missing_optional`.
+- [x] (first cut) `active_under_inactive` over two-hop paths.
+- [x] (first cut) Generator `missing_optional`.
 
 Verify: `/check --tests` · `curl -s -X POST localhost:8000/suggest -d '{}' -H 'content-type: application/json' |
 jq '[.items[].name]'`
@@ -292,35 +292,38 @@ Commit: `feat(engine): control suggestions from lifecycle, required fields and c
 ### Phase 6: (removed by the scope decision: no LLM lane)
 
 ### Phase 7: engine image (about 1 h; the second cut)
-- [ ] `engine/Dockerfile`: `python:3.12-slim`, `msodbcsql18` and `unixodbc`, `pip install -r requirements.txt`
+- [x] `engine/Dockerfile`: `python:3.12-slim`, `msodbcsql18` and `unixodbc`, `pip install -r requirements.txt`
       (the file of phase 1), a non-root user, the build context is the repository root (it copies `contracts/` and
       `engine/`), `ENGINE_DB_DRIVER` set to the driver the image installs, the start command of Design A on
       `0.0.0.0:8000`.
-- [ ] Smoke (state the build minutes first): build, run on the compose network of `data-controls` with the
+- [x] Smoke (state the build minutes first): build, run on the compose network of `data-controls` with the
       worktree's `.env`, `/health` answers 200 and one example runs. The compose service stays with dc-delivery.
 
 Verify: `docker build -f engine/Dockerfile -t dc-engine .` · the smoke above
 Commit: `build(engine): container image`
 
 ### Gate
-- [ ] `/check all --tests` in the worktree: ruff, pyright, pytest with nothing skipped or deselected, the print
+- [x] `/check all --tests` in the worktree: ruff, pyright, pytest with nothing skipped or deselected, the print
       guard, the hook tests (this branch edits `.claude/`). Save as `gates/final.txt`.
-- [ ] The lock and its export agree (`uv lock --check`; `uv export --no-dev --format requirements-txt | diff -
+- [x] The lock and its export agree (`uv lock --check`; `uv export --no-dev --format requirements-txt | diff -
       requirements.txt`), and the Windows wheel check of Design A prints `exit=0` for 3.12, 3.13 and 3.14.
-- [ ] The suite once under 3.13 and once under 3.14: `uv run --isolated --locked --python 3.14 python -m pytest`
+- [x] The suite once under 3.13 and once under 3.14: `uv run --isolated --locked --python 3.14 python -m pytest`
       (state it first: two more suite runs and the wheels of each version). A failure found here is fixed here.
-- [ ] The §19 gate item by item, each with the test that proves it: goldens for the six examples; every
+- [x] The §19 gate item by item, each with the test that proves it: goldens for the six examples; every
       rejection path; injection values bound; the exact planted ids from the seed; `/suggest` yields examples 2 to
       5 exactly.
-- [ ] Kfir reads `tests/golden/*.text.json` and one `/suggest` answer, in Hebrew. The Log says what
+- [ ] (open, Kfir's: the files are `engine/tests/golden/*.text.json` and `gates/suggest-answer.json`) Kfir reads
+      `tests/golden/*.text.json` and one `/suggest` answer, in Hebrew. The Log says what
       he changed or rejected, in his words where he gave them.
-- [ ] `security-auditor` on `git diff origin/main...HEAD` (one agent on opus: state it); fix critical and high.
+- [x] `security-auditor` on `git diff origin/main...HEAD` (one agent on opus: state it); fix critical and high.
       The report is saved as `reviews/security.md` and logged per decision 25.
-- [ ] One line to the dc-api session: the statement timeout (30 s) and every difference from Design J that phase
+- [ ] (written in `notes.md`, "Lines for the other sessions", and in the PR body; Kfir pastes it) One line to the
+      dc-api session: the statement timeout (30 s) and every difference from Design J that phase
       0 recorded.
-- [ ] `notes.md` State holds what dc-delivery reads first (its phase B0): the variables as built, the start
+- [x] `notes.md` State holds what dc-delivery reads first (its phase B0): the variables as built, the start
       command, the Python versions the suite ran under, which phases were cut, and the "Docs for dc-delivery" list.
-- [ ] `/ship dc-engine`. Its docs-drift step proposes edits: apply only those to this task's own files (the
+- [ ] (checks, secrets, docs drift and PR body done on 2026-11-11; the push and the PR follow on the night brief's
+      word; the task folder stays in `dev/active/` until the open items close) `/ship dc-engine`. Its docs-drift step proposes edits: apply only those to this task's own files (the
       README's engine section, the engine block of `.env.example`, `.claude/`); every other one joins "Docs for
       dc-delivery". The PR body gets that heading as a fifth section, one line per item: the file and section,
       what it says, what is true now. Push, PR and merge on Kfir's word.
@@ -603,6 +606,9 @@ with no parameter; the constants of a `CASE` are parameters.
 **Profile.** Per entity one aggregate SELECT: the row count and, per visible field, the null count, for text the
 empty count, the distinct count, and for number and date fields that are not identifying fields the minimum and
 maximum. The generators read typed `Profile` objects and the glossary, nothing else.
+(As built on 2026-11-11, notes.md decisions 17 and 19: the row count, the rows in which each optional field is
+missing, and for each pair of comparable date fields the rows that hold both and each strict order. No distinct
+count, minimum or maximum: no generator reads them.)
 
 **Generators** (each returns candidate definitions; ids are `c1..` and `r1..` in document order; fields in glossary
 order; a single-child OR collapses; the root is always a group). "Active" is `lifecycle.field eq lifecycle.active`;

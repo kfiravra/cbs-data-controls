@@ -1,0 +1,26 @@
+# /check --tests, phase 1, 2026-11-11T00:28:11+02:00
+== engine-ruff (engine): /home/kfir/projects/cbs-engine/engine/.venv/bin/ruff check .
+All checks passed!
+exit=0
+== engine-pyright (engine): /home/kfir/projects/cbs-engine/engine/.venv/bin/pyright
+0 errors, 0 warnings, 0 informations
+exit=0
+== engine-test (engine): .venv/bin/python -m pytest
+tests/unit/test_http.py ................................................ [ 62%]
+..                                                                       [ 63%]
+tests/unit/test_settings.py .......................                      [ 80%]
+tests/unit/test_startup.py ...........................                   [100%]
+
+============================= 137 passed in 5.76s ==============================
+exit=0
+== print-guard (.): bash /home/kfir/projects/cbs-engine/.claude/hooks/print-guard.sh engine/app/main.py
+exit=0
+
+# wheel check (Design A), engine/requirements.txt as exported from uv.lock, 2026-11-11
+3.12 exit=0
+3.13 exit=0
+3.14 exit=0
+
+# smoke: python -m uvicorn app.main:create_app --factory --host 127.0.0.1 --port 8000
+GET /health -> 200 {"status":"ok","database":"ok","glossaryVersion":"1.0.0","engineVersion":"0.1.0"}
+GET /glossary -> 200, the public glossary (no table, keyColumn, column, computed or join)
