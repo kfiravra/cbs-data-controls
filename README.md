@@ -52,6 +52,94 @@ dc-delivery.
 Running without Docker: the SQL scripts on a local SQL Server (by hand, see [sql/README.md](sql/README.md)), the
 engine from a local Python environment, the api with the client already built. Filled by dc-delivery.
 
+## Engine
+
+`engine/` is the Python control engine: FastAPI, SQLAlchemy Core and pyodbc. It validates a control definition
+against the schema and the glossary, compiles it into one parameterized SELECT, runs it as the read-only login
+`dq_engine_ro` under a row cap and a statement timeout, and returns the violating records with a reason each,
+rendered from the glossary's templates. Only the api calls it; its endpoints are in
+[contracts/api.md §3](contracts/api.md#3-engine-api).
+
+It needs:
+
+- Python 3.12 or later.
+- Microsoft ODBC Driver 18 for SQL Server (17 works too): the package `msodbcsql18` with `unixodbc` on Linux, the
+  installer from Microsoft on Windows and macOS. `odbcinst -q -d` (Linux, macOS) lists what is installed.
+- The database of [Quick start](#the-database-available-now), initialised, and `.env` in the repository root with
+  `DQ_ENGINE_RO_PASSWORD` and the engine block of `.env.example`.
+
+Start it with Python and pip alone. On Windows the first command is `py -m venv .venv` and the interpreter of the
+environment is `.venv\Scripts\python`:
+
+```sh
+cd engine
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements.txt
+.venv/bin/python -m uvicorn app.main:create_app --factory --host 127.0.0.1 --port 8000
+```
+
+or with [uv](https://docs.astral.sh/uv/), which installs the same locked versions and the development tools:
+
+```sh
+cd engine
+uv sync
+uv run python -m uvicorn app.main:create_app --factory --host 127.0.0.1 --port 8000
+```
+
+At startup the engine waits up to 30 seconds for the database, then checks every table and column the glossary
+names against it. It exits with a non-zero status, and one log line that says why, when the database does not
+answer, when the glossary and the database disagree, or when no ODBC driver is installed. Once it is up, from the
+repository root (the second command needs `jq`):
+
+```sh
+curl -s localhost:8000/health
+curl -s -X POST localhost:8000/run -H 'content-type: application/json' \
+  -d "{\"definition\": $(jq -c .definition contracts/examples/minor-high-salary.json), \"runDate\": \"2026-11-01\"}" \
+  | jq '.totalCount, [.violations[].key]'
+```
+
+The first answers `{"status":"ok","database":"ok",...}`; the second prints `3` and the keys `1051`, `1052` and
+`1053`, the three minors of the seed who earn more than 15,000.
+
+The engine reads these variables, from the environment first and then from `.env`. An empty value means the
+default, and the login is always `dq_engine_ro`:
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `DQ_ENGINE_RO_PASSWORD` | none, required | password of the login `dq_engine_ro`; never logged |
+| `ENGINE_DB_HOST` | `localhost` | goes into the ODBC `Server=` as written: `127.0.0.1` for the compose database (what `.env.example` holds), `db` inside compose, a named instance such as `.\SQLEXPRESS` |
+| `ENGINE_DB_PORT` | empty | empty: no port in `Server=` (1433 over TCP, or the named instance's own protocol); a number from 1 to 65535: `host,port` |
+| `ENGINE_DB_NAME` | `DataControls` | the database |
+| `ENGINE_DB_DRIVER` | empty | empty: ODBC Driver 18 for SQL Server when it is installed, else 17; set: that driver name as written |
+| `ENGINE_PORT` | `8000` | the port to give to `--port` when starting the engine (the commands above write 8000); the engine itself does not read it |
+| `ENGINE_ROW_CAP` | `5000` | default and maximum of a run's `rowCap`; the total count stays exact above it |
+| `ENGINE_QUERY_TIMEOUT_SECONDS` | `30` | per statement; a run sends two |
+| `ENGINE_STARTUP_DB_WAIT_SECONDS` | `30` | how long startup waits for the database before it exits |
+| `ENGINE_TIME_ZONE` | `Asia/Jerusalem` | where "today" is taken for a run that names no date |
+| `ENGINE_DEBUG_COMPILE` | `false` | `true` turns on `POST /debug/compile`, the one endpoint that shows SQL text |
+| `ENGINE_CONTRACTS_DIR` | `contracts/` beside `engine/` | where `glossary.json` and the definition schema are read from |
+| `ENGINE_LOG_LEVEL` | `INFO` | SQL text is logged only at `DEBUG`, and parameter values never |
+| `ENGINE_SUGGEST_MAX` | `10` | how many suggestions `POST /suggest` returns when the request names no `max` (at most 20) |
+
+Where `localhost` resolves to `::1` first (WSL with Docker Desktop does), the ODBC driver does not fall back to
+IPv4 and the login times out: use `127.0.0.1`, the address compose publishes SQL Server on.
+
+Tests, lint and types, from `engine/` after `uv sync`:
+
+```sh
+uv run python -m pytest
+uv run ruff check .
+uv run pyright
+```
+
+`pytest` runs the unit tests, the golden tests (the SQL and the parameters each example of `contracts/examples/`
+compiles to, in `engine/tests/golden/*.sql` and `*.params.json`) and the integration tests. Those run every
+example against the seeded database, compare the flagged records with the example files and the rendered Hebrew
+text with `engine/tests/golden/*.text.json`, and check `/suggest` against the examples. They fail, and
+never skip, when the database is down. One path is proven without the database: a statement that runs past the
+timeout is answered `QUERY_TIMEOUT`, and that mapping is tested on a fabricated driver error, because the
+read-only login has no way to run a slow statement on purpose.
+
 ## Configuration
 
 All configuration is environment variables; `.env.example` lists them in one block per component and `.env`

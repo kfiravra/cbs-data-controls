@@ -1,0 +1,6 @@
+# The context is the repository root; the image copies engine/requirements.txt, engine/app and contracts/ only.
+*
+!engine/requirements.txt
+!engine/app
+!contracts
+**/__pycache__
