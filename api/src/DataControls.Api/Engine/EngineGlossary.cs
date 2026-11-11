@@ -13,13 +13,15 @@ public sealed class EngineGlossary
         string version,
         IReadOnlyList<string> languages,
         string defaultLanguage,
-        IReadOnlyDictionary<string, IReadOnlyList<string>> identifyingFields)
+        IReadOnlyDictionary<string, IReadOnlyList<string>> identifyingFields,
+        IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> entityLabels)
     {
         Body = body;
         Version = version;
         Languages = languages;
         DefaultLanguage = defaultLanguage;
         IdentifyingFields = identifyingFields;
+        EntityLabels = entityLabels;
     }
 
     public byte[] Body { get; }
@@ -33,6 +35,9 @@ public sealed class EngineGlossary
     /// <summary>Entity key to its identifying field keys, in the glossary's order.</summary>
     public IReadOnlyDictionary<string, IReadOnlyList<string>> IdentifyingFields { get; }
 
+    /// <summary>Entity key to its plural label, one text per language.</summary>
+    public IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> EntityLabels { get; }
+
     internal static EngineGlossary Parse(byte[] body)
     {
         try
@@ -40,9 +45,13 @@ public sealed class EngineGlossary
             using var document = JsonDocument.Parse(body);
             var root = document.RootElement;
             var identifyingFields = new Dictionary<string, IReadOnlyList<string>>();
+            var entityLabels = new Dictionary<string, IReadOnlyDictionary<string, string>>();
             foreach (var entity in root.GetProperty("entities").EnumerateArray())
             {
-                identifyingFields[Text(entity.GetProperty("key"))] = Texts(entity.GetProperty("identifyingFields"));
+                var key = Text(entity.GetProperty("key"));
+                identifyingFields[key] = Texts(entity.GetProperty("identifyingFields"));
+                entityLabels[key] = entity.GetProperty("label").GetProperty("plural").EnumerateObject()
+                    .ToDictionary(text => text.Name, text => Text(text.Value));
             }
 
             var languages = Texts(root.GetProperty("languages"));
@@ -56,7 +65,8 @@ public sealed class EngineGlossary
                 Text(root.GetProperty("glossaryVersion")),
                 languages,
                 Text(root.GetProperty("defaultLanguage")),
-                identifyingFields);
+                identifyingFields,
+                entityLabels);
         }
         catch (Exception exception) when (exception is JsonException or KeyNotFoundException or InvalidOperationException)
         {

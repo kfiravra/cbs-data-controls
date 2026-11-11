@@ -70,6 +70,27 @@ public sealed class GlossaryService(
         return (await GetAsync(cancellationToken)).IdentifyingFields.GetValueOrDefault(entity);
     }
 
+    /// <summary>
+    /// The entity keys in the order of their plural labels in <paramref name="language"/>, for a list that is
+    /// sorted by what the user reads and not by the key. Null when no glossary can be read: the caller then
+    /// has only the keys to sort by.
+    /// </summary>
+    public async Task<IReadOnlyList<string>?> EntityKeysByLabelAsync(string language, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var labels = (await GetAsync(cancellationToken)).EntityLabels;
+            return [.. labels
+                .OrderBy(entity => entity.Value.GetValueOrDefault(language, entity.Key), StringComparer.OrdinalIgnoreCase)
+                .ThenBy(entity => entity.Key, StringComparer.Ordinal)
+                .Select(entity => entity.Key)];
+        }
+        catch (EngineException)
+        {
+            return null;
+        }
+    }
+
     /// <summary>The fresh copy, or the held one while a failed refresh is too recent to repeat.</summary>
     private EngineGlossary? Usable() => cache.Fresh ?? (cache.RecentFailure is null ? null : cache.Held);
 }

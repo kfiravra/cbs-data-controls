@@ -421,6 +421,48 @@ Review: `/phase-review web`
 Commit: `feat(web): one page, with the editor and the results in a panel` · `feat(web): the new look` ·
 `fix(web): design critique and polish` · `fix(web): review fixes`
 
+### Phase 10: last design round (Kfir's second read, 2026-11-11)
+Continues on `feat/web-ux`, into the same PR. After this round only bugs. Kfir's seventeen items are in
+`notes.md` (Log, "the last design round"). Two exceptions to the rules have his word: one api and contract
+change (the sort of the controls list) and one database reset, last of all. Not doing: a findings summary
+above the list, keyboard shortcuts, bulk actions.
+
+The api (item 3):
+- [x] `GET /api/v1/controls` takes `sort` (`name`, `rootEntity`, `lastRun`, `violations`) and `dir`; a control
+      that never ran sorts last. `contracts/api.md` and the api's tests with it.
+      Commit: `feat(api): sort the controls list`
+
+All tables (items 1 to 6):
+- [ ] One table design for the active list, the archive and the results: a row is a bubble of three parts
+      (details, run, actions) over a real table; a click anywhere on the details opens the results.
+- [ ] Every header the server can sort sorts on a click, ascending then descending.
+- [ ] One colour language: violations red, clean green, a stopped run amber, archive muted grey.
+- [ ] The archive behaves as the active list does, less run and edit.
+- [ ] No layout shift when a scrollbar appears; thin, half transparent scrollbars with no arrows.
+
+Results panel (items 7 to 11):
+- [ ] The rule in words on a tinted ground at the top, the letters small at the start corner of their condition.
+- [ ] One block for the run's information and the filter by condition; the table from edge to edge under it;
+      the pager and the counts sticky at the foot.
+- [ ] Typography across the app (`/impeccable typeset`): sizes, weights, line height.
+
+Editor panel (items 12 to 16):
+- [ ] Closing asks nothing: the panel closes at once and a toast gives the draft back.
+- [ ] The suggestions for a new control are one collapsed row; nothing moves when they load.
+- [ ] The conditions are in the first view; simple by default (a flat list and one switch), groups and related
+      records behind "advanced"; no trace between a row and its clause.
+
+Phone and the finish (item 17):
+- [ ] 390: rows as cards, full-screen panels, the sticky bars in reach, no sideways scroll.
+- [ ] Mocked and gate specs; the gate on the real stack; `/check all --tests`; screenshots at 390 and 1440;
+      `/impeccable polish`; `docs/design.md` in line. Commit: `feat(web): the last design round`
+- [ ] `/phase-review`, one review-fix commit, the push to the PR on Kfir's word.
+- [ ] Last of all: the dev database reset from the main tree, the six examples posted again, the stack left
+      running.
+
+Verify: `/check all --tests` · `cd web && npx playwright test e2e/mocked` · the gate command of Design O
+Review: `/phase-review api web`
+
 ### Gate
 Status, 2026-11-11: `gates/final.txt` holds `/check all --tests` (the engine and the api among its parts now),
 the mocked specs and the gate specs on the real stack, behind the dev server and on the build the api hosts, on

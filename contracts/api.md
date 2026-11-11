@@ -415,7 +415,7 @@ Errors: 404 `DEBUG_DISABLED`; 422 `DEFINITION_INVALID`.
 |---|---|---|---|
 | `GET /api/v1/health` | none | 200 `{ status, database, engine, version }` | none: always 200 |
 | `GET /api/v1/glossary` | none | 200 the engine's public glossary | 503 `ENGINE_UNAVAILABLE` |
-| `GET /api/v1/controls` | query `search`, `rootEntity`, `active`, `page`, `pageSize` | 200 `Page<ControlSummary>` | 503 `DATABASE_UNAVAILABLE` |
+| `GET /api/v1/controls` | query `search`, `rootEntity`, `active`, `sort`, `dir`, `page`, `pageSize` | 200 `Page<ControlSummary>` | 503 `DATABASE_UNAVAILABLE` |
 | `POST /api/v1/controls` | `{ name, description?, definition }` | 201 `Control` | 422 `DEFINITION_INVALID`, 503 `ENGINE_UNAVAILABLE`, 503 `DATABASE_UNAVAILABLE` |
 | `GET /api/v1/controls/{id}` | none | 200 `Control` | 404 `CONTROL_NOT_FOUND`, 503 `DATABASE_UNAVAILABLE` |
 | `PUT /api/v1/controls/{id}` | `{ name, description?, definition, concurrencyToken }` | 200 `Control` | 404 `CONTROL_NOT_FOUND`, 409 `CONTROL_ARCHIVED`, 409 `CONCURRENCY_CONFLICT`, 422 `DEFINITION_INVALID`, 503 `ENGINE_UNAVAILABLE`, 503 `DATABASE_UNAVAILABLE` |
@@ -469,9 +469,16 @@ copy and the engine does not answer.
 | `search?` | string | the name contains it; case-insensitive, `%` and `_` taken literally |
 | `rootEntity?` | string | the root entity key, exact |
 | `active?` | string | `true` (default): active controls; `false`: archived ones; `all`: both. Any other value is 400 `MALFORMED` |
+| `sort?` | string | `name` (default); `rootEntity`: the plural label of the root entity in the request's language; `lastRun`: the start of the control's newest run; `violations`: the `totalCount` of the newest run |
+| `dir?` | string | `asc` (default) or `desc`, applied to the sort key |
 | `page?`, `pageSize?` | integer | `Page<T>` |
 
-200 `Page<ControlSummary>`, ordered by name, then id.
+A `sort` or `dir` outside its words is 400 `MALFORMED`. 200 `Page<ControlSummary>`. Controls that are equal in the
+sort key stand by name, then id, ascending in both directions. What a key cannot place comes last in both
+directions: under `lastRun` a control that never ran; under `violations` a control whose newest run has no count
+(it failed, timed out or is running) and, after it, a control that never ran. `rootEntity` follows the labels of
+the glossary the api holds, compared without regard to case; when the api holds none and the engine does not
+answer, it follows the keys.
 
 ### `POST /api/v1/controls`
 

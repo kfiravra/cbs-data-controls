@@ -52,8 +52,8 @@ public sealed class RunQueries(DqDbContext db)
     {
         var check = new RequestCheck();
         var paging = Paging.Read(check, query.Page, query.PageSize);
-        var sort = Word(check, "sort", query.Sort, SortByKey, SortByDisplay);
-        var direction = Word(check, "dir", query.Dir, Ascending, Descending);
+        var sort = check.Word("sort", query.Sort, SortByKey, SortByDisplay);
+        var direction = check.Word("dir", query.Dir, Ascending, Descending);
         check.ThrowIfInvalid();
         if (KeyOf(runId) is not { } runKey || !await db.Runs.AnyAsync(run => run.Id == runKey, cancellationToken))
         {
@@ -97,22 +97,6 @@ public sealed class RunQueries(DqDbContext db)
             (_, Ascending) => results.OrderBy(result => result.Seq),
             _ => results.OrderByDescending(result => result.Seq),
         };
-
-    /// <summary>A query word: absent is the first accepted word, anything outside the list is malformed.</summary>
-    private static string Word(RequestCheck check, string parameter, string? value, params string[] accepted)
-    {
-        if (value is null)
-        {
-            return accepted[0];
-        }
-
-        if (!accepted.Contains(value))
-        {
-            check.Add(parameter, RequestErrorCodes.Malformed);
-        }
-
-        return value;
-    }
 
     /// <summary>
     /// Each run with what its response needs from other rows: the control's current name, the definition

@@ -88,6 +88,22 @@ internal sealed class RequestCheck
         return value;
     }
 
+    /// <summary>A query word: absent is the first accepted word, anything outside the list is malformed.</summary>
+    public string Word(string path, string? value, params string[] accepted)
+    {
+        if (value is null)
+        {
+            return accepted[0];
+        }
+
+        if (!accepted.Contains(value))
+        {
+            Add(path, RequestErrorCodes.Malformed);
+        }
+
+        return value;
+    }
+
     public void ThrowIfInvalid()
     {
         if (_errors.Count > 0)

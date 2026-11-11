@@ -1,11 +1,10 @@
 # dc-web notes
 
 ## State
-Phase 9, the UX pass, is done on branch `feat/web-ux` (cut from `origin/main` at `612b2b7` on 2026-11-11): the
-one-page structure (`22c64f1`), the new look as the only theme (`3762765`), the critique's fixes (`3b4013b`)
-and the review's fixes. The gate ran on the real stack and `/check all --tests` is green
-(`gates/phase-9.txt`). The branch is pushed and its PR is open on Kfir's word of 2026-11-11; it is not merged.
-The engine (8000) and the api (5000, serving this branch's build) are left running for his reading.
+Phase 10, the last design round (Kfir's second read, 2026-11-11), is in work on `feat/web-ux`, into the same
+PR. Done: the api's sort of the controls list (`sort`, `dir`), with `contracts/api.md` and ten api tests. In
+work: the client (one table design, the results panel, the editor, the phone). Phase 9 is merged into this
+branch's history (`22c64f1` to `8690539`) and pushed; the PR is open and not merged.
 
 ## Next
 1. Kfir reads the new interface at `http://localhost:5000` and its new Hebrew texts (decision 63 and the keys
@@ -245,6 +244,20 @@ Taken on 2026-11-11 in the morning (Kfir's second message: "no questions"):
     badge; the summary of a run is a band and no longer two rules; the panel floats with 12px of room and the
     large radius from 640px. The class `btn--tonal` is now `btn--secondary`, and the tokens `--color-bar` and
     `--color-on-action-*` are `--color-inverse` and `--color-on-inverse-*`.
+
+### The last design round (phase 10, 2026-11-11; Kfir: "no questions")
+72. The api and the contract change ride on this branch, in a commit of their own before the client's
+    (`feat(api): sort the controls list`), and not as a commit to `contracts/` on main: Kfir gave his word
+    for one api and contract change in this round and for the push to this PR.
+73. `sort=rootEntity` orders by the entity's plural label in the request's language, not by its key: the
+    user reads "מה נבדק" and was promised the alphabet, and the three keys stand in another order than their
+    Hebrew labels. The api holds the glossary already; it orders the keys by label and sends one bound
+    comparison per entity. With no glossary to read it falls back to the keys. Labels are compared without
+    regard to case and without a culture (code points put Hebrew in its alphabet's order).
+74. Equal controls stand by name and then id, ascending, in both directions; `dir` turns the sort key only.
+    Under `violations` a control whose newest run has no count (stopped or still running) comes after those
+    with one and before a control that never ran, in both directions: Kfir asked that never-ran sort last,
+    and a stopped run has no number to place either.
 
 ## Reconciliation with `contracts/` (phase 2, 2026-11-11)
 Read: `api.md`, `errors.md`, `glossary.json`, `control-definition.schema.json`, the six examples and the thirteen

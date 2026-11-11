@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using DataControls.Api.Tests.Support;
 
 namespace DataControls.Api.Tests.Controls;
@@ -11,6 +12,8 @@ public sealed class ControlListTests(ApiFixture fixture)
     private const string DepartmentExample = "department-without-active-employees";
 
     private readonly HttpClient _client = fixture.CreateClient();
+    private readonly EngineStub _engine = fixture.Factory.Engine;
+    private readonly TestClock _clock = fixture.Factory.Clock;
     private readonly string _testId = TestData.NewTestId();
 
     [Fact]
@@ -41,6 +44,133 @@ public sealed class ControlListTests(ApiFixture fixture)
         var list = await ControlRequests.ListAsync(_client, _testId);
 
         Assert.Equal([Id(firstA), Id(secondA), Id(b)], Ids(list));
+    }
+
+    [Fact]
+    public async Task List_is_ordered_by_name_from_the_end_and_still_by_id_when_dir_is_desc()
+    {
+        var b = await CreateAsync("b");
+        var firstA = await CreateAsync("a");
+        var secondA = await CreateAsync("a");
+
+        var named = await ControlRequests.ListAsync(_client, _testId, "&sort=name&dir=desc");
+        var byDefault = await ControlRequests.ListAsync(_client, _testId, "&dir=desc");
+
+        Assert.Equal([Id(b), Id(firstA), Id(secondA)], Ids(named));
+        Assert.Equal(Ids(named), Ids(byDefault));
+    }
+
+    [Fact]
+    public async Task List_is_ordered_by_the_label_of_the_root_entity_and_not_by_its_key_when_sort_is_rootEntity()
+    {
+        // The glossary's labels put the three entities in another order than their keys do.
+        var byLabel = EntityKeysByLabel();
+        Assert.NotEqual(byLabel.Order(StringComparer.Ordinal), byLabel);
+        var created = new Dictionary<string, int>();
+        foreach (var entity in byLabel.Order(StringComparer.Ordinal))
+        {
+            created[entity] = Id(await ControlRequests.CreateAsync(_client, TestData.Name(_testId, entity), DefinitionOf(entity)));
+        }
+
+        var second = Id(await ControlRequests.CreateAsync(_client, TestData.Name(_testId, "a second one"), DefinitionOf(byLabel[0])));
+
+        var ascending = await ControlRequests.ListAsync(_client, _testId, "&sort=rootEntity");
+        var descending = await ControlRequests.ListAsync(_client, _testId, "&sort=rootEntity&dir=desc");
+
+        // Inside one entity the controls stand by name whatever the direction.
+        Assert.Equal([second, created[byLabel[0]], created[byLabel[1]], created[byLabel[2]]], Ids(ascending));
+        Assert.Equal([created[byLabel[2]], created[byLabel[1]], second, created[byLabel[0]]], Ids(descending));
+    }
+
+    [Fact]
+    public async Task List_is_ordered_by_the_root_entity_key_when_sort_is_rootEntity_and_no_glossary_can_be_read()
+    {
+        // The glossary cache lives as long as its host: a host of its own has never read one.
+        await using var factory = new ApiFactory();
+        factory.Engine.Refuse(EngineStub.Glossary);
+        var client = factory.CreateClient();
+        var byKey = new List<int>();
+        foreach (var entity in EntityKeysByLabel().Order(StringComparer.Ordinal))
+        {
+            byKey.Add(Id(await ControlRequests.CreateAsync(client, TestData.Name(_testId, entity), DefinitionOf(entity))));
+        }
+
+        var ascending = await ControlRequests.ListAsync(client, _testId, "&sort=rootEntity");
+        var descending = await ControlRequests.ListAsync(client, _testId, "&sort=rootEntity&dir=desc");
+
+        Assert.Equal(byKey, Ids(ascending));
+        Assert.Equal(byKey.AsEnumerable().Reverse(), Ids(descending));
+    }
+
+    [Fact]
+    public async Task List_is_ordered_by_the_newest_run_with_a_control_that_never_ran_last_when_sort_is_lastRun()
+    {
+        var neverRan = await CreateAsync("a never ran");
+        var ranFirst = await CreateAsync("b ran first");
+        var ranLast = await CreateAsync("c ran last");
+        _engine.Answer(EngineStub.Run, HttpStatusCode.OK, RunAnswers.Numbered(1));
+        await RunRequests.StartAsync(_client, Id(ranFirst));
+        _clock.Advance(TimeSpan.FromMinutes(1));
+        await RunRequests.StartAsync(_client, Id(ranLast));
+        _clock.Advance(TimeSpan.FromMinutes(1));
+        // A second run of the first control is still older than what follows it here.
+        await RunRequests.StartAsync(_client, Id(ranFirst));
+        _clock.Advance(TimeSpan.FromMinutes(1));
+        await RunRequests.StartAsync(_client, Id(ranLast));
+
+        var ascending = await ControlRequests.ListAsync(_client, _testId, "&sort=lastRun");
+        var descending = await ControlRequests.ListAsync(_client, _testId, "&sort=lastRun&dir=desc");
+
+        Assert.Equal([Id(ranFirst), Id(ranLast), Id(neverRan)], Ids(ascending));
+        Assert.Equal([Id(ranLast), Id(ranFirst), Id(neverRan)], Ids(descending));
+    }
+
+    [Fact]
+    public async Task List_is_ordered_by_the_count_of_the_newest_run_with_a_stopped_run_and_then_no_run_last_when_sort_is_violations()
+    {
+        var neverRan = await CreateAsync("a never ran");
+        var stopped = await CreateAsync("b stopped");
+        var five = await CreateAsync("c five");
+        var two = await CreateAsync("d two");
+        var alsoTwo = await CreateAsync("e two as well");
+        _engine.Answer(EngineStub.Run, HttpStatusCode.OK, RunAnswers.Numbered(1));
+        // The newest run counts, not an earlier one: this control found one, then five.
+        await RunRequests.StartAsync(_client, Id(five));
+        _clock.Advance(TimeSpan.FromMinutes(1));
+        _engine.Answer(EngineStub.Run, HttpStatusCode.OK, RunAnswers.Numbered(5));
+        await RunRequests.StartAsync(_client, Id(five));
+        _engine.Answer(EngineStub.Run, HttpStatusCode.OK, RunAnswers.Numbered(2));
+        await RunRequests.StartAsync(_client, Id(two));
+        await RunRequests.StartAsync(_client, Id(alsoTwo));
+        await RunRequests.StartAsync(_client, Id(stopped));
+        _clock.Advance(TimeSpan.FromMinutes(1));
+        _engine.Answer(EngineStub.Run, HttpStatusCode.GatewayTimeout, EngineFixtures.Read("problem-query-timeout.json"));
+        await RunRequests.StartAsync(_client, Id(stopped));
+
+        var ascending = await ControlRequests.ListAsync(_client, _testId, "&sort=violations");
+        var descending = await ControlRequests.ListAsync(_client, _testId, "&sort=violations&dir=desc");
+
+        Assert.Equal([Id(two), Id(alsoTwo), Id(five), Id(stopped), Id(neverRan)], Ids(ascending));
+        Assert.Equal([Id(five), Id(two), Id(alsoTwo), Id(stopped), Id(neverRan)], Ids(descending));
+    }
+
+    [Fact]
+    public async Task List_pages_a_sorted_list_without_repeating_or_dropping_a_control()
+    {
+        var created = new List<int>();
+        foreach (var label in new[] { "1", "2", "3", "4", "5" })
+        {
+            created.Add(Id(await CreateAsync(label)));
+        }
+
+        // No control here ran, so the run's start orders nothing and the name alone decides.
+        var pages = new List<int>();
+        foreach (var page in new[] { 1, 2, 3 })
+        {
+            pages.AddRange(Ids(await ControlRequests.ListAsync(_client, _testId, $"&sort=lastRun&dir=desc&pageSize=2&page={page}")));
+        }
+
+        Assert.Equal(created, pages);
     }
 
     [Fact]
@@ -80,6 +210,10 @@ public sealed class ControlListTests(ApiFixture fixture)
     [InlineData("page=1.5", """[{"path":"page","code":"MALFORMED","params":{}}]""")]
     [InlineData("active=maybe", """[{"path":"active","code":"MALFORMED","params":{}}]""")]
     [InlineData("active=TRUE", """[{"path":"active","code":"MALFORMED","params":{}}]""")]
+    [InlineData("sort=created", """[{"path":"sort","code":"MALFORMED","params":{}}]""")]
+    [InlineData("sort=Name", """[{"path":"sort","code":"MALFORMED","params":{}}]""")]
+    [InlineData("dir=up", """[{"path":"dir","code":"MALFORMED","params":{}}]""")]
+    [InlineData("active=x&sort=x&dir=x", """[{"path":"active","code":"MALFORMED","params":{}},{"path":"sort","code":"MALFORMED","params":{}},{"path":"dir","code":"MALFORMED","params":{}}]""")]
     [InlineData("page=0&pageSize=500&active=x", """[{"path":"page","code":"OUT_OF_RANGE","params":{"min":1,"max":1000000}},{"path":"pageSize","code":"OUT_OF_RANGE","params":{"min":1,"max":200}},{"path":"active","code":"MALFORMED","params":{}}]""")]
     public async Task List_returns_400_naming_the_parameter_when_a_query_value_is_out_of_range_or_not_a_word_it_accepts(string query, string expectedErrors)
     {
@@ -160,6 +294,24 @@ public sealed class ControlListTests(ApiFixture fixture)
     }
 
     private Task<JsonElement> CreateAsync(string label) => ControlRequests.CreateAsync(_client, TestData.Name(_testId, label));
+
+    /// <summary>The first example's rule with another root entity: the stubbed engine accepts any definition the schema does.</summary>
+    private static string DefinitionOf(string rootEntity)
+    {
+        var definition = JsonNode.Parse(Examples.Definition(Examples.First))!;
+        definition["rootEntity"] = rootEntity;
+        return definition.ToJsonString();
+    }
+
+    /// <summary>The entity keys of the glossary fixture in the order of their plural labels in the default language.</summary>
+    private static List<string> EntityKeysByLabel()
+    {
+        using var glossary = JsonDocument.Parse(EngineFixtures.Read("glossary.json"));
+        var language = glossary.RootElement.GetProperty("defaultLanguage").GetString()!;
+        return [.. glossary.RootElement.GetProperty("entities").EnumerateArray()
+            .OrderBy(entity => entity.GetProperty("label").GetProperty("plural").GetProperty(language).GetString(), StringComparer.OrdinalIgnoreCase)
+            .Select(entity => entity.GetProperty("key").GetString()!)];
+    }
 
     private static int Id(JsonElement control) => control.GetProperty("id").GetInt32();
 
