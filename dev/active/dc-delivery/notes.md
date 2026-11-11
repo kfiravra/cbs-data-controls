@@ -62,6 +62,14 @@ are named in the last Log lines.
 10. The order of `docs/examples.md` is read from the table of the document itself, so `scripts/examples.py`
     names no example (the B1 review's first warning).
 
+11. Change f, the scale test: built and run in about 25 minutes (`scripts/scale-test.sh`,
+    `sql/scale/load_scale.sql`). It found that `department-without-active-employees` takes 9.2 s on 2,000
+    departments and 200,005 employees, and 36 ms with an index on `hr.Employee (department_id, status)`. The
+    index was NOT added: the brief says the seed and its assertions stay untouched (`db-check.sh` asserts the
+    exact index list), the run still ends inside the 30 s statement timeout, and plan decision 13 sends a late
+    finding that is not critical to the limitations document. Adding it is one statement in
+    `sql/50_indexes.sql`, one name in `scripts/db-check.sh` and a row in `sql/README.md`: Kfir's call.
+
 ## Next
 1. The Gate: G1 on a fresh clone, G3 on it, G2 from a Windows folder, G5 the audit, G6, G8.
 
@@ -173,3 +181,6 @@ are named in the last Log lines.
   In `docs/ai-usage.md` two statements were corrected by this session against tonight's facts (architecture
   §15 no longer holds the sentence it quoted; the push of `9b5f79a` was on Kfir's recorded word). Its last
   section lists, from the records, where no read by Kfir is recorded: that section is his to read (G7).
+- 2026-11-12 03:10 change f done: `scripts/scale-test.sh` and `sql/scale/load_scale.sql`; the table is in
+  architecture §11 and the finding in the limitations document (unattended decision 11). The scratch database
+  and the second engine were removed after the run; `DataControls` was only read.

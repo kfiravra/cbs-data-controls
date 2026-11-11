@@ -157,8 +157,12 @@ started with only its own variables, but nothing stops that user from reading bo
 - **The statement timeout** is tested on a fabricated driver error: the read-only login has no way to run a slow
   statement on purpose. In the client, a timeout, the row cap, an engine or a database that is down, and a save
   conflict were shown on the mocked api only, never provoked on the real stack.
-- **Performance beyond the sample data.** The seed holds 85 employees; a run takes about 10 ms. A run of 5,000
-  violations is stored and answered in about 2 seconds on the development machine.
+- **Performance was measured once, on one machine.** On the sample data (85 employees) a run takes about 10 ms.
+  On a scratch database of 200,005 employees (`scripts/scale-test.sh`) five of the six examples ran in 0.25 to
+  0.6 seconds; the rule about related records ("a department with no active employee") took 9.2 seconds, and 36 ms
+  once `hr.Employee` had an index on `(department_id, status)`. That index is not in v1
+  ([architecture.md §11](architecture.md#11-performance-and-scale) has the table). A run of 5,000 violations is
+  stored and answered by the api in about 2 seconds.
 - **Windows without Docker, and macOS.** Nothing was run on a Windows host outside Docker: the engine's
   packages all have Windows wheels for Python 3.12 to 3.14 and its suite passed under those versions on Linux,
   but the engine, the published api and `db-init.sh` under Git Bash never ran there. Nothing was run on macOS;
@@ -189,5 +193,8 @@ started with only its own variables, but nothing stops that user from reading bo
 - **Templated controls** applied across several entities (the same "required field" rule for every entity).
 - **Marking a violation as handled**, with a note, so that the next run tells new violations from known ones.
 - **Restoring an archived control**, and unique names if the users ask for them.
+- **Indexes for related-record rules**: an index on a child table's foreign key together with its lifecycle
+  field (for the sample data, `hr.Employee (department_id, status)`), which the scale test shows is what such a
+  rule needs on a large table.
 - **More computed kinds** (years of service, days since a date) and more languages.
 - **Horizontal scaling of the engine**, which is stateless.

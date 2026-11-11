@@ -298,6 +298,19 @@ Additional: the .NET login cannot read `hr`; configuration and secrets come from
 - **Retention**: cleanup of old run results by policy.
 - Extensions (documented, not built): asynchronous runs with polling for long controls; scheduling; export of results; horizontal scaling of the stateless engine.
 
+**Measured on 200,000 employees.** `scripts/scale-test.sh` builds a scratch database (`DataControlsScale`: the seed's organization multiplied to 5 ministries, 2,000 departments and 200,005 employees, with the same keys and indexes; the seeded database is only read), points a second engine at it and runs the six examples. On the development machine (SQL Server in Docker Desktop under WSL 2), the engine's own time for a run, which is the count statement and the capped page, the median of five runs:
+
+| Example | Root records | Violations found | Rows returned | Engine time (ms) |
+|---|---|---|---|---|
+| `minor-high-salary` | 200,005 employees | 7,059 | 5,000 | 357 |
+| `termination-before-hire` | 200,005 employees | 7,059 | 5,000 | 248 |
+| `active-in-inactive-department` | 200,005 employees | 14,118 | 5,000 | 384 |
+| `missing-mandatory-data` | 200,005 employees | 23,530 | 5,000 | 453 |
+| `department-without-active-employees` | 2,000 departments | 375 | 375 | 9,198 |
+| `inactive-ministry-salary-out-of-range` | 200,005 employees | 7,059 | 5,000 | 579 |
+
+Five of the six stay under 0.6 seconds, with the count exact and the page cut at the row cap. The fifth does not: "a department with no active employee" compiles to `NOT EXISTS` over the employees of each department with a status test, and the indexes of the seed serve the department and the status separately. With one more index on `hr.Employee (department_id, status)` the same run took 36 ms on the same data. That index is not part of v1: the seed and its checks were left as they are for the submission, and in an organization's own database the indexes belong to its administrators. The finding stands as a limitation, and as the first thing to add before running controls with related-record conditions on large tables.
+
 ---
 
 ## 12. Error handling (what the business user sees)

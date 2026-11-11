@@ -268,6 +268,9 @@ system.
 | The whole system | `python3 scripts/examples.py verify` | runs the six examples through the running app and compares the flagged records and the matched conditions with the example files |
 | The whole system, in a browser | `cd web && E2E_BASE_URL=http://localhost:5000 npm run e2e:gate` | builds each example in the editor, saves, runs and reads it, at 390 and 1440 pixels |
 
+`scripts/scale-test.sh` times the six examples on a scratch database of 200,000 employees and drops it again;
+the numbers it gave are in [docs/architecture.md §11](docs/architecture.md#11-performance-and-scale).
+
 `examples.py verify` and the gate specs are test tools: the runs they start stay in the store, and each gate
 run leaves 18 archived controls with `e2e-` in their names under the archive tab.
 
@@ -497,7 +500,8 @@ sql/                  database scripts, run in order by scripts/db-init.sh
 engine/               Python FastAPI control engine
 api/                  .NET 10 Web API, which also serves the built client
 web/                  Angular client
-scripts/              start.sh and start.ps1 (the Docker path), db-init.sh, db-check.sh, examples.py, contracts-check.py
+scripts/              start.sh and start.ps1 (the Docker path), db-init.sh, db-check.sh, examples.py,
+                      contracts-check.py, scale-test.sh
 docs/                 the documents listed below
 docker-compose.yml    the whole system: db, db-init, engine, api, examples
 start.cmd             the Docker path on Windows
