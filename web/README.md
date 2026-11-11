@@ -21,7 +21,10 @@ npx ng build                 # production build in dist/web/browser
 ```
 
 `dist/web/browser` is the folder the api serves as static files; the build has no base path of its own, so it
-is served from the root of whatever hosts it.
+is served from the root of whatever hosts it. The api takes it from the `wwwroot` beside its own app, read once
+at startup: copy the contents of `dist/web/browser` there and then start the api. For an api started with
+`dotnet run` that is `api/src/DataControls.Api/bin/Debug/net10.0/wwwroot`; for a published one, the `wwwroot`
+of the publish folder.
 
 Without the api on port 5000 every screen shows its error state with a retry. To look at the app with no
 backend at all, `npm run preview` opens a headed Chromium over the in-memory api of the mocked specs and pauses
@@ -52,7 +55,7 @@ npm run e2e:gate                                    # the dev server on 4200, pr
 E2E_BASE_URL=http://localhost:5000 npm run e2e:gate # the build the api hosts; no dev server is started
 ```
 
-One worker, both projects. The gate builds each of the six examples of `contracts/examples/` in the editor from
+One worker, both projects, about two minutes. The gate builds each of the six examples of `contracts/examples/` in the editor from
 glossary terms, saves it, runs it on the engine and reads the violating records back one by one; it then works a
 control of its own through the list (search, run, filter, duplicate, archive) and creates one control from the
 suggestions dialog.
@@ -77,7 +80,8 @@ no `toHaveScreenshot` baselines: they are per-OS and font-sensitive.
 The gate leaves four names in each project: `gate-list`, `gate-editor`, `gate-results`, `gate-suggestions`. The
 five images the top-level README uses are the four in `e2e/screenshots/desktop/` and
 `e2e/screenshots/mobile/gate-results.png`. The editor and results shots are of example 4 and show the test's tag
-in the control's name.
+in the control's name. `gate-list` is the list as the run found it, before the test creates anything: on a
+system loaded with the six examples it shows them, never run.
 
 ## Where things are
 

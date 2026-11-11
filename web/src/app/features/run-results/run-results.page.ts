@@ -143,9 +143,14 @@ export class RunResultsPage {
     if (!run) {
       return [];
     }
-    // counted as it is shown, to one decimal: 1,020 ms is "one second", 412 ms is "0.4 seconds"
+    // counted as it is shown, to one decimal: 1,020 ms is "one second", 412 ms is "0.4 seconds". A run that
+    // rounds to nothing (the engine answers the sample data in a few milliseconds) is said in words:
+    // "0 seconds" reads as a run that did not happen
     const shown = Math.round((run.durationMs ?? 0) / 100) / 10;
-    const seconds = this.counted('results.seconds', shown, { count: this.format.seconds(run.durationMs ?? 0) });
+    const seconds =
+      shown === 0
+        ? this.text('results.summary.durationUnder')
+        : this.counted('results.seconds', shown, { count: this.format.seconds(run.durationMs ?? 0) });
     return [
       { label: this.text('results.summary.checked'), text: this.entityLabel() },
       { label: this.text('results.summary.duration'), text: seconds },

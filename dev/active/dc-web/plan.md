@@ -329,11 +329,12 @@ Commit: `feat(web): controls list and suggestions dialog`
 
 ### Phase 7: the real stack
 
-Status on 2026-11-11 (night run): the gate fixture and the three gate specs are written, type-checked, linted
-and dry-run on a stand-in (notes.md, Log). The four unticked steps need the api and the engine and wait for
-their merge to main, on Kfir's word for that night: no service is started from another worktree.
+Status on 2026-11-11: done. The night run wrote the gate fixture and the three gate specs and dry-ran them on
+a stand-in. In the morning the api and the engine were on main (`eec007d`); on Kfir's word `origin/main` was
+merged, both services were started from this worktree against the shared database, and the four waiting steps
+ran (notes.md, Log; `gates/phase-7.txt`).
 
-- [ ] `git merge main` when the api and the engine are on it, or run them from their worktrees; the db runs from
+- [x] `git merge main` when the api and the engine are on it, or run them from their worktrees; the db runs from
       the main tree. Say what will run and for how long, and wait for the word. Port 8000: ask before stopping
       another project's container.
 - [x] `e2e/support/gate.ts` per Design O: the health check, the tag, the ids a test created, the teardown.
@@ -345,15 +346,15 @@ their merge to main, on Kfir's word for that night: no service is started from a
       which no active row carries the test's tag.
 - [x] `e2e/gate/suggestions.spec.ts` per Design O: the drafts as the engine's answer holds them,
       `gate-suggestions`, one draft created under a tagged name and opened by its id.
-- [ ] Fix what the real payloads show. A difference from the contracts is one line to Kfir, never a silent adapter.
-- [ ] The pre-loaded list (decision 22). Save the "before" listing of Design O. If no control carries an example's
+- [x] Fix what the real payloads show. A difference from the contracts is one line to Kfir, never a silent adapter.
+- [x] The pre-loaded list (decision 22). Save the "before" listing of Design O. If no control carries an example's
       exact name, say what will be posted and wait for the word, then post the six examples under their Hebrew
       names with the loop of Design O (with `scripts/examples.py` on the branch: `python3 scripts/examples.py
       load`). They stay, active and untouched: dc-delivery's loader skips a name that exists, archived or not, so
       an archived example is never loaded again. Then the gate twice in a row; after each run the listing equals
       the one saved before it. Without the word, skip the step and say so in the Log: dc-delivery's phase B1 is
       then the first run on such a list.
-- [ ] The build the api hosts. From this worktree's own build of the api, after the merge, never from another
+- [x] The build the api hosts. From this worktree's own build of the api, after the merge, never from another
       session's worktree: `npx ng build`, the output copied into the `wwwroot` beside the api's executable (under
       `bin/`, which git ignores; dc-api plan, Design D), the api started as its README says, then the gate once
       with `E2E_BASE_URL=http://localhost:5000`. If the api is not on this branch yet, skip it and write that into

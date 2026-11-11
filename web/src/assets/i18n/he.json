@@ -270,6 +270,7 @@
       "title": "סיכום ההרצה",
       "checked": "נבדקו",
       "duration": "משך ההרצה",
+      "durationUnder": "פחות משנייה",
       "previous": "בהרצה הקודמת, {{date}}"
     },
     "breakdown": {

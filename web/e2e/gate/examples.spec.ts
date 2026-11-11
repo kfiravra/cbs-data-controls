@@ -69,6 +69,8 @@ test.describe('the six examples on the real stack', () => {
       await expect(page.getByTestId('page-title')).toHaveText(gate.nameOf(example));
       await expectResults(page, example);
       if (number === 4) {
+        // the toast of the save rides along to this screen and would stand over the records in the shot
+        await expect(page.getByText(t('editor.toast.saved'), { exact: true })).toBeHidden({ timeout: 10_000 });
         await shot(page, testInfo, 'gate-results');
       }
       if (number === 1) {

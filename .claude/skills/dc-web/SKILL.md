@@ -90,7 +90,15 @@ playwright install --with-deps chromium` needs sudo on WSL: ask the user to run 
   dismisses a dialog by default, which keeps the page: a spec that leaves a changed draft answers the dialog.
 - `vitest` is pinned to `~4.0.8`: npm 10.9.2 crashes resolving the peer set of 4.1.x.
 - Dev server: `ng serve` on :4200 proxies `/api` to :5000 (`proxy.conf.json`), so the api needs no CORS entry for
-  it. The production build lands in `dist/web/browser/`, which the api serves.
+  it. The production build lands in `dist/web/browser/`, which the api serves from the `wwwroot` beside its own
+  app, read at startup: under `dotnet run` that is `api/src/DataControls.Api/bin/Debug/net10.0/wwwroot`.
+- The real engine answers the sample data in about 10 ms and the fixtures say 412: a text that formats a
+  measured value needs a spec at the real size too (the summary's `results.summary.durationUnder`).
+- A toast lives six seconds and rides along through a navigation: a gate shot of the screen after a save waits
+  for it to go, or it stands over the page in the image.
+- A worktree's `.env` may have no engine block: start the engine there with `ENGINE_DB_HOST=127.0.0.1` and
+  `ENGINE_DB_PORT=1433` in the environment (`localhost` resolves to `::1` first on WSL and the ODBC driver does
+  not fall back).
 - Playwright: projects `mobile` (390×844) and `desktop` (1440×900), `locale: 'he-IL'`, `timezoneId:
   'Asia/Jerusalem'`. Each gate spec saves a full-page `page.screenshot` per screen per project; `toHaveScreenshot`
   baselines are per-OS and font-sensitive and are not used. Specs find elements by role and test id and read

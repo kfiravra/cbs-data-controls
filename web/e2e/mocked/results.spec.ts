@@ -213,6 +213,21 @@ test.describe('run results', () => {
     await shot(page, testInfo, 'results-no-violations');
   });
 
+  test('the summary says how long the run took, and in words when it took next to nothing', async ({ page, api }) => {
+    const control = controlOf(api, 4);
+    const measured = api.addRun(succeededRun(control, RUN));
+    // the real engine answers the sample data in a few milliseconds
+    const quick = succeededRun(control, RUN + 1);
+    const instant = api.addRun({ ...quick, run: { ...quick.run, durationMs: 9 } });
+
+    await open(page, measured);
+    await expect(page.getByTestId('run-summary')).toContainText(t('results.seconds.other', { count: '0.4' }));
+
+    await open(page, instant);
+    await expect(page.getByTestId('run-summary')).toContainText(t('results.summary.durationUnder'));
+    await expect(page.getByTestId('run-summary')).not.toContainText(t('results.seconds.other', { count: '0' }));
+  });
+
   test('more violations than the cap: the exact total, how many are shown, and counts over all of them', async ({ page, api }, testInfo) => {
     const control = controlOf(api, 1);
     const stored = api.addRun(succeededRun(control, RUN, { expected: manyViolations(control, 20), totalAboveCap: 6412 }));

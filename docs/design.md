@@ -661,7 +661,8 @@ them narrows the list, so a narrowed list always shows what narrows it.
 
 A statement, not a row of tiles: between two Line strong rules, the Figure with its noun (`23 חריגות`), then a
 short list of terms and values: what was checked, how long it took, and the count of the previous run with its
-date.
+date. The time is in seconds with one decimal at most (`0.4 שניות`); a run that rounds to nothing is said in
+words (`פחות משנייה`), never as `0 שניות`.
 
 ### Breakdown by condition
 

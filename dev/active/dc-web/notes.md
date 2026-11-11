@@ -1,23 +1,22 @@
 # dc-web notes
 
 ## State
-Phases 1 to 6 and phase 8 are done and committed (2026-11-11, unattended night run on Kfir's word). Phase 7:
-the gate specs are written, committed and dry-run on a stand-in; its four steps on the real stack wait for the
-api and the engine to reach main. The task's gate is blocked by those steps alone, so nothing is pushed and no
-PR is open.
+All eight phases are done (2026-11-11). Phase 7 ran in the morning on Kfir's word: `origin/main` (`eec007d`, the
+engine and the api) merged into `feat/web`, both services started from this worktree against the shared
+database, the gate specs green on the real stack, on the pre-loaded list twice and on the build the api hosts.
+The six examples are in the dev `dq` under their Hebrew names. Kept by Kfir (2026-11-11): decision 38, the leave
+prompt; the four items the critiques left open stay open, and dc-delivery lists them as limitations.
 
 ## Next
-1. When the api and the engine are on main: `git merge main`, then the four waiting steps of phase 7 (the gate
-   on the real stack, the fixes its payloads ask for, the pre-loaded list twice, the build the api hosts).
-2. The Gate section of plan.md: `gates/final.txt` again with the gate specs on the real stack, Kfir's reading
-   of the Hebrew interface (`npm run preview`, or `gates/final/`; the texts added in phase 8 are decision 44),
-   the drift list against main, then `/ship` and the PR on his word.
-3. For Kfir, from the critiques (Log, 2026-11-11): the P2 findings left open, each with why.
+1. Kfir reads the Hebrew interface in the browser, on the stack this session leaves running
+   (`http://localhost:5000`). The texts added since his last reading are decisions 44 and 46.
+2. The PR is opened on his word at the end of this session; the merge is his.
+3. For dc-delivery (limitations, on Kfir's word): the phone results layout (the breakdown stands before the
+   records), nested groups unnamed for a screen reader, a conflict that discards the draft, a list row's count
+   that may belong to an older version of the rule. Each is in the Log of 2026-11-11 with its reason.
 
 ## Blockers
-- Phase 7 runs (the gate on the real stack, the pre-load, the hosted build): the api and the engine are not on
-  main (`git log main` ends at `f9928bf`, checked last at the end of the run on 2026-11-11). Kfir's word for the
-  night: wait for the merge, start no service from another worktree.
+- None.
 
 ## Decisions taken unattended (2026-11-11, Kfir asleep: "decide, write it in notes.md, continue")
 1. The session runs on Fable 5.2, not Opus as decision 21 says: a session cannot switch its own model and nobody
@@ -140,6 +139,24 @@ PR is open.
     `removedGroup`, `editor.leave.confirm`, `results.noMatch.bodyCapped`, `results.failed.reasons.*`; and
     `errors.ROW_CAP_EXCEEDED.body` was rewritten.
 
+Taken on 2026-11-11 in the morning (Kfir's second message: "no questions"):
+
+45. The engine and the api run from this worktree's own installs and builds (`uv sync`, `dotnet build`), each
+    in its own session so that they outlive the command that started them. The engine gets
+    `ENGINE_DB_HOST=127.0.0.1` and `ENGINE_DB_PORT=1433` in its environment, as Kfir said; the api needs nothing
+    beyond `.env` (its block of `.env.example` is defaults, and `DB_HOST=localhost` connects from here). Each
+    service reads only its own login from `.env`.
+46. A run that took less than a twentieth of a second reads `פחות משנייה` in the summary
+    (`results.summary.durationUnder`), not "0 שניות": the engine answers the sample data in about 10 ms, so
+    every real run read as a run that took no time. A new Hebrew text, for Kfir's reading. Longer runs keep
+    decision 27.
+47. The gate waits for the toast of the save to go before it shoots `gate-results` (example 4 only, about six
+    seconds a project): the toast rides to the results screen and stood over the records in the README image.
+48. Beyond the gate, the real api was asked by hand for what no gate test reaches: the list and results queries
+    with the client's own parameters, four invalid fixtures through `POST /controls/validate`, an unknown run,
+    and a `PUT` and a run on an archived control of the gate's own (both refused, 409). Nothing was written by
+    these. Every answer has the shape `api.types.ts` holds: no difference from the contracts, no line for Kfir.
+
 ## Reconciliation with `contracts/` (phase 2, 2026-11-11)
 Read: `api.md`, `errors.md`, `glossary.json`, `control-definition.schema.json`, the six examples and the thirteen
 invalid fixtures, as merged in `f9928bf`. Where they differ from Design E to M of the plan, the contracts were built:
@@ -164,12 +181,11 @@ fcf0036 (phase 8) together with 44a7219 (the gate specs of phase 7), fixed in th
 that follows fcf0036. That fix commit is not reviewed, as the earlier ones were not.
 
 ## Hand-over to dc-delivery
-Read by its phase B0 (plan.md Design Q). Complete for phase 8; the lines that say "not run" change when phase 7
-runs on the real stack.
+Read by its phase B0 (plan.md Design Q). Complete: phase 7 ran on the real stack on 2026-11-11.
 
 - Its asks of 2026-11-10. (1) Built: the gate specs run at `E2E_BASE_URL=http://localhost:5000` as well as behind
   the dev server, on any list; no spec assumes an empty list, counts or orders the list as a whole, or finds a
-  control by a bare name (each test tags the names it creates and follows ids). Not yet run on the real stack.
+  control by a bare name (each test tags the names it creates and follows ids). Run on the real stack, both ways.
   (2) Done as planned: this task edited only `web/README.md`, `docs/design.md` and `.claude/skills/dc-web/SKILL.md`;
   the drift is the list below; the Log is factual.
 - As built:
@@ -185,13 +201,21 @@ runs on the real stack.
      estimated transfer; each screen and the dialog are lazy chunks).
   5. A gate run leaves 18 archived controls with `e2e-` in their names (9 per project) and their runs in `dq`,
      none active; it reads `hr` only through the api's runs.
-  6. **The gate has not run on the real stack.** The api and the engine were not on main during this task (main
-     ended at `f9928bf` through 2026-11-11). The specs were dry-run once on a stand-in (decision 33), which
-     proves their flow and teardown and nothing about the real payloads. dc-delivery's B1 is their first real
-     run; the phase 7 step "fix what the real payloads show" is still open and belongs to this task.
-  7. Not run: the gate on a pre-loaded list (the six examples under their real names), and the gate on the
-     hosted build.
-  8. This task left nothing in the dev `dq`: it never called the real api.
+  6. The gate ran on the real stack on 2026-11-11, on this branch with `eec007d` merged, the engine and the api
+     started from this worktree (`gates/phase-7.txt`): once on a list without the examples, twice in a row on
+     the pre-loaded list behind the dev server, once at `E2E_BASE_URL=http://localhost:5000` on the build the api
+     hosts; 16 of 16 each time. After each of the last three runs the listing of the controls without a tag
+     equals the one saved before it (`gates/phase-7-list-*.txt`): the six examples were not opened, run or
+     changed.
+  7. The hosted build: with `dotnet run` the api's content root is its build folder, so the client's build goes
+     to `api/src/DataControls.Api/bin/Debug/net10.0/wwwroot` (ignored by git) and the api is restarted; a
+     published app takes it in the `wwwroot` of its publish folder, as the README says. A deep link, the
+     translation file and the fonts are served from there; a path with an extension that names no file is the
+     api's 404 problem.
+  8. What this task left in the dev `dq`: the six examples, posted once on 2026-11-11 on Kfir's word from
+     `contracts/examples/` as of `f9928bf`, under their Hebrew names, ids 1800 to 1805, active, version 1, never
+     run. And the gate's archived controls with `e2e-` in their names, 18 a run, with their runs. Four archived
+     controls with English names (ids 1462, 1463, 1676, 1677) were there before and are not this task's.
   9. `npm run e2e` is the mocked suite (no service needed); `npm run preview` opens the app over the same
      in-memory api, for reading the Hebrew interface without a backend.
 - Cuts: none taken. The four of decision 7 (the archived view, the settle, "open in editor" on a suggestion,
@@ -199,8 +223,8 @@ runs on the real stack.
 
 ## Docs for dc-delivery
 Kept as the work goes (plan.md decision 23, Design Q) and copied into the PR body under this heading at `/ship`.
-Checked on 2026-11-11 against the documents as they stand on main (`f9928bf`) and against what was built; check
-again before `/ship` if main has moved.
+Checked on 2026-11-11 against the documents as they stand on main (`eec007d`, which changed the README and no
+file under `docs/`) and against what was built.
 
 - `docs/architecture.md` §8, screen 2 ("live sentence preview") and the component list ("rule sentence
   preview"), and §13 ("preview sentence" among the focused Angular tests): the client has no sentence renderer.
@@ -224,6 +248,17 @@ again before `/ship` if main has moved.
   `index.html` may hold no Hebrew).
 - README, the demo walkthrough: with the examples loaded, the suggestions repeat controls the list already
   holds.
+- README, "Running the tests" ("Engine, api and web: one command each, filled by ..."): the client's commands
+  are in `web/README.md` (unit tests, the mocked specs, the gate). "The api", "Run it from a checkout": started
+  with `dotnet run`, the api serves the client from `bin/Debug/net10.0/wwwroot`, not from a `wwwroot` in the
+  project folder.
+- README, the demo walkthrough and the screenshots: a run on the sample data takes about 10 ms, and the summary
+  says `פחות משנייה`. The list of the delivered system, six examples never run, is `gate-list.png`.
+- `docs/assumptions-limitations-extensions.md`, on Kfir's word of 2026-11-11, as limitations: on a phone the
+  breakdown stands before the records; nested groups have no name for a screen reader; a save conflict loads the
+  current version and discards the draft; a list row's count may belong to an older version of the rule. The
+  line above about a changed draft holds for a link of the app as well as for a reload or a closed tab
+  (decision 38, kept by Kfir).
 - `docs/ai-usage.md`: the Log below. The design pass of phase 8 used the impeccable skill's detector and two
   opus sub-agents per critique run.
 - Dropped since the plan: the 1024 screenshot (main's §8 already says 390 and 1440), the missing
@@ -579,3 +614,22 @@ rewrote. A review that found nothing, or did not run, is logged as that.
   the engine are not there. By Kfir's rule for the night the gate is blocked only by steps that wait for a
   merge: committed, not pushed, no PR. The stand-in api and the dev server of this session are stopped; nothing
   of this run is left in the repository's tree or in the dev `dq`.
+- 2026-11-11 morning, Kfir: "The engine and the api are merged to main. Finish this task now". His words for the
+  steps: merge `origin/main` (no rebase); start the engine and the api from this worktree against the shared
+  database, with `ENGINE_DB_HOST=127.0.0.1` and `ENGINE_DB_PORT=1433` in the environment; "Posting the six
+  examples into the dev dq: you have my word"; "Keep decision 38 (the leave prompt). The four items you left
+  open stay open; delivery lists them as limitations"; `/check all --tests` green, then "You have my word for
+  the push and the PR. No merge"; leave the stack running for his reading of the Hebrew interface. No questions,
+  the database container never stopped or reset, wait when another suite runs.
+- 2026-11-11 phase 7 on Fable 5.2, gate `gates/phase-7.txt`. `origin/main` (`eec007d`) merged as `268a0f7`, no
+  conflict; `contracts/` is the same as at `f9928bf`. Installs: `uv sync` in `engine/`, `dotnet build` in
+  `api/`. The engine on 8000 and the api on 5000 from this worktree, both healthy against the shared container
+  (port 8000 was free; no other project's container held it). The gate specs passed on the real stack on their
+  first run, 16 of 16, with no change to a spec's flow or to the driver. What the real stack showed, and the
+  mocks had not: (1) a run takes about 10 ms and the summary read "0 שניות" (fixed, decision 46, with a mocked
+  spec); (2) the toast of the save stood over the records in `gate-results` (fixed in the spec, decision 47).
+  The payloads were also read by hand (decision 48): no difference from the contracts. The pre-load: no control
+  carried an example's exact name, so the six were posted (six times 201, ids 1800 to 1805). Then the gate twice
+  on that list and once on the build the api hosts, 16 of 16 each; the listing of untagged controls after each
+  run equals the one before it. Not provoked on the real stack: a timeout, a row cap, an engine or database that
+  is down, a save conflict; those states are covered by the mocked specs alone.
