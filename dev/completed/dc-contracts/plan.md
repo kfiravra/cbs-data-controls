@@ -259,9 +259,12 @@ Commit: `feat(contracts): http api and error catalogue`
       `node --test .claude/hooks/tests/*.test.mjs`. Save the output as `gates/final.txt`.
 - [x] Kfir reads `uv run scripts/contracts-check.py --render`: the rule sentence and the reasons of the six
       examples, in Hebrew. This is the last moment a wording change is free.
-- [ ] `/ship`, then the PR and the merge on Kfir's word.
-- [ ] After the merge, on main: `scripts/db-init.sh --reset` if the seed changed since the last init, then the
+- [x] `/ship`, then the PR and the merge on Kfir's word. (PR #1, merged by Kfir as `f9928bf` on 2026-11-10;
+      archived by dc-delivery, 2026-11-12)
+- [x] After the merge, on main: `scripts/db-init.sh --reset` if the seed changed since the last init, then the
       three worktrees of kickoff §5, with `.env` copied into each (it is ignored by git, so a new worktree has none).
+      (2026-11-10 23:57: the three worktrees cut from `f9928bf`, each with `.env`; `sql/` unchanged since the
+      Gate's init)
 
 ## Design
 
@@ -578,7 +581,7 @@ plain placeholder substitution. It is a reading aid for the copy review, not the
 
 ### H. Amendments from dc-engine planning (2026-11-10, decisions 26 to 29)
 
-H wins where it differs from B to F. `dev/active/dc-engine/plan.md` (Design J) lists the same shapes as what the
+H wins where it differs from B to F. `dev/completed/dc-engine/plan.md` (Design J) lists the same shapes as what the
 engine assumes; a change here after that task starts is a contract change.
 
 **H1. Suggestion data** (decision 26; glossary in phase 2, examples and seed in phase 3, `errors.md` in phase 4)
@@ -670,7 +673,7 @@ engine assumes; a change here after that task starts is a contract change.
 
 Written by the `/task-plan dc-api` session on Kfir's word. It pins what Designs E and F leave open, so that
 `contracts/api.md`, `contracts/errors.md` and the invalid fixtures are written with it; the api plan
-(`dev/active/dc-api/plan.md`, Design H) assumes exactly these lines. I adds to E and F and changes nothing in H.
+(`dev/completed/dc-api/plan.md`, Design H) assumes exactly these lines. I adds to E and F and changes nothing in H.
 Where I and H touch the same point, the path of a `SCHEMA_VIOLATION`, **H4a is the rule that holds**: I1 only says
 what the api does to follow it and what the schema must avoid so that the two validators agree.
 
@@ -687,7 +690,7 @@ what the api does to follow it and what the schema must avoid so that the two va
 
 The engine validates with Python `jsonschema`, the api with JsonSchema.Net 8.0.5 (the last MIT release; from 9.0.0
 the package ships under a maintenance-fee EULA, so decision 10's "JsonSchema.Net" means that version). Both were
-run on a miniature of the schema on 2026-11-10 (`dev/active/dc-api/research/schema-probe.md`). With node types and
+run on a miniature of the schema on 2026-11-10 (`dev/completed/dc-api/research/schema-probe.md`). With node types and
 operand shapes by `if`/`then` they agree on a missing member (the object) and on a wrong value, a wrong `type` and
 an array of the wrong length (the member). They differ in three ways:
 

@@ -1,6 +1,8 @@
 # dc-api notes
 
 ## State
+Merged to main as PR #3 (eec007d); archived 2026-11-12.
+
 The task is at its gate and the gate is passed. All five phases are built, reviewed and fixed; the engine
 (PR #2) is merged into the branch; the live pass ran twice against the real engine, the second time on the
 final code (`gates/live.txt`); the security audit ran and its one critical finding is fixed, with three more
@@ -8,12 +10,14 @@ that probing showed to be real; `/check all --tests` is green (`gates/final.txt`
 this commit, on Kfir's word of 2026-11-11 ("You have my word for the push and the PR. No merge.").
 
 ## Next
-1. Kfir reads the PR (`env -u GITHUB_TOKEN gh pr list --head feat/api`); the merge is his word.
-2. After the merge: `/ship` step 5, the move of this folder to `dev/completed/`.
-3. For Kfir or dc-delivery, from the audit, not done here because none is critical or high and each is a
+Nothing: the task is closed.
+
+Open, carried by dc-delivery:
+1. For Kfir or dc-delivery, from the audit, not done here because none is critical or high and each is a
    decision about deployment or the contract (decision 38): `AllowedHosts`, a limit on concurrent runs, a
    cross-site check on unsafe methods, a cap on an engine answer, `TrustServerCertificate`, security headers
    on the static files.
+2. The list under "Docs for dc-delivery" below, its limitations items among them.
 
 ## Blockers
 None.
@@ -558,3 +562,10 @@ warning by file, what the fix changed, what was left and why, what Kfir rejected
   values of `.env.example`: this worktree's `.env` was written before the engine block existed. The secrets
   scan of `git diff origin/main...HEAD` was repeated before the push. Then the push and the PR, on Kfir's
   word of that morning; no merge.
+- 2026-11-12 closed on paper by the dc-delivery session: it ticked the one box of the Gate that was still open,
+  `/ship`, now true, and left none open: PR #3 merged by Kfir as `eec007d`, its body with "Docs for
+  dc-delivery", and the folder archived. In Next the read and merge of the PR and the move of the folder went
+  (done); the six open items of the security audit (decision 38) and the "Docs for dc-delivery" list are
+  carried as open.
+
+ARCHIVED 2026-11-12: merged to main (PR #3); folder moved from dev/active/ by the dc-delivery task.

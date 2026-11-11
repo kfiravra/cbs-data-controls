@@ -3,7 +3,7 @@ namespace DataControls.Api.Controls;
 /// <summary>
 /// Turns JsonSchema.Net's error units into the paths <c>contracts/errors.md</c> (Schema violations) asks
 /// for, which are the ones Python's jsonschema reports in the engine. Three corrections, each seen in
-/// the probe of both validators (<c>dev/active/dc-api/research/schema-probe.md</c>).
+/// the probe of both validators (<c>dev/completed/dc-api/research/schema-probe.md</c>).
 /// </summary>
 internal static class SchemaErrorPaths
 {

@@ -1,19 +1,22 @@
 # dc-contracts notes
 
 ## State
+Merged to main as PR #1 (f9928bf); archived 2026-11-12.
+
 The task is done up to its merge. Every phase, the review fixes, Kfir's scope decision and his final wording are
 committed on `feat/contracts` and pushed; the PR to main is open (pull 1) and not merged. The Gate ran from a clean
 container on `9b01a4b` (`gates/final.txt`); the two wording commits after it changed text only, and the checks
 passed again on each.
 
 ## Next
-1. The merge, on Kfir's word. Then on main: `scripts/db-init.sh --reset` (the seed is new there), and the three
-   worktrees of kickoff §5 with `.env` copied into each. The local `.env` holds new passwords since the rotation.
-2. A wording change from here on is a contract change: one commit to `contracts/` on main and one line to each
+Nothing: the task is closed.
+
+Open, carried by dc-delivery:
+1. A wording change from here on is a contract change: one commit to `contracts/` on main and one line to each
    session. The lines for the engine, api, web and delivery sessions are already in their plans.
-3. `README.md` was left as it is by the scope decision: its `--render` comment still says "he and en"
+2. `README.md` was left as it is by the scope decision: its `--render` comment still says "he and en"
    (dc-delivery rewrites the README in its phase B4).
-4. `43745cc` keeps three former local dev passwords in `.env.example` in its history, by Kfir's decision: no
+3. `43745cc` keeps three former local dev passwords in `.env.example` in its history, by Kfir's decision: no
    rebase. They were rotated before the push and open nothing.
 
 ## Blockers
@@ -186,3 +189,11 @@ passed again on each.
 - 2026-11-10 on Kfir's word, the three places that still quoted the first wording were updated to the final one:
   `docs/architecture.md` §4.3, decision 12 of this plan, and the rendered-text line of the web plan's contract
   section. Kfir closed the task with that commit; the merge is his.
+- 2026-11-12 closed on paper by the dc-delivery session: it ticked the two boxes of the Gate that were still open,
+  both now true, and left none open. `/ship` and the PR: PR #1 merged by Kfir as `f9928bf`, its body in the shape
+  of `/ship`, and the folder archived. After the merge: the three worktrees were cut from `f9928bf` at 23:57 with
+  `.env` in each, and `sql/` had not changed since the Gate's init (the dev database was also reset from main on
+  2026-11-11, per the dc-web notes). In Next the merge item, now done, went; the other three are carried as
+  open, renumbered 1 to 3. Three paths in plan.md Designs H and I now point to `dev/completed/`.
+
+ARCHIVED 2026-11-12: merged to main (PR #1); folder moved from dev/active/ by the dc-delivery task.

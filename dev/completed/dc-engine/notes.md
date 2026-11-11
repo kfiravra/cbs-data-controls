@@ -1,6 +1,8 @@
 # dc-engine notes
 
 ## State
+Merged to main as PR #2 (0e07fca); archived 2026-11-12.
+
 Done on 2026-11-11, in one unattended night (the night brief, see "Decisions taken unattended"): every phase
 (1 to 5 and 7; 6 was removed by the scope decision), nothing cut, and the gate passed except the two items that
 are Kfir's own (his read of the Hebrew text, and pasting the line for dc-api). The branch `feat/engine` is
@@ -37,13 +39,15 @@ What dc-delivery reads first (its phase B0):
 
 For Kfir's read (the open gate item): `engine/tests/golden/*.text.json` (six files: the rule sentence, a
 sentence per node and one reason per matched node of each example, in Hebrew) and
-`dev/active/dc-engine/gates/suggest-answer.json` (the seven proposals on the seed). A wording change is a
+`dev/completed/dc-engine/gates/suggest-answer.json` (the seven proposals on the seed). A wording change is a
 glossary commit on main: the engine renders the templates as written.
 
 ## Next
-1. Kfir: read the Hebrew text and the `/suggest` answer; read "Decisions taken unattended" (25 items);
-   paste the line under "Lines for the other sessions" into the dc-api session; review and merge the PR.
-2. After the merge: `/ship`'s last step, moving this folder to `dev/completed/`.
+Nothing: the task is closed.
+
+Open, carried by dc-delivery:
+1. Kfir: read "Decisions taken unattended" (25 items).
+2. The list under "Docs for dc-delivery" below, its three "For the limitations document" items among them.
 
 ## Blockers
 None. Steps that need another task's running service are listed under "Waiting for a merge" when they appear.
@@ -467,3 +471,14 @@ phases 1 to 5 in `reviews/phase-1.md` to `phase-5.md`.
   nobody has read them), and the line for dc-api, written above and not pasted. Reviews of the night: seven
   agents on opus (five phase reviews, the image review, the security audit), 3 critical or high findings in
   all (a recursion crash, a parameter-count crash, a quadratic check), each fixed with tests the same night.
+- 2026-11-12 closed on paper by the dc-delivery session: it ticked the three boxes of the Gate that were still
+  open, all now true, and left none open. Kfir's read: he read the Hebrew interface on 2026-11-11 (his
+  statement of 2026-11-12), which shows these sentences, reasons and suggestions; no wording change followed
+  (`contracts/glossary.json` on main is as merged in `f9928bf`), and no words of his on these texts are
+  recorded here. The line for dc-api reached it through these notes (dc-api notes, decision 32, on 2026-11-11).
+  `/ship`: PR #2 merged by Kfir as `0e07fca`, its body with "Docs for dc-delivery" as the fifth section, and
+  the folder archived. In Next the done items went; Kfir's read of the 25 unattended decisions (not shown done)
+  and the "Docs for dc-delivery" list are carried as open. The State's path to `suggest-answer.json` now points
+  to `dev/completed/`.
+
+ARCHIVED 2026-11-12: merged to main (PR #2); folder moved from dev/active/ by the dc-delivery task.

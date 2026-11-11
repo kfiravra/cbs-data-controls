@@ -312,21 +312,23 @@ Commit: `build(engine): container image`
 - [x] The §19 gate item by item, each with the test that proves it: goldens for the six examples; every
       rejection path; injection values bound; the exact planted ids from the seed; `/suggest` yields examples 2 to
       5 exactly.
-- [ ] (open, Kfir's: the files are `engine/tests/golden/*.text.json` and `gates/suggest-answer.json`) Kfir reads
+- [x] (open, Kfir's: the files are `engine/tests/golden/*.text.json` and `gates/suggest-answer.json`) Kfir reads
       `tests/golden/*.text.json` and one `/suggest` answer, in Hebrew. The Log says what
-      he changed or rejected, in his words where he gave them.
+      he changed or rejected, in his words where he gave them. (read by Kfir in the Hebrew interface on
+      2026-11-11, as he stated on 2026-11-12; the Log line of 2026-11-12)
 - [x] `security-auditor` on `git diff origin/main...HEAD` (one agent on opus: state it); fix critical and high.
       The report is saved as `reviews/security.md` and logged per decision 25.
-- [ ] (written in `notes.md`, "Lines for the other sessions", and in the PR body; Kfir pastes it) One line to the
+- [x] (written in `notes.md`, "Lines for the other sessions", and in the PR body; Kfir pastes it) One line to the
       dc-api session: the statement timeout (30 s) and every difference from Design J that phase
-      0 recorded.
+      0 recorded. (reached dc-api through these notes, 2026-11-11)
 - [x] `notes.md` State holds what dc-delivery reads first (its phase B0): the variables as built, the start
       command, the Python versions the suite ran under, which phases were cut, and the "Docs for dc-delivery" list.
-- [ ] (checks, secrets, docs drift and PR body done on 2026-11-11; the push and the PR follow on the night brief's
+- [x] (checks, secrets, docs drift and PR body done on 2026-11-11; the push and the PR follow on the night brief's
       word; the task folder stays in `dev/active/` until the open items close) `/ship dc-engine`. Its docs-drift step proposes edits: apply only those to this task's own files (the
       README's engine section, the engine block of `.env.example`, `.claude/`); every other one joins "Docs for
       dc-delivery". The PR body gets that heading as a fifth section, one line per item: the file and section,
-      what it says, what is true now. Push, PR and merge on Kfir's word.
+      what it says, what is true now. Push, PR and merge on Kfir's word. (PR #2, merged by Kfir as `0e07fca` on
+      2026-11-11; archived by dc-delivery, 2026-11-12)
 
 ## Design
 

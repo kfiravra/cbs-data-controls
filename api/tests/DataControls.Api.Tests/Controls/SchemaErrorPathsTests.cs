@@ -4,7 +4,7 @@ namespace DataControls.Api.Tests.Controls;
 
 /// <summary>
 /// The corrections that make JsonSchema.Net's error units say what the contract asks for. The units are
-/// the ones the probe recorded on the real schema (<c>dev/active/dc-api/research/schema-probe.md</c>).
+/// the ones the probe recorded on the real schema (<c>dev/completed/dc-api/research/schema-probe.md</c>).
 /// </summary>
 public sealed class SchemaErrorPathsTests
 {

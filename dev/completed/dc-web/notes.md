@@ -1,6 +1,8 @@
 # dc-web notes
 
 ## State
+Merged to main as PRs #4 and #5 (612b2b7, d66670d); archived 2026-11-12.
+
 Phase 13, the flowing rule (2026-11-11, Kfir's look at phase 12), is done on `feat/web-ux` for the same PR,
 which is open and not merged. Before it on this branch: phase 12 (`54947e8`, the rule in words in the colours
 of its conditions, and its review fixes `00f8600`), phase 11 (the hot fixes), phase 10 (the last design
@@ -8,23 +10,22 @@ round). `/check all --tests` is green and the gate passed on the real stack, beh
 build the api hosts (`gates/phase-13.txt`).
 
 ## Next
-1. Kfir reads the rule in words at `http://localhost:5000`: one flowing sentence, only the conditions
-   underlined, no line under a joining word (decision 117). The last commit is local: the push to the PR is
-   his word (decision 118). Two things are his to decide: the strength of the coloured lines (decision 103:
+Nothing: the task is closed.
+
+Open, carried by dc-delivery:
+1. Two things are Kfir's to decide: the strength of the coloured lines (decision 103:
    faint at 50%, the review's one critical point), and whether a group should be shown in the sentence in
    some other way, now that nothing draws it. The commits after the reset had no gate run on the real stack
    (decision 116).
-   No new Hebrew text in phases 12 and 13. The texts of phase 10 are still to be read (`list.columns.run`,
-   `list.sort.*`, `results.rule`, `results.archived`, `editor.conditions.waiting`, `editor.ideas.loading`
-   and `.none`, `editor.add.advanced` and `.advancedHint`, `editor.toast.closed`).
-2. The merge of the PR is his.
-3. Still open for dc-delivery (limitations, on Kfir's word): nested groups unnamed for a screen reader in the
+2. Still open for dc-delivery (limitations, on Kfir's word): nested groups unnamed for a screen reader in the
    builder, a conflict that discards the draft, a list row's count that may belong to an older version of the
    rule, a closed draft that lives in memory only and for twelve seconds; and for `docs/architecture.md` §7
    and §8, beside the lines of phase 10: `GET /api/v1/runs/{id}/results` takes `sort=field` with `field` and
    `sort=reasons`; every head of the results sorts; a rule in words is one flowing sentence of plain text
    with no letter and no bracket, each condition's words underlined in the colour of its letter, a group
    shown by a thin neutral line under its joining words (the engine's text is unchanged).
+3. The list under "Docs for dc-delivery" below, its `docs/assumptions-limitations-extensions.md` items among
+   them.
 
 ## Blockers
 - None.
@@ -1325,3 +1326,12 @@ rewrote. A review that found nothing, or did not run, is logged as that.
   last section): the client's type checks, lint, 390 unit tests in 37 files, build and print guard green;
   `e2e/mocked` 221 passed, 5 skipped by project. No gate run on the real stack (decision 116). The api hosts
   the build; the commit is local, since his message has no word for a push (decision 118).
+- 2026-11-12 closed on paper by the dc-delivery session: it ticked the two boxes of the Gate that were still
+  open, both now true, and left none open. Kfir read the Hebrew interface on 2026-11-11 (his statement of
+  2026-11-12), which closes the reading of the phase 10 texts as well. `/ship`: PRs #4 and #5 merged by Kfir as
+  `612b2b7` and `d66670d`, each body with `## Docs for dc-delivery`, and the folder archived; the local commit
+  of decision 118 (`9b5f79a`) is in `d66670d` (same tree). Still true and carried as open: the two choices of
+  decision 103 and 117 that are Kfir's, no gate run on the real stack after the last reset (decision 116),
+  and the limitations and architecture lines for dc-delivery.
+
+ARCHIVED 2026-11-12: merged to main (PRs #4 and #5: 612b2b7, d66670d); folder moved from dev/active/ by the dc-delivery task.

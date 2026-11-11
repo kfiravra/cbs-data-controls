@@ -519,13 +519,14 @@ morning. Open: his reading of the Hebrew interface, and the merge, which is his.
 - [x] After phase 8: the mocked and the gate specs green on `mobile` and `desktop`, the gate on the pre-loaded
       list and, where phase 7 could run it, on the build the api hosts; `/check all --tests` green. The output
       goes to `gates/final.txt`, the screenshots to `gates/final/`.
-- [ ] Kfir reads the Hebrew interface, on the preview script or the screenshots. It is the last cheap moment for a
-      wording change.
+- [x] Kfir reads the Hebrew interface, on the preview script or the screenshots. It is the last cheap moment for a
+      wording change. (read by Kfir on 2026-11-11, as he stated on 2026-11-12)
 - [x] `notes.md` is complete for dc-delivery (Design Q): the hand-over block, a Log line per review, and the drift
       list checked line by line against the documents on main.
-- [ ] `/ship`. Its docs-drift step edits only this task's own files (decision 26). Every other row of its table
+- [x] `/ship`. Its docs-drift step edits only this task's own files (decision 26). Every other row of its table
       becomes a line under a fifth heading of the PR body, `## Docs for dc-delivery`, taken from the list in
-      `notes.md`. Then the PR and the merge on Kfir's word.
+      `notes.md`. Then the PR and the merge on Kfir's word. (PRs #4 and #5, merged by Kfir as `612b2b7` and
+      `d66670d` on 2026-11-11; archived by dc-delivery, 2026-11-12)
 
 ## Design
 
