@@ -2119,7 +2119,11 @@ Running 158 tests using 4 workers
   2 skipped
   156 passed (1.9m)
 --- playwright-mocked: ok
-=== the api restarted with web/dist/web/browser in its wwwroot: {"status":"ok","database":"ok","engine":"ok","version":"1.0.0"}
+=== web/dist/web/browser copied into the api's wwwroot: {"status":"ok","database":"ok","engine":"ok","version":"1.0.0"}
+(corrected afterwards: this line said "the api restarted". It was not. The script aimed its stop at a wrong process id,
+so the api started after api-test at 09:48 kept running, its wwwroot was removed and filled again under it, and the
+second start found the port taken and exited. The two gate runs below ran on that api, which served the new files:
+the index it answered was the build's. A run on an api started after the copy is at the end of this file.)
 === engine: {"status":"ok","database":"ok","glossaryVersion":"1.0.0","engineVersion":"0.1.0"}
 === the list before the gate runs: 10 controls without a tag (final-list-before.txt), 6 of them active
 no suite running
@@ -2214,4 +2218,45 @@ Running 16 tests using 1 worker
 
   16 passed (1.6m)
 --- gate-hosted-build-again: ok
+--- listing of untagged controls after it, every page: equal to the one before, and to final-list-before.txt
+
+=== after the correction above: the api stopped by its real process id and started again at 10:03, the build already in its wwwroot
+api: {"status":"ok","database":"ok","engine":"ok","version":"1.0.0"} ; the index it serves equals web/dist/web/browser/index.html: yes
+=== e2e/mocked/results.spec.ts with the duration test widened to 9, 49, 50 and 412 ms (both projects)
+[38/38] [desktop] › e2e/mocked/results.spec.ts:375:3 › run results › a run of an archived control cannot be run again, and the screen says why
+  2 skipped
+  36 passed (29.0s)
+=== web-e2e-types: npm run -s typecheck:e2e
+--- web-e2e-types: ok
+=== web-eslint: npx ng lint
+
+Linting "web"...
+
+All files pass linting.
+
+--- web-eslint: ok
+no suite running
+=== gate-hosted-build-restarted: E2E_BASE_URL=http://localhost:5000 npm run -s e2e:gate
+
+Running 16 tests using 1 worker
+
+  ✓   1 [mobile] › e2e/gate/examples.spec.ts:43:5 › the six examples on the real stack › example 1 is built in the editor, saved, run and read (4.5s)
+  ✓   2 [mobile] › e2e/gate/examples.spec.ts:43:5 › the six examples on the real stack › example 2 is built in the editor, saved, run and read (2.6s)
+  ✓   3 [mobile] › e2e/gate/examples.spec.ts:43:5 › the six examples on the real stack › example 3 is built in the editor, saved, run and read (4.4s)
+  ✓   4 [mobile] › e2e/gate/examples.spec.ts:43:5 › the six examples on the real stack › example 4 is built in the editor, saved, run and read (15.5s)
+  ✓   5 [mobile] › e2e/gate/examples.spec.ts:43:5 › the six examples on the real stack › example 5 is built in the editor, saved, run and read (5.3s)
+  ✓   6 [mobile] › e2e/gate/examples.spec.ts:43:5 › the six examples on the real stack › example 6 is built in the editor, saved, run and read (7.1s)
+  ✓   7 [mobile] › e2e/gate/list.spec.ts:11:1 › a control of its own is found, run from its row, filtered in its results, duplicated and archived (6.4s)
+  ✓   8 [mobile] › e2e/gate/suggestions.spec.ts:10:1 › the dialog shows the drafts the engine proposes, and creates one as a control (1.8s)
+  ✓   9 [desktop] › e2e/gate/examples.spec.ts:43:5 › the six examples on the real stack › example 1 is built in the editor, saved, run and read (4.1s)
+  ✓  10 [desktop] › e2e/gate/examples.spec.ts:43:5 › the six examples on the real stack › example 2 is built in the editor, saved, run and read (2.7s)
+  ✓  11 [desktop] › e2e/gate/examples.spec.ts:43:5 › the six examples on the real stack › example 3 is built in the editor, saved, run and read (4.3s)
+  ✓  12 [desktop] › e2e/gate/examples.spec.ts:43:5 › the six examples on the real stack › example 4 is built in the editor, saved, run and read (15.6s)
+  ✓  13 [desktop] › e2e/gate/examples.spec.ts:43:5 › the six examples on the real stack › example 5 is built in the editor, saved, run and read (5.5s)
+  ✓  14 [desktop] › e2e/gate/examples.spec.ts:43:5 › the six examples on the real stack › example 6 is built in the editor, saved, run and read (7.2s)
+  ✓  15 [desktop] › e2e/gate/list.spec.ts:11:1 › a control of its own is found, run from its row, filtered in its results, duplicated and archived (5.7s)
+  ✓  16 [desktop] › e2e/gate/suggestions.spec.ts:10:1 › the dialog shows the drafts the engine proposes, and creates one as a control (1.9s)
+
+  16 passed (1.6m)
+--- gate-hosted-build-restarted: ok
 --- listing of untagged controls after it, every page: equal to the one before, and to final-list-before.txt

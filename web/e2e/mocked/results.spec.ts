@@ -215,17 +215,24 @@ test.describe('run results', () => {
 
   test('the summary says how long the run took, and in words when it took next to nothing', async ({ page, api }) => {
     const control = controlOf(api, 4);
-    const measured = api.addRun(succeededRun(control, RUN));
-    // the real engine answers the sample data in a few milliseconds
-    const quick = succeededRun(control, RUN + 1);
-    const instant = api.addRun({ ...quick, run: { ...quick.run, durationMs: 9 } });
+    const lasting = (id: number, durationMs: number): StoredRun => {
+      const stored = succeededRun(control, id);
+      return api.addRun({ ...stored, run: { ...stored.run, durationMs } });
+    };
+    const summary = page.getByTestId('run-summary');
+    const inWords = t('results.summary.durationUnder');
 
-    await open(page, measured);
-    await expect(page.getByTestId('run-summary')).toContainText(t('results.seconds.other', { count: '0.4' }));
-
-    await open(page, instant);
-    await expect(page.getByTestId('run-summary')).toContainText(t('results.summary.durationUnder'));
-    await expect(page.getByTestId('run-summary')).not.toContainText(t('results.seconds.other', { count: '0' }));
+    // the real engine answers the sample data in a few milliseconds; 49 ms is the last that rounds to nothing
+    for (const [id, durationMs] of [[RUN, 9], [RUN + 1, 49]]) {
+      await open(page, lasting(id, durationMs));
+      await expect(summary).toContainText(inWords);
+      await expect(summary).not.toContainText(t('results.seconds.other', { count: '0' }));
+    }
+    for (const [id, durationMs, shown] of [[RUN + 2, 50, '0.1'], [RUN + 3, 412, '0.4']] as const) {
+      await open(page, lasting(id, durationMs));
+      await expect(summary).toContainText(t('results.seconds.other', { count: shown }));
+      await expect(summary).not.toContainText(inWords);
+    }
   });
 
   test('more violations than the cap: the exact total, how many are shown, and counts over all of them', async ({ page, api }, testInfo) => {

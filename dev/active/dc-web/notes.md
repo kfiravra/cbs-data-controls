@@ -226,8 +226,8 @@ Read by its phase B0 (plan.md Design Q). Complete: phase 7 ran on the real stack
      api's 404 problem.
   8. What this task left in the dev `dq`: the six examples, posted once on 2026-11-11 on Kfir's word from
      `contracts/examples/` as of `f9928bf`, under their Hebrew names, ids 1800 to 1805, active, version 1, never
-     run. And the gate's archived controls with `e2e-` in their names, 18 a run, with their runs: 126 after the
-     seven runs of 2026-11-11, so the store held 136 controls when this task ended. Four archived controls with
+     run. And the gate's archived controls with `e2e-` in their names, 18 a run, with their runs: 144 after the
+     eight runs of 2026-11-11, so the store held 154 controls when this task ended. Four archived controls with
      English names (ids 1462, 1463, 1676, 1677) were there before and are not this task's.
   9. `npm run e2e` is the mocked suite (no service needed); `npm run preview` opens the app over the same
      in-memory api, for reading the Hebrew interface without a backend.
@@ -268,7 +268,7 @@ file under `docs/`) and against what was built.
 - README, the demo walkthrough and the screenshots: a run on the sample data takes about 10 ms, and the summary
   says `פחות משנייה`. The list of the delivered system, six examples never run, is `gate-list.png`.
 - `dev/active/dc-delivery/plan.md`, the before-and-after listing (`...controls?active=all&pageSize=100`): it
-  reads one page. The dev store held 136 controls on 2026-11-11 and each gate run adds 18, so the listing must
+  reads one page. The dev store held 154 controls on 2026-11-11 and each gate run adds 18, so the listing must
   page (the loop of this task's plan.md, Design O), or an example that sorts last drops out and reads as changed.
 - `docs/assumptions-limitations-extensions.md`: the api deletes nothing, so archived controls, the gate's among
   them, stay in the store and in the archived view of the list.
@@ -679,3 +679,14 @@ rewrote. A review that found nothing, or did not run, is logged as that.
   hosted build once more, 16 of 16, with the paged listing equal before and after. Screenshots in
   `gates/final/screenshots/`, the four gate shots of each project among them. The header's "1 changed file" is
   the gate file itself. Secrets: the branch diff and the gate files hold no token and no password value.
+- 2026-11-11 a correction to the final gate, found by the session when it checked the stack it was leaving
+  running: `final.txt` said "the api restarted" before its two gate runs, and it had not. The gate script wrote
+  a wrong process id for the api it started after `api-test`, so its later stop did nothing: the build was
+  copied into the `wwwroot` of an api that kept running (it served the new files; the index it answered was the
+  build's) and the second start found the port taken. The line in `final.txt` now says what happened. The api
+  was then stopped by its real process id and started with the build in place, and the gate ran on it once
+  more at `E2E_BASE_URL=http://localhost:5000`: 16 of 16, the paged listing equal before and after
+  (`final.txt`, the last section). The run of phase 7 on the hosted build (`phase-7.txt`, gate run 4) was on a
+  properly restarted api and stands as written. In the same commit, the review's item on the 49/50 ms edge,
+  left an hour earlier, is taken after all: the mocked spec now reads 9, 49, 50 and 412 ms (36 passed, 2
+  skipped by project). That commit is pushed to the open PR.
