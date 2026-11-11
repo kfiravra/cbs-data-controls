@@ -185,6 +185,20 @@ public sealed class ControlUpdateTests(ApiFixture fixture)
     }
 
     [Fact]
+    public async Task Update_relays_422_and_leaves_the_control_alone_when_a_tree_left_to_the_engine_has_no_root_entity()
+    {
+        // The schema layer does not evaluate a tree this large, so the first thing to read it is the hasher.
+        var created = await CreateAsync();
+        var tooLarge = $$"""{"schemaVersion":1,"where":{"type":"group","op":"and","children":[{{string.Join(',', Enumerable.Repeat("{}", 241))}}]} }""";
+        _engine.Answer(EngineStub.Validate, HttpStatusCode.UnprocessableEntity, EngineFixtures.Read("problem-definition-invalid.json"));
+
+        var response = await ControlRequests.UpdateAsync(_client, created, definitionJson: tooLarge);
+
+        await HttpAssert.ProblemAsync(response, HttpStatusCode.UnprocessableEntity, "DEFINITION_INVALID");
+        await AssertUnchangedAsync(created);
+    }
+
+    [Fact]
     public async Task Update_relays_422_and_leaves_the_control_alone_when_the_engine_rejects_the_new_definition()
     {
         var created = await CreateAsync();

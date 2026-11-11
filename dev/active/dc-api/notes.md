@@ -1,33 +1,34 @@
 # dc-api notes
 
 ## State
-All five phases are built, reviewed and fixed (344 tests pass; the 3 live tests are skipped without
-`DC_LIVE=1`). The gate is green in everything this worktree can run: `/check all --tests`, the package pins,
-the secrets scan, the docs list. One gate step is open, the live pass against the real engine, and it waits for
-the merge of `feat/engine`. Nothing was pushed and no PR is open: Kfir's word for the unattended run was "gate
-blocked only by steps waiting for a merge: commit, no push".
+The task is at its gate and the gate is passed. All five phases are built, reviewed and fixed; the engine
+(PR #2) is merged into the branch; the live pass ran twice against the real engine, the second time on the
+final code (`gates/live.txt`); the security audit ran and its one critical finding is fixed, with three more
+that probing showed to be real; `/check all --tests` is green (`gates/final.txt`). The push and the PR follow
+this commit, on Kfir's word of 2026-11-11 ("You have my word for the push and the PR. No merge.").
 
 ## Next
-1. When the engine is on main and runs with the seeded database (dc-delivery's compose, or the engine started
-   from the main tree): say how many minutes it takes, then `cd api && DC_LIVE=1 dotnet test --filter
-   Category=Live` and one walk through `api/requests.http`. Set `Engine__BaseUrl` if the engine is not on 8000.
-2. Live pass green: push `feat/api` and open the PR with `dev/active/dc-api/pr-body.md` as its body. Kfir's word
-   of 2026-11-11 covered both for a passed gate; ask again if the day has changed. No merge without his word.
-3. After the merge: `/ship` step 5, the move of this folder to `dev/completed/`.
+1. Kfir reads the PR (`env -u GITHUB_TOKEN gh pr list --head feat/api`); the merge is his word.
+2. After the merge: `/ship` step 5, the move of this folder to `dev/completed/`.
+3. For Kfir or dc-delivery, from the audit, not done here because none is critical or high and each is a
+   decision about deployment or the contract (decision 38): `AllowedHosts`, a limit on concurrent runs, a
+   cross-site check on unsafe methods, a cap on an engine answer, `TrustServerCertificate`, security headers
+   on the static files.
 
 ## Blockers
-- The live pass needs a running engine; none answers on this machine (`curl localhost:8000/health` gave no
-  connection at 01:08 on 2026-11-11) and this session starts no service from another worktree.
+None.
 
-## Hand-off: the live pass
+## The live pass (done 2026-11-11)
 The three tests of `tests/DataControls.Api.Tests/Live/LiveEngineTests.cs` run the real app with its real engine
 client: the glossary is served; each of the six examples is created, run on its `runDate` and on each of its
 `alternateRuns`, every page of results is read, and the keys and matched ids must equal the example's
 `expected`; each semantic-layer fixture of `contracts/examples/invalid/` must come back 422 with its code and
-path. They need the database up and the engine answering at `Engine:BaseUrl`, and they leave marked controls
-that the suite's sweep deletes. If one fails, the difference is between the engine and the contract's examples,
-or between the stub's fixtures and the real engine: `Fixtures/engine/` was generated from `contracts/`, never
-recorded (decision 9). Until they have run, every claim about the real engine in this task is unproven.
+path. They passed against the merged engine, so the stub's fixtures (`Fixtures/engine/`, generated from
+`contracts/`, decision 9) agree with it on everything those tests read. To run them again: the database up,
+the engine at `Engine:BaseUrl` (`cd engine && uv sync`, then the start command of the README with
+`ENGINE_DB_HOST=127.0.0.1` where `.env` has no engine block), then `cd api && DC_LIVE=1 dotnet test --filter
+Category=Live`. They leave marked controls that the suite's sweep deletes; a walk through `api/requests.http`
+leaves two controls, one of them active.
 
 ## Unattended run (Kfir, 2026-11-11, pasted before going to sleep)
 Run the task to its final gate without questions. At each phase end: review, fix, commit, tick, continue. A
@@ -36,6 +37,15 @@ listed. The SQL Server container is shared and is never stopped, recreated or re
 doubt is noted and the api is built to the contract. Scope is the plan as it stands. Gate passed: push the
 branch and open the PR (his word for both, given in that message), no merge. Gate blocked only by steps that
 wait for a merge: commit, no push.
+
+## Second message (Kfir, 2026-11-11, pasted at 05:53)
+"The engine is merged to main (PR #2). Finish this task now": fetch and merge `origin/main` (merge, no rebase);
+apply the lines for dc-api of `dev/active/dc-engine/notes.md`; start the engine from this worktree (`uv sync`
+included), run the live tests and one walk through `api/requests.http`, stop the engine; "A JSON body that does
+not parse answers what contracts/errors.md says; if the contract is silent, 400. 415 is only for a wrong
+Content-Type."; run the security-auditor pass and fix critical and high findings; `/check all --tests` green,
+then push and open the PR with `pr-body.md` ("You have my word for the push and the PR. No merge."). Same rules
+as the night: no questions, the database container is never stopped or reset, wait if another suite runs.
 
 ## Decisions taken unattended
 1. **The session ran on Fable, not Opus.** The plan gives execution to Opus; a session cannot change its own
@@ -184,9 +194,42 @@ wait for a merge: commit, no push.
     archived with one more `DELETE`, so the default list is as empty as it was. Both stay readable with
     `active=all`.
 
+37. **PR #2 was still open when the message said it was merged.** At 05:53 `origin/main` was `f9928bf` and
+    the PR was open and mergeable. Merging it was not mine to do. The steps that did not need it went first
+    (the 400 rule, the probe of the engine's line, the start of the audit); the merge appeared at 08:36 and
+    `origin/main` was merged into the branch at 08:37 (`cc9ed8c`, no conflict in `README.md` or
+    `.env.example`).
+38. **Of the audit, more than "critical and high" was fixed, and the rest was left on purpose.** Fixed: the
+    critical finding; one rated medium and "suspected" that measuring made serious (50,000 empty children, a
+    body of 146 KB: 23 s and 2.4 GB of allocations in the schema library); and two rated low that were a 500
+    of the kind fixed the same morning (a number outside the decimal range, and `text/json` passing the body
+    guard). Left, each named in the PR body: a limit on concurrent runs and what it answers (a contract
+    question); `AllowedHosts: "*"` (the right list depends on dc-delivery's compose); a cross-site check on
+    unsafe methods; a cap on the size of an engine answer; `TrustServerCertificate=true`; security headers on
+    the static files.
+39. **The api's schema layer evaluates a bounded tree and leaves a larger one to the engine.** More than 240
+    nodes (objects and arrays that are items of an array), more than 10,000 JSON values, or a number that does
+    not fit a decimal: the layer reports nothing and the engine's `/validate` answers, as it does for any
+    definition before a save. The first number is eight times the glossary's 30 conditions, the point past
+    which the engine itself answers with the limit's error alone (its line). The engine checks the schema too,
+    and nothing is stored before it has answered, so no check is lost; what changes is who answers, and that
+    such a tree gets 503 `ENGINE_UNAVAILABLE` while the engine is down instead of a schema answer. Seen live:
+    241 empty children come back 422 `TOO_MANY_CONDITIONS` with `{max: 30, actual: 241}`, 50,000 in 0.05 s,
+    `values: [1e30, 1]` as `VALUE_TYPE_MISMATCH`. The numbers are constants in `DefinitionSchemaValidator`; if
+    the glossary's limits grow past them, trees between the two are answered by the engine, correctly.
+40. **Schema errors are put in order by following only the reported paths** (`DefinitionDocument.Locate`), not
+    by a pointer for every element of the definition. Same order, same `nodeId`; a pointer that leads nowhere
+    still comes last with the id of the node above the place where it leaves the definition.
+41. **The live pass ran twice.** The first (08:41) was on the code before the audit's fixes, which touch the
+    schema layer and the body guard, so it was repeated on the final code (08:56) with the audit's inputs
+    added. The engine was started and stopped for each; the second start is one more than Kfir's message
+    names.
+
 ## Last reviewed
-`0129a3b` (Phase 5), fixes in the commit that carries this line (`fix(api): review fixes`, the last on the
-branch); `f54d6c2` (Phase 4), fixes in `90a5db1`; `96bc1e9` (Phase 3), fixes in `a619323`; `b89bd0b` (Phase 2), fixes in `638787d`; `8e80f74` (Phase 1), fixes in `a781c91`
+Security audit of the whole api (`git diff main -- api .env.example README.md` with the working tree, on
+2026-11-11), fixes in the commit that carries this line (`fix(api): security audit fixes`). Before it:
+`0129a3b` (Phase 5), fixes in `aa3b954`; `f54d6c2` (Phase 4), fixes in `90a5db1`; `96bc1e9` (Phase 3), fixes in
+`a619323`; `b89bd0b` (Phase 2), fixes in `638787d`; `8e80f74` (Phase 1), fixes in `a781c91`.
 
 ## Docs for dc-delivery
 Kept as the work went (plan.md decision 26) and confirmed against what was built at the gate; it is copied into
@@ -240,7 +283,25 @@ the PR body under this heading. Each entry is something a document this task doe
   the engine for at most the attempt timeout (75 s by default) and one more for the body; a run of 5,000
   violations is stored and answered in about 2 s on the development machine.
 - `docs/ai-usage.md`: the Log below, and "Decisions taken unattended" above. The night of 2026-11-11 ran on
-  Fable where the plan names Opus for execution (decision 1); the five phase reviews ran on opus.
+  Fable where the plan names Opus for execution (decision 1); the five phase reviews ran on opus. The
+  morning after (the merge of the engine, the live pass, the audit's fixes) ran in the same Fable session,
+  and the security audit was one `security-auditor` agent on opus.
+
+- `docs/architecture.md` §5, validation layers (decision 39): the api's schema layer evaluates a tree of at
+  most 240 nodes and 10,000 JSON values whose numbers fit a decimal; anything larger is answered by the
+  engine alone, with the limit's own error. In the same place (decisions 33 and 34): a body with a string that
+  is not Unicode text is refused before any layer, and a definition reaches the engine and the store as the
+  text it was sent in.
+- `docs/architecture.md` §10 or the limitations document, from the security audit (decision 38), each open:
+  `AllowedHosts` is `*` (a page can rebind its name to 127.0.0.1 and read the api of a developer machine;
+  `localhost;127.0.0.1` or what compose needs); nothing limits how many runs are in flight, and a run goes on
+  after its client has gone; an unsafe method is not checked for a cross-site origin (a page can start a run
+  with a body-less POST; it cannot read the answer); an engine answer is read whole into memory without a cap;
+  the connection string sets `TrustServerCertificate=true`; the static files carry no `nosniff`,
+  `Content-Security-Policy` or `frame-ancestors`. Sound, per the same audit: no SQL text anywhere, the search
+  is a bound `LIKE` with its wildcards escaped, only `dq_app` and only `dq`, no connection string or driver
+  text in a response or a log, CORS by explicit origins without credentials, no path traversal in static
+  hosting, no secret in the diff.
 
 ## Log
 The times of 2026-11-11 are the times of the commits (`git log`): a first draft of these lines carried
@@ -438,3 +499,62 @@ warning by file, what the fix changed, what was left and why, what Kfir rejected
   `feat/engine` not merged), and therefore no push and no PR, by Kfir's rule for the night. Not run because the
   plan does not ask for it: the `security-auditor` agent that `CLAUDE.md` names for work on error responses
   and a network boundary; it is a candidate before the merge.
+- 2026-11-11 05:53 Kfir's second message (above). `git fetch`: `origin/main` still `f9928bf`, PR #2 open and
+  mergeable, so step 1 had nothing to merge (decision 37). Done while it was open: decision 3 turned as he
+  ruled (a JSON body that does not parse is 400 `MALFORMED` at `""`); the engine's line read from
+  `origin/feat/engine` and probed, which showed two faults in the api (decisions 33 and 34: a 500 for half a
+  surrogate pair anywhere in a definition; a definition made longer on its way to the engine and into the
+  store); the security audit started.
+- 2026-11-11 08:37 `origin/main` (`0e07fca`, PR #2, merged on GitHub at 08:36) merged into `feat/api` as
+  `cc9ed8c`, no conflict. The line for dc-api in the merged `dev/active/dc-engine/notes.md` is the one already
+  read; applied as decision 32.
+- 2026-11-11 08:41 to 08:43 the live pass, first time (`gates/live.txt`). Engine from this worktree (`uv sync`,
+  then the README's start command with `ENGINE_DB_HOST=127.0.0.1 ENGINE_DB_PORT=1433`, because this
+  worktree's `.env` has no engine block). `DC_LIVE=1 dotnet test --filter Category=Live`: 3 passed in 4.2 s.
+  The walk through `api/requests.http` against the api started as the file says: 16 of 16 as expected (201
+  for the create, the run and the accept, 204 for the archive, 200 for the rest; the run of the updated
+  control flags record 1052). Engine and api stopped; the second control of the walk archived (decision 36).
+- 2026-11-11 08:45 `f3f0335`: the 400 rule, the unreadable-string check, the definition's text kept as sent,
+  with their tests (355 passed, 3 skipped), the live gate and decisions 3 and 32 to 36.
+- 2026-11-11 the security audit (started before the merge appeared, reported after `f3f0335`; no clock time
+  was taken): one `security-auditor` agent on opus, read-only, 569 s by its own count, over the whole api
+  (`git diff main -- api .env.example README.md` with the working tree as it stood before `f3f0335`). It
+  ran nothing; its line numbers are of that tree. 1 critical, 0 high, 3 medium, 5 low, 4 info.
+  Critical: `Controls/DefinitionSchemaValidator.cs:54` with `Controls/DefinitionDocument.cs:67,75`, the order
+  of schema errors was taken from a pointer string built for every element of the definition, so one
+  schema-invalid definition under 1 MB (a member name of 500,000 characters over an array of 250,000 items)
+  asks for about 250 GB. Read in the code and true. Fixed in the commit that carries this line (decision
+  40); the same request, with 9,000 items, is answered in 0.02 s in the second live pass.
+  Medium: `Controls/DefinitionSchemaValidator.cs:37`, a wide `children` costs the schema library a lot
+  (reported as suspected). Measured: 1,000 empty children 47 MB, 10,000 5.9 s and 480 MB, 50,000 23 s and
+  2.4 GB, from a body of 146 KB. Fixed in the same commit, not as the audit proposed (a refusal at the
+  array's path) but by leaving the tree to the engine (decision 39). `Runs/RunService.cs:46-58`, nothing
+  limits concurrent runs and a run outlives its client: left, a contract question (decision 38).
+  `appsettings.json:8`, `AllowedHosts` is `*`: left for dc-delivery (decision 38).
+  Low: `Runs/RunsController.cs:23`, a cross-site page can start a run: left.
+  `Hosting/RequestBodyGuardMiddleware.cs:28`, `text/json` passed the new guard and reached the 500 of
+  decision 33: fixed in the same commit. A number outside the decimal range (reported as suspected): probed,
+  `System.FormatException` from the library's `const`, `enum` and `uniqueItems`, a 500 for `"values":[1e30,1]`;
+  fixed in the same commit (decision 39). `Engine/EngineClient.cs:108`, an engine answer has no size cap:
+  left. `Persistence/DatabaseOptions.cs:47` `TrustServerCertificate=true` and `Hosting/StaticHosting.cs` no
+  security headers: left.
+  Info, nothing done: the engine's `errors` and `params` are relayed as they come; `.env` is looked for up to
+  the filesystem root in Development; Swagger UI is served in Production; the body guard's 400 where the
+  contract's sentence says 415, which is Kfir's rule (decision 3).
+  Found sound: listed under "Docs for dc-delivery". Kfir rejected or rewrote: nothing; he was not present.
+  What was left is my decision 38, his to overrule.
+- 2026-11-11 08:56 to 08:57 the live pass, second time, on the final code (`gates/live.txt`, second part): 3
+  live tests passed in 4.6 s; the walk 16 of 16; and the inputs of the morning against the real engine: 240
+  empty children answered by the api with 241 schema errors; 241 and 50,000 answered by the engine with
+  `TOO_MANY_CONDITIONS` alone (0.05 s for 50,000); `values: [1e30, 1]` `VALUE_TYPE_MISMATCH`; half a surrogate
+  pair 400, also as `text/json`; unparsable JSON 400; a wrong media type 415. Both services stopped, the
+  walk's second control archived; the database container untouched throughout.
+- 2026-11-11 09:05 the gate, again, on the final code. `/check all --tests` from the worktree, green
+  (`gates/final.txt`), ten checks, and now with the engine's three because `engine/` is in the tree:
+  `db-check.sh`, `contracts-check.py`, the engine's ruff, pyright and pytest, the api's build with
+  `-warnaserror`, format and 370 tests passed with 3 skipped (the live tests, which ran on their own at
+  08:56), the print guard over all sources, the hook tests; `sql-init` skipped, as in every worktree. The
+  engine's tests were given `ENGINE_DB_HOST=127.0.0.1` and `ENGINE_DB_PORT=1433` in the environment, the
+  values of `.env.example`: this worktree's `.env` was written before the engine block existed. The secrets
+  scan of `git diff origin/main...HEAD` was repeated before the push. Then the push and the PR, on Kfir's
+  word of that morning; no merge.

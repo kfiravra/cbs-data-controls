@@ -22,6 +22,14 @@ internal sealed class DefinitionSchemaValidator(
     // An empty key is how the library marks the error of a `false` subschema.
     private const string FalseSchemaErrorKey = "";
 
+    // What this layer evaluates: at most this many nodes (objects and arrays that are items of an array)
+    // and this many JSON values in all. The library spends about half a millisecond and 50 KB on a node
+    // that fails, so 50,000 empty children, a body of 150 KB, cost 23 seconds and 2.4 GB of allocations.
+    // The first number is eight times the glossary's 30 conditions: past it the engine too stops listing
+    // schema errors and answers with the limit's own error.
+    private const int MaxEvaluatedNodes = 240;
+    private const int MaxEvaluatedValues = 10_000;
+
     // Built once per process: the library registers a schema by its $id and refuses to register it twice.
     private static readonly Lazy<JsonSchema> _schema = new(Load);
 
@@ -32,6 +40,15 @@ internal sealed class DefinitionSchemaValidator(
         if (HasUnsupportedVersion(definition))
         {
             return [new DefinitionError(DefinitionErrorCodes.UnsupportedSchemaVersion, VersionPath, null)];
+        }
+
+        if (!IsEvaluated(definition))
+        {
+            // Not a pass: the engine checks the schema as well, and nothing is saved before it has answered.
+            logger.LogInformation(
+                "A definition was left to the engine's schema check: too large for this layer, or it holds a number the schema library cannot compare {CorrelationId}",
+                requests.Current.CorrelationId);
+            return [];
         }
 
         var results = _schema.Value.Evaluate(definition, _listOutput);
@@ -51,13 +68,8 @@ internal sealed class DefinitionSchemaValidator(
             paths = [string.Empty];
         }
 
-        var positions = DefinitionDocument.PositionsOf(definition);
-        return [.. paths
-            .OrderBy(path => positions.GetValueOrDefault(path, int.MaxValue))
-            .Select(path => new DefinitionError(
-                DefinitionErrorCodes.SchemaViolation,
-                path,
-                DefinitionDocument.NearestNodeId(definition, path)))];
+        return [.. DefinitionDocument.Locate(definition, paths)
+            .Select(located => new DefinitionError(DefinitionErrorCodes.SchemaViolation, located.Pointer, located.NodeId))];
     }
 
     /// <summary>Decided before the schema, as the engine does: a version that is present and is not the number 1.</summary>
@@ -65,6 +77,64 @@ internal sealed class DefinitionSchemaValidator(
         definition.ValueKind == JsonValueKind.Object
         && definition.TryGetProperty(VersionMember, out var version)
         && !(version.ValueKind == JsonValueKind.Number && version.TryGetDouble(out var number) && number == SupportedVersion);
+
+    /// <summary>
+    /// Whether the schema library is given the definition: it is within the two limits, and every number
+    /// in it fits a decimal (const, enum and uniqueItems compare numbers as decimals, and the library
+    /// throws on one that does not).
+    /// </summary>
+    private static bool IsEvaluated(JsonElement definition)
+    {
+        var nodes = 0;
+        var values = 0;
+        return IsEvaluated(definition, isItem: false, ref nodes, ref values);
+    }
+
+    private static bool IsEvaluated(JsonElement element, bool isItem, ref int nodes, ref int values)
+    {
+        if (++values > MaxEvaluatedValues)
+        {
+            return false;
+        }
+
+        switch (element.ValueKind)
+        {
+            case JsonValueKind.Object:
+                if (isItem && ++nodes > MaxEvaluatedNodes)
+                {
+                    return false;
+                }
+
+                foreach (var member in element.EnumerateObject())
+                {
+                    if (!IsEvaluated(member.Value, isItem: false, ref nodes, ref values))
+                    {
+                        return false;
+                    }
+                }
+
+                return true;
+            case JsonValueKind.Array:
+                if (isItem && ++nodes > MaxEvaluatedNodes)
+                {
+                    return false;
+                }
+
+                foreach (var item in element.EnumerateArray())
+                {
+                    if (!IsEvaluated(item, isItem: true, ref nodes, ref values))
+                    {
+                        return false;
+                    }
+                }
+
+                return true;
+            case JsonValueKind.Number:
+                return element.TryGetDecimal(out _);
+            default:
+                return true;
+        }
+    }
 
     private static IEnumerable<SchemaErrorUnit> ErrorUnits(EvaluationResults results)
     {

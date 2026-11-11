@@ -15,13 +15,21 @@ internal static class DefinitionHasher
 {
     private const string RootEntityMember = "rootEntity";
 
-    /// <summary>What a version row keeps of a schema-valid definition.</summary>
+    /// <summary>
+    /// What a version row keeps of a definition. It is also taken, to compare hashes, of a definition the
+    /// engine has not judged yet, which may have no root entity; one that is stored always has.
+    /// </summary>
     public static StoredDefinition ToStored(JsonElement definition) =>
-        new(StoredJson.Minify(definition), Hash(definition), definition.GetProperty(RootEntityMember).GetString() ?? string.Empty);
+        new(StoredJson.Minify(definition), Hash(definition), RootEntityOf(definition));
 
     /// <summary>SHA-256 of the canonical form, as 64 lower-case hexadecimal characters.</summary>
     public static string Hash(JsonElement definition) =>
         Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(Canonical(definition))));
+
+    private static string RootEntityOf(JsonElement definition) =>
+        definition.TryGetProperty(RootEntityMember, out var rootEntity) && rootEntity.ValueKind == JsonValueKind.String
+            ? rootEntity.GetString() ?? string.Empty
+            : string.Empty;
 
     internal static string Canonical(JsonElement definition) =>
         StoredJson.Write(writer => WriteCanonical(writer, definition));

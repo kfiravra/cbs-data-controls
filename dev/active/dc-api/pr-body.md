@@ -15,6 +15,10 @@ The .NET 10 application API of Data Controls (`api/`), serving every row of the 
   every response and on every engine call.
 - **Engine client** with one retry for fast failures, an attempt timeout above the engine's worst case and a
   circuit breaker that counts only an engine that does not answer.
+- **Bounded input**: a body is at most 1 MB and 64 levels deep and every string in it is Unicode text (else
+  413 or 400); the api's schema check evaluates a tree of at most 240 nodes and 10,000 values and leaves a
+  larger one to the engine, which answers with the limit's own error; a definition reaches the engine and the
+  store as the text it was sent in.
 - OpenAPI at `/openapi/v1.json`, Swagger UI at `/api/docs`, `api/requests.http`, and static hosting of the client's
   build with the fallback to `index.html`.
 
@@ -33,21 +37,44 @@ docker compose up -d db && scripts/db-init.sh          # from the main tree, onc
 cd api && dotnet build -warnaserror && dotnet format --verify-no-changes && dotnet test
 ```
 
-344 tests pass and 3 are skipped (the live tests below). The tests run the real app against the shared database as `dq_app` (rows marked `zz-dc-api-test-`,
-swept before and after) with the engine stubbed at its HTTP handler; expected values are read from `contracts/`.
+370 tests pass and 3 are skipped (the live tests below). The tests run the real app against the shared
+database as `dq_app` (rows marked `zz-dc-api-test-`, swept before and after) with the engine stubbed at its
+HTTP handler; expected values are read from `contracts/`.
 
-Waiting for the engine (`feat/engine`) to be merged and running:
+Against the real engine, merged from main (PR #2) and started from this branch's tree:
 
 ```sh
 cd api && DC_LIVE=1 dotnet test --filter Category=Live   # the six examples and the semantic fixtures, for real
 ```
 
-and one walk through `api/requests.http` against the running stack.
+and one walk through `api/requests.http`. Both were run twice on 2026-11-11, the second time on the final code:
+3 live tests passed, 16 of 16 requests answered as the contract's table says
+(`dev/active/dc-api/gates/live.txt`). `/check all --tests` is green (`dev/active/dc-api/gates/final.txt`).
+
+## Security audit
+
+One read-only `security-auditor` pass over the whole api (the Log in `dev/active/dc-api/notes.md` lists every
+finding): 1 critical, 0 high, 3 medium, 5 low.
+
+- Fixed, critical: the order of schema errors was taken from a pointer built for every element of the
+  definition, so one invalid definition under 1 MB could ask for hundreds of gigabytes. Only the reported
+  paths are followed now.
+- Fixed, rated medium and measured as worse: 50,000 empty children (146 KB) cost the schema library 23 s and
+  2.4 GB of allocations. A tree past 240 nodes or 10,000 values is left to the engine (0.05 s, live).
+- Fixed, low: a number outside the decimal range in a `values` list was a 500; `text/json` passed the body
+  guard.
+- Left open, none critical or high, each a deployment or contract decision: `AllowedHosts` is `*`; nothing
+  limits concurrent runs; an unsafe method is not checked for a cross-site origin; an engine answer has no
+  size cap; `TrustServerCertificate=true`; no security headers on the static files.
 
 ## Risks and rollback
 
 - The engine fixtures are generated from the contract's examples and glossary, not recorded from the engine.
-  The live tests are the check, and they have not run yet.
+  The live tests are the check; they pass against the merged engine.
+- Where the contract is silent the two services differ on three inputs no client of ours builds: JSON text
+  that does not parse (api 400, engine 415), half a surrogate pair in a string (api 400, engine 422) and a
+  body nested deeper than 64 levels (api 400).
+- The items the security audit left open, above.
 - The tests write to the shared `DataControls` database; a killed run leaves marked rows until the next run.
 - JsonSchema.Net is pinned to 8.0.5, its last MIT release, behind one class.
 - Rollback: the branch adds `api/` and touches nothing another component reads; reverting the merge removes it.
@@ -104,4 +131,21 @@ Documents this task does not own, and what each should say about the api as buil
   the engine for at most the attempt timeout (75 s by default) and one more for the body; a run of 5,000
   violations is stored and answered in about 2 s on the development machine.
 - `docs/ai-usage.md`: the Log below, and "Decisions taken unattended" above. The night of 2026-11-11 ran on
-  Fable where the plan names Opus for execution (decision 1); the five phase reviews ran on opus.
+  Fable where the plan names Opus for execution (decision 1); the five phase reviews ran on opus. The
+  morning after (the merge of the engine, the live pass, the audit's fixes) ran in the same Fable session,
+  and the security audit was one `security-auditor` agent on opus.
+- `docs/architecture.md` §5, validation layers (decision 39): the api's schema layer evaluates a tree of at
+  most 240 nodes and 10,000 JSON values whose numbers fit a decimal; anything larger is answered by the
+  engine alone, with the limit's own error. In the same place (decisions 33 and 34): a body with a string that
+  is not Unicode text is refused before any layer, and a definition reaches the engine and the store as the
+  text it was sent in.
+- `docs/architecture.md` §10 or the limitations document, from the security audit (decision 38), each open:
+  `AllowedHosts` is `*` (a page can rebind its name to 127.0.0.1 and read the api of a developer machine;
+  `localhost;127.0.0.1` or what compose needs); nothing limits how many runs are in flight, and a run goes on
+  after its client has gone; an unsafe method is not checked for a cross-site origin (a page can start a run
+  with a body-less POST; it cannot read the answer); an engine answer is read whole into memory without a cap;
+  the connection string sets `TrustServerCertificate=true`; the static files carry no `nosniff`,
+  `Content-Security-Policy` or `frame-ancestors`. Sound, per the same audit: no SQL text anywhere, the search
+  is a bound `LIKE` with its wildcards escaped, only `dq_app` and only `dq`, no connection string or driver
+  text in a response or a log, CORS by explicit origins without credentials, no path traversal in static
+  hosting, no secret in the diff.

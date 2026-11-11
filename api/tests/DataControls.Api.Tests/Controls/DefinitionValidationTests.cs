@@ -181,6 +181,78 @@ public sealed class DefinitionValidationTests(ApiFixture fixture)
     }
 
     [Fact]
+    public async Task Validate_returns_one_error_at_the_root_and_stays_cheap_when_a_long_unknown_member_name_holds_a_wide_array()
+    {
+        // Within what this layer evaluates. A pointer for every element of it would be 9,000 pointers of
+        // 50,000 characters: 900 MB.
+        var definition = $$"""{"schemaVersion":1,"{{new string('a', 50_000)}}":[{{string.Join(',', Enumerable.Repeat("0", 9_000))}}]}""";
+        var before = GC.GetTotalAllocatedBytes();
+
+        var response = await _client.PostAsync(Path, Body.Definition(definition));
+
+        var allocated = GC.GetTotalAllocatedBytes() - before;
+        var problem = await HttpAssert.ProblemAsync(response, HttpStatusCode.UnprocessableEntity, "DEFINITION_INVALID");
+        HttpAssert.JsonEqual("""[{"code":"SCHEMA_VIOLATION","path":"","params":{}}]""", HttpAssert.Errors(problem));
+        Assert.InRange(allocated, 0, 200L * 1024 * 1024);
+        Assert.Empty(_engine.Calls);
+    }
+
+    [Fact]
+    public async Task Validate_lists_every_child_itself_when_the_tree_has_as_many_nodes_as_this_layer_evaluates()
+    {
+        var response = await _client.PostAsync(Path, Body.Definition(GroupOf(Enumerable.Repeat("{}", 240))));
+
+        var problem = await HttpAssert.ProblemAsync(response, HttpStatusCode.UnprocessableEntity, "DEFINITION_INVALID");
+        var paths = problem.GetProperty("errors").EnumerateArray().Select(error => error.GetProperty("path").GetString()).ToList();
+        Assert.Equal(241, paths.Count);
+        Assert.Equal(["/where/children", "/where/children/0", "/where/children/1"], paths.Take(3));
+        Assert.Equal("/where/children/239", paths[^1]);
+        Assert.Empty(_engine.Calls);
+    }
+
+    [Theory]
+    [InlineData(241)]
+    [InlineData(50_000)]
+    public async Task Validate_leaves_the_definition_to_the_engine_and_stays_cheap_when_the_tree_has_more_nodes_than_this_layer_evaluates(int children)
+    {
+        // The schema library spends about half a millisecond and 50 KB on each empty child: 23 s and 2.4 GB for 50,000.
+        var engineErrors = """[{"code":"TOO_MANY_CONDITIONS","path":"/where","params":{"max":30}}]""";
+        _engine.Answer(EngineStub.Validate, HttpStatusCode.UnprocessableEntity, EngineFixtures.Problem("DEFINITION_INVALID", 422, errors: engineErrors));
+        var before = GC.GetTotalAllocatedBytes();
+
+        var response = await _client.PostAsync(Path, Body.Definition(GroupOf(Enumerable.Repeat("{}", children))));
+
+        var allocated = GC.GetTotalAllocatedBytes() - before;
+        var problem = await HttpAssert.ProblemAsync(response, HttpStatusCode.UnprocessableEntity, "DEFINITION_INVALID");
+        HttpAssert.JsonEqual(engineErrors, HttpAssert.Errors(problem));
+        Assert.Single(_engine.CallsTo(EngineStub.Validate));
+        Assert.InRange(allocated, 0, 200L * 1024 * 1024);
+    }
+
+    [Fact]
+    public async Task Validate_leaves_the_definition_to_the_engine_when_it_holds_more_values_than_this_layer_evaluates()
+    {
+        var condition = $$"""{"type":"condition","id":"c1","left":{"field":"age"},"operator":"in","values":[{{string.Join(',', Enumerable.Range(0, 10_000))}}]}""";
+
+        var response = await _client.PostAsync(Path, Body.Definition(GroupOf([condition])));
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Single(_engine.CallsTo(EngineStub.Validate));
+    }
+
+    [Theory]
+    [InlineData("""{"type":"condition","id":"c1","left":{"field":"age"},"operator":"in","values":[1e30,1]}""")]
+    [InlineData("""{"type":"condition","id":"c1","left":{"field":"age"},"operator":"in","values":[1e400,1]}""")]
+    [InlineData("""{"type":1e30,"id":"c1","left":{"field":"age"},"operator":"lt","value":1}""")]
+    public async Task Validate_leaves_the_definition_to_the_engine_when_a_number_is_outside_the_range_the_schema_library_compares(string node)
+    {
+        var response = await _client.PostAsync(Path, Body.Definition(GroupOf([node])));
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Single(_engine.CallsTo(EngineStub.Validate));
+    }
+
+    [Fact]
     public async Task Validate_returns_503_engine_unavailable_when_the_schema_passes_and_the_engine_is_down()
     {
         _engine.Refuse(EngineStub.Validate);
@@ -189,4 +261,8 @@ public sealed class DefinitionValidationTests(ApiFixture fixture)
 
         await HttpAssert.ProblemAsync(response, HttpStatusCode.ServiceUnavailable, "ENGINE_UNAVAILABLE");
     }
+
+    /// <summary>A definition whose root group holds the given children, written as JSON.</summary>
+    private static string GroupOf(IEnumerable<string> children) =>
+        $$"""{"schemaVersion":1,"rootEntity":"employee","where":{"type":"group","op":"and","children":[{{string.Join(',', children)}}]} }""";
 }

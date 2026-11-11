@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Unicode;
 using DataControls.Api.Errors;
+using Microsoft.Net.Http.Headers;
 
 namespace DataControls.Api.Hosting;
 
@@ -16,6 +17,7 @@ internal sealed class RequestBodyGuardMiddleware(RequestDelegate next)
     public const int MaxBodyBytes = 1024 * 1024;
 
     private const int ReadBufferBytes = 16 * 1024;
+    private const string TextJson = "text/json";
 
     public async Task InvokeAsync(HttpContext context)
     {
@@ -25,7 +27,7 @@ internal sealed class RequestBodyGuardMiddleware(RequestDelegate next)
             throw ApiException.RequestRejected(StatusCodes.Status413PayloadTooLarge);
         }
 
-        if (request.HasJsonContentType() && request.ContentLength != 0)
+        if (IsReadAsJson(request) && request.ContentLength != 0)
         {
             // Read once, into memory (the limit bounds it), and hand the same bytes to the binders.
             var body = await ReadAsync(request.Body, context.RequestAborted);
@@ -40,6 +42,15 @@ internal sealed class RequestBodyGuardMiddleware(RequestDelegate next)
 
         await next(context);
     }
+
+    /// <summary>
+    /// Every media type MVC's JSON formatter reads: <c>application/json</c>, a <c>+json</c> suffix and
+    /// <c>text/json</c>. A body the formatter would read and this guard did not is the gap to avoid.
+    /// </summary>
+    private static bool IsReadAsJson(HttpRequest request) =>
+        request.HasJsonContentType()
+        || (MediaTypeHeaderValue.TryParse(request.ContentType, out var mediaType)
+            && mediaType.MediaType.Equals(TextJson, StringComparison.OrdinalIgnoreCase));
 
     /// <summary>Reads the body to its end; a length that was not declared is still held to the limit.</summary>
     private static async Task<MemoryStream> ReadAsync(Stream source, CancellationToken cancellationToken)

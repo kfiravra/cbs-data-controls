@@ -270,14 +270,17 @@ Commit: `feat(api): suggestions, openapi and static hosting`
       write the hand-off to dc-delivery into `notes.md`; the tests are ready to run there.
       (2026-11-11 01:35: no engine answers on this machine and `feat/engine` is not merged; the step waited.
       2026-11-11 08:43: done after the merge of PR #2, on Kfir's word, with the engine started from this
-      worktree: 3 live tests passed, 16 of 16 requests of the walk as expected; `gates/live.txt`.)
+      worktree: 3 live tests passed, 16 of 16 requests of the walk as expected; repeated at 08:57 on the
+      final code, after the security audit's fixes, with the same result; `gates/live.txt`.)
 - [x] `notes.md` holds the Log line of the start from another directory (Design I) and a Log line per review in
       the form of decision 27.
 - [ ] `/ship`. In its docs-drift step, edit only what decision 26 gives this task; everything else goes, item by
       item, into the PR body under a fifth heading, "Docs for dc-delivery", taken from the list in `notes.md`
       and from the step's own table. Then the PR and the merge on Kfir's word.
-      (2026-11-11: checks, secrets and docs drift are done and the PR body is `pr-body.md` in this folder. The
-      push and the PR wait for the live pass.)
+      (2026-11-11 01:35: checks, secrets and docs drift are done and the PR body is `pr-body.md` in this
+      folder; the push and the PR wait for the live pass. 2026-11-11 morning: live pass and security audit
+      done, checks and secrets scan repeated; the push and the PR follow on Kfir's word of that morning. The
+      box stays open for the merge, which is his, and for the move of this folder to `dev/completed/`.)
 
 ## Design
 

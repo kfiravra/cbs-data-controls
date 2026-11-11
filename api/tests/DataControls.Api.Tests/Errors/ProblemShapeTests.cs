@@ -71,6 +71,19 @@ public sealed class ProblemShapeTests(ApiFixture fixture)
     }
 
     [Fact]
+    public async Task Body_returns_400_malformed_at_the_root_when_it_is_sent_as_text_json_and_a_string_holds_half_a_surrogate_pair()
+    {
+        // MVC reads text/json as JSON too, so the guard has to.
+        var content = new StringContent($$"""{"name":"x{{HalfPair}}"}""", Encoding.UTF8);
+        content.Headers.ContentType = new MediaTypeHeaderValue("text/json");
+
+        var response = await _client.PostAsync("/_probe/items", content);
+
+        var problem = await HttpAssert.ProblemAsync(response, HttpStatusCode.BadRequest, "REQUEST_INVALID");
+        HttpAssert.JsonEqual("""[{"path":"","code":"MALFORMED","params":{}}]""", HttpAssert.Errors(problem));
+    }
+
+    [Fact]
     public async Task Body_returns_400_malformed_at_the_root_when_a_string_holds_bytes_that_are_not_utf8()
     {
         byte[] bytes = [.. """{"name":"x"""u8, 0xFF, .. "\"}"u8];
