@@ -70,34 +70,19 @@
 }
 
 // The thread: inside a group, and inside what a condition on related records holds, the joining words and
-// the spaces carry a thin neutral line at the foot of the coloured ones, and each coloured line runs into it
-// where it fades. The group reads as one unbroken underlined run; the joining words of the top level carry
-// nothing. The thread is the text's own colour, thinned, so it holds on every ground; a group inside a
-// group has it a little heavier.
-[data-thread] {
-  --thread: color-mix(in oklab, currentColor 60%, transparent);
-  --thread-size: 1px;
-}
-
-[data-thread='2'] {
-  --thread-size: 2px;
-}
-
+// the spaces beside them carry a thin neutral line at the foot of the coloured ones, from the end of one
+// condition's words to the start of the next. The group reads as one unbroken underlined run; the joining
+// words of the top level carry nothing. The thread is never under a condition's own words: a coloured line
+// is that colour alone from end to end, and no line lies over another. It is the text's own colour, thinned,
+// so it holds on every ground and stays quieter than the colours beside it.
 .rule-gap[data-thread],
 .rule-lead[data-thread] {
+  --thread: color-mix(in oklab, currentColor 45%, transparent);
+
   background-image: linear-gradient(var(--thread), var(--thread));
   background-repeat: no-repeat;
   background-position: 0 calc(100% - 0.05em);
-  background-size: 100% var(--thread-size);
-}
-
-.clause[data-tone][data-thread] {
-  background-image:
-    linear-gradient(90deg, transparent, var(--tone) var(--fade), var(--tone) calc(100% - var(--fade)), transparent),
-    linear-gradient(90deg, var(--thread), transparent var(--fade), transparent calc(100% - var(--fade)), var(--thread));
-  background-size:
-    100% 0.2em,
-    100% var(--thread-size);
+  background-size: 100% 1px;
 }
 
 // the copy of a rule that is read aloud is not also taken when the rule is selected and copied
@@ -110,12 +95,9 @@
   animation: clause-settle var(--duration-settle) var(--ease-out) both;
 }
 
-// (the second size is the thread's, which a tied condition draws as a second line and which does not move)
 @keyframes clause-settle {
   from {
-    background-size:
-      100% 0.5em,
-      100% var(--thread-size, 0);
+    background-size: 100% 0.5em;
   }
 }
 

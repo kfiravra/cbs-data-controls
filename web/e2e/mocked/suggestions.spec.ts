@@ -17,6 +17,26 @@ async function openDialog(page: Page): Promise<void> {
 }
 
 test.describe('suggestions panel', () => {
+  test('suggestions carry one icon wherever they are offered: the button beside "new control" and the row of a new control', async ({ page }) => {
+    /** The icon a button carries: its name, and the drawing itself. */
+    const icon = (testId: string) =>
+      page
+        .getByTestId(testId)
+        .locator('mat-icon')
+        .first()
+        .evaluate((element) => [element.getAttribute('data-mat-icon-name'), element.querySelector('svg')?.innerHTML ?? '']);
+    await page.goto('/');
+    await expect(page.getByTestId('control-row').first()).toBeVisible();
+    const onList = await icon('open-suggestions');
+    expect(onList[0]).toBe('sparkle');
+    expect(onList[1]).not.toBe('');
+
+    await page.goto('/controls/new');
+    await page.getByTestId('root-entity').first().click();
+    await expect(page.getByTestId('ideas-toggle')).toBeVisible();
+    expect(await icon('ideas-toggle')).toEqual(onList);
+  });
+
   test('shows the engine drafts as cards with their sentence and marks, none ticked, and saves or runs nothing', async ({ page, api }, testInfo) => {
     api.delay('POST /suggestions', 500);
     await openDialog(page);

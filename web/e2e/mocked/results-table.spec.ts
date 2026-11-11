@@ -149,7 +149,7 @@ test.describe('run results: the order of the records and the layout of the panel
     await shot(page, testInfo, 'results-foot');
   });
 
-  test('a rule with groups is one flowing sentence: no forced line and nothing set in, no line ends on a joining word, a condition stays whole, and a group is shown by the thread under its joining words', async ({ page, api }) => {
+  test('a rule with groups is one flowing sentence: no forced line and nothing set in, no line ends on a joining word, a condition stays whole, and a group is shown by the thread under its joining words, which lies over no coloured line', async ({ page, api }) => {
     // example 4: (one condition and (three joined by or)) or (two joined by and)
     const control = controlOf(api, 4);
     const stored = api.addRun(succeededRun(control, RUN));
@@ -183,14 +183,14 @@ test.describe('run results: the order of the records and the layout of the panel
     // so no line ends on one
     expect(await placed()).toEqual(Array.from({ length: 6 }, () => ({ whole: true, led: true })));
 
-    // the joining words in the order of the rule, with the thread each carries: the first group's own, the
-    // inner group's a step heavier, the one of the top level none, the second group's own
-    expect(await leads.evaluateAll((all) => all.map((lead) => [lead.textContent?.trim(), lead.getAttribute('data-thread')]))).toEqual([
-      [and, '1'],
-      [or, '2'],
-      [or, '2'],
-      [or, null],
-      [and, '1'],
+    // the joining words in the order of the rule, and whether each carries the thread: the first group's
+    // own, the two of the group inside it, the one of the top level (none), the second group's own
+    expect(await leads.evaluateAll((all) => all.map((lead) => [lead.textContent?.trim(), lead.hasAttribute('data-thread')]))).toEqual([
+      [and, true],
+      [or, true],
+      [or, true],
+      [or, false],
+      [and, true],
     ]);
     // as painted: a thin line under a joining word inside a group, and nothing under the one of the top level
     const lines = await leads.evaluateAll((all) =>
@@ -199,13 +199,25 @@ test.describe('run results: the order of the records and the layout of the panel
         return style.backgroundImage === 'none' ? null : style.backgroundSize;
       }),
     );
-    expect(lines).toEqual(['100% 1px', '100% 2px', '100% 2px', null, '100% 1px']);
+    expect(lines).toEqual(['100% 1px', '100% 1px', '100% 1px', null, '100% 1px']);
     // the thread is neutral: the same on every joining word, and none of the conditions' colours
     const threads = await leads.evaluateAll((all) => [...new Set(all.map((lead) => getComputedStyle(lead).backgroundImage).filter((image) => image !== 'none'))]);
     expect(threads).toHaveLength(1);
-    // a condition inside a group runs into the thread at its ends: a second line under its words
-    const tied = sentence.getByTestId('clause').first();
-    expect((await tied.evaluate((element) => getComputedStyle(element).backgroundImage)).split('linear-gradient')).toHaveLength(3);
+    // no line lies over another: under a condition's words there is one line, of that condition's colour
+    // alone, and the thread is under joining words and spaces only
+    const under = await sentence.getByTestId('clause').evaluateAll((all) => all.map((clause) => getComputedStyle(clause).backgroundImage.split('linear-gradient').length - 1));
+    expect(under).toEqual([1, 1, 1, 1, 1, 1]);
+    for (const clause of await sentence.getByTestId('clause').all()) {
+      expect(threads).not.toContain(await clause.evaluate((element) => getComputedStyle(element).backgroundImage));
+      expect(strengthOf(await lineOf(clause))).toBeCloseTo(0.5, 1);
+    }
+    await expect(sentence.locator('[data-testid="clause"][data-thread], [data-testid="clause"] [data-thread]')).toHaveCount(0);
+    // and no piece overlaps the next one: the lines stand side by side
+    const overlap = await sentence.evaluate((element) => {
+      const boxes = [...element.querySelectorAll('[data-testid="rule-unit"], [data-testid="rule-gap"]')].flatMap((piece) => [...piece.getClientRects()]);
+      return boxes.some((a, at) => boxes.some((b, other) => other > at && a.width > 0 && b.width > 0 && a.left < b.right - 0.5 && b.left < a.right - 0.5 && a.top < b.bottom - 0.5 && b.top < a.bottom - 0.5));
+    });
+    expect(overlap).toBe(false);
 
     // what is drawn holds no bracket and no ground of its own; what is read holds the engine's sentence
     expect(await drawn.innerText()).not.toMatch(/[()]/);

@@ -9,8 +9,9 @@ build the api hosts (`gates/phase-13.txt`).
 
 ## Next
 1. Kfir reads the rule in words at `http://localhost:5000`: one flowing sentence, groups tied by a thin
-   neutral line. Two things are his to decide: the strength of the coloured lines (decision 103: faint at
-   50%, the review's one critical point) and the 2px line of a group inside a group (decision 111, mine).
+   neutral line under their joining words, which lies over no coloured line (decision 114). One thing is his
+   to decide: the strength of the coloured lines (decision 103: faint at 50%, the review's one critical
+   point). The last commit had no gate run on the real stack (decision 116).
    No new Hebrew text in phases 12 and 13. The texts of phase 10 are still to be read (`list.columns.run`,
    `list.sort.*`, `results.rule`, `results.archived`, `editor.conditions.waiting`, `editor.ideas.loading`
    and `.none`, `editor.add.advanced` and `.advancedHint`, `editor.toast.closed`).
@@ -427,6 +428,22 @@ Taken on 2026-11-11 in the morning (Kfir's second message: "no questions"):
     no thread, since it has no coloured lines for a thread to join. Its brackets stay unwritten.
 113. No reviewer in this round: his message asks for the specs, the checks, the gate and the push, and names
     none ("fast"). The review of phase 12 stands as the last one.
+114. After the push he wrote "now the colors underline are override each other": the thread was also drawn
+    under the two ends of every coloured line (the second line of decision 110) and at 2px in a group inside
+    a group (decision 111), and on the editor's dark bar it outshone the colours it lay over. Both are taken
+    back. The thread is under the joining words and the spaces beside them only, one weight (1px), at 45% of
+    the text's colour instead of 60% (mine: quieter than the colours it stands between). A coloured line is
+    its own colour alone from end to end, with its faded ends as he asked for them; no line lies over
+    another. What is lost with decision 111: a group inside a group is drawn like its parent. That is his
+    item 2 as he wrote it.
+115. "also use the same stars icon of the suggestion in the create controler also in the get suggestion in
+    the main page new the button new controller" (read as: near the "new control" button): the sparkle is on both buttons that open the suggestions panel (the
+    list's head, and the first-use state, which is the same action). The light bulb had no other use and is
+    removed from the registry and the assets.
+116. No gate run on the real stack for these two notes: the dev database had just been reset on his word,
+    a gate run leaves 18 archived `e2e-` controls in it, and this message gives neither a reset nor a run
+    against the live services. The client's checks and the mocked specs ran; the build is hosted by the api
+    again so he reads it at the same address.
 
 ## Reconciliation with `contracts/` (phase 2, 2026-11-11)
 Read: `api.md`, `errors.md`, `glossary.json`, `control-definition.schema.json`, the six examples and the thirteen
@@ -1278,3 +1295,16 @@ rewrote. A review that found nothing, or did not run, is logged as that.
   unit tests in 37 files and build, the print guard, the hook tests); `e2e/mocked` 219 passed, 5 skipped by
   project; `e2e/gate` 18 of 18 behind the dev server and 18 of 18 on the build the api hosts; the listing
   of untagged controls equal before and after both runs.
+- 2026-11-11, last of all in phase 13, on Kfir's word for it: the dev database was reset from the main tree
+  (`scripts/db-init.sh --reset`, main at `612b2b7`), `db-check` 27 of 27, this worktree's engine and api
+  started again, and the six examples posted through the api (ids 2 to 7, none run yet). The store held 98
+  controls before it, the gate runs' archived `e2e-` ones and what was made by hand while reading (a copy
+  and one taken from a suggestion among the active ones); all of them went with the reset. The container
+  was not stopped. Record: `gates/phase-13-reset.txt`. The branch was pushed before it, at `3a49090`.
+- 2026-11-11, two notes from Kfir after the push of phase 13: "now the colors underline are override each
+  other" and the sparkle on the main page's suggestions button. The neutral line is under joining words and
+  the spaces beside them only, one weight, quieter; no line lies over a coloured one (decision 114). The
+  sparkle is on both buttons that open the suggestions panel, and the light bulb is removed (decision 115).
+  Checks (`gates/phase-13.txt`, its last section): the client's type checks, lint, 390 unit tests in 37
+  files, build and print guard green; `e2e/mocked` 221 passed, 5 skipped by project. No gate run on the real
+  stack and no reset (decision 116); the api hosts the new build, and the store holds the six examples.

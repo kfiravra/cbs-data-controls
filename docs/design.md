@@ -629,9 +629,9 @@ marks the side of a row, a banner or a card.
 
 Icons are Material Symbols, Sharp, weight 400, drawn in the colour of the text beside them: 20px by default, 16px
 inside small text and marks of status, 24px at the head of a state panel. They ship as SVG with the application.
-The suggestions panel is opened with the light bulb. The row of ideas in the editor carries a sparkle, drawn for
-this project in the same box as the Sharp set; its words say what is offered, never that a machine
-made it. A column that does not sort now shows `unfold_more` at 55%; a sorted one an up or down arrow.
+Suggestions carry one icon wherever they are offered, a sparkle: on the button that opens the suggestions
+panel beside "new control", and on the row of ideas in the editor. It is drawn for this project in the same box
+as the Sharp set; the words beside it say what is offered, never that a machine made it. A column that does not sort now shows `unfold_more` at 55%; a sorted one an up or down arrow.
 
 ## Components
 
@@ -716,12 +716,14 @@ The signature of the system.
   the archived editor.
 - **The groups of a rule** are shown by the underline alone: no bracket character of the engine's sentence
   stands on the screen, and a group has no tint, no line of its own and no step in. Inside a group, and inside
-  what a condition on related records holds, the joining words and the spaces carry **the thread**: a thin
-  neutral line (1px, the text's own colour at 60%, so it holds on every ground) at the foot of the coloured
-  ones, and each coloured line runs into it where it fades. The group reads as one unbroken underlined run,
-  from its first word to its last; the words of a condition on related records are tied to what it holds the
-  same way. The joining words of the top level carry no line, so the run stops there. A group inside a group
-  has the thread a little heavier (2px). Only the engine's own group marks are read: the glossary's
+  what a condition on related records holds, the joining words and the spaces beside them carry **the
+  thread**: a thin neutral line (1px, the text's own colour at 45%, so it holds on every ground and stays
+  quieter than the colours) at the foot of the coloured ones, from the end of one condition's words to the
+  start of the next. The group reads as one unbroken underlined run; the words of a condition on related
+  records are tied to what it holds the same way. The thread is never under a condition's own words: a
+  coloured line is that colour alone from end to end, and no line lies over another. The joining words of the
+  top level carry no line, so the run stops there. Every thread is the same, also in a group inside a group.
+  Only the engine's own group marks are read: the glossary's
   `groupOpen` and `groupClose`, in the engine's connecting text. A bracket in a value the user typed, in a
   field's label or in the name of a relationship is data and is written as it is. The engine's text is
   untouched: beside the drawing the plain sentence, brackets and all, is given to assistive technology, and

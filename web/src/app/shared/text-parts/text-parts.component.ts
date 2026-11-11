@@ -23,23 +23,16 @@ interface ClauseView {
   readonly nodeId?: string;
   /** The place of the node's colour in the fixed set; null for joining words and for a node without a mark. */
   readonly tone: number | null;
-  /** How the node is tied into a group of a rule (`Thread`); null for a condition of the top level. */
-  readonly thread: Thread | null;
   readonly pieces: readonly Piece[];
 }
-
-/**
- * The neutral line that ties a group together: 1 inside a group or a condition on related records, 2 inside a
- * group that stands inside another, which is drawn a little heavier.
- */
-type Thread = 1 | 2;
 
 /** The joining word before a condition: it stands with the condition, so no line ends on it. */
 interface Lead {
   readonly text: string;
   /** The space between the word and the condition, as the engine wrote it: the line is not broken at it. */
   readonly glue: string;
-  readonly thread: Thread | null;
+  /** It stands inside a group, or inside what a condition on related records holds: it carries the thread. */
+  readonly tied: boolean;
 }
 
 /** A condition with the joining word before it: one piece of the sentence, kept whole while it fits on a line. */
@@ -53,7 +46,8 @@ interface Unit {
 interface Gap {
   readonly kind: 'gap';
   readonly text: string;
-  readonly thread: Thread | null;
+  /** A space inside a group: it carries the thread, as the joining word beside it does. */
+  readonly tied: boolean;
 }
 
 type FlowItem = Unit | Gap;
@@ -76,7 +70,6 @@ const NO_MARKS: ReadonlyMap<string, string> = new Map();
 const NONE: ReadonlySet<string> = new Set();
 /** The white space at the two ends of a text, and what stands between them. */
 const ENDS = /^(\s*)([\s\S]*?)(\s*)$/;
-const threadOf = (depth: number): Thread | null => (depth <= 0 ? null : depth === 1 ? 1 : 2);
 
 /**
  * Draws text the engine rendered, from its parts: a rule sentence, a condition's clause or a reason. It is
@@ -90,9 +83,10 @@ const threadOf = (depth: number): Thread | null => (depth <= 0 ? null : depth ==
  * is set in. A condition and the joining word before it are one piece, kept whole while it fits on a line, so
  * a line never ends on a joining word and a condition's words stay together. The group marks of a rule are
  * not written (a reason, `markValues`, keeps its own brackets): a group, and what a condition on related
- * records holds, is shown by the underline alone. Inside it the joining words carry a thin neutral line and
- * the coloured lines run into it, so the group reads as one unbroken underlined run; the joining words of
- * the top level carry none. Only the engine's own marks are read (the glossary's, in its connecting text): a
+ * records holds, is shown by the underline alone. Inside it the joining words, and the spaces beside them,
+ * carry a thin neutral line (the thread) between the coloured ones, so the group reads as one unbroken
+ * underlined run; the joining words of the top level carry none. The thread is never drawn under a
+ * condition's own words: a coloured line is that colour alone, from end to end. Only the engine's own marks are read (the glossary's, in its connecting text): a
  * bracket in a value or a label is data and is written as it is. The text itself stays the engine's, brackets
  * included, for assistive technology: beside a drawing that says something by a line or a colour the plain
  * sentence is given to be read, each condition named by its mark, and the drawing is hidden from it.
@@ -101,7 +95,7 @@ const threadOf = (depth: number): Thread | null => (depth <= 0 ? null : depth ==
   selector: 'app-text-parts',
   imports: [NgTemplateOutlet, TranslatePipe, ValueComponent],
   // one line per block: white space between elements would add spaces the engine did not write
-  template: `@if (spoken(); as stretches) {<span class="sr-only plain-copy" data-testid="plain-text">@for (stretch of stretches; track $index) {@if (stretch.mark; as mark) {{{ 'common.condition' | translate: { mark } }} }{{ stretch.text }}}</span>}<span data-testid="drawn-text" [attr.aria-hidden]="spoken() ? 'true' : null">@if (drawing().flow; as flow) {@for (item of flow; track $index) {@if (item.kind === 'gap') {<span class="rule-gap" data-testid="rule-gap" [attr.data-thread]="item.thread">{{ item.text }}</span>} @else {<span class="rule-unit" data-testid="rule-unit">@if (item.lead; as lead) {<span class="rule-lead" data-testid="rule-lead" [attr.data-thread]="lead.thread">{{ lead.text }}<span class="nb">{{ lead.glue }}</span></span>}<ng-container *ngTemplateOutlet="words; context: { $implicit: item.clause }" /></span>}}} @else {@for (item of drawing().clauses; track $index) {<ng-container *ngTemplateOutlet="words; context: { $implicit: item }" />}}</span><ng-template #words let-item>@if (item.nodeId; as id) {<span class="clause" data-testid="clause" [class.clause--changed]="changed().has(id)" [attr.data-node]="id" [attr.data-tone]="item.tone" [attr.data-thread]="item.thread">@for (piece of item.pieces; track $index) {@if (piece.value) {<app-value [text]="piece.text" />} @else if (piece.whole) {<span class="nb">{{ piece.text }}</span>} @else {{{ piece.text }}}}</span>} @else {@for (piece of item.pieces; track $index) {{{ piece.text }}}}</ng-template>`,
+  template: `@if (spoken(); as stretches) {<span class="sr-only plain-copy" data-testid="plain-text">@for (stretch of stretches; track $index) {@if (stretch.mark; as mark) {{{ 'common.condition' | translate: { mark } }} }{{ stretch.text }}}</span>}<span data-testid="drawn-text" [attr.aria-hidden]="spoken() ? 'true' : null">@if (drawing().flow; as flow) {@for (item of flow; track $index) {@if (item.kind === 'gap') {<span class="rule-gap" data-testid="rule-gap" [attr.data-thread]="item.tied ? '' : null">{{ item.text }}</span>} @else {<span class="rule-unit" data-testid="rule-unit">@if (item.lead; as lead) {<span class="rule-lead" data-testid="rule-lead" [attr.data-thread]="lead.tied ? '' : null">{{ lead.text }}<span class="nb">{{ lead.glue }}</span></span>}<ng-container *ngTemplateOutlet="words; context: { $implicit: item.clause }" /></span>}}} @else {@for (item of drawing().clauses; track $index) {<ng-container *ngTemplateOutlet="words; context: { $implicit: item }" />}}</span><ng-template #words let-item>@if (item.nodeId; as id) {<span class="clause" data-testid="clause" [class.clause--changed]="changed().has(id)" [attr.data-node]="id" [attr.data-tone]="item.tone">@for (piece of item.pieces; track $index) {@if (piece.value) {<app-value [text]="piece.text" />} @else if (piece.whole) {<span class="nb">{{ piece.text }}</span>} @else {{{ piece.text }}}}</span>} @else {@for (piece of item.pieces; track $index) {{{ piece.text }}}}</ng-template>`,
   styles: `
     :host {
       display: inline;
@@ -139,12 +133,12 @@ export class TextPartsComponent {
    */
   protected readonly drawing = computed<Drawing>(() => {
     if (this.markValues()) {
-      return { flow: null, clauses: toClauses(this.parts()).map((clause) => this.view(clause, null)), drawn: false };
+      return { flow: null, clauses: toClauses(this.parts()).map((clause) => this.view(clause)), drawn: false };
     }
     const blocks = toBlocks(this.parts(), groupBrackets(this.glossary(), this.language.lang));
     const grouped = blocks.some((block) => block.kind === 'group');
     if (this.marks().size === 0) {
-      return { flow: null, clauses: clausesIn(blocks).map((clause) => this.view(clause, null)), drawn: grouped };
+      return { flow: null, clauses: clausesIn(blocks).map((clause) => this.view(clause)), drawn: grouped };
     }
     const flow = this.flow(blocks);
     const coloured = flow.some((item) => item.kind === 'unit' && item.clause.tone !== null);
@@ -168,17 +162,17 @@ export class TextPartsComponent {
   /**
    * The blocks of a rule as one flow. A joining word goes with the condition after it, into one piece; the
    * space before it stays between the pieces, where a line may be broken. Inside a group (and inside what a
-   * condition on related records holds) the joining words, the spaces and the conditions carry the thread
-   * that ties the group; the words of a related node are tied to what the node holds. Every character is the
-   * engine's, in its order: only the group marks are gone.
+   * condition on related records holds) the joining words and the spaces carry the thread that ties the
+   * group; the space between the words of a related node and what the node holds carries it too. Every
+   * character is the engine's, in its order: only the group marks are gone.
    */
   private flow(blocks: readonly Block[]): FlowItem[] {
     const flow: FlowItem[] = [];
     // the joining word that waits for its condition: one at the most
     const waiting: Lead[] = [];
-    const gap = (text: string, thread: Thread | null) => {
+    const gap = (text: string, tied: boolean) => {
       if (text !== '') {
-        flow.push({ kind: 'gap', text, thread });
+        flow.push({ kind: 'gap', text, tied });
       }
     };
     const walk = (children: readonly Block[], depth: number): void => {
@@ -187,20 +181,19 @@ export class TextPartsComponent {
           walk(child.children, depth + 1);
           return;
         }
-        const thread = threadOf(depth);
+        const tied = depth > 0;
         if (child.clause.nodeId === undefined) {
           const [, before, words, after] = ENDS.exec(plainText(child.clause.parts))!;
-          gap(before, thread);
+          gap(before, tied);
           if (words !== '') {
-            waiting.push({ text: words, glue: after, thread });
+            waiting.push({ text: words, glue: after, tied });
           }
           return;
         }
-        // the words of a related node stand before what the node holds, and are tied to it
+        // the words of a related node stand before what the node holds: the space between the two is tied
         const next = children.at(index + 1);
         const holds = next?.kind === 'group' && !next.logical;
-        const tie = holds ? threadOf(depth + 1) : thread;
-        const view = this.view(child.clause, tie);
+        const view = this.view(child.clause);
         const [first, last] = [view.pieces.at(0), view.pieces.at(-1)];
         const before = first ? ENDS.exec(first.text)![1] : '';
         const after = last ? ENDS.exec(last.text)![3] : '';
@@ -210,21 +203,21 @@ export class TextPartsComponent {
         }));
         const lead = waiting.pop();
         if (!lead) {
-          gap(before, tie);
+          gap(before, tied);
         }
         flow.push({ kind: 'unit', lead: lead ? { ...lead, glue: lead.glue + before } : null, clause: { ...view, pieces } });
-        gap(after, tie);
+        gap(after, tied || holds);
       });
     };
     walk(blocks, 0);
     // joining words that no condition follows are written as they came
     for (const left of waiting) {
-      gap(left.text + left.glue, null);
+      gap(left.text + left.glue, false);
     }
     return flow;
   }
 
-  private view(clause: Clause, thread: Thread | null): ClauseView {
+  private view(clause: Clause): ClauseView {
     const pieces: Piece[] = clause.parts.map((part) => {
       const actual = part.role === 'actual' || part.role === 'otherActual';
       return {
@@ -233,7 +226,7 @@ export class TextPartsComponent {
         whole: part.role === 'value' || (actual && !this.markValues()),
       };
     });
-    return { nodeId: clause.nodeId, tone: (clause.nodeId && this.tones().get(clause.nodeId)) || null, thread, pieces };
+    return { nodeId: clause.nodeId, tone: (clause.nodeId && this.tones().get(clause.nodeId)) || null, pieces };
   }
 }
 

@@ -500,7 +500,11 @@ Same branch, same PR, fast, no reviewer named. His word covers one database rese
       words inside it, none at the top level.
 - [x] The rest as it was: a colour per condition, no letters, no brackets, no grounds.
 - [x] Specs; `/check all --tests`; the gate on the real stack (`gates/phase-13.txt`); the push.
-- [ ] Last of all: the database reset from the main tree and the six examples.
+- [x] Last of all: the database reset from the main tree and the six examples (`gates/phase-13-reset.txt`).
+- [x] Sent after the push: the neutral line lies over no coloured line (under joining words and spaces only,
+      one weight); the sparkle on the main page's suggestions button.
+- [x] The client's checks and the mocked specs for those two; the push. No gate run on the real stack and no
+      reset: neither has his word for this change (decision 116).
 
 ### Gate
 Status, 2026-11-11: `gates/final.txt` holds `/check all --tests` (the engine and the api among its parts now),

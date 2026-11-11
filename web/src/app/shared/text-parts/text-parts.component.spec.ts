@@ -34,12 +34,12 @@ describe('TextPartsComponent', () => {
   const clauses = () => [...host().querySelectorAll<HTMLElement>('[data-testid="clause"]')];
   const drawn = () => host().querySelector<HTMLElement>('[data-testid="drawn-text"]')!;
   const units = () => [...host().querySelectorAll<HTMLElement>('[data-testid="rule-unit"]')];
-  /** Each joining word of the rule with the thread it carries (null: none). */
-  const leads = () => [...host().querySelectorAll<HTMLElement>('[data-testid="rule-lead"]')].map((lead) => [lead.textContent?.trim(), lead.getAttribute('data-thread')]);
-  /** Each condition's words with the thread they are tied by (null: a condition of the top level). */
-  const ties = () => clauses().map((clause) => [clause.getAttribute('data-node'), clause.getAttribute('data-thread')]);
+  /** Each joining word of the rule, and whether it carries the thread. */
+  const leads = () => [...host().querySelectorAll<HTMLElement>('[data-testid="rule-lead"]')].map((lead) => [lead.textContent?.trim(), lead.hasAttribute('data-thread')]);
   /** The spaces between the pieces that carry the thread, counted. */
   const tiedGaps = () => host().querySelectorAll('[data-testid="rule-gap"][data-thread]').length;
+  /** The thread is never on a condition's own words: a coloured line is that colour alone. */
+  const threadOnWords = () => host().querySelectorAll('[data-testid="clause"][data-thread], [data-testid="clause"] [data-thread]').length;
 
   async function draw(inputs: Record<string, unknown>): Promise<void> {
     for (const [name, value] of Object.entries(inputs)) {
@@ -142,13 +142,10 @@ describe('TextPartsComponent', () => {
     // the space before a joining word is between the pieces, where a line may break; the one after it is not
     expect(host().querySelector('[data-testid="rule-gap"]')!.textContent).toBe(' ');
     expect(host().querySelector('[data-testid="rule-lead"] .nb')!.textContent).toBe(' ');
-    // the joining words of the top level carry no line, and its conditions are tied to nothing
-    expect(leads()).toEqual([['and', null]]);
-    expect(ties()).toEqual([
-      ['c1', null],
-      ['c2', null],
-    ]);
+    // the joining words of the top level carry no line, and neither do the spaces beside them
+    expect(leads()).toEqual([['and', false]]);
     expect(tiedGaps()).toBe(0);
+    expect(threadOnWords()).toBe(0);
   });
 
   it('shows what a condition on related records holds by the underline alone: its words and what it holds are one tied run, with no bracket', async () => {
@@ -174,21 +171,18 @@ describe('TextPartsComponent', () => {
       ['c2', '2'],
       ['c3', '3'],
     ]);
-    // one run: the node's words, the conditions it holds, the joining word between them and both spaces
-    expect(ties()).toEqual([
-      ['r1', '1'],
-      ['c2', '1'],
-      ['c3', '1'],
-    ]);
-    expect(leads()).toEqual([['and', '1']]);
+    // one run: the space between the node's words and what it holds, and the joining word inside with its
+    // space, carry the thread; no condition's own words do
+    expect(leads()).toEqual([['and', true]]);
     expect(tiedGaps()).toBe(2);
+    expect(threadOnWords()).toBe(0);
     const named = (mark: string) => t('common.condition', { mark });
     expect(host().querySelector('[data-testid="plain-text"]')!.textContent).toBe(
       `${named('A')} no line with (${named('B')} quantity over 3 and ${named('C')} price under 2)`,
     );
   });
 
-  it('shows a group by the underline alone: inside it the joining words carry the thread, heavier in a group inside a group, and those of the top level carry none', async () => {
+  it('shows a group by the underline alone: inside it the joining words carry the thread, those of the top level carry none, and no condition does', async () => {
     const nested: TextPart[] = [
       { text: '(' },
       { text: 'state: open', nodeId: 'c1' },
@@ -212,20 +206,14 @@ describe('TextPartsComponent', () => {
     // one sentence, the engine's words in their order, and no bracket
     expect(drawn().textContent).toBe('state: open and mail: empty or pay: missing and age over 3 or state: closed');
     expect(units().map((unit) => unit.textContent)).toEqual(['state: open', 'and mail: empty', 'or pay: missing', 'and age over 3', 'or state: closed']);
-    // the first group's own joining words are tied; the inner group's a step heavier; the top level's not at all
+    // the joining words of the first group and of the group inside it are tied alike; the top level's is not
     expect(leads()).toEqual([
-      ['and', '1'],
-      ['or', '2'],
-      ['and', '1'],
-      ['or', null],
+      ['and', true],
+      ['or', true],
+      ['and', true],
+      ['or', false],
     ]);
-    expect(ties()).toEqual([
-      ['c1', '1'],
-      ['c2', '2'],
-      ['c3', '2'],
-      ['c4', '1'],
-      ['c5', '1'],
-    ]);
+    expect(threadOnWords()).toBe(0);
     // a space is tied where it stands inside a group: three of the four here
     expect(tiedGaps()).toBe(3);
     // nothing but pieces and the spaces between them: no line, no block, no step in
@@ -243,14 +231,10 @@ describe('TextPartsComponent', () => {
 
     expect(units().map((unit) => unit.textContent)).toEqual(['a', 'and b', 'or c']);
     expect(leads()).toEqual([
-      ['and', null],
-      ['or', '1'],
+      ['and', false],
+      ['or', true],
     ]);
-    expect(ties()).toEqual([
-      ['c1', null],
-      ['c2', '1'],
-      ['c3', '1'],
-    ]);
+    expect(threadOnWords()).toBe(0);
   });
 
   it('writes a joining word that no condition follows as it came, at the end of the text', async () => {

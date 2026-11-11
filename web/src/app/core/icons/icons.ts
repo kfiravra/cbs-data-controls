@@ -18,7 +18,6 @@ import error from '../../../assets/icons/error.svg';
 import info from '../../../assets/icons/info.svg';
 import inventory from '../../../assets/icons/inventory_2.svg';
 import keyboardArrowDown from '../../../assets/icons/keyboard_arrow_down.svg';
-import lightbulb from '../../../assets/icons/lightbulb.svg';
 import linkOff from '../../../assets/icons/link_off.svg';
 import playArrow from '../../../assets/icons/play_arrow.svg';
 import refresh from '../../../assets/icons/refresh.svg';
@@ -54,7 +53,6 @@ const ICONS = {
   error,
   expand_more: keyboardArrowDown,
   info,
-  lightbulb,
   link_off: linkOff,
   play_arrow: playArrow,
   refresh,
