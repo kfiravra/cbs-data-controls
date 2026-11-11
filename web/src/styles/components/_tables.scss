@@ -196,6 +196,12 @@ a.cell-title,
   color: var(--color-muted);
 }
 
+// the finding is what a row is for: its count is set as strongly as the control's name
+.cell-result .link {
+  font-size: var(--text-body);
+  font-weight: 600;
+}
+
 .status {
   display: inline-flex;
   align-items: center;

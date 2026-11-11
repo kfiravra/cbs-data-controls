@@ -572,7 +572,8 @@ Plain and exact; they step, they do not glow.
 ### Tabs of the list
 
 Two tabs on one Surface track (12px radius, 4px of room): `פעילות` and `ארכיון`, each with the number of controls
-it holds as a small chip. The chosen tab is filled with Inverse. The numbers follow the search and the filter, so
+it holds as a small chip (a Card chip on a resting tab, so its Muted digits keep 5.5:1). The chosen tab is
+filled with Inverse. The numbers follow the search and the filter, so
 a tab says how many of what was asked for it holds. One stop of the keyboard: an arrow, Home or End moves to the
 other tab and shows it. Under the archive tab one line says what the archive is: only controls are archived,
 their runs and results are kept, and each can be duplicated into a new control.
@@ -618,6 +619,8 @@ never ends on a mark. Two forms:
 - **The bar:** in the editor only, at the foot of the panel, always in view. Inverse ground, On inverse text: a
   small heading (`הבקרה במילים`, heard and not seen on a narrow panel), the sentence, one line of status when
   something is unfinished (`תנאי ה לא הושלם: חסר ערך להשוואה.`), and beside them save and, last, save and run.
+  Before a first sentence exists the status line is silent, unless a save was asked for: the hint already says
+  what is awaited, and a warning over a row nobody touched would be a reproach for no mistake.
   **The bar never changes its height:** the sentence has the room of two lines and scrolls inside it when it is
   longer, and the status line keeps its room while it is empty (one line, two on a narrow panel; a status that
   does not fit is cut, and the same words stand in full under the condition they are about). The sentence is the
@@ -630,22 +633,24 @@ never ends on a mark. Two forms:
   conditions were refused (`הבקרה תוצג כאן במילים לאחר תיקון התנאים.`), or the engine does not answer (`אי אפשר
   להציג כעת את הבקרה במילים.`). A sentence that is waiting for its answer is not dimmed, so typing does not make
   it flicker. Changes of the sentence and of the status line are announced politely.
-- **Plain:** on a card, for reading: at the top of a results panel (also for a control that never ran, where the
-  engine is asked for it once), and on each suggestion card.
+- **Plain:** on a card, for reading: at the top of a results panel, and on each suggestion card. A results
+  panel always shows it: where the run carries none (a control that never ran, a run that stopped), the engine
+  is asked once for the sentence of the control, or of the version that ran.
 
 ### What to check
 
 The editor asks `מה רוצים לבדוק?` and answers with one card for each entity the glossary allows a control to
 start from: the entity's name (its plural label) and the glossary's own description of it. The cards are one
 radio group, 12px radius, a Line strong edge; the chosen card is filled with Inverse and shows a check. A new
-control has nothing chosen, and the conditions appear once something is. Arrow keys move the choice, and the
-chosen card (the first, while nothing is chosen) is the group's one tab stop. A save before the choice says so
-under the cards and puts the focus on the first.
+control has nothing chosen, and the conditions appear once something is. The group is one tab stop: the chosen
+card, or the first while nothing is chosen. Arrow keys move between the cards and choose nothing; Space, Enter
+or a click chooses. Another choice starts a control's conditions over, so it is never made by passing over a
+card. A save before the choice says so under the cards and puts the focus on the first.
 
 Under the cards, a small chain shows how those things connect: each name as a chip, in glossary order, and
 between two neighbours a line with a few words that say which holds many of the other (`בכל מחלקה יש עובדים`),
-taken from the cardinality of the relationship that joins them. It is a picture to read: nothing in it can be
-pressed. One sentence under it states what the control will return and lists what else it may ask about
+taken from the cardinality of the relationship that joins them. The chip of the chosen one is filled with
+Inverse, as its card is. It is a picture to read: nothing in it can be pressed. One sentence under it states what the control will return and lists what else it may ask about
 (`הבקרה תחזיר מחלקות. אפשר להתנות גם על: המשרד ועובד במחלקה.`). Everything here is drawn from the glossary and
 assumes no number of entities. The word for an entity is not shown.
 
@@ -703,11 +708,12 @@ list has one filter, `מה נבדק`.
   technology and not seen.
 - **A row of the list:** the name over its description; what it checks; the last run; the result; the actions.
   The name is a link to the results of the control's last run, and for a control that never ran to the control's
-  own results panel, where it can be run. The result is one of: a count as an Action link to that run (`3
+  own results panel, where it can be run; a tooltip says which. The result is set as strongly as the name
+  (Body, 600): it is what the row is for. It is one of: a count as an Action link to that run (`3
   חריגות`), `ללא חריגות` with a check in Success, `ההרצה נעצרה` with the error icon in Danger, both linking to
   their run as the count does, or a dash when the control has never run (on a phone the dash takes no line: `טרם
   הורצה` already says it). The actions: run (a small second button with its label), then icon buttons for edit
-  (the pencil), duplicate and archive. An archived control has duplicate alone.
+  (the pencil), duplicate and archive (a closed box). An archived control has duplicate alone.
 - **A run from the list** stays on the list. The row's button keeps the focus and is marked unavailable while
   the run is on its way, the actions column holds its width, and the start and the outcome are said to assistive
   technology by name (`הרצת הבקרה ”…” הסתיימה: 3 חריגות`); the row's result and its run button are described by
@@ -718,8 +724,9 @@ list has one filter, `מה נבדק`.
   the reasons: one line for each condition the record matched, its mark, then the sentence with the value marked.
   The first header sorts (a button; the sorted column shows an arrow and turns Ink); below 640px a select in the
   toolbar sorts.
-- **Foot:** the range in words, a page size select and previous and next icon buttons. The range is a status:
-  after a search, a filter, a sort or another page it is said to assistive technology.
+- **Foot:** the range in words, a page size select and previous and next icon buttons, which are drawn when
+  there is more than one page. The range is a status: after a search, a filter, a sort or another page it is
+  said to assistive technology.
 
 ### Run summary
 
@@ -731,7 +738,8 @@ words (`פחות משנייה`), never as `0 שניות`.
 ### Picker of runs
 
 In the head of a results panel, under the control's name: a small select that lists the control's runs, newest
-first, each as its day, its time and what it found or how it ended (`10.11.2026, 09:12 · 3 חריגות`). Choosing
+first, each as its day, its time and what it found or how it ended (`10.11.2026, 09:12 · 3 חריגות`; a list
+that is scanned counts in digits). Choosing
 one shows that run, at its own address. It is there when the control has more than one run, and lists the 50
 newest; beside it the head says which version of the control ran. With one run the head says when it ran, in a
 line of text.
@@ -766,10 +774,10 @@ Every empty, waiting and failed state, and what it says. The error codes are tho
 | Nothing in the archive | The list, under the archive tab | State panel, neutral, no icon | That an archived control is shown here, with its runs | None |
 | Never run | A list row; the results panel opened by the control | Text on the row; in the panel the control's name, its rule in words and a state panel, neutral | `טרם הורצה` on the row; in the panel that the control has not run yet and what a run will do | Run (primary, in the panel). An archived control that never ran says so and offers nothing |
 | Run in progress | List row, results | Button with spinner, unavailable (on a list row it keeps the focus); skeleton rows in the table | `ההרצה מתבצעת` | Wait |
-| No violations | Results | State panel, Success | That the control was checked against every record and none matched | Run again |
+| No violations | Results | State panel, Success | That the control was checked against every record and none matched | Run again, in the head |
 | More violations than the cap, `ROW_CAP_EXCEEDED` | Results, above the records | Banner, Warning | The exact total and how many are shown; the figure and the breakdown count all violations; the search, the filter and the sort reach the stored rows only, and a search that finds none there says so | Edit the conditions |
-| Run timed out, `QUERY_TIMEOUT` | Results; the list row shows `ההרצה נעצרה` | State panel, Danger | After how long it stopped, and that nothing was checked | Edit the conditions; run again |
-| Run failed for another reason (a run error other than the two beside it) | Results; the list row shows `ההרצה נעצרה` | State panel, Danger | That the run did not complete, and what stopped it then, in the past tense: the run may be days old, and the text of a live failure would say the system is down now | Run again |
+| Run timed out, `QUERY_TIMEOUT` | Results; the list row shows `ההרצה נעצרה` | State panel, Danger, under the rule that was running | After how long it stopped, and that nothing was checked | Edit the conditions; run again, in the head |
+| Run failed for another reason (a run error other than the two beside it) | Results; the list row shows `ההרצה נעצרה` | State panel, Danger | That the run did not complete, and what stopped it then, in the past tense: the run may be days old, and the text of a live failure would say the system is down now | Run again, in the head |
 | Run still in progress when its results are opened (`running`) | Results; the head offers no run | State panel, neutral, no icon | That the results appear when the run ends | Look again |
 | Engine, database or network not answering, `ENGINE_UNAVAILABLE`, `DATABASE_UNAVAILABLE`, `NETWORK_ERROR` | The list or a panel, under its head | Banner, Danger | What still works (reading) and what waits (run, save) | Try again |
 | A control that cannot be archived | The list, under its head | Banner, Danger | Why, by its code | Its row's own button |
@@ -782,6 +790,9 @@ Every empty, waiting and failed state, and what it says. The error codes are tho
 | Search or filter matches nothing | Under the search | State panel, neutral, no icon | The term searched and what the search looks in | Clear the search |
 | No suggestions | The suggestions panel: one sentence. The editor: nothing at all | Text | That the data shows no pattern that asks for a new control | None |
 | Saved, archived, created, filled from a suggestion | Any | Toast | The result in one line (`הבקרה נשמרה כגרסה 4`) | One optional text button (`שחזור`) |
+
+The head of a results panel is always in view, so a state never repeats the head's own button: where the
+next step is to run again, it is the head's.
 
 Loading never blanks a screen: the head stays, and rows are skeleton bars (Tonal, breathing slowly) in the shape
 of what is to come: rows of the list, records of a run, cards of suggestions, one card where the suggestions for

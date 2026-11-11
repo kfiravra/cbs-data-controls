@@ -143,6 +143,11 @@ export class ControlEditorPage {
     const text = (key: string, params: object = {}) => this.translate.instant(key, params) as string;
     switch (status?.kind) {
       case 'incomplete':
+        // before a first sentence the hint already says what is awaited: a warning over an untouched row
+        // would be a reproach for a mistake nobody made. A save that was refused does name the row
+        if (this.store.sentence().parts === null && !this.store.showErrors()) {
+          return null;
+        }
         return text('editor.status.incomplete', {
           mark: status.mark,
           reason: text(`editor.issueWhat.${status.issue.kind}`),

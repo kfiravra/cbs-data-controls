@@ -24,14 +24,14 @@ import { TextPartsComponent } from '../../shared/text-parts/text-parts.component
           [aria-label]="'suggestions.select' | translate: { name: item().name }"
           (change)="selectedChange.emit($event.checked)"
         />
-        <h3 class="suggestion__name" data-testid="suggestion-name"><bdi>{{ item().name }}</bdi></h3>
+        <h2 class="suggestion__name" data-testid="suggestion-name"><bdi>{{ item().name }}</bdi></h2>
       </div>
       <p class="sentence sentence--body" data-testid="suggestion-sentence">
         <app-text-parts [parts]="item().sentenceParts" [marks]="marks()" />
       </p>
       <p class="suggestion__why">{{ item().rationale }}</p>
       <ul class="evidence" [attr.aria-label]="'suggestions.evidence' | translate">
-        @for (evidence of item().evidence; track evidence.key) {
+        @for (evidence of item().evidence; track $index) {
           <li class="chip num" data-testid="evidence">{{ evidence.text }}</li>
         }
       </ul>

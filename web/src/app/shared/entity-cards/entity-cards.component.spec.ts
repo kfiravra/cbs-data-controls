@@ -64,18 +64,40 @@ describe('EntityCardsComponent', () => {
     expect(chosen).toEqual([ENTITIES[2].key]);
   });
 
-  it('moves the choice with the arrows in the reading direction, round the ends, and from no choice to an end', async () => {
-    await draw();
+  it('moves the focus with the arrows in the reading direction, round the ends, and chooses nothing', async () => {
+    await draw({ chosen: ENTITIES[0].key });
+    document.body.appendChild(host());
+    const focused = () => cards().indexOf(document.activeElement as HTMLButtonElement);
+    cards()[0].focus();
+
     // right to left: the left arrow goes forward
     press(cards()[0], 'ArrowLeft');
-    press(cards()[0], 'ArrowRight');
-    expect(chosen).toEqual([ENTITIES[0].key, ENTITIES.at(-1)!.key]);
-
-    await draw({ chosen: ENTITIES.at(-1)!.key });
+    expect(focused()).toBe(1);
+    press(cards()[1], 'ArrowRight');
+    press(cards()[0], 'ArrowUp');
+    expect(focused()).toBe(ENTITIES.length - 1);
     press(cards().at(-1)!, 'ArrowDown');
-    press(cards().at(-1)!, 'ArrowUp');
-    press(cards().at(-1)!, 'Tab');
-    expect(chosen.slice(2)).toEqual([ENTITIES[0].key, ENTITIES.at(-2)!.key]);
+    expect(focused()).toBe(0);
+    press(cards()[0], 'Tab');
+
+    // passing over a card is no choice: another choice would start a control's conditions over
+    expect(chosen).toEqual([]);
+    host().remove();
+  });
+
+  it('keeps one tab stop: the card the arrows stand on, and the chosen one again once the focus has left', async () => {
+    await draw({ chosen: ENTITIES[0].key });
+    document.body.appendChild(host());
+    cards()[0].focus();
+
+    press(cards()[0], 'ArrowLeft');
+    await fixture.whenStable();
+    expect(cards().map((card) => card.tabIndex)).toEqual(ENTITIES.map((_, index) => (index === 1 ? 0 : -1)));
+
+    cards()[1].dispatchEvent(new FocusEvent('focusout', { bubbles: true, relatedTarget: document.body }));
+    await fixture.whenStable();
+    expect(cards().map((card) => card.tabIndex)).toEqual(ENTITIES.map((_, index) => (index === 0 ? 0 : -1)));
+    host().remove();
   });
 
   it('says that a choice is missing, and by which text, when it is told so', async () => {

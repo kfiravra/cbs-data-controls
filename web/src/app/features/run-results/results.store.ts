@@ -5,6 +5,7 @@ import { EMPTY, Subject, catchError, firstValueFrom, map, of, switchMap } from '
 import { ApiError, toApiError } from '../../core/api/api-error';
 import {
   Control,
+  Definition,
   DefinitionError,
   Page,
   ResultItem,
@@ -74,7 +75,10 @@ export class ResultsStore {
   readonly run = signal<Run | null>(null);
   /** The control, when the panel was opened by it and it has no run. */
   readonly control = signal<Control | null>(null);
-  /** The rule of a control with no run, in the engine's words; null when the engine did not say. */
+  /**
+   * The rule in the engine's words where no run carries it: a control with no run, or a run that stopped
+   * before it had one. Null when the engine did not say.
+   */
   private readonly controlSentence = signal<readonly TextPart[] | null>(null);
   /** A failed load of the run or of its rows. */
   readonly failure = signal<ApiError | null>(null);
@@ -209,7 +213,7 @@ export class ResultsStore {
       this.control.set(control);
       this.marks.set(this.marksService.of(control.definition.where));
       this.loadState.set('ready');
-      void this.readSentence(control);
+      void this.readSentence(() => this.control()?.id === control.id, control.definition);
     } catch (error) {
       if (turn === this.turn) {
         this.fail(error);
@@ -262,6 +266,10 @@ export class ResultsStore {
       const version = await firstValueFrom(this.controlsApi.version(run.controlId, run.controlVersion));
       if (this.run()?.id === run.id) {
         this.marks.set(this.marksService.of(version.definition.where));
+        if (run.sentenceParts === null) {
+          // a run that stopped has no sentence of its own: the rule it was running is asked for once
+          void this.readSentence(() => this.run()?.id === run.id, version.definition);
+        }
       }
     } catch {
       // without the version's definition the screen stays readable: reasons and clauses stand without marks
@@ -285,10 +293,11 @@ export class ResultsStore {
     }
   }
 
-  private async readSentence(control: Control): Promise<void> {
+  /** Asks the engine for a definition's sentence; `current` says whether the answer is still wanted. */
+  private async readSentence(current: () => boolean, definition: Definition): Promise<void> {
     try {
-      const answer = await firstValueFrom(this.controlsApi.validate(control.definition));
-      if (this.control()?.id === control.id) {
+      const answer = await firstValueFrom(this.controlsApi.validate(definition));
+      if (current()) {
         this.controlSentence.set(answer.sentenceParts);
       }
     } catch {

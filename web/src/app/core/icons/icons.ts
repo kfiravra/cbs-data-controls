@@ -4,7 +4,6 @@ import { DomSanitizer } from '@angular/platform-browser';
 
 import accountTree from '../../../assets/icons/account_tree.svg';
 import add from '../../../assets/icons/add.svg';
-import archive from '../../../assets/icons/archive.svg';
 import arrowDownward from '../../../assets/icons/arrow_downward.svg';
 import arrowUpward from '../../../assets/icons/arrow_upward.svg';
 import checkCircle from '../../../assets/icons/check_circle.svg';
@@ -17,6 +16,7 @@ import deleteIcon from '../../../assets/icons/delete.svg';
 import edit from '../../../assets/icons/edit.svg';
 import error from '../../../assets/icons/error.svg';
 import info from '../../../assets/icons/info.svg';
+import inventory from '../../../assets/icons/inventory_2.svg';
 import lightbulb from '../../../assets/icons/lightbulb.svg';
 import linkOff from '../../../assets/icons/link_off.svg';
 import playArrow from '../../../assets/icons/play_arrow.svg';
@@ -36,7 +36,8 @@ import warning from '../../../assets/icons/warning.svg';
 const ICONS = {
   account_tree: accountTree,
   add,
-  archive,
+  // the archive: a closed box (the symbol named `archive` draws an arrow into a tray and reads as a download)
+  archive: inventory,
   arrow_downward: arrowDownward,
   arrow_upward: arrowUpward,
   check_circle: checkCircle,

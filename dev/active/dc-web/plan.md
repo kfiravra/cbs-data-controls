@@ -410,7 +410,7 @@ being built: no three directions and no stop; one direction, and straight on to 
       was chosen is in `notes.md` (decisions 69 to 71).
 
 Part 3:
-- [ ] `/impeccable critique` and `/impeccable polish`, once each; `docs/design.md` in line with what is built.
+- [x] `/impeccable critique` and `/impeccable polish`, once each; `docs/design.md` in line with what is built.
 - [ ] The mocked specs and the gate specs updated; the gate on the real stack (dev server and hosted build);
       `/check all --tests`; output in `gates/phase-9.txt`, screenshots in `screenshots/phase-9/`.
 - [ ] `/phase-review web`, one `fix(web): review fixes` commit, the Log lines.

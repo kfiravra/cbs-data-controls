@@ -96,9 +96,28 @@ test.describe('control editor', () => {
     await expect(page.getByTestId('root-entity').first()).toBeFocused();
     expect(api.callsTo('POST /controls')).toHaveLength(0);
 
+    // the arrows move between the cards and choose nothing; Space chooses the card the focus is on
     await page.keyboard.press('ArrowLeft');
-    await expect(page.getByTestId('root-entity').first()).toHaveAttribute('aria-checked', 'true');
+    await expect(page.getByTestId('root-entity').nth(1)).toBeFocused();
+    await expect(page.getByTestId('root-entity').and(page.locator('[aria-checked="true"]'))).toHaveCount(0);
+    await page.keyboard.press('Space');
+    await expect(page.getByTestId('root-entity').nth(1)).toHaveAttribute('aria-checked', 'true');
     await expect(page.getByTestId('what-error')).toHaveCount(0);
+  });
+
+  test('passing over the cards with the arrows leaves a stored control\'s conditions as they are', async ({ page, api }) => {
+    const control = stored(api);
+    await openStored(page, control);
+    const count = control.definition.where.children.length;
+
+    await page.getByTestId('root-entity').and(page.locator('[aria-checked="true"]')).focus();
+    await page.keyboard.press('ArrowLeft');
+    await page.keyboard.press('ArrowLeft');
+    await page.keyboard.press('ArrowRight');
+
+    await expect(page.getByTestId('condition-row')).toHaveCount(count);
+    await expect(page.getByRole('button', { name: t('editor.toast.restore'), exact: true })).toHaveCount(0);
+    await expect(page.getByTestId('root-entity').and(page.locator('[aria-checked="true"]'))).toHaveCount(1);
   });
 
   test('a new control is offered up to three suggestions for its choice, and one click fills the conditions', async ({ page, api }, testInfo) => {
@@ -475,6 +494,8 @@ test.describe('control editor', () => {
     const banner = page.getByTestId('archived-banner');
     await expect(banner).toContainText(t('errors.CONTROL_ARCHIVED.title'));
     await expect(page.getByTestId('archived-view')).toContainText(control.name);
+    // it can be read: its rule is there in words, under its name
+    await expect(page.getByTestId('archived-view').getByTestId('mark')).toHaveText(letters.slice(0, 2));
     await expect(page.getByTestId('save')).toHaveCount(0);
     await expect(page.getByTestId('sentence-field')).toHaveCount(0);
     await expect(page.getByTestId('condition-builder')).toHaveCount(0);

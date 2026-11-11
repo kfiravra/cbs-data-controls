@@ -351,8 +351,10 @@
   color: var(--color-ink);
   font-weight: 500;
 
+  // the chosen one, as the card above it: filled with the ink, and nothing in the chain looks pressable
   &.is-chosen {
-    box-shadow: inset 0 0 0 1px var(--color-ink);
+    background: var(--color-inverse);
+    color: var(--color-on-inverse);
   }
 }
 

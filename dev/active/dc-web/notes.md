@@ -2,18 +2,19 @@
 
 ## State
 Phase 9, the UX pass, is in work on branch `feat/web-ux` (cut from `origin/main` at `612b2b7` on 2026-11-11;
-PR #4 is merged). Part 1, the one-page structure, is built and committed: the list as the parent route, the
-editor and the results in a panel over it, the tabs, the picker, the cards of what to check, the suggestions
-for a choice, the bar of the rule in words (`gates/phase-9-part-1.txt`: 326 unit tests, 186 mocked specs).
-The gate specs are rewritten for it and have not yet run on the real stack. Part 2 is next, as Kfir changed
-it: one visual direction, no stop.
+PR #4 is merged). Parts 1 and 2 are built and committed: the one-page structure (`22c64f1`) and the new look
+(`3762765`), one direction and one theme, as Kfir changed part 2 (decisions 53 to 71). Part 3 is in work: the
+critique and the polish, then the gate on the real stack, `/check all --tests`, the phase review, the push and
+the PR.
 
 ## Next
-1. Part 2: one direction dealt with the `design-taste-frontend` skill, applied as the only theme; why, in the
-   decisions below. `docs/design.md` is rewritten with it (decision 67).
-2. Part 3: `/impeccable critique` and polish, the gate on the real stack (dev server and hosted build),
-   `/check all --tests`, the phase review, push and PR on Kfir's word of 2026-11-11. No merge; the stack is
-   left running.
+1. Part 3: `/impeccable critique` (two sub-agents) and polish, once each; then the gate on the real stack
+   (dev server and hosted build), `/check all --tests` into `gates/phase-9.txt`, `/phase-review web` and one
+   `fix(web): review fixes` commit; push and PR on Kfir's word of 2026-11-11. No merge; the stack is left
+   running at `http://localhost:5000`.
+2. Kfir reads the new interface and its new Hebrew texts (decision 63 and the keys under `list.tabs`,
+   `list.archiveNote`, `list.noArchived`, `editor.what`, `editor.ideas`, `results.picker`, `results.never`,
+   `suggestions.note`).
 3. Still open from the first gate, for dc-delivery (limitations, on Kfir's word): the phone results layout
    (the breakdown stands before the records), nested groups unnamed for a screen reader, a conflict that
    discards the draft, a list row's count that may belong to an older version of the rule.
@@ -314,15 +315,16 @@ Read by its phase B0 (plan.md Design Q). Complete: phase 7 ran on the real stack
 ## Docs for dc-delivery
 Kept as the work goes (plan.md decision 23, Design Q) and copied into the PR body under this heading at `/ship`.
 Checked on 2026-11-11 against the documents as they stand on main (`eec007d`, which changed the README and no
-file under `docs/`) and against what was built.
+file under `docs/`) and against what was built; read again after the UX pass (phase 9, main at `612b2b7`), which
+rewrote two lines and added the last four.
 
 - `docs/architecture.md` §8, screen 2 ("live sentence preview") and the component list ("rule sentence
   preview"), and §13 ("preview sentence" among the focused Angular tests): the client has no sentence renderer.
   The editor draws the engine's sentence from `POST /controls/validate`, called 400ms after the last edit, and
   keeps the last valid sentence, dimmed, while a row is incomplete. The focused test is that validate loop
   (`editor.sentence.spec.ts`), not a rendering test.
-- `docs/architecture.md` §8, screen 1: the list's actions are run, edit and duplicate, as written; archiving is
-  an action of the editor's page head, and the list has an archived view (the state filter). Screen 3: sorting is
+- `docs/architecture.md` §8, screen 1: the list's actions are run, edit, duplicate and archive (archiving is an
+  action of the row since the UX pass), and the archived controls stand under the list's second tab. Screen 3: sorting is
   by the record's identifying fields only (`sort=display`), filtering is by condition through the breakdown, and a
   definition that no longer fits the glossary is the run error `CONTROL_DEFINITION_OUTDATED`, with the condition
   named by its mark.
@@ -348,14 +350,16 @@ file under `docs/`) and against what was built.
   reads one page. The dev store held 154 controls on 2026-11-11 and each gate run adds 18, so the listing must
   page (the loop of this task's plan.md, Design O), or an example that sorts last drops out and reads as changed.
 - `docs/assumptions-limitations-extensions.md`: the api deletes nothing, so archived controls, the gate's among
-  them, stay in the store and in the archived view of the list.
+  them, stay in the store and under the archive tab of the list.
 - `docs/assumptions-limitations-extensions.md`, on Kfir's word of 2026-11-11, as limitations: on a phone the
   breakdown stands before the records; nested groups have no name for a screen reader; a save conflict loads the
   current version and discards the draft; a list row's count may belong to an older version of the rule. The
   line above about a changed draft holds for a link of the app as well as for a reload or a closed tab
   (decision 38, kept by Kfir).
 - `docs/ai-usage.md`: the Log below. The design pass of phase 8 used the impeccable skill's detector and two
-  opus sub-agents per critique run.
+  opus sub-agents per critique run. The UX pass of phase 9 used `/impeccable shape` (the brief, with no
+  interview), the `design-taste-frontend` dealer for the one direction, one critique run of two opus sub-agents
+  and one opus reviewer.
 - Dropped since the plan: the 1024 screenshot (main's §8 already says 390 and 1440), the missing
   `docs/design.md` row and the "client renders the text" gotcha of `.claude/CLAUDE.md` (both already right on
   main).
@@ -373,7 +377,12 @@ file under `docs/`) and against what was built.
   over the first page of the list. The picker offers a control's 50 newest runs. The word for an entity is not
   shown anywhere in the interface.
 - README, the screenshots: a picture with a panel open is of the window, not of the whole page; the gate leaves a
-  fifth name, `gate-panel`.
+  fifth name, `gate-panel`. Every screenshot of the first delivery shows the old look and the old three screens:
+  the README's images are to be taken again from a gate run on this branch.
+- Any document that names the look or the font (the first design was a cool grey page, a black bar, one cobalt
+  and IBM Plex): the client is now "Frost and slate", white cards on an off-white ground with a slate ink and one
+  teal, in Heebo; `docs/design.md` is rewritten for it, and the third-party notice of the font changes from IBM
+  Plex Sans Hebrew to Heebo (both SIL Open Font License 1.1).
 
 ## Log
 A review's line follows plan.md Design Q: who reviewed and on which model, the diff range, findings per axis and
@@ -803,3 +812,54 @@ rewrote. A review that found nothing, or did not run, is logged as that.
   subsets, one variable file each). `docs/design.md` rewritten for the structure and the look, its frontmatter
   linted with `@google/design.md` (0 errors; the warnings are the orphaned-token kind the first version had).
   Costs said here: one npm install and uninstall, three runs of mocked specs, two unit runs, no agent.
+- 2026-11-11 phase 9, part 3, `/impeccable critique`, once: two opus sub-agents (A read the 50 screenshots of
+  the mocked specs and the sources, 226k tokens; B ran the detector, its overlay and measurements in the
+  browser on the real stack, 153k tokens), said here and not waited for. Score 29 of 40; no P0. What they found
+  and what happened to each, in the polish that followed (once):
+  - P1, arrow keys on the cards of what to check chose the next card and reset the conditions, so two presses
+    lost a control's tree: fixed. The arrows move the focus and choose nothing; Space, Enter or a click chooses
+    (unit and mocked specs; the driver walks with arrows and presses Space).
+  - P2, the list reads as an inventory, the finding its quietest cell: the count is now set as strongly as the
+    name; the archive icon, which read as a download, is a closed box; the name's tooltip says where it leads.
+    Left: a "more" menu for duplicate and archive (Kfir asked for the archive action on the row, in view), a
+    summary line of findings above the list (a new feature).
+  - P2, after a refused save the invalid row sat at the edge of the bar: fixed with a scroll margin on what
+    takes the focus in the panel's body.
+  - P2, the bar warned of an unfinished condition as soon as a card was chosen: fixed. Before a first sentence
+    the status line is silent unless a save was asked for. Left: the bar's height on a phone (174px); it is
+    fixed on purpose, item 10 of the pass.
+  - P2, a run that stopped showed no rule, and its state repeated the head's "run again": fixed. The engine is
+    asked once for the sentence of the version that ran; the three states keep only what the head does not offer.
+  - Measured by B: the count on the resting tab was 4.24:1, fixed (a white chip, 5.5:1); the "previous run" link
+    was 24px tall at 390, fixed (it answers a touch 44px tall); a skipped heading level in the suggestions panel,
+    fixed (card titles are `h2`); NG0955 on opening suggestions (several pieces of evidence share one key),
+    fixed (`track $index`). Not failures: the names and results of the list measure 33px, and answer a touch
+    49px tall through the pseudo-element that was already there; a disabled picker's placeholder is exempt.
+  - Minor, fixed: the gap after the picker's prefix; the picker counts in digits; the letters sat low (-0.22em);
+    no previous and next on a single page; the chain's chosen chip is filled, not outlined; a narrow panel's
+    head is shorter.
+  - Left, with the reason: shortcuts and bulk actions (not in the pass); the whole sentence announced after an
+    edit (as designed in phase 4); a nested rule reading as a formula (the engine's text); "0 violations" beside
+    "no violations found" (two facts of one screen); the value field showing `15000` (the input is the raw
+    number). The reviewers' larger questions (findings first on the list, name after the conditions) are for
+    Kfir.
+  The snapshot is `.impeccable/critique/` in the worktree, untracked and not committed. After the polish:
+  330 unit tests, 188 mocked specs passed and 2 skipped by project.
+- 2026-11-11 phase 9, the gate on the real stack (`gates/phase-9.txt`, working tree on `3762765` plus the
+  polish). The rewritten gate specs passed on their first run on the real stack, 18 of 18 behind the dev server
+  (16 as before and two new: the picker of runs inside the list's test, and a new control filled from the
+  engine's suggestions for its choice). Then the script: `/check all --tests` green (`sql-check` 27 assertions,
+  `contracts-check` 5, the engine's ruff, pyright and 521 tests, the api's build, format and 370 tests with 3
+  live ones skipped by their own switch, the client's ngc, lint, e2e type check, 330 unit tests in 33 files and
+  build at 555 kB initial and 139 kB transfer, the print guard, 226 hook tests; `sql-init` skipped in a
+  worktree); `e2e/mocked` 188 passed and 2 skipped by project; the gate behind the dev server 18 of 18; the
+  api stopped by the process group of its listener, the build copied into its `wwwroot`, started again (the
+  page it serves names the build's main script); the gate on that hosted build 18 of 18.
+  One line of that file was wrong when the script ended, and is corrected in it: the before-and-after listing
+  of untagged controls did not run (the helper in the scratch folder was not executable: "Permission denied"),
+  so the script compared two empty files and printed "equal". The listing was then taken by hand around one
+  more gate run on the hosted build: 12 controls without a tag, 8 of them active, the same before and after,
+  byte for byte (`phase-9-list-before.txt`, `phase-9-list-after.txt`); the store went from 210 controls to 228.
+  The two gate runs inside the script have no listing. Four gate runs today on this branch left 72 archived
+  `e2e-` controls in the dev `dq`. Screenshots: `screenshots/phase-9/` (ignored by git).
+

@@ -68,6 +68,16 @@ describe('TableFootComponent', () => {
     expect(pages).toEqual([3, 1]);
   });
 
+  it('draws no previous and next when everything fits on one page: there is nowhere to go', async () => {
+    ref.setInput('total', 7);
+    await fixture.whenStable();
+
+    const host = fixture.nativeElement as HTMLElement;
+    expect(host.querySelector('[data-testid="page-previous"]')).toBeNull();
+    expect(host.querySelector('[data-testid="page-next"]')).toBeNull();
+    expect(text('table-range')).toBe(t('results.range', { from: 1, to: 7, total: 7 }));
+  });
+
   it('writes the range in words as first row, last row and total when a middle page is shown', async () => {
     ref.setInput('rangeKey', 'results.range');
     ref.setInput('page', 3);

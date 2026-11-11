@@ -294,7 +294,7 @@ export class RunResultsPage {
     const result =
       run.status === 'succeeded'
         ? run.totalCount
-          ? this.counted('results.violations', run.totalCount)
+          ? this.counted('results.picker.found', run.totalCount)
           : this.text('results.picker.none')
         : this.text(run.status === 'running' ? 'results.picker.running' : 'results.picker.stopped');
     return this.text('results.picker.option', {

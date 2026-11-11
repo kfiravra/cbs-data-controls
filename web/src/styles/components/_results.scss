@@ -44,6 +44,18 @@
   dd {
     font-variant-numeric: tabular-nums;
   }
+
+  // a link that stands alone answers a touch the height of a control (as the links of a table row do)
+  a.link {
+    position: relative;
+
+    &::after {
+      content: '';
+      position: absolute;
+      inset-inline: 0;
+      inset-block: -10px;
+    }
+  }
 }
 
 @container sheet (min-width: 900px) {

@@ -219,7 +219,7 @@ test.describe('run results', () => {
     const picker = ui(page).getByTestId('run-picker');
 
     await expect(picker).toContainText('10.11.2026');
-    await expect(picker).toContainText(t('results.violations.other', { count: newest.run.totalCount! }));
+    await expect(picker).toContainText(t('results.picker.found.other', { count: newest.run.totalCount! }));
     // the picker says when the run was; beside it stands only the version that ran
     await expect(ui(page).getByTestId('page-meta')).toHaveText(t('results.metaVersion', { version: newest.run.controlVersion }));
     await picker.click();
@@ -227,7 +227,8 @@ test.describe('run results', () => {
     await expect(options).toHaveCount(3);
     await expect(options.nth(1)).toContainText('09.11.2026');
     await expect(options.nth(1)).toContainText(t('results.picker.stopped'));
-    await expect(options.nth(2)).toContainText(t('results.violations.two'));
+    // a list that is scanned counts in digits
+    await expect(options.nth(2)).toContainText(t('results.picker.found.other', { count: 2 }));
     await shot(page, testInfo, 'results-picker');
 
     await options.nth(2).click();
@@ -384,6 +385,11 @@ test.describe('run results', () => {
 
     const panel = ui(page).getByTestId('state-timed-out');
     await expect(panel).toContainText(t('errors.QUERY_TIMEOUT.title', { timeoutSeconds: 30 }));
+    // the rule that was running is still read back, so "narrow the conditions" has something to point at
+    await expect(ui(page).getByTestId('run-sentence').getByTestId('mark').first()).toHaveText(letters[0]);
+    // the head offers the run again; the state does not repeat it
+    await expect(ui(page).getByTestId('rerun')).toHaveCount(1);
+    await expect(panel.getByRole('button')).toHaveCount(0);
     await expect(panel.getByRole('link', { name: t('results.actions.editConditions') })).toHaveAttribute(
       'href',
       `/controls/${stored.run.controlId}`,

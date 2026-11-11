@@ -203,9 +203,6 @@
           [title]="'results.none.title' | translate"
         >
           <p>{{ 'results.none.body' | translate: { entity: entityLabel() } }}</p>
-          <button actions class="btn btn--secondary" type="button" [attr.aria-disabled]="store.rerunning() ? 'true' : null" (click)="rerun()">
-            <app-icon name="play_arrow" />{{ 'results.actions.rerun' | translate }}
-          </button>
         </app-state-panel>
       }
       @case ('neverRun') {
@@ -247,9 +244,6 @@
           <a actions class="btn btn--secondary" [routerLink]="['/controls', run!.controlId]">
             <app-icon name="edit" />{{ 'results.actions.editConditions' | translate }}
           </a>
-          <button actions class="btn btn--secondary" type="button" [attr.aria-disabled]="store.rerunning() ? 'true' : null" (click)="rerun()">
-            <app-icon name="play_arrow" />{{ 'results.actions.rerun' | translate }}
-          </button>
         </app-state-panel>
       }
       @case ('outdated') {
@@ -274,9 +268,6 @@
         >
           <!-- the run is in the past: the text says what stopped it then, not what is unavailable now -->
           <p>{{ failedReason() | translate }}</p>
-          <button actions class="btn btn--secondary" type="button" [attr.aria-disabled]="store.rerunning() ? 'true' : null" (click)="rerun()">
-            <app-icon name="play_arrow" />{{ 'results.actions.rerun' | translate }}
-          </button>
         </app-state-panel>
       }
       @case ('running') {

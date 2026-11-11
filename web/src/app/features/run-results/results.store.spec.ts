@@ -41,7 +41,8 @@ function run(status: RunStatus, totalCount: number | null, error: RunError | nul
     capExceeded: false,
     durationMs: 412,
     sentence: null,
-    sentenceParts: null,
+    // a run that stopped carries no sentence; one that finished does
+    sentenceParts: status === 'succeeded' ? [] : null,
     conditions: null,
     error,
     previousRun: null,
@@ -61,6 +62,8 @@ const CONTROL: Control = {
   definition: DEFINITION,
 };
 const HISTORY = '/api/v1/controls/7/runs';
+const VALIDATE = '/api/v1/controls/validate';
+const RULE = [{ text: 'total above 100', nodeId: 'c1' }];
 
 const pageOf = (...runs: Run[]): Page<Run> => ({ items: runs, total: runs.length, page: 1, pageSize: HISTORY_SIZE });
 
@@ -98,6 +101,11 @@ describe('ResultsStore', () => {
     }
     (await next(HISTORY)).flush(history);
     await settle();
+    if (withVersion && stored.sentenceParts === null) {
+      // the rule of a run that stopped is asked of the engine, from the definition of the version that ran
+      (await next(VALIDATE, 'POST')).flush({ valid: true, sentence: '', sentenceParts: RULE, conditions: [] });
+      await settle();
+    }
   }
 
   beforeEach(() => {
@@ -133,6 +141,19 @@ describe('ResultsStore', () => {
         expect(store.state()).toBe(state);
       });
     }
+
+    it('shows the rule of a run that stopped, asked of the engine for the version that ran', async () => {
+      await open(run('timed_out', null, { code: 'QUERY_TIMEOUT', params: { timeoutSeconds: 30 } }));
+
+      expect(store.sentenceParts()).toEqual(RULE);
+    });
+
+    it('asks the engine for no rule when the run carries its own', async () => {
+      await open({ ...run('succeeded', 23), sentenceParts: [{ text: 'as it ran', nodeId: 'c1' }] });
+
+      http.expectNone(VALIDATE);
+      expect(store.sentenceParts()).toEqual([{ text: 'as it ran', nodeId: 'c1' }]);
+    });
 
     it('is not found when no run has the id', async () => {
       const opening = store.open(9);
@@ -366,7 +387,7 @@ describe('ResultsStore', () => {
       expect([...store.marks()].map(([id]) => id)).toEqual(['c1', 'c2']);
 
       const parts = [{ text: 'total above 100', nodeId: 'c1' }];
-      (await next('/api/v1/controls/validate', 'POST')).flush({ valid: true, sentence: '', sentenceParts: parts, conditions: [] });
+      (await next(VALIDATE, 'POST')).flush({ valid: true, sentence: '', sentenceParts: parts, conditions: [] });
       await settle();
       expect(store.sentenceParts()).toEqual(parts);
     });
@@ -375,7 +396,7 @@ describe('ResultsStore', () => {
       const { opening } = await openControl(pageOf());
       (await next('/api/v1/controls/7')).flush(CONTROL);
       await opening;
-      (await next('/api/v1/controls/validate', 'POST')).error(new ProgressEvent('error'));
+      (await next(VALIDATE, 'POST')).error(new ProgressEvent('error'));
       await settle();
 
       expect(store.sentenceParts()).toBeNull();
@@ -399,7 +420,7 @@ describe('ResultsStore', () => {
       const { opening } = await openControl(pageOf());
       (await next('/api/v1/controls/7')).flush(CONTROL);
       await opening;
-      (await next('/api/v1/controls/validate', 'POST')).flush({ valid: true, sentence: '', sentenceParts: [], conditions: [] });
+      (await next(VALIDATE, 'POST')).flush({ valid: true, sentence: '', sentenceParts: [], conditions: [] });
 
       const running = store.rerun();
       (await next(HISTORY, 'POST')).flush(run('succeeded', 2));

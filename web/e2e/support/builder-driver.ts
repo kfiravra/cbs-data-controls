@@ -82,16 +82,17 @@ export class BuilderDriver {
       await expect(wanted).toHaveAttribute('aria-checked', 'true');
       return;
     }
-    // arrow keys walk the radio group; next is the left arrow in a right-to-left page. The group's one tab
-    // stop is the chosen card, or the first while nothing is chosen, and from no choice the first arrow
-    // chooses the first card
+    // arrow keys walk the radio group and choose nothing; next is the left arrow in a right-to-left page. The
+    // group's one tab stop is the chosen card, or the first while nothing is chosen; Space chooses
     await options.and(this.page.locator('[tabindex="0"]')).focus();
     for (let step = 0; step <= (await options.count()); step++) {
-      if ((await wanted.getAttribute('aria-checked')) === 'true') {
-        return;
+      if (await wanted.evaluate((card) => card === document.activeElement)) {
+        break;
       }
       await this.page.keyboard.press('ArrowLeft');
     }
+    await expect(wanted).toBeFocused();
+    await this.page.keyboard.press('Space');
     await expect(wanted).toHaveAttribute('aria-checked', 'true');
   }
 

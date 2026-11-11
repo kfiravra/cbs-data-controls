@@ -104,6 +104,12 @@ playwright install --with-deps chromium` needs sudo on WSL: ask the user to run 
   scrollbar beside it. Compare with `document.documentElement.clientWidth`, not the viewport size.
 - A shot with a panel open is of the window, not the whole page (`e2e/support/shots.ts`): the page behind the
   panel is held still by the CDK's block scroll strategy and a full-page picture would show it running on.
+- The entity cards are a radio group whose arrows move the focus and choose nothing; Space, Enter or a click
+  chooses. A choice resets the condition tree, so it must never follow from passing over a card (the critique
+  of 2026-11-11 found two arrow presses losing a control's conditions).
+- A results panel always shows the rule: a run that stopped carries no `sentenceParts`, so the store asks
+  `POST /controls/validate` once with the definition of the version that ran. A store spec of a stopped run
+  answers that request.
 - A new control has nothing chosen: the builder is not in the page until one of the entity cards is pressed, and
   that press asks `POST /suggestions` with `rootEntity` and `max: 3` (a store spec answers it; a mocked spec gets
   the fake api's).

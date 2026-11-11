@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, ElementRef, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, inject, input, output, signal } from '@angular/core';
 
 import { GlossaryEntity } from '../../core/api/api.types';
 import { LanguageService } from '../../core/i18n/language.service';
@@ -6,8 +6,10 @@ import { IconComponent } from '../icon/icon.component';
 
 /**
  * What a control checks, as a choice: one card for each entity the glossary allows, with its name and the
- * glossary's own description of it. One radio group: arrow keys move the choice, and the chosen card (the
- * first, while nothing is chosen) is the one tab stop. It assumes no number of entities.
+ * glossary's own description of it. One radio group with one tab stop: the chosen card, or the first while
+ * nothing is chosen. Arrow keys move between the cards and choose nothing; Space, Enter or a click chooses.
+ * Another choice starts a control's conditions over, so it is never made by passing over a card. It assumes
+ * no number of entities.
  */
 @Component({
   selector: 'app-entity-cards',
@@ -19,6 +21,7 @@ import { IconComponent } from '../icon/icon.component';
       [attr.aria-labelledby]="labelledBy()"
       [attr.aria-describedby]="describedBy() ?? null"
       [attr.aria-invalid]="invalid() ? 'true' : null"
+      (focusout)="onFocusOut($event)"
     >
       @for (entity of entities(); track entity.key; let first = $first) {
         <button
@@ -28,7 +31,7 @@ import { IconComponent } from '../icon/icon.component';
           data-testid="root-entity"
           [attr.data-key]="entity.key"
           [attr.aria-checked]="entity.key === chosen()"
-          [attr.tabindex]="entity.key === chosen() || (chosen() === null && first) ? 0 : -1"
+          [attr.tabindex]="entity.key === (walked() ?? chosen() ?? (first ? entity.key : null)) ? 0 : -1"
           (click)="choose.emit(entity.key)"
           (keydown)="onKey($event)"
         >
@@ -62,6 +65,9 @@ export class EntityCardsComponent {
   readonly invalid = input(false);
   readonly choose = output<string>();
 
+  /** The card the arrow keys stand on while they move through the group; null once the focus has left it. */
+  protected readonly walked = signal<string | null>(null);
+
   /** The first card: where the focus goes when a save found nothing chosen. */
   focus(): void {
     this.cards()[0]?.focus();
@@ -71,7 +77,10 @@ export class EntityCardsComponent {
     return [...this.host.nativeElement.querySelectorAll<HTMLElement>('[role="radio"]')];
   }
 
-  /** Next and previous follow the reading direction: in a right-to-left page the left arrow goes forward. */
+  /**
+   * The arrows move the focus to the next or the previous card, round the ends, and choose nothing. Next and
+   * previous follow the reading direction: in a right-to-left page the left arrow goes forward.
+   */
   protected onKey(event: KeyboardEvent): void {
     const forward = this.language.dir === 'rtl' ? 'ArrowLeft' : 'ArrowRight';
     const back = this.language.dir === 'rtl' ? 'ArrowRight' : 'ArrowLeft';
@@ -80,11 +89,17 @@ export class EntityCardsComponent {
       return;
     }
     event.preventDefault();
-    const entities = this.entities();
-    const current = entities.findIndex((entity) => entity.key === this.chosen());
-    // from no choice, forward lands on the first card and back on the last
-    const next = current === -1 ? (step === 1 ? 0 : entities.length - 1) : (current + step + entities.length) % entities.length;
-    this.choose.emit(entities[next].key);
-    this.cards()[next]?.focus();
+    const cards = this.cards();
+    const current = cards.indexOf(event.currentTarget as HTMLElement);
+    const next = (current + step + cards.length) % cards.length;
+    this.walked.set(this.entities()[next].key);
+    cards[next]?.focus();
+  }
+
+  /** Once the focus is out of the group, its one tab stop is the chosen card again. */
+  protected onFocusOut(event: FocusEvent): void {
+    if (!this.host.nativeElement.contains(event.relatedTarget as Node | null)) {
+      this.walked.set(null);
+    }
   }
 }

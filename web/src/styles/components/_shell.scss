@@ -171,6 +171,11 @@
   line-height: 1;
 }
 
+// on the track the count of a resting tab stands on the card's white: Muted on a grey chip falls under 4.5:1
+.tab:not([aria-selected='true']) .tab__count {
+  background: var(--color-card);
+}
+
 .tab[aria-selected='true'] .tab__count {
   background: var(--color-on-inverse-tonal);
 }
@@ -272,6 +277,11 @@
   .page-head__actions {
     flex-wrap: nowrap;
   }
+
+  // a narrow panel keeps its head short: it stays while the body scrolls
+  .page-head {
+    gap: var(--space-3);
+  }
 }
 
 .sheet__body {
@@ -280,6 +290,12 @@
   padding: var(--space-5) var(--sheet-pad) var(--space-7);
   overflow-y: auto;
   overscroll-behavior: contain;
+}
+
+// what takes the focus in the body is scrolled clear of its edges: the reason under an invalid row stays in
+// view above the foot
+.sheet__body :is(input, textarea, select, button, a, mat-select, [tabindex]) {
+  scroll-margin-block: var(--space-8);
 }
 
 .sheet__foot {
@@ -313,6 +329,10 @@
 
 .run-pick {
   inline-size: min(100%, 23rem);
+
+  .field__prefix {
+    margin-inline-end: var(--space-1);
+  }
 }
 
 @media (min-width: 640px) {

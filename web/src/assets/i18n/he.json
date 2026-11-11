@@ -46,7 +46,9 @@
       "duplicate": "שכפול",
       "duplicateNamed": "שכפול הבקרה ”{{name}}”",
       "archive": "העברה לארכיון",
-      "archiveNamed": "העברת הבקרה ”{{name}}” לארכיון"
+      "archiveNamed": "העברת הבקרה ”{{name}}” לארכיון",
+      "openResults": "תוצאות ההרצה האחרונה",
+      "openControl": "פרטי הבקרה והרצה ראשונה"
     },
     "announce": {
       "started": "הרצת הבקרה ”{{name}}” מתבצעת",
@@ -240,6 +242,10 @@
       "label": "הרצות הבקרה",
       "prefix": "הרצה:",
       "option": "{{date}}, {{time}} · {{result}}",
+      "found": {
+        "one": "חריגה אחת",
+        "other": "{{count}} חריגות"
+      },
       "none": "ללא חריגות",
       "stopped": "ההרצה נעצרה",
       "running": "ההרצה מתבצעת"
