@@ -260,7 +260,7 @@ Commit: `feat(contracts): http api and error catalogue`
 - [x] Kfir reads `uv run scripts/contracts-check.py --render`: the rule sentence and the reasons of the six
       examples, in Hebrew. This is the last moment a wording change is free.
 - [x] `/ship`, then the PR and the merge on Kfir's word. (PR #1, merged by Kfir as `f9928bf` on 2026-11-10;
-      archived by dc-delivery, 2026-11-12)
+      archived by dc-delivery, 2026-11-11)
 - [x] After the merge, on main: `scripts/db-init.sh --reset` if the seed changed since the last init, then the
       three worktrees of kickoff §5, with `.env` copied into each (it is ignored by git, so a new worktree has none).
       (2026-11-10 23:57: the three worktrees cut from `f9928bf`, each with `.env`; `sql/` unchanged since the

@@ -1,7 +1,7 @@
 # dc-ai-suggestions notes
 
 ## State
-Planned, not started. The plan was written on 2026-11-12 from Kfir's brief, without an interview. Decisions 1 to 9
+Planned, not started. The plan was written on 2026-11-11 from Kfir's brief, without an interview. Decisions 1 to 9
 are the brief; decisions 10 to 23 are the planner's and wait for his objection. Nothing of this task is in the
 repository: no `advisor/`, no contract line, no table. Branch `feat/ai-suggestions` does not exist.
 
@@ -21,4 +21,4 @@ repository: no `advisor/`, no contract line, no table. Branch `feat/ai-suggestio
 (none)
 
 ## Log
-- 2026-11-12 created plan from the owner's brief, without an interview, by the dc-delivery session.
+- 2026-11-11 created plan from the owner's brief, without an interview, by the dc-delivery session.

@@ -1,7 +1,7 @@
 # dc-web notes
 
 ## State
-Merged to main as PRs #4 and #5 (612b2b7, d66670d); archived 2026-11-12.
+Merged to main as PRs #4 and #5 (612b2b7, d66670d); archived 2026-11-11.
 
 Phase 13, the flowing rule (2026-11-11, Kfir's look at phase 12), is done on `feat/web-ux` for the same PR,
 which is open and not merged. Before it on this branch: phase 12 (`54947e8`, the rule in words in the colours
@@ -1328,13 +1328,13 @@ rewrote. A review that found nothing, or did not run, is logged as that.
   the build; the commit is local, since his message has no word for a push (decision 118).
 - 2026-11-11, on Kfir's word ("great push it the pr5"): `9b5f79a` pushed to the PR, its text brought in line.
   The PR is open and not merged. (This line was written by the dc-web session in its worktree and never
-  committed there; the dc-delivery session copied it here on 2026-11-12, unchanged.)
-- 2026-11-12 closed on paper by the dc-delivery session: it ticked the two boxes of the Gate that were still
+  committed there; the dc-delivery session copied it here on 2026-11-11, unchanged.)
+- 2026-11-11 closed on paper by the dc-delivery session: it ticked the two boxes of the Gate that were still
   open, both now true, and left none open. Kfir read the Hebrew interface on 2026-11-11 (his statement of
-  2026-11-12), which closes the reading of the phase 10 texts as well. `/ship`: PRs #4 and #5 merged by Kfir as
+  2026-11-11), which closes the reading of the phase 10 texts as well. `/ship`: PRs #4 and #5 merged by Kfir as
   `612b2b7` and `d66670d`, each body with `## Docs for dc-delivery`, and the folder archived; the local commit
   of decision 118 (`9b5f79a`) is in `d66670d` (same tree). Still true and carried as open: the two choices of
   decision 103 and 117 that are Kfir's, no gate run on the real stack after the last reset (decision 116),
   and the limitations and architecture lines for dc-delivery.
 
-ARCHIVED 2026-11-12: merged to main (PRs #4 and #5: 612b2b7, d66670d); folder moved from dev/active/ by the dc-delivery task.
+ARCHIVED 2026-11-11: merged to main (PRs #4 and #5: 612b2b7, d66670d); folder moved from dev/active/ by the dc-delivery task.

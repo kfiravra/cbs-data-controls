@@ -281,7 +281,7 @@ Commit: `feat(api): suggestions, openapi and static hosting`
       folder; the push and the PR wait for the live pass. 2026-11-11 morning: live pass and security audit
       done, checks and secrets scan repeated; the push and the PR follow on Kfir's word of that morning. The
       box stays open for the merge, which is his, and for the move of this folder to `dev/completed/`.)
-      (PR #3, merged by Kfir as `eec007d` on 2026-11-11; folder moved by dc-delivery, 2026-11-12)
+      (PR #3, merged by Kfir as `eec007d` on 2026-11-11; folder moved by dc-delivery, 2026-11-11)
 
 ## Design
 

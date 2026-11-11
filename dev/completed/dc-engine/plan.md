@@ -315,7 +315,7 @@ Commit: `build(engine): container image`
 - [x] (open, Kfir's: the files are `engine/tests/golden/*.text.json` and `gates/suggest-answer.json`) Kfir reads
       `tests/golden/*.text.json` and one `/suggest` answer, in Hebrew. The Log says what
       he changed or rejected, in his words where he gave them. (read by Kfir in the Hebrew interface on
-      2026-11-11, as he stated on 2026-11-12; the Log line of 2026-11-12)
+      2026-11-11, as he stated on 2026-11-11; the Log line of 2026-11-11)
 - [x] `security-auditor` on `git diff origin/main...HEAD` (one agent on opus: state it); fix critical and high.
       The report is saved as `reviews/security.md` and logged per decision 25.
 - [x] (written in `notes.md`, "Lines for the other sessions", and in the PR body; Kfir pastes it) One line to the
@@ -328,7 +328,7 @@ Commit: `build(engine): container image`
       README's engine section, the engine block of `.env.example`, `.claude/`); every other one joins "Docs for
       dc-delivery". The PR body gets that heading as a fifth section, one line per item: the file and section,
       what it says, what is true now. Push, PR and merge on Kfir's word. (PR #2, merged by Kfir as `0e07fca` on
-      2026-11-11; archived by dc-delivery, 2026-11-12)
+      2026-11-11; archived by dc-delivery, 2026-11-11)
 
 ## Design
 

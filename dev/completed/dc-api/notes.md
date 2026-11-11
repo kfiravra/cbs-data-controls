@@ -1,7 +1,7 @@
 # dc-api notes
 
 ## State
-Merged to main as PR #3 (eec007d); archived 2026-11-12.
+Merged to main as PR #3 (eec007d); archived 2026-11-11.
 
 The task is at its gate and the gate is passed. All five phases are built, reviewed and fixed; the engine
 (PR #2) is merged into the branch; the live pass ran twice against the real engine, the second time on the
@@ -562,10 +562,10 @@ warning by file, what the fix changed, what was left and why, what Kfir rejected
   values of `.env.example`: this worktree's `.env` was written before the engine block existed. The secrets
   scan of `git diff origin/main...HEAD` was repeated before the push. Then the push and the PR, on Kfir's
   word of that morning; no merge.
-- 2026-11-12 closed on paper by the dc-delivery session: it ticked the one box of the Gate that was still open,
+- 2026-11-11 closed on paper by the dc-delivery session: it ticked the one box of the Gate that was still open,
   `/ship`, now true, and left none open: PR #3 merged by Kfir as `eec007d`, its body with "Docs for
   dc-delivery", and the folder archived. In Next the read and merge of the PR and the move of the folder went
   (done); the six open items of the security audit (decision 38) and the "Docs for dc-delivery" list are
   carried as open.
 
-ARCHIVED 2026-11-12: merged to main (PR #3); folder moved from dev/active/ by the dc-delivery task.
+ARCHIVED 2026-11-11: merged to main (PR #3); folder moved from dev/active/ by the dc-delivery task.

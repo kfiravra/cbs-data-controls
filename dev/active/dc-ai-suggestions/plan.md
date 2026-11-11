@@ -1,6 +1,6 @@
 # dc-ai-suggestions: an advisor service that proposes controls
-Status: planned, not started · Created: 2026-11-12 · Branch: `feat/ai-suggestions` (main tree, cut from main)
-Written without an interview, from Kfir's brief of 2026-11-12, by the dc-delivery session's planner. Decisions 1 to
+Status: planned, not started · Created: 2026-11-11 · Branch: `feat/ai-suggestions` (main tree, cut from main)
+Written without an interview, from Kfir's brief of 2026-11-11, by the dc-delivery session's planner. Decisions 1 to
 9 are the brief, line for line. Decisions 10 to 23 are the planner's and wait for Kfir's objection. Facts were
 looked up in the code and the contracts and are cited by file.
 
@@ -20,7 +20,7 @@ built" until phase 8 changes it.
 
 ## Decisions
 
-From the brief (Kfir, 2026-11-12). Each line is his; the why and the rejected alternative are the planner's reading.
+From the brief (Kfir, 2026-11-11). Each line is his; the why and the rejected alternative are the planner's reading.
 
 1. **A fourth, small service, `advisor/`, in Python, is the only part that talks to a language model. It is
    agentic: the model works in a bounded loop with a few tools.** Why: the engine stays deterministic and keyless
