@@ -99,6 +99,15 @@ while ($true) {
     Start-Sleep -Seconds 3
 }
 
+# The containers are healthy; this last look proves that the published port answers from the host too.
+try {
+    $null = Invoke-WebRequest -UseBasicParsing -TimeoutSec 15 -Uri "http://localhost:$appPort/api/v1/health"
+}
+catch {
+    Write-Host "start: the containers are healthy, but http://localhost:$appPort does not answer from this machine"
+    exit 1
+}
+
 Write-Host ''
 Write-Host 'Data Controls is running.'
 Write-Host ''

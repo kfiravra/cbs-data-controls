@@ -66,8 +66,7 @@ services:
       ENGINE_DB_HOST: db
       ENGINE_DB_PORT: "1433"
       DQ_ENGINE_RO_PASSWORD: ${DQ_ENGINE_RO_PASSWORD:?copy .env.example to .env (cp .env.example .env) and set it}
-      # An empty value means the engine's default.
-      ENGINE_DB_NAME: ${ENGINE_DB_NAME:-}
+      # An empty value means the engine's default. The database name is not passed: sql/ and the api fix it.
       ENGINE_ROW_CAP: ${ENGINE_ROW_CAP:-}
       ENGINE_QUERY_TIMEOUT_SECONDS: ${ENGINE_QUERY_TIMEOUT_SECONDS:-}
       ENGINE_STARTUP_DB_WAIT_SECONDS: ${ENGINE_STARTUP_DB_WAIT_SECONDS:-}
@@ -99,6 +98,11 @@ services:
       DB_PORT: "1433"
       DQ_APP_PASSWORD: ${DQ_APP_PASSWORD:?copy .env.example to .env (cp .env.example .env) and set it}
       Engine__BaseUrl: http://engine:8000
+      # One knob for both services: the api sends its own row cap and resolves "today" itself, so it follows
+      # the engine's two settings of .env. The attempt timeout must stay above two statement timeouts.
+      Runs__RowCap: ${ENGINE_ROW_CAP:-5000}
+      Runs__TimeZone: ${ENGINE_TIME_ZONE:-Asia/Jerusalem}
+      Engine__AttemptTimeout: ${Engine__AttemptTimeout:-00:01:15}
     ports:
       # The app has no sign-in, so it is published on this machine only; APP_BIND=0.0.0.0 opens it to the network.
       - "${APP_BIND:-127.0.0.1}:${APP_PORT:-5000}:8080"

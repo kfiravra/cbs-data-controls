@@ -5,8 +5,13 @@
 # letter, a lower-case letter and a digit are all present: the SQL Server password policy. Letters and digits
 # only, so the value passes what scripts/db-init.sh refuses (spaces, quotes, $, ; and backslash).
 dc_random_password() {
-  local value=""
-  while :; do
+  local value="" tries=0
+  [[ -r /dev/urandom ]] || {
+    printf 'start: /dev/urandom is not readable; create .env by hand (cp .env.example .env, then the passwords)\n' >&2
+    return 1
+  }
+  while ((tries < 50)); do
+    tries=$((tries + 1))
     # tr reads until head has its 24 bytes and is then ended by the closed pipe, which is not a failure here.
     value=$(LC_ALL=C tr -dc 'A-HJ-NP-Za-km-z2-9' </dev/urandom 2>/dev/null | head -c 24 || true)
     if [[ ${#value} -eq 24 && $value == *[A-Z]* && $value == *[a-z]* && $value == *[2-9]* ]]; then
@@ -14,6 +19,8 @@ dc_random_password() {
       return 0
     fi
   done
+  printf 'start: could not draw a password; create .env by hand (cp .env.example .env, then the passwords)\n' >&2
+  return 1
 }
 
 # dc_ensure_env <repository root>: prints one line that says what it did.
@@ -27,23 +34,28 @@ dc_ensure_env() {
     printf 'start: %s/.env.example is missing\n' "$root" >&2
     return 1
   }
-  # Written under a private name first, so a start that is interrupted leaves no half-filled .env behind.
-  local draft="$root/.env.new.$$"
+  # Written under a private name first, so a start that is interrupted leaves no half-filled .env behind, and
+  # no draft either: the draft holds the passwords.
+  local draft="$root/.env.new.$$" password
+  trap 'rm -f "$draft"; exit 130' INT TERM
   (
     umask 077
     while IFS= read -r line || [[ -n "$line" ]]; do
       line=${line%$'\r'}
       if [[ "$line" =~ ^([A-Z_]+_PASSWORD)=$ ]]; then
-        printf '%s=%s\n' "${BASH_REMATCH[1]}" "$(dc_random_password)"
+        password=$(dc_random_password) || exit 1
+        printf '%s=%s\n' "${BASH_REMATCH[1]}" "$password"
       else
         printf '%s\n' "$line"
       fi
     done <"$root/.env.example" >"$draft"
   ) || {
     rm -f "$draft"
+    trap - INT TERM
     return 1
   }
   mv "$draft" "$root/.env"
+  trap - INT TERM
   printf 'start: created .env with three random passwords (they are in that file and are not printed)\n'
 }
 

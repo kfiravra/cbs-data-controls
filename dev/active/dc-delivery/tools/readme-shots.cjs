@@ -1,15 +1,23 @@
 // The five README screenshots, taken on a list that holds only the six examples (night brief, change e).
 // Run after `scripts/examples.py verify` and before any gate spec:
-//   node dev/active/dc-delivery/tools/readme-shots.cjs [base url]
+//   node dev/active/dc-delivery/tools/readme-shots.cjs <example id> [base url]
+// The example id names the file of contracts/examples whose control the editor and results shots show (the
+// shots of 2026-11-12 used missing-mandatory-data: nested groups and ten records).
 // It reads through the interface and the api's GET endpoints only; it creates, changes and runs nothing.
 const path = require('node:path');
 const { createRequire } = require('node:module');
 
 const root = path.resolve(__dirname, '..', '..', '..', '..');
 const { chromium } = createRequire(path.join(root, 'web', 'package.json'))('@playwright/test');
-const base = process.argv[2] || 'http://localhost:5000';
+const exampleId = process.argv[2];
+const base = process.argv[3] || 'http://localhost:5000';
 const out = path.join(root, 'docs', 'screenshots');
-const EXAMPLE_NAME = 'נתוני חובה חסרים'; // example 4, missing-mandatory-data: nested groups and ten records
+if (!exampleId) {
+  console.error('usage: node readme-shots.cjs <example id> [base url]');
+  process.exit(2);
+}
+const exampleFile = require(path.join(root, 'contracts', 'examples', exampleId + '.json'));
+const exampleName = Object.values(exampleFile.name)[0];
 
 async function settle(page) {
   await page.waitForLoadState('networkidle');
@@ -32,8 +40,8 @@ async function shoot(page, name) {
   if (listing.total !== 6 || tagged.length > 0) {
     throw new Error('the list is not clean: ' + listing.total + ' controls, ' + tagged.length + ' with a test tag');
   }
-  const example = listing.items.find((item) => item.name === EXAMPLE_NAME);
-  if (!example || !example.lastRun) throw new Error('example 4 is missing or has no run: run examples.py verify first');
+  const example = listing.items.find((item) => item.name === exampleName);
+  if (!example || !example.lastRun) throw new Error(exampleId + ' is missing or has no run: run examples.py verify first');
 
   const browser = await chromium.launch();
   const common = { baseURL: base, locale: 'he-IL', timezoneId: 'Asia/Jerusalem' };

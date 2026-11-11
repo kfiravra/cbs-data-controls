@@ -23,7 +23,11 @@ RUN dotnet restore api/src/DataControls.Api/DataControls.Api.csproj
 # The project embeds the schema by its path in the repository: ../../../contracts from the project folder.
 COPY contracts/control-definition.schema.json contracts/
 COPY api/src/ api/src/
-RUN dotnet publish api/src/DataControls.Api/DataControls.Api.csproj -c Release --no-restore -o /out
+# The tag sdk:10.0 moves with the SDK's patch releases, and the repository's own build treats warnings as
+# errors (api/Directory.Build.props). A warning that a later SDK adds must not fail an image build, so that
+# switch is off here; `dotnet build -warnaserror` in api/ stays the strict gate.
+RUN dotnet publish api/src/DataControls.Api/DataControls.Api.csproj -c Release --no-restore -o /out \
+      -p:TreatWarningsAsErrors=false
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0
 WORKDIR /app

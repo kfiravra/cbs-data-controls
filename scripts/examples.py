@@ -22,6 +22,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import sys
 import time
 import urllib.error
@@ -32,17 +33,6 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parent.parent
-
-# The order the documents and the client's tests give the six examples: the four of the assignment, then two
-# more. A file that is not named here follows them, by name.
-ORDER = (
-    "minor-high-salary",
-    "termination-before-hire",
-    "active-in-inactive-department",
-    "missing-mandatory-data",
-    "department-without-active-employees",
-    "inactive-ministry-salary-out-of-range",
-)
 
 REGION_START = "<!-- generated:start (scripts/examples.py docs) -->"
 REGION_END = "<!-- generated:end -->"
@@ -67,6 +57,8 @@ class Api:
     """The application api, by urllib. Every answer comes back whatever its status."""
 
     def __init__(self, base_url: str) -> None:
+        if not base_url.startswith(("http://", "https://")):
+            raise Failure("--base-url must start with http:// or https://")
         self.base_url = base_url.rstrip("/")
         self.language = "he"
 
@@ -129,9 +121,19 @@ def read_examples(folder: Path) -> list[dict[str, Any]]:
     if not files:
         raise Failure(f"no example files in {folder}")
     examples = [json.loads(file.read_text(encoding="utf-8")) for file in files]
-    rank = {example_id: position for position, example_id in enumerate(ORDER)}
-    examples.sort(key=lambda example: (rank.get(example["id"], len(ORDER)), example["id"]))
+    examples.sort(key=lambda example: example["id"])
     return examples
+
+
+def in_frame_order(examples: list[dict[str, Any]], frame: str) -> list[dict[str, Any]]:
+    """The examples in the order of the document's own table, whose rows start `| <number> | `<id>` |`.
+
+    The order is the document's to decide: this script names no example. One that the table lacks follows
+    the others, by id.
+    """
+    listed = re.findall(r"^\| *\d+ *\| *`([^`]+)` *\|", frame, flags=re.M)
+    rank = {example_id: position for position, example_id in enumerate(listed)}
+    return sorted(examples, key=lambda example: (rank.get(example["id"], len(listed)), example["id"]))
 
 
 def text_of(texts: dict[str, str], language: str) -> str:
@@ -187,7 +189,9 @@ class RunOfExample:
     items: list[dict[str, Any]]
 
 
-def run_and_compare(api: Api, control_id: int, run_date: str, expected: dict[str, Any]) -> tuple[RunOfExample, list[str]]:
+def run_and_compare(
+    api: Api, control_id: int, run_date: str, expected: dict[str, Any]
+) -> tuple[RunOfExample, list[str]]:
     """Starts one run, reads every page of its results and lists what differs from the expected records."""
     run = api.expect(201, "POST", f"/api/v1/controls/{control_id}/runs", body={"runDate": run_date})
     if run["status"] != "succeeded":
@@ -202,12 +206,22 @@ def run_and_compare(api: Api, control_id: int, run_date: str, expected: dict[str
         if len(items) >= body["total"] or not body["items"]:
             break
         page += 1
+    return RunOfExample(run, items), differences(run, items, expected)
 
+
+def differences(run: dict[str, Any], items: list[dict[str, Any]], expected: dict[str, Any]) -> list[str]:
+    """What a succeeded run and its stored records hold that the example does not expect, in words."""
     faults: list[str] = []
     if run["totalCount"] != expected["total"]:
         faults.append(f"total {run['totalCount']}, expected {expected['total']}")
     if run["capExceeded"]:
         faults.append("the row cap cut the results")
+    if len(items) != run["storedCount"]:
+        faults.append(f"the pages hold {len(items)} records, the run stored {run['storedCount']}")
+    keys = [item["key"] for item in items]
+    repeated = sorted({key for key in keys if keys.count(key) > 1})
+    if repeated:
+        faults.append("keys returned more than once " + ",".join(repeated))
     wanted = {violation["key"]: violation["matched"] for violation in expected["violations"]}
     got = {item["key"]: item["matched"] for item in items}
     missing = sorted(set(wanted) - set(got))
@@ -216,14 +230,18 @@ def run_and_compare(api: Api, control_id: int, run_date: str, expected: dict[str
         faults.append("missing keys " + ",".join(missing))
     if unexpected:
         faults.append("unexpected keys " + ",".join(unexpected))
-    for key in sorted(set(wanted) & set(got)):
-        if got[key] != wanted[key]:
-            faults.append(f"key {key} matched {','.join(got[key])}, expected {','.join(wanted[key])}")
+    faults += [
+        f"key {key} matched {','.join(got[key])}, expected {','.join(wanted[key])}"
+        for key in sorted(set(wanted) & set(got))
+        if got[key] != wanted[key]
+    ]
     for item in items:
-        lost = [field for field, value in item["display"].items() if isinstance(value, str) and _only_question_marks(value)]
+        lost = sorted(
+            field for field, value in item["display"].items() if isinstance(value, str) and _only_question_marks(value)
+        )
         if lost:
-            faults.append(f"key {item['key']}: the text of {','.join(sorted(lost))} is question marks")
-    return RunOfExample(run, items), faults
+            faults.append(f"key {item['key']}: the text of {','.join(lost)} is question marks")
+    return faults
 
 
 def _only_question_marks(value: str) -> bool:
@@ -231,7 +249,9 @@ def _only_question_marks(value: str) -> bool:
     return bool(stripped) and set(stripped) == {"?"}
 
 
-def check_control(api: Api, example: dict[str, Any], summary: dict[str, Any]) -> tuple[dict[str, Any] | None, str | None]:
+def check_control(
+    api: Api, example: dict[str, Any], summary: dict[str, Any]
+) -> tuple[dict[str, Any] | None, str | None]:
     """The control an example runs on, or why it cannot: archived, or holding another definition."""
     control = api.expect(200, "GET", f"/api/v1/controls/{summary['id']}")
     if not control["isActive"]:
@@ -266,14 +286,20 @@ def cmd_verify(api: Api, arguments: argparse.Namespace) -> int:
         # The example's own date last: the list then shows that run as the control's last one.
         runs = [(other["runDate"], other["expected"]) for other in example.get("alternateRuns", [])]
         runs.append((example["runDate"], example["expected"]))
+        passed: list[str] = []
+        faulty: list[str] = []
         for run_date, expected in runs:
             result, faults = run_and_compare(api, control["id"], run_date, expected)
-            where = f"control {control['id']} run {result.run['id']} on {run_date}"
             if faults:
-                print(f"FAIL {example['id']}: {where}: " + "; ".join(faults))
-                failed += 1
+                faulty.append(f"run {result.run['id']} on {run_date}: " + "; ".join(faults))
             else:
-                print(f"PASS {example['id']}: {where}: {result.run['totalCount']} violations, keys and matched ids as expected")
+                passed.append(f"run {result.run['id']} on {run_date}: {result.run['totalCount']} violations")
+        if faulty:
+            print(f"FAIL {example['id']}: control {control['id']}: " + " | ".join(faulty))
+            failed += 1
+        else:
+            runs_text = ", ".join(passed)
+            print(f"PASS {example['id']}: control {control['id']}: {runs_text}; keys and matched ids as expected")
     return 1 if failed else 0
 
 
@@ -285,7 +311,15 @@ def cmd_docs(api: Api, arguments: argparse.Namespace) -> int:
     wait_until_healthy(api)
     glossary = api.expect(200, "GET", "/api/v1/glossary")
     api.language = glossary["defaultLanguage"]
-    examples = read_examples(arguments.dir)
+    out: Path = arguments.out
+    if not out.is_file():
+        raise Failure(f"{out} does not exist: the hand-written frame with the two markers comes first")
+    current = out.read_text(encoding="utf-8")
+    start = current.find(REGION_START)
+    end = current.find(REGION_END)
+    if start < 0 or end < start:
+        raise Failure(f"{out} lacks the generated region's two marker lines")
+    examples = in_frame_order(read_examples(arguments.dir), current[:start])
     controls = load(api, examples)
     sections: list[str] = []
     for number, example in enumerate(examples, start=1):
@@ -306,14 +340,6 @@ def cmd_docs(api: Api, arguments: argparse.Namespace) -> int:
         print(f"DOCS {example['id']}: {result.run['totalCount']} violations")
 
     region = REGION_START + "\n\n" + "\n".join(sections) + REGION_END
-    out: Path = arguments.out
-    if not out.is_file():
-        raise Failure(f"{out} does not exist: the hand-written frame with the two markers comes first")
-    current = out.read_text(encoding="utf-8")
-    start = current.find(REGION_START)
-    end = current.find(REGION_END)
-    if start < 0 or end < start:
-        raise Failure(f"{out} lacks the generated region's two marker lines")
     updated = current[:start] + region + current[end + len(REGION_END) :]
     if arguments.check:
         if updated != current:
@@ -344,7 +370,6 @@ def render_example(
         f"### {number}. {rtl(text_of(example['name'], language))}",
         "",
         f"`contracts/examples/{example['id']}.json`"
-        + (" · one of the assignment's four examples" if number <= 4 else " · an additional example")
         + (" · also proposed by the suggestions" if example.get("heuristic") else ""),
         "",
         f'<p dir="rtl">{escape(text_of(example["description"], language))}</p>',
@@ -357,11 +382,13 @@ def render_example(
         json.dumps(example["definition"], ensure_ascii=False, indent=2),
         "```",
         "",
-        f"Run date {run['runDate']}: **{run['totalCount']}** of the seed's {entity['label']['plural'][language]} "
-        f"({entity['key']}) are flagged."
+        f"Run date {run['runDate']}: **{run['totalCount']}** records of `{entity['key']}` are flagged in the "
+        "sample data."
         + "".join(f" On {run_date}: {total}." for run_date, total in others),
         "",
-        "| " + " | ".join(rtl(labels[column]) for column in columns) + " | Matched | Reason, as the engine renders it |",
+        "| "
+        + " | ".join(rtl(labels[column]) for column in columns)
+        + " | Matched | Reason, as the engine renders it |",
         "|" + "---|" * (len(columns) + 2),
     ]
     for item in result.items:
@@ -373,8 +400,13 @@ def render_example(
     return "\n".join(lines) + "\n"
 
 
+# Characters that would act as HTML or as Markdown inside a paragraph or a table cell, as character references.
+_LITERAL = {ord(char): f"&#{ord(char)};" for char in "&<>|*_`[]\\~"}
+
+
 def escape(text: str) -> str:
-    return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("|", "\\|")
+    """Text of the data as inert text: no tag, no Markdown, and no line break that would end a table row."""
+    return " ".join(text.split()).translate(_LITERAL)
 
 
 def rtl(text: str) -> str:
