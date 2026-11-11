@@ -1,5 +1,7 @@
+using System.Linq.Expressions;
 using System.Text.Json;
 using DataControls.Api.Errors;
+using DataControls.Api.Glossary;
 using DataControls.Api.Hosting;
 using DataControls.Api.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -10,10 +12,13 @@ namespace DataControls.Api.Runs;
 /// Reads runs and their stored results. Everything here is answered from the snapshot in <c>dq</c>; the
 /// engine is never called for a page, a search, a filter or a sort.
 /// </summary>
-public sealed class RunQueries(DqDbContext db)
+public sealed class RunQueries(DqDbContext db, GlossaryService glossary)
 {
     private const string SortByKey = "key";
     private const string SortByDisplay = "display";
+    private const string SortByField = "field";
+    private const string SortByReasons = "reasons";
+    private const string NumberType = "number";
     private const string Ascending = "asc";
     private const string Descending = "desc";
     private const string RootEntityMember = "rootEntity";
@@ -52,13 +57,22 @@ public sealed class RunQueries(DqDbContext db)
     {
         var check = new RequestCheck();
         var paging = Paging.Read(check, query.Page, query.PageSize);
-        var sort = check.Word("sort", query.Sort, SortByKey, SortByDisplay);
-        var direction = check.Word("dir", query.Dir, Ascending, Descending);
+        var sort = check.Word("sort", query.Sort, SortByKey, SortByDisplay, SortByField, SortByReasons);
+        var descending = check.Word("dir", query.Dir, Ascending, Descending) == Descending;
+        if (sort == SortByField && string.IsNullOrEmpty(query.Field))
+        {
+            check.Add("field", RequestErrorCodes.Required);
+        }
+
         check.ThrowIfInvalid();
         if (KeyOf(runId) is not { } runKey || !await db.Runs.AnyAsync(run => run.Id == runKey, cancellationToken))
         {
             throw ApiException.RunNotFound(runId);
         }
+
+        var order = sort == SortByField
+            ? await ByFieldAsync(runKey, query.Field!, descending, cancellationToken)
+            : results => Order(results, sort, descending);
 
         var results = db.RunResults.AsNoTracking().Where(result => result.RunId == runKey);
         var search = query.Search?.Trim();
@@ -74,7 +88,7 @@ public sealed class RunQueries(DqDbContext db)
         }
 
         var total = await results.CountAsync(cancellationToken);
-        var page = await Order(results, sort, direction).Skip(paging.Skip).Take(paging.PageSize).ToListAsync(cancellationToken);
+        var page = await order(results).Skip(paging.Skip).Take(paging.PageSize).ToListAsync(cancellationToken);
         var items = page.Select(result => new ResultItemResponse(
             result.Seq,
             result.RecordKey,
@@ -88,15 +102,59 @@ public sealed class RunQueries(DqDbContext db)
     /// <summary>An id of the path as a key of the table, or null when no row can have it (it is beyond 32 bits).</summary>
     private static int? KeyOf(long id) => id <= int.MaxValue ? (int)id : null;
 
-    /// <summary>The direction applies to both sort keys, so a page is stable either way.</summary>
-    private static IQueryable<RunResult> Order(IQueryable<RunResult> results, string sort, string direction) =>
-        (sort, direction) switch
+    /// <summary>
+    /// Under <c>key</c> and <c>display</c> the direction applies to both sort keys; under <c>reasons</c> it
+    /// applies to the number of reasons and to their text, and equal violations stand by <c>seq</c>, ascending.
+    /// Either way a page is the same page whenever it is asked for.
+    /// </summary>
+    private static IQueryable<RunResult> Order(IQueryable<RunResult> results, string sort, bool descending) =>
+        (sort, descending) switch
         {
-            (SortByDisplay, Ascending) => results.OrderBy(result => result.DisplayText).ThenBy(result => result.Seq),
-            (SortByDisplay, _) => results.OrderByDescending(result => result.DisplayText).ThenByDescending(result => result.Seq),
-            (_, Ascending) => results.OrderBy(result => result.Seq),
+            (SortByDisplay, false) => results.OrderBy(result => result.DisplayText).ThenBy(result => result.Seq),
+            (SortByDisplay, true) => results.OrderByDescending(result => result.DisplayText).ThenByDescending(result => result.Seq),
+            (SortByReasons, false) => results.OrderBy(result => result.MatchedConditionIds.Count).ThenBy(result => result.ReasonText).ThenBy(result => result.Seq),
+            (SortByReasons, true) => results.OrderByDescending(result => result.MatchedConditionIds.Count).ThenByDescending(result => result.ReasonText).ThenBy(result => result.Seq),
+            (_, false) => results.OrderBy(result => result.Seq),
             _ => results.OrderByDescending(result => result.Seq),
         };
+
+    /// <summary>
+    /// The order by one identifying field of the record. The field is one the request named, so it is
+    /// checked first against the glossary's identifying fields of the run's root entity; then its value is
+    /// read from the stored display by a JSON path that is sent bound, like every value of the query: no
+    /// part of it is written into the statement. A number is ordered by value and anything else as text (a
+    /// date is ISO text, so by date); a violation without the value comes last in both directions, and
+    /// equal ones stand by <c>seq</c>.
+    /// </summary>
+    private async Task<Func<IQueryable<RunResult>, IQueryable<RunResult>>> ByFieldAsync(int runKey, string field, bool descending, CancellationToken cancellationToken)
+    {
+        var definition = await (
+            from run in db.Runs
+            where run.Id == runKey
+            join version in db.ControlVersions
+                on new { run.ControlId, Version = run.VersionNumber } equals new { version.ControlId, version.Version }
+            select version.Definition).SingleAsync(cancellationToken);
+        var rootEntity = StoredJson.Parse(definition).GetProperty(RootEntityMember).GetString() ?? string.Empty;
+        var type = await glossary.IdentifyingFieldTypeAsync(rootEntity, field, cancellationToken)
+            ?? throw ApiException.RequestInvalid("field", RequestErrorCodes.Malformed);
+
+        var path = $"$.\"{field}\"";
+        Expression<Func<RunResult, bool>> missing = result => DqDbContext.JsonValue(result.RecordDisplay, path) == null;
+        Expression<Func<RunResult, string?>> asText = result => DqDbContext.JsonValue(result.RecordDisplay, path);
+        Expression<Func<RunResult, double>> asNumber = result => Convert.ToDouble(DqDbContext.JsonValue(result.RecordDisplay, path));
+        return results =>
+        {
+            var placed = results.OrderBy(missing);
+            var ordered = (type == NumberType, descending) switch
+            {
+                (true, false) => placed.ThenBy(asNumber),
+                (true, true) => placed.ThenByDescending(asNumber),
+                (false, false) => placed.ThenBy(asText),
+                _ => placed.ThenByDescending(asText),
+            };
+            return ordered.ThenBy(result => result.Seq);
+        };
+    }
 
     /// <summary>
     /// Each run with what its response needs from other rows: the control's current name, the definition

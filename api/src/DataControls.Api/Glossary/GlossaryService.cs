@@ -9,6 +9,8 @@ public sealed class GlossaryService(
     RequestContextAccessor requests,
     ILogger<GlossaryService> logger)
 {
+    private const string TextType = "text";
+
     /// <summary>
     /// The glossary: the cached copy while it is fresh, else the engine's. When the engine fails, the held
     /// copy is served stale; with no copy the failure goes to the caller. Either way the engine is not
@@ -68,6 +70,18 @@ public sealed class GlossaryService(
     {
         cache.DropUnless(reportedVersion);
         return (await GetAsync(cancellationToken)).IdentifyingFields.GetValueOrDefault(entity);
+    }
+
+    /// <summary>
+    /// The glossary type of one of an entity's identifying fields, or null when the glossary does not list
+    /// the field among them: the check a caller makes before it sorts by a field a request named.
+    /// </summary>
+    public async Task<string?> IdentifyingFieldTypeAsync(string entity, string field, CancellationToken cancellationToken)
+    {
+        var glossary = await GetAsync(cancellationToken);
+        return glossary.IdentifyingFields.GetValueOrDefault(entity)?.Contains(field) == true
+            ? glossary.FieldTypes.GetValueOrDefault(entity)?.GetValueOrDefault(field) ?? TextType
+            : null;
     }
 
     /// <summary>

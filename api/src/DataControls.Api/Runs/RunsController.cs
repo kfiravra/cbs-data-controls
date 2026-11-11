@@ -51,9 +51,10 @@ public sealed class RunsController(RunService runs, RunQueries queries) : Contro
         string? search,
         string? condition,
         string? sort,
+        string? field,
         string? dir,
         int? page,
         int? pageSize,
         CancellationToken cancellationToken) =>
-        queries.ResultsAsync(id, new ResultsQuery(search, condition, sort, dir, page, pageSize), cancellationToken);
+        queries.ResultsAsync(id, new ResultsQuery(search, condition, sort, field, dir, page, pageSize), cancellationToken);
 }

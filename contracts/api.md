@@ -426,7 +426,7 @@ Errors: 404 `DEBUG_DISABLED`; 422 `DEFINITION_INVALID`.
 | `POST /api/v1/controls/{id}/runs` | `{ runDate? }` or no body | 201 `Run`, also when the run failed | 404 `CONTROL_NOT_FOUND`, 409 `CONTROL_ARCHIVED`, 503 `DATABASE_UNAVAILABLE` |
 | `GET /api/v1/controls/{id}/runs` | query `page`, `pageSize` | 200 `Page<Run>` | 404 `CONTROL_NOT_FOUND`, 503 `DATABASE_UNAVAILABLE` |
 | `GET /api/v1/runs/{id}` | none | 200 `Run` | 404 `RUN_NOT_FOUND`, 503 `DATABASE_UNAVAILABLE` |
-| `GET /api/v1/runs/{id}/results` | query `page`, `pageSize`, `search`, `condition`, `sort`, `dir` | 200 `Page<ResultItem>` | 404 `RUN_NOT_FOUND`, 503 `DATABASE_UNAVAILABLE` |
+| `GET /api/v1/runs/{id}/results` | query `page`, `pageSize`, `search`, `condition`, `sort`, `field`, `dir` | 200 `Page<ResultItem>` | 404 `RUN_NOT_FOUND`, 503 `DATABASE_UNAVAILABLE`, 503 `ENGINE_UNAVAILABLE` |
 | `POST /api/v1/suggestions` | `{ rootEntity?, max? }` or no body | 200 the engine's `/suggest` body | 503 `ENGINE_UNAVAILABLE`, 503 `DATABASE_UNAVAILABLE`, 504 `QUERY_TIMEOUT` |
 | `POST /api/v1/suggestions/accept` | `{ items: [{ name, description?, definition }] }` | 201 `{ items: Control[] }` | 422 `DEFINITION_INVALID`, 503 `ENGINE_UNAVAILABLE`, 503 `DATABASE_UNAVAILABLE` |
 
@@ -561,12 +561,22 @@ Served from the run's stored snapshot; the engine is not called. A run with no s
 |---|---|---|
 | `search?` | string | a substring of the violation's `display_text` (`Violation`) or of its `reasonText`; case-insensitive, with `%`, `_` and `[` taken literally. It is trimmed first, and an empty one filters nothing |
 | `condition?` | string | a node id: keeps the violations whose `matched` holds it |
-| `sort?` | string | `key` (default): the engine's order, `seq`; `display`: `display_text`, then `seq` |
-| `dir?` | string | `asc` (default) or `desc`, applied to both sort keys |
+| `sort?` | string | `key` (default): the engine's order, `seq`; `display`: `display_text`, then `seq`; `field`: the value of the identifying field that `field` names; `reasons`: the number of reasons, then `reasonText` |
+| `field?` | string | with `sort=field`: the key of one of the identifying fields of the run's root entity. Read with `sort=field` only |
+| `dir?` | string | `asc` (default) or `desc`. Under `key` and `display` it applies to both sort keys; under `field` and `reasons` it applies to the sort key, and violations that are equal in it stand by `seq`, ascending |
 | `page?`, `pageSize?` | integer | `Page<T>` |
 
 A `sort` or `dir` outside its words is 400 `MALFORMED`. 200 `Page<ResultItem>`; `total` counts the violations that
 pass `search` and `condition`. 404 `RUN_NOT_FOUND`.
+
+`sort=field` orders by the field's glossary type: a `number` by its value, anything else as text (a `date` is
+written year first, so its text orders by date). A violation that has no value in the field comes last in both
+directions. The api checks `field` against the glossary before it reads anything by it: `sort=field` without a
+`field` is 400 `REQUIRED` on `field`; a key that is not one of the identifying fields of the run's root entity is
+400 `MALFORMED` on `field`, answered after the 404 of a run that does not exist. The value is read from the
+stored `display` by a path that is bound like any other value: no part of the request is written into a
+statement. 503 `ENGINE_UNAVAILABLE` only with `sort=field`, when the api holds no glossary and the engine does
+not answer.
 
 ### `POST /api/v1/suggestions`
 

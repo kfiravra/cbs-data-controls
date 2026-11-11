@@ -1,3 +1,4 @@
+using System.Reflection;
 using Microsoft.EntityFrameworkCore;
 
 namespace DataControls.Api.Persistence;
@@ -21,6 +22,19 @@ public sealed class DqDbContext(DbContextOptions<DqDbContext> options) : DbConte
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder) =>
         configurationBuilder.Properties<DateTime>().HaveConversion<UtcDateTimeConverter>().HavePrecision(3);
 
-    protected override void OnModelCreating(ModelBuilder modelBuilder) =>
+    /// <summary>
+    /// SQL Server's <c>JSON_VALUE</c>, for a query to read one member of a stored JSON text. The path is a
+    /// value of the query like any other and is sent bound. It has no body: it exists to be translated.
+    /// </summary>
+    internal static string? JsonValue(string json, string path) =>
+        throw new NotSupportedException("JSON_VALUE is evaluated by the database.");
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(DqDbContext).Assembly);
+        modelBuilder
+            .HasDbFunction(typeof(DqDbContext).GetMethod(nameof(JsonValue), BindingFlags.NonPublic | BindingFlags.Static)!)
+            .HasName("JSON_VALUE")
+            .IsBuiltIn();
+    }
 }

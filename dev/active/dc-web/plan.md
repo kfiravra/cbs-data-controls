@@ -457,11 +457,27 @@ Phone and the finish (item 17):
 - [x] Mocked and gate specs; the gate on the real stack; `/check all --tests`; screenshots at 390 and 1440;
       `/impeccable polish`; `docs/design.md` in line. Commit: `feat(web): the last design round`
 - [x] `/phase-review`, one review-fix commit, the push to the PR on Kfir's word.
-- [ ] Last of all: the dev database reset from the main tree, the six examples posted again, the stack left
+- [x] Last of all: the dev database reset from the main tree, the six examples posted again, the stack left
       running.
 
 Verify: `/check all --tests` · `cd web && npx playwright test e2e/mocked` · the gate command of Design O
 Review: `/phase-review api web`
+
+### Phase 11: hot fixes (Kfir's third read, 2026-11-11)
+Same branch, same PR. Fast: no critique runs, one reviewer at the end. His word covers the api and contract
+change of item 4 and one database reset at the very end. The seven items are in `notes.md` (Log).
+
+- [x] Item 4, the api: `GET /api/v1/runs/{id}/results` sorts by any identifying field of the record, by its
+      glossary type, and by the reasons (`sort=field` with `field`, `sort=reasons`); `contracts/api.md` and
+      the api's tests. Commit: `feat(api): sort a run's results by a field and by the reasons`
+- [ ] Item 4, the client: every head of the results table sorts.
+- [ ] Items 5 and 6: the rule in words with no bracket on the screen (a nested group as a soft block, top
+      groups on lines of their own), and the letters as superscripts that take no room in the line.
+- [ ] Items 1, 2, 3 and 7: the suggestions row after the choice, with an entrance; every suggestion replaces
+      name, description and conditions; the results' search shows its whole placeholder; the list's count in
+      a bar fixed at the bottom of the window.
+- [ ] Specs; the gate on the real stack; `/check all --tests`; one reviewer; the push; then the database
+      reset and the six examples.
 
 ### Gate
 Status, 2026-11-11: `gates/final.txt` holds `/check all --tests` (the engine and the api among its parts now),

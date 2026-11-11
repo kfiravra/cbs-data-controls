@@ -1,10 +1,12 @@
 # dc-web notes
 
 ## State
-Phase 10, the last design round (Kfir's second read, 2026-11-11), is in work on `feat/web-ux`, into the same
-PR. Done: the api's sort of the controls list (`sort`, `dir`), with `contracts/api.md` and ten api tests. In
-work: the client (one table design, the results panel, the editor, the phone). Phase 9 is merged into this
-branch's history (`22c64f1` to `8690539`) and pushed; the PR is open and not merged.
+Phase 10, the last design round (Kfir's second read, 2026-11-11), is done on `feat/web-ux` and pushed into the
+same PR, which is open and not merged: `15658ca` (the api's sort of the controls list), `b47d203` (the client's
+round), `cc23057` (the review fixes of both). The gate ran on the real stack and `/check all --tests` is green
+(`gates/phase-10.txt`). After the push the dev database was reset from the main tree and the six examples
+were posted again (`gates/phase-10-reset.txt`): the store holds those six, active, none run. The engine (8000)
+and the api (5000, serving the branch's last build) are left running. After this round only bugs.
 
 ## Next
 1. Kfir reads the last design round at `http://localhost:5000` and its new Hebrew texts: `list.columns.run`,
@@ -1072,3 +1074,13 @@ rewrote. A review that found nothing, or did not run, is logged as that.
   passed, 211 with 5 skipped by project on purpose. The sql, engine and hook checks were not repeated: no
   file of theirs changed since the first run of the phase. Secrets: the branch diff holds no token and no
   password value. Each gate run of the phase left 18 archived `e2e-` controls in the dev `dq` (three runs).
+- 2026-11-11, last of all, on Kfir's word for this round: the dev database was reset from the main tree
+  (`scripts/db-init.sh --reset`, main at `612b2b7`), after the push. This worktree's own engine and api were
+  stopped around it and started again; the database container was not stopped or recreated (it reports the
+  same uptime). `scripts/db-check.sh` then passed its 27 assertions. The store went from 300 controls (the
+  six examples of the first delivery, what the gate runs and earlier work left) to none, and the six examples
+  of `contracts/examples/` were posted through the api with their Hebrew names and descriptions: ids 2 to 7,
+  all active, none run (`gates/phase-10-reset.txt`). The page at `http://localhost:5000` shows the six, served
+  from the branch's last build, with no error in the console. Stop the stack with `pkill -f DataControls.Api`
+  and `pkill -f "uvicorn app.main"`. This entry, the reset's output and the last tick of the plan are not
+  committed: they are documents alone, and ride with the next code commit.
