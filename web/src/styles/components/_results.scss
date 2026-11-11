@@ -1,31 +1,72 @@
-// The run summary, the breakdown by condition and the split layout of the results screen.
+// The results panel, from the top: the rule in words on a tint, one block for what the run found (the
+// count, the run's facts and the count by condition, which filters), and the records as wide as the panel.
+// The layout answers to the panel's width, not the window's.
 
-.summary {
+.results {
   display: grid;
   gap: var(--space-4);
-  padding-block: var(--space-5);
-  border-block: 1px solid var(--color-line-strong);
 }
 
-.summary__figure {
+// the rule in words: what was checked, read before what was found
+.rule {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-4) var(--space-5);
+  border-radius: var(--radius-md);
+  background: var(--color-action-tint);
+
+  .sentence {
+    max-inline-size: none;
+  }
+}
+
+// on the tint the label takes the accent's own ink: a grey would go dull on it
+.rule__title {
+  font-size: var(--text-label);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-title);
+  color: var(--color-action-ink);
+}
+
+// what the run found: one card, the count and the facts at its start, the count by condition beside them
+.overview {
+  display: grid;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-md);
+  background: var(--color-card);
+}
+
+.overview__info {
+  display: grid;
+  align-content: start;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+}
+
+// violations are red, and a run that found none is green
+.overview__figure {
   display: flex;
   align-items: baseline;
-  gap: var(--space-3);
+  gap: var(--space-2);
   font-size: var(--text-title);
-  font-weight: 500;
-  line-height: 1;
+  font-weight: var(--weight-strong);
+  line-height: var(--leading-tight);
+  color: var(--color-danger);
 
   strong {
     font-size: var(--text-figure);
-    font-weight: 500;
-    font-variant-numeric: tabular-nums;
+    font-weight: var(--weight-strong);
   }
+}
+
+.overview__figure--clean {
+  color: var(--color-success);
 }
 
 .facts {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-4) var(--space-7);
+  gap: var(--space-2) var(--space-5);
   margin: 0;
 
   > div {
@@ -35,128 +76,145 @@
 
   dt {
     font-size: var(--text-label);
-    font-weight: 500;
+    font-weight: var(--weight-medium);
+    line-height: var(--leading-title);
     color: var(--color-muted);
   }
 
   dd {
+    font-size: var(--text-small);
+    line-height: var(--leading-body);
     font-variant-numeric: tabular-nums;
   }
-}
 
-@media (min-width: 1024px) {
-  .summary {
-    grid-template-columns: auto minmax(0, 1fr);
-    align-items: end;
-    gap: var(--space-8);
+  // a link that stands alone answers a touch the height of a control (as the links of a table row do)
+  a.link {
+    position: relative;
+
+    &::after {
+      content: '';
+      position: absolute;
+      inset-inline: 0;
+      inset-block: calc(-1 * var(--space-3));
+    }
   }
 }
 
-// one row per condition: its mark, its clause, how many violations match it, and that share as a bar
-.meters {
+.overview__filter {
   display: grid;
+  align-content: start;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-3);
+  border-block-start: 1px solid var(--color-line);
+}
+
+.overview__by {
+  display: grid;
+  gap: 2px;
+  padding-inline: var(--space-2);
+}
+
+// one chip per condition: its mark, its clause and how many violations match it. A chip is a button, and
+// the pressed one is the filter of the records.
+.meters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding-inline: var(--space-2);
 }
 
 .meter {
-  display: grid;
-  grid-template-columns: var(--size-mark) minmax(0, 1fr) auto;
-  align-items: start;
-  gap: var(--space-2) var(--space-3);
-  inline-size: 100%;
-  padding: var(--space-3) var(--space-2);
-  border: 0;
-  border-block-start: 1px solid var(--color-line);
-  border-radius: 0;
-  background: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  max-inline-size: 100%;
+  min-block-size: var(--size-control-sm);
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--color-line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--color-card);
   text-align: start;
-  line-height: 1.5;
-  transition: background-color var(--duration-out) var(--ease-out);
+  font-size: var(--text-small);
+  line-height: var(--leading-title);
+  transition:
+    background-color var(--duration-out) var(--ease-out),
+    border-color var(--duration-out) var(--ease-out);
 
   &:hover {
-    background: var(--color-row-hover);
+    border-color: var(--color-control-line);
+    background: var(--color-card-hover);
     transition-duration: var(--duration-in);
   }
 
+  // the chosen chip is the filter: the ink's edge (ink selects)
   &[aria-pressed='true'] {
-    background: var(--color-action-tint);
+    border-color: var(--color-ink);
+    background: var(--color-ground);
+    box-shadow: inset 0 0 0 1px var(--color-ink);
   }
 }
 
-.meter__all {
-  grid-column: 1 / 3;
-  font-weight: 500;
+// all violations: the count stands beside this block, so the chip carries none
+.meter--all {
+  font-weight: var(--weight-medium);
 }
 
-// the marks of a run could not be read: the clause takes the place of the mark too
-.meter--unmarked .meter__clause {
-  grid-column: 1 / 3;
+.meter__clause {
+  min-inline-size: 0;
 }
 
 .meter__count {
-  font-weight: 500;
+  font-weight: var(--weight-strong);
   font-variant-numeric: tabular-nums;
-  min-inline-size: 3ch;
-  text-align: end;
+  color: var(--color-danger);
 }
 
-.meter__bar {
-  grid-column: 2 / -1;
-  block-size: 8px;
-  border-radius: var(--radius-xs);
-  background: var(--color-action-track);
-  overflow: hidden;
-}
-
-.meter__fill {
-  display: block;
-  block-size: 100%;
-  inline-size: calc(var(--share) * 100%);
-  border-radius: var(--radius-xs);
-  background: var(--color-action);
-}
-
-.split {
-  display: grid;
-  gap: var(--space-6);
-}
-
-.split__main {
-  display: grid;
-  gap: var(--space-4);
-  min-inline-size: 0;
-  align-content: start;
-}
-
-.panel {
+// the records: their title and the search on one line, then the table
+.records {
   display: grid;
   gap: var(--space-3);
-  padding: var(--space-4) var(--space-3);
-  border-radius: var(--radius-lg);
-  background: var(--color-surface);
+  min-inline-size: 0;
+  margin-block-start: var(--space-2);
 }
 
-.panel__head {
+.records__head {
   display: grid;
-  gap: var(--space-1);
-  padding-inline: var(--space-1);
+  gap: var(--space-3);
+  align-items: center;
 }
 
-@media (min-width: 640px) {
-  .panel {
-    padding: var(--space-5) var(--space-4);
-  }
-}
-
-@media (min-width: 1024px) {
-  .split {
-    grid-template-columns: minmax(0, 1fr) 360px;
-    gap: var(--space-7);
-    align-items: start;
+@container sheet (min-width: 720px) {
+  .overview {
+    grid-template-columns: minmax(15rem, 1fr) minmax(0, 2fr);
   }
 
-  .split__side {
-    position: sticky;
-    inset-block-start: var(--space-5);
-    order: 2;
+  .overview__info {
+    padding: var(--space-5);
+  }
+
+  .overview__filter {
+    padding: var(--space-4);
+    border-block-start: 0;
+    border-inline-start: 1px solid var(--color-line);
+  }
+
+  // a clean run has no count by condition: its block is the count and the facts on one line
+  .overview:not(:has(.overview__filter)) {
+    grid-template-columns: minmax(0, 1fr);
+
+    .overview__info {
+      grid-template-columns: auto minmax(0, 1fr);
+      align-items: end;
+      gap: var(--space-7);
+    }
+  }
+
+  // the search has the room of its placeholder: the column is given, not left to what the title spares
+  .records__head {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 26rem);
+  }
+
+  .records__head .toolbar__search {
+    flex: 1 1 100%;
   }
 }

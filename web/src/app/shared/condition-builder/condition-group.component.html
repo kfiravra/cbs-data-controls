@@ -41,7 +41,6 @@
             [scope]="scope()"
             [view]="view()"
             (edit)="edit.emit($event)"
-            (trace)="trace.emit($event)"
           />
         }
         @case ('group') {
@@ -51,7 +50,6 @@
             [scope]="scope()"
             [view]="view()"
             (edit)="edit.emit($event)"
-            (trace)="trace.emit($event)"
           />
         }
         @case ('related') {
@@ -61,7 +59,6 @@
             [scope]="scope()"
             [view]="view()"
             (edit)="edit.emit($event)"
-            (trace)="trace.emit($event)"
           />
         }
       }
@@ -77,26 +74,43 @@
       >
         <app-icon name="add" size="sm" /><span>{{ 'editor.add.condition' | translate }}</span>
       </button>
-      <button
-        class="adder"
-        type="button"
-        data-adder="group"
-        [attr.data-adder-of]="group().key"
-        [disabled]="!canGroup()"
-        (click)="add('addGroup')"
-      >
-        <app-icon name="add" size="sm" /><span>{{ 'editor.add.group' | translate }}</span>
-      </button>
-      @if (hasRelated()) {
+      <!-- groups and related records are the advanced part: offered when it was asked for, and whenever the
+           draft already holds one -->
+      @if (view().advanced) {
         <button
           class="adder"
           type="button"
-          data-adder="related"
+          data-adder="group"
           [attr.data-adder-of]="group().key"
-          [disabled]="!canRelate()"
-          (click)="add('addRelated')"
+          [disabled]="!canGroup()"
+          (click)="add('addGroup')"
         >
-          <app-icon name="add" size="sm" /><span>{{ 'editor.add.related' | translate }}</span>
+          <app-icon name="add" size="sm" /><span>{{ 'editor.add.group' | translate }}</span>
+        </button>
+        @if (hasRelated()) {
+          <button
+            class="adder"
+            type="button"
+            data-adder="related"
+            [attr.data-adder-of]="group().key"
+            [disabled]="!canRelate()"
+            (click)="add('addRelated')"
+          >
+            <app-icon name="add" size="sm" /><span>{{ 'editor.add.related' | translate }}</span>
+          </button>
+        }
+      }
+      @if (root() && !structured()) {
+        <!-- one action for everything beyond a flat list; it is gone once the draft holds such a thing -->
+        <button
+          class="adder adder--more"
+          type="button"
+          data-testid="advanced"
+          [attr.aria-pressed]="view().advanced"
+          [matTooltip]="'editor.add.advancedHint' | translate"
+          (click)="advancedChange.emit(!view().advanced)"
+        >
+          <app-icon name="tune" size="sm" /><span>{{ 'editor.add.advanced' | translate }}</span>
         </button>
       }
     </div>

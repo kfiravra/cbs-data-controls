@@ -104,16 +104,48 @@ describe('SuggestionsDialogComponent', () => {
     expect(drafts()).toHaveLength(3);
   });
 
-  it('shows each draft with its name, its sentence under a mark, its rationale and its evidence, none ticked', async () => {
+  it('shows each draft with its name, its sentence in the colour of its condition, its rationale and its evidence, none ticked', async () => {
     await opened();
 
     const first = drafts()[0];
     expect(first.textContent).toContain('first');
     expect(first.querySelector('[data-testid="suggestion-sentence"]')!.textContent).toContain('first sentence');
-    expect(first.querySelectorAll('[data-testid="mark"]')).toHaveLength(1);
+    // no letter in the sentence: the one condition's words carry its colour
+    expect(first.querySelectorAll('[data-testid="mark"]')).toHaveLength(0);
+    expect(first.querySelectorAll('[data-testid="clause"][data-tone="1"]')).toHaveLength(1);
     expect(first.textContent).toContain('first rationale');
     expect(first.querySelector('[data-testid="evidence"]')!.textContent).toBe('first: 3 of 85');
     expect(host().querySelectorAll('input[type="checkbox"]:checked')).toHaveLength(0);
+  });
+
+  it('says under its title that the suggestions are computed from the data as they are now', async () => {
+    await opened();
+
+    expect(host().querySelector('[data-testid="page-meta"]')!.textContent).toBe(t('suggestions.note'));
+  });
+
+  it('computes the suggestions again on a refresh: the cards stay meanwhile, and the ticks are dropped', async () => {
+    await opened();
+    await tick(1);
+    const refresh = host().querySelector<HTMLButtonElement>('[data-testid="suggestions-refresh"]')!;
+
+    refresh.click();
+    await settled();
+    const request = await next('/api/v1/suggestions');
+    expect(request.request.method).toBe('POST');
+    // the pressed button keeps the focus, and a second press asks nothing more
+    expect(refresh.getAttribute('aria-disabled')).toBe('true');
+    refresh.click();
+    http.expectNone('/api/v1/suggestions');
+    expect(drafts()).toHaveLength(3);
+
+    request.flush({ items: [item('fresh'), item('second')] });
+    await settled();
+
+    expect(drafts().map((draft) => draft.querySelector('[data-testid="suggestion-name"]')!.textContent)).toEqual(['fresh', 'second']);
+    expect(host().querySelectorAll('input[type="checkbox"]:checked')).toHaveLength(0);
+    expect(createButton().disabled).toBe(true);
+    expect(refresh.hasAttribute('aria-disabled')).toBe(false);
   });
 
   it('counts the selection on the main button, and disables it while nothing is ticked', async () => {

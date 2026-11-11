@@ -55,8 +55,16 @@ async function expectBuilt(page: Page, api: FakeApi, example: Example): Promise<
   }
 }
 
-async function open(page: Page): Promise<Locator> {
+/** A new control, before anything is chosen: the driver chooses what it checks as its first step. */
+async function start(page: Page): Promise<void> {
   await page.goto('/controls/new');
+  await expect(page.getByTestId('root-entity').first()).toBeVisible();
+}
+
+/** A new control that checks the first thing the glossary offers: the builder, with its one empty row. */
+async function open(page: Page): Promise<Locator> {
+  await start(page);
+  await page.getByTestId('root-entity').first().click();
   const builder = page.getByTestId('condition-builder');
   await expect(builder.getByTestId('condition-row')).toHaveCount(1);
   return builder;
@@ -65,7 +73,7 @@ async function open(page: Page): Promise<Locator> {
 test.describe('condition builder', () => {
   test('builds example 6 with the pointer: a two-hop path and a nested group', async ({ page, api }, testInfo) => {
     const example = exampleNumber(6);
-    await open(page);
+    await start(page);
 
     await new BuilderDriver(page).build(example.definition);
 
@@ -73,9 +81,9 @@ test.describe('condition builder', () => {
     await shot(page, testInfo, 'builder-example-6');
   });
 
-  test('builds example 5 with the keyboard alone: another root entity and a related-records node', async ({ page, api }, testInfo) => {
+  test('builds example 5 with the keyboard alone: another choice of what to check and a related-records node', async ({ page, api }, testInfo) => {
     const example = exampleNumber(5);
-    await open(page);
+    await start(page);
 
     await new BuilderDriver(page, true).build(example.definition);
 
@@ -86,7 +94,7 @@ test.describe('condition builder', () => {
   for (const number of [1, 2] as const) {
     test(`builds example ${number} with the keyboard alone: ${number === 1 ? 'typed numbers' : 'a comparison of two fields'}`, async ({ page, api }) => {
       const example = exampleNumber(number);
-      await open(page);
+      await start(page);
 
       await new BuilderDriver(page, true).build(example.definition);
 
@@ -109,7 +117,7 @@ test.describe('condition builder', () => {
 
   test('builds example 4, a tree three groups deep', async ({ page, api }, testInfo) => {
     const example = exampleNumber(4);
-    await open(page);
+    await start(page);
 
     await new BuilderDriver(page).build(example.definition);
 
@@ -117,7 +125,11 @@ test.describe('condition builder', () => {
     await shot(page, testInfo, 'builder-deep-tree');
   });
 
-  test('starts a new control on the first root entity with one empty, open condition', async ({ page }) => {
+  test('has no conditions before it is chosen what to check, and one empty, open condition after', async ({ page }) => {
+    await start(page);
+    await expect(page.getByTestId('root-entity').and(page.locator('[aria-checked="true"]'))).toHaveCount(0);
+    await expect(page.getByTestId('condition-builder')).toHaveCount(0);
+
     const builder = await open(page);
     const first = glossary.entities.find((entity) => entity.rootable)!;
 
@@ -145,6 +157,7 @@ test.describe('condition builder', () => {
   test('removes a nested group with its last row, and keeps one row in the root group', async ({ page }) => {
     const builder = await open(page);
 
+    await builder.getByTestId('advanced').click();
     await builder.locator('[data-adder="group"]').first().click();
     await expect(builder.getByTestId('condition-group')).toHaveCount(2);
     await builder.getByTestId('condition-group').nth(1).getByTestId('remove-row').click();
@@ -157,13 +170,16 @@ test.describe('condition builder', () => {
   test('disables the adders the limits of the glossary no longer allow', async ({ page, api }) => {
     api.glossary = { ...glossary, limits: { ...glossary.limits, maxConditions: 2, maxDepth: 2 } };
     const builder = await open(page);
-    // a root entity that has related records, so the builder offers all three adders
+    // a choice that has related records, so the builder offers all three adders
     const withRelated = glossary.relationships.find((relationship) => relationship.cardinality === 'one_to_many')!.from;
     await page.getByRole('radio', { name: label(glossary.entities.find((entity) => entity.key === withRelated)!.label.plural) }).click();
     const keys = () => builder.getByTestId('condition-group').evaluateAll((groups) => groups.map((group) => group.getAttribute('data-group')));
     const adder = async (kind: string, group = 0) => builder.locator(`[data-adder-of="${(await keys())[group]}"][data-adder="${kind}"]`);
 
     await expect(await adder('condition')).toBeEnabled();
+    // a flat list offers one adder; the other two are behind the advanced action
+    await expect(builder.locator('[data-adder]')).toHaveCount(1);
+    await builder.getByTestId('advanced').click();
     // one more node fits, and a related-records node brings two: itself and its first row
     await expect(await adder('related')).toBeDisabled();
     await (await adder('group')).click();
@@ -181,7 +197,7 @@ test.describe('condition builder', () => {
     const root = glossary.entities.find((entity) => entity.rootable)!;
 
     await expect(page.getByTestId('root-summary')).toContainText(
-      t('editor.root.returns', { entity: label(root.label.plural) }),
+      t('editor.what.returns', { entity: label(root.label.plural) }),
     );
   });
 });

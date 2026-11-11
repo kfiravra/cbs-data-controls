@@ -3,103 +3,114 @@ version: alpha
 name: Data Controls
 description: Visual design of the Data Controls client. Direction, tokens, type, components, responsive rules, motion and states.
 colors:
-  ground: "#eef0f3"
-  surface: "#e2e5ea"
-  ink: "#0b0c0e"
-  muted: "#5d6470"
-  action: "#1f2de6"
-  action-hover: "#355aec"
-  action-pressed: "#486fef"
+  ground: "#f7f9fa"
+  surface: "#ecf0f2"
+  card: "#ffffff"
+  ink: "#1f3038"
+  muted: "#5d6b72"
+  action: "#0d7480"
+  action-hover: "#106a76"
+  action-pressed: "#12616c"
   on-action: "#ffffff"
-  on-action-stale: "#ffffffb8"
-  action-tint: "#1f2de61a"
-  action-track: "#1f2de629"
-  on-action-tonal: "#ffffff2e"
-  on-action-line: "#ffffff47"
-  bar: "#0b0c0e"
-  on-bar: "#eef0f3"
-  line: "#0b0c0e1c"
-  line-strong: "#0b0c0e33"
-  control-line: "#767c87"
-  tonal: "#0b0c0e14"
-  tonal-hover: "#0b0c0e24"
-  row-hover: "#0b0c0e0a"
+  action-ink: "#0b5f69"
+  action-tint: "#0d74801a"
+  inverse: "#1f3038"
+  on-inverse: "#f7f9fa"
+  on-inverse-muted: "#bbc1c4"
+  on-inverse-tonal: "#f7f9fa24"
+  on-inverse-line: "#f7f9fa3d"
+  line: "#1f30381c"
+  line-strong: "#1f303833"
+  control-line: "#74838b"
+  tonal: "#1f303812"
+  card-hover: "#f4f7f8"
+  scroll: "#1f303880"
+  scroll-on-inverse: "#f7f9fa80"
   danger: "#b51522"
   danger-tint: "#b515221a"
   danger-line: "#b5152259"
   warning: "#825100"
   warning-tint: "#8251001a"
   warning-line: "#82510059"
-  success: "#1d6835"
-  success-tint: "#1d68351a"
-  success-line: "#1d683559"
-  scrim: "#0b0c0e66"
+  success: "#2d6a1e"
+  success-tint: "#2d6a1e1a"
+  success-line: "#2d6a1e59"
+  tone-1: "#f2c74480"
+  tone-2: "#7fc0f580"
+  tone-3: "#f59ab880"
+  tone-4: "#8ed47c80"
+  tone-5: "#b9a6f280"
+  tone-6: "#f5a46880"
+  tone-7: "#5fd2c280"
+  tone-8: "#e29aea80"
+  scrim: "#1f303847"
 typography:
   figure:
-    fontFamily: "IBM Plex Sans Hebrew, IBM Plex Sans, system-ui, sans-serif"
-    fontSize: 3rem
-    fontWeight: 500
-    lineHeight: 1
-  figure-compact:
-    fontFamily: "IBM Plex Sans Hebrew, IBM Plex Sans, system-ui, sans-serif"
-    fontSize: 2.5rem
-    fontWeight: 500
-    lineHeight: 1
+    fontFamily: "Heebo, system-ui, sans-serif"
+    fontSize: 2.25rem
+    fontWeight: 600
+    lineHeight: 1.2
   page-title:
-    fontFamily: "IBM Plex Sans Hebrew, IBM Plex Sans, system-ui, sans-serif"
-    fontSize: 1.75rem
-    fontWeight: 500
-    lineHeight: 1.25
-  page-title-compact:
-    fontFamily: "IBM Plex Sans Hebrew, IBM Plex Sans, system-ui, sans-serif"
+    fontFamily: "Heebo, system-ui, sans-serif"
     fontSize: 1.5rem
-    fontWeight: 500
-    lineHeight: 1.25
-  sentence:
-    fontFamily: "IBM Plex Sans Hebrew, IBM Plex Sans, system-ui, sans-serif"
-    fontSize: 1.25rem
-    fontWeight: 500
-    lineHeight: 1.7
+    fontWeight: 600
+    lineHeight: 1.2
   title:
-    fontFamily: "IBM Plex Sans Hebrew, IBM Plex Sans, system-ui, sans-serif"
+    fontFamily: "Heebo, system-ui, sans-serif"
     fontSize: 1.125rem
-    fontWeight: 500
+    fontWeight: 600
+    lineHeight: 1.35
+  name:
+    fontFamily: "Heebo, system-ui, sans-serif"
+    fontSize: 1rem
+    fontWeight: 600
     lineHeight: 1.35
   body:
-    fontFamily: "IBM Plex Sans Hebrew, IBM Plex Sans, system-ui, sans-serif"
+    fontFamily: "Heebo, system-ui, sans-serif"
     fontSize: 1rem
     fontWeight: 400
-    lineHeight: 1.55
+    lineHeight: 1.5
   body-strong:
-    fontFamily: "IBM Plex Sans Hebrew, IBM Plex Sans, system-ui, sans-serif"
+    fontFamily: "Heebo, system-ui, sans-serif"
     fontSize: 1rem
     fontWeight: 500
-    lineHeight: 1.55
+    lineHeight: 1.5
+  read:
+    fontFamily: "Heebo, system-ui, sans-serif"
+    fontSize: 1rem
+    fontWeight: 500
+    lineHeight: 1.7
   small:
-    fontFamily: "IBM Plex Sans Hebrew, IBM Plex Sans, system-ui, sans-serif"
+    fontFamily: "Heebo, system-ui, sans-serif"
     fontSize: 0.875rem
     fontWeight: 400
     lineHeight: 1.5
   small-strong:
-    fontFamily: "IBM Plex Sans Hebrew, IBM Plex Sans, system-ui, sans-serif"
+    fontFamily: "Heebo, system-ui, sans-serif"
     fontSize: 0.875rem
     fontWeight: 500
-    lineHeight: 1.4
+    lineHeight: 1.35
   label:
-    fontFamily: "IBM Plex Sans Hebrew, IBM Plex Sans, system-ui, sans-serif"
+    fontFamily: "Heebo, system-ui, sans-serif"
     fontSize: 0.8125rem
     fontWeight: 500
-    lineHeight: 1.4
+    lineHeight: 1.35
   caption:
-    fontFamily: "IBM Plex Sans Hebrew, IBM Plex Sans, system-ui, sans-serif"
+    fontFamily: "Heebo, system-ui, sans-serif"
     fontSize: 0.8125rem
     fontWeight: 400
     lineHeight: 1.5
+  mark:
+    fontFamily: "Heebo, system-ui, sans-serif"
+    fontSize: 0.75rem
+    fontWeight: 600
+    lineHeight: 1
 rounded:
-  xs: 2px
-  sm: 4px
-  md: 6px
-  lg: 8px
+  xs: 4px
+  chip: 6px
+  sm: 8px
+  md: 12px
+  lg: 20px
 spacing:
   "1": 4px
   "2": 8px
@@ -113,11 +124,13 @@ spacing:
   gutter-tablet: 32px
   gutter-desktop: 48px
   container: 1280px
+  sheet: 1120px
+  sheet-inset: 12px
 components:
   app-bar:
-    backgroundColor: "{colors.bar}"
-    textColor: "{colors.on-bar}"
-    height: 56px
+    backgroundColor: "{colors.card}"
+    textColor: "{colors.ink}"
+    height: 60px
   button-primary:
     backgroundColor: "{colors.action}"
     textColor: "{colors.on-action}"
@@ -127,103 +140,155 @@ components:
     padding: 0 24px
   button-primary-hover:
     backgroundColor: "{colors.action-hover}"
-  button-tonal:
-    backgroundColor: "{colors.tonal}"
+  button-secondary:
+    backgroundColor: "{colors.card}"
     textColor: "{colors.ink}"
     typography: "{typography.body-strong}"
     rounded: "{rounded.sm}"
     height: 44px
     padding: 0 24px
-  button-tonal-hover:
-    backgroundColor: "{colors.tonal-hover}"
+  button-secondary-hover:
+    backgroundColor: "{colors.ground}"
   button-small:
     typography: "{typography.small-strong}"
     height: 36px
     padding: 0 12px
-  button-on-action:
-    backgroundColor: "{colors.ground}"
-    textColor: "{colors.ink}"
-  button-on-action-tonal:
-    backgroundColor: "{colors.on-action-tonal}"
-    textColor: "{colors.on-action}"
+  button-on-inverse:
+    backgroundColor: "{colors.on-inverse}"
+    textColor: "{colors.inverse}"
+  button-on-inverse-quiet:
+    backgroundColor: "{colors.inverse}"
+    textColor: "{colors.on-inverse}"
   icon-button:
     textColor: "{colors.muted}"
     rounded: "{rounded.sm}"
     size: 44px
   field:
-    backgroundColor: "{colors.ground}"
+    backgroundColor: "{colors.card}"
     textColor: "{colors.ink}"
     typography: "{typography.body}"
     rounded: "{rounded.sm}"
     height: 44px
     padding: 0 12px
   segmented-option:
-    backgroundColor: "{colors.ground}"
+    backgroundColor: "{colors.card}"
     textColor: "{colors.ink}"
     typography: "{typography.small-strong}"
     height: 36px
     padding: 6px 12px
   segmented-option-selected:
-    backgroundColor: "{colors.ink}"
-    textColor: "{colors.ground}"
-  entity:
-    backgroundColor: "{colors.ground}"
-    textColor: "{colors.ink}"
-    typography: "{typography.body-strong}"
+    backgroundColor: "{colors.inverse}"
+    textColor: "{colors.on-inverse}"
+  tab:
+    backgroundColor: "{colors.surface}"
+    textColor: "{colors.muted}"
+    typography: "{typography.small-strong}"
     rounded: "{rounded.sm}"
-    height: 44px
+    height: 36px
     padding: 0 16px
-  entity-selected:
-    backgroundColor: "{colors.ink}"
-    textColor: "{colors.ground}"
+  tab-selected:
+    backgroundColor: "{colors.inverse}"
+    textColor: "{colors.on-inverse}"
+  choice:
+    backgroundColor: "{colors.card}"
+    textColor: "{colors.ink}"
+    typography: "{typography.name}"
+    rounded: "{rounded.md}"
+    padding: 12px 16px
+  choice-selected:
+    backgroundColor: "{colors.inverse}"
+    textColor: "{colors.on-inverse}"
   chip:
     backgroundColor: "{colors.tonal}"
     textColor: "{colors.ink}"
     typography: "{typography.label}"
-    rounded: "{rounded.sm}"
+    rounded: "{rounded.chip}"
     height: 24px
     padding: 0 8px
-  mark:
-    backgroundColor: "{colors.action-tint}"
-    textColor: "{colors.action}"
+  status-chip:
+    backgroundColor: "{colors.tonal}"
+    textColor: "{colors.muted}"
     typography: "{typography.label}"
-    rounded: "{rounded.sm}"
-    size: 22px
-  mark-active:
-    backgroundColor: "{colors.action}"
-    textColor: "{colors.on-action}"
-  mark-on-action:
-    backgroundColor: "{colors.on-action-tonal}"
-    textColor: "{colors.on-action}"
+    rounded: "{rounded.chip}"
+    height: 26px
+    padding: 2px 8px
+  status-chip-violations:
+    backgroundColor: "{colors.danger-tint}"
+    textColor: "{colors.danger}"
+  status-chip-clean:
+    backgroundColor: "{colors.success-tint}"
+    textColor: "{colors.success}"
+  status-chip-stopped:
+    backgroundColor: "{colors.warning-tint}"
+    textColor: "{colors.warning}"
+  mark:
+    backgroundColor: "{colors.tone-1}"
+    textColor: "{colors.ink}"
+    typography: "{typography.mark}"
+    rounded: "{rounded.chip}"
+    size: 18px
   value:
     backgroundColor: "{colors.action-tint}"
     textColor: "{colors.ink}"
     typography: "{typography.body-strong}"
-    rounded: "{rounded.sm}"
+    rounded: "{rounded.chip}"
     padding: 1px 6px
-  sentence-field:
-    backgroundColor: "{colors.action}"
-    textColor: "{colors.on-action}"
-    typography: "{typography.sentence}"
+  rule-bar:
+    backgroundColor: "{colors.inverse}"
+    textColor: "{colors.on-inverse}"
+    typography: "{typography.body-strong}"
+    padding: 16px 32px
+  table-row:
+    backgroundColor: "{colors.card}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.md}"
+    padding: 12px 16px
+  table-row-hover:
+    backgroundColor: "{colors.card-hover}"
+  sheet:
+    backgroundColor: "{colors.card}"
+    textColor: "{colors.ink}"
     rounded: "{rounded.lg}"
-    padding: 24px
+    width: 1120px
   panel:
     backgroundColor: "{colors.surface}"
     textColor: "{colors.ink}"
-    rounded: "{rounded.lg}"
-    padding: 24px
-  toolbar:
-    backgroundColor: "{colors.surface}"
     rounded: "{rounded.md}"
-    padding: 12px
-  meter-track:
-    backgroundColor: "{colors.action-track}"
-    rounded: "{rounded.xs}"
-    height: 8px
-  meter-fill:
+    padding: 24px
+  rule-block:
+    backgroundColor: "{colors.action-tint}"
+    textColor: "{colors.ink}"
+    typography: "{typography.read}"
+    rounded: "{rounded.md}"
+    padding: 16px 24px
+  overview:
+    backgroundColor: "{colors.card}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.md}"
+    padding: 24px
+  meter:
+    backgroundColor: "{colors.card}"
+    textColor: "{colors.ink}"
+    typography: "{typography.small}"
+    rounded: "{rounded.sm}"
+    height: 36px
+    padding: 4px 12px
+  meter-selected:
+    backgroundColor: "{colors.ground}"
+  ideas:
+    backgroundColor: "{colors.action-tint}"
+    textColor: "{colors.action-ink}"
+    typography: "{typography.small-strong}"
+    rounded: "{rounded.md}"
+    height: 44px
+    padding: 0 16px
+  ideas-count:
     backgroundColor: "{colors.action}"
-    rounded: "{rounded.xs}"
-    height: 8px
+    textColor: "{colors.on-action}"
+    typography: "{typography.label}"
+    rounded: "{rounded.chip}"
+    height: 20px
+    padding: 0 6px
   banner-warning:
     backgroundColor: "{colors.warning-tint}"
     textColor: "{colors.ink}"
@@ -235,7 +300,7 @@ components:
     rounded: "{rounded.md}"
     padding: 12px 16px
   dialog:
-    backgroundColor: "{colors.ground}"
+    backgroundColor: "{colors.card}"
     textColor: "{colors.ink}"
     rounded: "{rounded.lg}"
     padding: 24px
@@ -243,8 +308,8 @@ components:
   dialog-small:
     width: 440px
   toast:
-    backgroundColor: "{colors.bar}"
-    textColor: "{colors.on-bar}"
+    backgroundColor: "{colors.inverse}"
+    textColor: "{colors.on-inverse}"
     typography: "{typography.small}"
     rounded: "{rounded.md}"
     height: 44px
@@ -253,15 +318,16 @@ components:
 
 # Design System: Data Controls
 
-The visual design of the client in [architecture.md §8](architecture.md): three screens (controls list, control
-editor, run results) and the suggestions dialog, for business users at a statistics bureau, in Hebrew, right to
-left, written mobile first. Product context is in [PRODUCT.md](PRODUCT.md).
+The visual design of the client in [architecture.md §8](architecture.md): one page (the controls list) with
+the control editor, the run results and the suggestions opening in a panel over it, for business users at a
+statistics bureau, in Hebrew, right to left, written mobile first. Product context is in
+[PRODUCT.md](PRODUCT.md).
 
-How it was made (2026-11-10). The direction was dealt, not chosen by taste, with the `design-taste-frontend`
-dealer. A static mock of the three screens and a sheet of their states was then built from the deal and checked at
-390 and 1440, and this document records what the mock does (`/impeccable document`). The tokens in the frontmatter
-are normative; the prose says how to apply them. The mock and its screenshots are working files of the developer
-(`dev/active/design/`, not in the repository), so this document stands without them.
+How it was made. The first direction (2026-11-10: a cool grey page, a near black bar, one cobalt, square
+corners, IBM Plex) was built and shipped, and its owner read it in the browser and found it dated and dull.
+On 2026-11-11 the structure became one page, and one new direction was dealt with the `design-taste-frontend`
+dealer and applied as the only theme: there is no second theme and no switch. This document records what the
+client does now. The tokens in the frontmatter are normative; the prose says how to apply them.
 
 ## Overview
 
@@ -270,298 +336,418 @@ are normative; the prose says how to apply them. The mock and its screenshots ar
 A statistical table is trusted because every figure can be traced: a small mark beside the number leads to the note
 that explains it. This interface works the same way. Every condition of a control carries a mark, a letter given in
 order (א, ב, ג), and the mark travels with the condition wherever it is spoken of: on its row in
-the builder, on its clause in the sentence that reads the control back, on its line in the breakdown of a run, and
-beside every reason a record is listed. A user who asks "why is this record here" follows a letter, not a query.
+the builder, at the corner of its clause in the sentence that reads the control back, on its chip in the count of a
+run by condition, and beside every reason a record is listed. A user who asks "why is this record here" follows a letter, not a query.
 
-The mood is exact, plain and unhurried. Exact: aligned numerals, hairline rules, square corners, one measure of
-everything. Plain: sentences in the user's own words, standard controls that need no learning, no decoration
-standing in for content. Unhurried: nothing blinks or counts up, a finding is stated in ink and not in red, and the
-one saturated colour is spent on what the user is about to commit. The primary scene is an office desk in daylight,
-so there is one light theme and no dark one.
-
-The page is flat and grey by design, and three things keep it from being a grey screen with a blue button: a near
-black bar that frames every screen, two greys that mean different things (below), and a cobalt field that holds the
-control in words.
+The mood is light, exact and unhurried. Light: white cards on a frost ground, soft corners, air between things.
+Exact: aligned numerals, hairline edges, one measure of everything. Unhurried: nothing blinks or counts up, a
+status is said in words with one of four colours beside them, and the teal is spent on what the user is about to
+commit and on what is offered to be read. The primary scene is an office desk in daylight, so there is one light theme and no dark one.
 
 The direction as dealt:
 
-| Part | Dealt | Why it stands |
+| Part | Dealt | How it stands |
 |---|---|---|
-| Palette | `cool-grey-cobalt`, the first of three dealt for a software product | A cool paper grey for long reading of tables, near black type, one cobalt. Nothing else is tinted, so state colours keep their meaning. |
-| Type | `plex` (IBM Plex Sans) | The first pairing dealt, Host Grotesk, has no Hebrew glyphs. Checked against the Google Fonts metadata, IBM Plex is the only family on the dealer's software list with a Hebrew cut drawn as part of the same family. The language decided, not taste. |
-| Radius | `sharp`: 4, 6, 8 | The dealer's scale for data tools. Tables and nested conditions want corners that do not eat their content. |
-| Buttons | `tonal` | One filled button for the main action; every other button is a quiet grey fill with no border. |
-| Mark | `dots` | Three dots and one square: three records and the one that differs. It is the only brand mark; there is no bureau logo. |
+| Palette | `cool-white-slate`, "Frost and slate": the first of the three dealt for a light software page | An off-white ground, white cards on it, a slate ink and one teal. The dealer's very first hand was a dark page; the desk in daylight asks for a light one, so the deal was repeated for light and its first palette taken. The teal is far from the three state colours, so red keeps its one meaning. |
+| Type | `host` (Host Grotesk), the first pairing dealt | Host Grotesk has no Hebrew glyphs, and neither has any other face the dealer holds but IBM Plex, which the first direction used. The interface is in Hebrew, so the face is Heebo: the neo-grotesk nearest the dealt one whose Hebrew and Latin were drawn as one family. The language decided, not taste. |
+| Radius | `soft`: 8, 12, 20 | The dealer's default. Controls 8, panels 12, the list and the panel 20. |
+| Buttons | `arrow` | A filled main button and a quiet second one. The arrow itself says "this leads on" and is a device of a site's calls to action: the buttons of this page act in place (save, run, archive), so none carries it, and the second button takes the system's plain form, a white button with a line round it. |
+| Mark | `wordmark` | The name of the product is its mark. No symbol stands beside it and there is no bureau logo. |
 
-Website parts of the deal (navigation, footer, hero, scroll moments) have no place in an application and were not
-used.
+Website parts of the deal (navigation, footer, hero, scroll moments, photographs) have no place in an
+application and were not used.
 
 **Key Characteristics:**
 
 - One mark per condition, the same everywhere the condition appears.
-- Two greys with two jobs: the lighter is read on, the darker is operated on.
-- One cobalt, kept for the main action, links, focus, marks and the control in words.
-- Flat surfaces, hairline rules, square corners; one shadow, only for what floats.
+- Three lights with three jobs: the ground is the page, a card is what stands on it, the surface is where things
+  are operated.
+- One teal, kept for the main action, links, focus, marks, and the tint of the rule in words and of an offer.
+- One status language: violations red, a clean run green, a stopped run amber, nothing to say grey.
+- Ink selects: a chosen tab, a chosen card, a chosen option are filled with the ink.
+- Every row is a bubble: a white card of its own, with room between it and the next.
+- Soft corners, hairline edges, flat cards; a shadow only for what floats, and for a card about to be pressed.
 - Standard controls at one height of 44px; nothing invented where a known control exists.
 - Sentences before symbols: the control, the result of a run and each reason are written out.
 
 ## Colors
 
-A cool neutral page, a near black ink and one cobalt; three state colours of matched weight that appear only with an
-icon and words. Each colour below is the CSS custom property `--color-<name>`.
+A frost page, white cards, a slate ink and one teal; three state colours of matched weight that appear only
+with an icon or words. Each colour below is the CSS custom property `--color-<name>`.
 
 ### Primary
 
-- **Action** (`#1f2de6`): the one filled button of a view, text links, the focus ring, the caret, the meter's fill,
-  and the ground of the sentence field. **Action hover** (`#355aec`) is its hover; **Action pressed** (`#486fef`)
-  shows a press when motion is reduced. **On action** (`#ffffff`) is text on it.
-- **Action tint** (`#1f2de61a`, 10%): the ground of a mark, of a highlighted value and of a selected filter row.
-  **Action track** (`#1f2de629`, 16%): the unfilled part of a meter.
-- **On action tonal** (`#ffffff2e`) and **On action line** (`#ffffff47`): marks, the second button and the divider
-  on the sentence field. **On action stale** (`#ffffffb8`, 72% white): the last valid sentence, kept on the field
-  while the draft is unfinished or refused.
+- **Action** (`#0d7480`): the one filled button of a view, text links, the focus ring, the caret, the count on
+  the row of ideas and the first instant of the settle. **Action hover** (`#106a76`) is its hover; **Action pressed** (`#12616c`) shows a press when motion is
+  reduced. **On action** (`#ffffff`) is text on it.
+- **Action tint** (`#0d74801a`, 10%): the ground of a mark, of a highlighted value, of the rule in words on a
+  results panel and of the row of ideas in the editor. **Action ink** (`#0b5f69`): the letter of a mark, and the
+  text that stands on the tint (the label of the rule, the row of ideas), a step darker than Action so it reads on
+  the tint also where the tint lies over Surface.
 
 ### Neutral
 
-- **Ground** (`#eef0f3`): the page, tables, sentences, dialogs, and the inside of every field.
-- **Surface** (`#e2e5ea`): panels where the user operates: the builder, the breakdown, toolbars.
-- **Ink** (`#0b0c0e`): text, selected options, and, as **Bar**, the app bar and the toast, with **On bar**
-  (`#eef0f3`) as their text.
-- **Muted** (`#5d6470`): labels, hints, meta lines, resting icons. Never a sentence the user must read to act.
-- **Line** (`#0b0c0e1c`, 11% ink): rules between rows. **Line strong** (`#0b0c0e33`, 20% ink): the rule under a
-  table header, the builder's rail, the edge of a dialog. **Control line** (`#767c87`): the border of every field.
-- **Tonal** (`#0b0c0e14`) and **Tonal hover** (`#0b0c0e24`): the second button, chips, icon buttons on hover.
-  **Row hover** (`#0b0c0e0a`): a table row or a filter row under the pointer.
-- **Scrim** (`#0b0c0e66`): the page behind an open dialog.
+- **Ground** (`#f7f9fa`): the page, the body of a results panel (so its rows stand on the page again), the
+  list's foot, the chosen chip of the count by condition, a second button under the pointer.
+- **Card** (`#ffffff`): what stands on the page: a row of a table, the panel, the overview of a run, a dialog, a
+  card, a second button, and the inside of every field. The bar's white is also painted on the canvas, so it
+  reaches the window's edge over the room kept for the scrollbar. **Card hover** (`#f4f7f8`): the details of a row
+  under the pointer, and a chip of the count by condition; one step from the card towards the ground.
+- **Surface** (`#ecf0f2`): where the user operates: the builder, the track of the tabs.
+- **Ink** (`#1f3038`): text. As **Inverse** it is a ground: the bar of the rule in words, a chosen tab, card or
+  option, the toast and the tooltip, with **On inverse** (`#f7f9fa`) as their text. **On inverse muted**
+  (`#bbc1c4`): the last valid sentence, kept on the bar while the draft is unfinished or refused. **On inverse
+  tonal** (`#f7f9fa24`) and **On inverse line** (`#f7f9fa3d`): marks and the edge of the second button on the bar.
+- **Muted** (`#5d6b72`): labels, hints, meta lines, resting icons. Never a sentence the user must read to act.
+- **Line** (`#1f30381c`, 11% ink): the edge of a row's bubble and of a card, the line between the parts of a row,
+  the line over a foot. **Line strong** (`#1f303833`, 20% ink): the edge of a row under the pointer, of a second
+  button, of a choice card and of a chip of the count by condition, the builder's rail. **Control line** (`#74838b`): the border
+  of every field.
+- **Tonal** (`#1f303812`): chips, the grey status chip, skeleton bars, an icon button under the pointer. **Row
+  hover** (`#1f30380a`) is declared and no component draws it now: a row under the pointer takes Card hover.
+- **Scroll** (`#1f303880`, 50% ink): the thumb of every scrollbar. **Scroll on inverse** (`#f7f9fa80`): the same
+  on the bar of the rule in words.
+- **Scrim** (`#1f303847`, 28% ink): the page behind an open panel or dialog. Light on purpose: the list stays
+  readable under it.
 
 ### State
 
-- **Danger** (`#b51522`): system errors, a failed run, an invalid field. **Warning** (`#825100`): a result that is
-  true but partial (the row cap), a control that can no longer run, an edit conflict. **Success** (`#1d6835`): a
-  run with no violations.
-- Each has a **tint** (10%, the ground of its banner) and a **line** (35%, the banner's border). The state colour
-  itself is used for the icon and for short status text, never for a paragraph.
+- **Danger** (`#b51522`): violations (the status chip of a row, the count of a run, the counts by condition),
+  system errors, an invalid field. **Warning** (`#825100`): a run that stopped (timed out or failed), a result
+  that is true but partial (the row cap), a control that can no longer run, an edit conflict. **Success**
+  (`#2d6a1e`): a run with no violations; a leaf green, kept away from the teal.
+- Each has a **tint** (10%, the ground of its banner and of its status chip) and a **line** (35%, the banner's
+  border). The state colour itself is used for the icon, the figure and short status text, never for a paragraph.
 
 ### Contrast, measured
 
 | Pair | Ratio |
 |---|---|
-| Ink on Ground / on Surface | 17.1 / 15.5 |
-| Muted on Ground / on Surface | 5.2 / 4.7 |
-| Action on Ground / on Surface / on Action tint | 7.1 / 6.5 / 6.2 |
-| On action on Action / on Action hover | 8.2 / 5.5 |
-| On action stale on Action | 4.9 |
-| On bar on Bar | 17.1 |
-| Danger, Warning, Success on Ground | 5.9, 5.9, 6.0 |
-| Danger, Warning, Success on their own tint over Surface (worst case) | 4.7, 4.6, 4.7 |
-| Control line against Ground / Surface | 3.7 / 3.3 |
+| Ink on Ground / on Surface / on Card | 12.9 / 11.9 / 13.7 |
+| Muted on Ground / on Surface / on Card | 5.2 / 4.8 / 5.5 |
+| Action on Ground / on Surface / on Card | 5.2 / 4.8 / 5.5 |
+| On action on Action / on Action hover | 5.5 / 6.3 |
+| Action ink on Action tint over Card / over Surface | 6.4 / 5.6 |
+| On inverse on Inverse / On inverse muted on Inverse | 12.9 / 7.5 |
+| Danger, Warning, Success on Ground | 6.4, 6.4, 6.2 |
+| Danger, Warning, Success on their own tint over Surface (worst case) | 5.0, 5.1, 5.0 |
+| Danger, Warning, Success on their own tint over Card (a status chip) | 5.7, 5.8, 5.7 |
+| Danger, Success on Card (the figure of a run) | 6.8, 6.6 |
+| Muted on Tonal over Card (the grey status chip) / on Card hover | 4.8 / 5.1 |
+| Action ink, Ink on Action tint over Ground (the rule of a results panel) | 6.1, 11.3 |
+| Control line against Card / Ground / Surface | 3.9 / 3.7 / 3.4 |
 
-Text is held to 4.5:1 and the boundary of a control to 3:1. Row rules are decoration and are not. Translucent
-tokens (tints, Tonal, the lines) are measured as painted over Ground and over Surface; a tool that compares them
-unmixed, as the DESIGN.md linter does, reports a failure that is not there.
+Text is held to 4.5:1 and the boundary of a control to 3:1. Row rules and the edge of a card are decoration and
+are not. Translucent tokens (tints, Tonal, the lines) are measured as painted over what they lie on; a tool that
+compares them unmixed, as the DESIGN.md linter does, reports a failure that is not there.
 
 ### Named Rules
 
-**The Two Greys Rule.** Ground is where things are read; Surface is where things are operated. A table, a sentence
-or a summary never sits on Surface, and a builder or a filter bar never sits bare on Ground. Inside a Surface panel
-every field is filled with Ground, so a field always reads as a lighter well.
+**The Three Lights Rule.** Ground is the page. A Card is a thing on the page: it is white, it has a hairline
+edge or floats, and it is where things are read. Surface is where things are operated, always inside a card and
+never bare on the ground. Inside a Surface panel every field is a Card, so a field always reads as a white well.
 
-**The One Cobalt Rule.** A view has one filled Action button. Cobalt otherwise appears only as a link, a focus
-ring, a mark, a meter and the sentence field. It is never a heading colour, an icon colour for decoration, or a
-background behind ordinary content.
+**The One Teal Rule.** A view has one filled Action button. Teal otherwise appears only as a link, a focus
+ring, a mark, the settle and the count of ideas; its tint grounds a mark, a value, the rule of a results panel and
+the row of ideas, and on that tint a label takes Action ink. It is never a heading colour on a neutral ground, an
+icon colour for decoration, or a full-strength background behind ordinary content.
 
-**The Ink Selects Rule.** A chosen option (all of / any of, the root entity, a checked box) is filled with Ink.
-Cobalt acts and marks; ink selects.
+**The Ink Selects Rule.** A chosen option (a tab of the list, the card of what to check, all of / any of, a
+checked box) is filled with the Inverse ground; the chosen chip of the count by condition and a ticked suggestion
+take an Ink edge. Teal acts and marks; ink selects.
 
-**The Findings Rule.** A number of violations is a finding and is set in Ink, or as an Action link to its results.
-Red is for something that went wrong with the system or the input, never for the count.
+**The One Status Language Rule.** A run's status has one colour wherever it is shown: violations are Danger, a
+clean run Success, a stopped run Warning, and a control that never ran, or is archived, Muted on Tonal. The same
+colours hold on a list row, on the archive's rows, on the count of a results panel and on its state panels. (The
+earlier rule that a count is never red was retired by the product owner on 2026-11-11.)
 
 **The Never Colour Alone Rule.** A state is an icon, a sentence that names it and, where there is one, the next
 step. The colour is the third signal, not the first.
 
 ## Typography
 
-**Display, body and label font:** IBM Plex Sans Hebrew, with IBM Plex Sans and `system-ui` behind it. One family
-for everything. Its Hebrew and its Latin letters were drawn together, so Hebrew text with an English name or a
-number in it stays one texture.
+**Display, body and label font:** Heebo, with `system-ui` behind it. One family for everything. Its Hebrew and
+its Latin letters and digits were drawn together, so Hebrew text with an English name or a number in it stays
+one texture.
 
-**Character:** an engineer's grotesque with a measured Hebrew: even, a little square, at ease in a table.
+**Character:** a calm, open neo-grotesk with a full, even Hebrew: easy in a table, clear at 13px, firm at 24.
 
-Weights 400 and 500 carry the interface; 600 is used once, for the letter inside a mark. The files (weights 400,
-500, 600; Hebrew and Latin subsets) ship with the application. The mono face of the dealt pairing, IBM Plex Mono,
-is not loaded: nothing on the three screens is code.
+Three weights, each a token: 400 (`--weight-regular`) for what is read, 500 (`--weight-medium`) for labels,
+buttons, chips and the rule in words, 600 (`--weight-strong`) for titles, names, figures and the letter of a mark.
+Four line heights, each a token: 1.2 (`--leading-tight`) for page titles and figures, 1.35 (`--leading-title`) for
+section titles, names and labels, 1.5 (`--leading-body`) for body and small text, 1.7 (`--leading-read`) for lines
+that carry marks and values. A role is a size with its weight and its line height; component styles take all
+three from these tokens, and a one-line box (a button, a mark, the name in the bar) sets 1. The font is one variable file per script (Hebrew, Latin) and ships with the application.
+No mono face is loaded: nothing on the page is code.
 
 ### Hierarchy
 
-Sizes are fixed rem steps, not fluid. Two roles step down below 1024px.
+Sizes are fixed rem steps, not fluid, and the same at every width: label 13, small 14, body 16, title 18, page 24,
+figure 36.
 
-- **Figure** (500, 3rem, 2.5rem below 1024, line height 1): the number of violations in the run summary. One per
-  screen at most.
-- **Page title** (500, 1.75rem, 1.5rem below 1024, 1.25): the `h1` of a screen: the list's name, the control's
-  name on its results.
-- **Sentence** (500, 1.25rem, 1.7): the control in words on the sentence field. The same component reads at Title
-  size (regular weight, 1.75) on the results screen and at Body size in the suggestions dialog.
-- **Title** (500, 1.125rem, 1.35): section headings, the brand name in the bar, the title of a state or a dialog.
-- **Body** (400, 1rem, 1.55) and **Body strong** (500): running text and field text; buttons, a row's name, a
-  banner's title, the highlighted value.
+- **Figure** (600, 2.25rem, 1.2): the number of violations in the overview of a run, its noun beside it in Title
+  size; Danger, and Success for a run that found none. One per panel at most.
+- **Page title** (600, 1.5rem, 1.2): the `h1` of the list and of a panel: the list's name, the control's name on
+  its results.
+- **Title** (600, 1.125rem, 1.35): section headings, the name in the bar, the title of a state or a dialog, the
+  name of a suggestion card.
+- **Name** (600, 1rem, 1.35): the name of a control on its row, the identifying field of a record, the name on a
+  card of what to check and on an idea.
+- **Body** (400, 1rem, 1.5) and **Body strong** (500): running text and field text; buttons, a banner's title, the
+  highlighted value, the sentence on the bar from 720px of panel width.
+- **The rule in words** is set as a sentence is: Body (400, 1rem, 1.5) on a results panel, on a suggestion and
+  in the archived editor, Small on a narrow bar. It has no weight or line height of its own. A reason takes the
+  Read line height (1.7), for the value it marks.
 - **Small** (400, 0.875rem, 1.5) and **Small strong** (500): descriptions, meta lines and notes; field labels,
-  table headers, small buttons, status text, an error under its field.
-- **Label** (500, 0.8125rem, 1.4) and **Caption** (400): chips, marks, the joining word on the rail, the terms of
-  the summary; hints under a field.
+  tabs, small buttons, the chips of the count by condition, an error under its field, the row of ideas, the
+  sentence on the bar of a narrow panel.
+- **Label** (500, 0.8125rem, 1.35) and **Caption** (400, 1.5): chips, status chips, column heads, the joining word
+  on the rail, the terms of the overview, the chain of what connects; hints under a field, the description on a
+  card of what to check.
+- **Mark** (600, 0.75rem): the letter of a condition at the start of its row.
 
 ### Named Rules
 
 **The No Tracking Rule.** Hebrew is never letter-spaced, tighter or wider, at any size. The dealt pairing's negative
 display tracking is not applied.
 
-**The Thirteen Floor Rule.** No text is smaller than 0.8125rem. Text the user must read to act (a message, a
+**The Thirteen Floor Rule.** No text is smaller than 0.8125rem, the letter of a mark aside: one letter that
+names its condition, also said in words where nothing else says it. Text the user must read to act (a message, a
 reason, an instruction) is 1rem; 0.875rem is for support beside it.
 
-**The Standing Numbers Rule.** Digits are Western (0 to 9). Plex's digits share one width, so
-columns of numbers align without a feature switch. Numbers, dates, currency and durations are formatted by the
-locale (`he-IL`: `15,000 ₪`, `10.11.2026`, `09:12`), and a range is written with a word (`1 עד 10 מתוך 23`), not a
-dash, so its two ends cannot swap sides in right-to-left text.
+**The Standing Numbers Rule.** Digits are Western (0 to 9) and share one width, so columns of numbers align.
+Numbers, dates, currency and durations are formatted by the locale (`he-IL`: `15,000 ₪`, `10.11.2026`, `09:12`),
+and a range is written with a word (`1 עד 10 מתוך 23`), not a dash, so its two ends cannot swap sides in
+right-to-left text.
 
 Further type rules: user data that may be in the other script (a person's name) is isolated with `<bdi>`. A prefix
 joins its number with a maqaf (`מ־18`). Quotation marks are the Hebrew locale's pair (`”ריק”`). There is no italic
-and no capitals style: emphasis is weight 500.
+and no capitals style: emphasis is weight.
 
 ## Layout
 
-One column of content, at most 1280px wide, centred, with a side gutter of 16px on a phone, 32px from 640px and
-48px from 1024px. The app bar (56px) spans the window; its content keeps the same edges. Nothing is sticky except
-the side column of a split screen.
+One page. Its content is one column, at most 1280px wide, centred, with a side gutter of 16px on a phone, 32px
+from 640px and 48px from 1024px. The bar (60px) spans the window; its content keeps the same edges. Under the
+list its foot (the range and the pager) is a bar fixed at the bottom of the window, a Card with a Line over it as
+the foot of the results panel is, there whether the list is longer than the window or one row.
+
+**The panel.** A control or a run opens in a panel over the list: a card at the inline end, as tall as the window
+less 12px of room on every side, `min(1120px, the window less between 48 and 320px)` wide, with the large radius
+and the overlay shadow. The list stays in view beside it, at the start edge, under the scrim: the names of the
+controls remain readable. Below 640px the panel is the whole window, square, with no room around it. A panel has
+a head that stays (the title, one meta line or the picker of runs, the actions; the close button at its end), a
+body that scrolls, and a foot that stays: for the editor the bar of the rule in words, for the results the count
+and the pager under the records. The suggestions are the same panel.
+
+What is inside a panel answers to the panel's width, not the window's (container queries on the panel): the
+overview of a run and the bar of the rule in words change at 720px of panel, the grid of suggestion cards at
+880px, the editor's details and section heads at 900px.
 
 Spacing uses eight steps: 4, 8, 12, 16, 24, 32, 48, 64 (`--space-1` to `--space-8`). 8 between a label and its
-control and between the controls of one condition; 16 between fields and inside a toolbar; 24 inside a panel; 32
-between the blocks of a screen, 48 from 1024px. There is always more space above a heading than under it.
+control, between the controls of one condition and between two rows of a table; 12 between cards of a row; 16
+between fields and between the blocks of a results panel; 24 between the sections of the editor and at the top of
+a panel's body. A panel's body has 16px of side room on a phone and 32 from 640. There is always more space above
+a heading than under it.
 
-Two breakpoints change structure, and type does not scale between them:
+**Scrolling.** Every scrollbar is thin (10px), with a Scroll thumb inset 2px, no arrows and no drawn track; a
+browser without the scrollbar pseudo-elements takes `scrollbar-width: thin` and `scrollbar-color` instead. From
+640px the page and a panel's body keep the room of their scrollbar (`scrollbar-gutter: stable`), so nothing moves
+sideways when content grows past the window. Below 640px the scrollbar lies over the page and keeps no room.
+Nothing scrolls sideways at any width: a long value breaks inside its tint, a table becomes cards.
 
-| | Below 640 | 640 to 1023 | From 1024 |
+| | Below 640 | From 640 | From 900 (the window for the list, the panel for what is in it) |
 |---|---|---|---|
-| Page head | Title, then the actions as equal buttons in one row | Actions at the end of the title row | Same |
-| Controls list | Card rows between rules: name and description; entity and last run on one line; result and actions on one line | A table of five columns (40%, 16%, 18%, 16%, actions) | Same |
-| List toolbar | Search and one square filter button | Search and the filters as selects | Same |
-| Editor | One column: details, root entity, conditions, then the sentence field with its buttons stacked | Same, the buttons side by side | Two columns (2fr and 1fr, at least 320px, 48px apart); the sentence field stays in view at the inline end, 24px from the top |
-| Relationship map | Entities stacked, each link's label between them | One row: entity, link, entity | Same |
-| Results | One column: head, sentence, summary, breakdown panel, table | Same | Summary in one row; then the table (1fr) with the breakdown panel (360px) in view at the inline end |
-| Results rows | Card rows: name and number on one line, the reasons under them; a sort select in the toolbar | A table (20%, 12%, the rest) with sortable headers | Same |
+| List head | Title, then the two actions as equal buttons in one row | Actions at the end of the title's row | Same |
+| Tabs, search, filter | The tabs as one track, full width; under them the search and one square filter button | The same two rows, the filter as a select | One row: the tabs at the start, the search and the filter at the end |
+| Controls list | One card per row, 12px apart: name and description; what is checked; the status and the last run on one line; under a line, run at the start and the actions at the end. A select in the toolbar sorts | A table of bubbles, 8px apart, under a head of sort buttons: four columns (40%, 16%, 18%, 16%), then the run and the actions, each behind a line | Same |
+| Panel | The whole window | A floating card, 12px of room, the list beside it | Same, up to 1120px wide |
+| Panel head | Title and meta, then the actions as one row | Actions at the end of the title's row | Same |
+| Editor | One column: name, description, what to check (cards stacked), the row of ideas, conditions; the bar: sentence, status, then two equal buttons | Cards in a row | From 720 of panel the bar in one row: the sentence and its status, then the buttons. From 900 the name (22rem) and the description (36rem) side by side, and a section's title and hint on one line |
+| Results | One column: the rule, the overview (the count and the facts, then the count by condition under a line), the records, the foot | Same | From 720 of panel the overview in two parts side by side (1fr and 2fr, a line between); the records as wide as the panel |
+| Results rows | One card per record: the identifying fields on one line, the reasons under them; a sort select | A table of bubbles with a sortable first header | Same |
+| Suggestions | One column of cards | Same | Two cards in a row |
 | Controls | Every control 44px high | Small controls (36px) allowed | Same |
-| Dialog | Full width inside the gutters | Up to 640px, or 440px for a confirmation | Same |
+| Dialog | Full width inside the gutters | Up to 440px for a confirmation | Same |
+
+Name and description in the editor keep a width that is easy to read (40rem at most, 22rem and 36rem when side
+by side), not the width of the panel. The description is two rows and stays two rows; more text scrolls inside
+it. The editor is laid out so that the conditions are in the first view: the details have no visible heading,
+the cards of what to check are compact, and their chain and summary share one line.
+
+Below 640px the sticky bars (the editor's bar of the rule in words, the results' foot, the list's foot) stay in
+reach at the bottom of the window; the two feet of a table keep the room of the device's safe area.
 
 A condition row answers to its own width, not to the window: it is one line (mark, field, comparison, value,
-remove) when its group is at least 560px wide and stacks below that. A deeply nested row on a wide screen and any
-row on a phone therefore take the same stacked form. Each level of nesting indents 24px on a phone and 32px from
-640px.
+remove) when its group is at least 560px wide and stacks below that. Each level of nesting indents 24px on a
+phone and 32px from 640px.
 
 Right to left:
 
 - Only logical properties (`margin-inline-start`, `inset-inline-end`, `border-start-start-radius`,
   `text-align: start`), so the layout holds for any language the interface gains later, whatever its direction.
-- Arrows and chevrons follow the reading direction: back points to the start edge, next page to the end edge. Icons
-  that show a thing and not a direction (run, search, edit, copy, delete) are never mirrored.
-- A meter fills from the start edge. The builder's rail stands on the start edge. The side column of a split
-  screen stands at the end edge.
+  The one thing a logical property cannot say, which way the panel slides in, reads a sign from the direction.
+- Chevrons follow the reading direction: next page points to the end edge. Icons that show a thing and not a
+  direction (run, search, edit, copy, archive, refresh) are never mirrored.
+- The builder's rail stands on the start edge. A mark in a sentence stands at the top corner of its clause, on the
+  start side. The panel stands at the end edge.
 
 ## Elevation & Depth
 
-Flat. Depth is said with tone and line: Ground and Surface, a hairline between rows, a stronger line under a
-header. Panels have no border and no shadow; their grey is enough against the page.
+The page is flat. Depth is said with the three lights and a hairline: a card or a row is white on the frost
+ground with a Line edge; an operating panel is Surface inside a card. A row under the pointer is not lifted: its
+details take Card hover and its edge Line strong.
 
 ### Shadow Vocabulary
 
-- **Overlay** (`box-shadow: 0 8px 24px #0b0c0e1a, 0 1px 2px #0b0c0e14`): the only shadow, for what floats above
-  the page: a dialog, a menu or select panel, a date picker, a toast. A dialog also takes a Line strong edge and
-  the Scrim behind it.
+- **Overlay** (`0 24px 48px -12px #1f303829, 0 2px 8px #1f303814`): for what floats above the page: the panel, a
+  dialog, a menu or select panel, a toast.
+- **Raised** (`0 6px 16px -6px #1f303824, 0 1px 2px #1f30380f`): a card that can be pressed (a choice of what to
+  check, a suggestion for it), while the pointer is on it.
 
 ### Named Rules
 
-**The Flat Page Rule.** Nothing that is part of the page casts a shadow, at rest or on hover. If a thing has a
-shadow, it can be dismissed.
+**The Flat Page Rule.** Nothing that is part of the page casts a shadow at rest. If a thing has the Overlay
+shadow, it can be dismissed; if it takes the Raised one, it is about to be pressed.
 
-**The No Box In A Box Rule.** A panel never holds another panel. Inside the builder, depth is a rail; inside a
-table, grouping is a rule.
+**The No Box In A Box Rule.** A card never holds another card, and a Surface panel never holds another. Inside
+the builder, depth is a rail; inside a row, its parts are divided by a line. A panel whose body holds rows (the
+results) paints that body the ground, so its rows and its overview stand on the page again.
 
 ## Shapes
 
-Square with eased corners, four radii: 2px for the meter and the focus outline, 4px for every control, button,
-chip, mark and highlighted value, 6px for toolbars, banners, toasts and menus, 8px for panels, dialogs and the
-sentence field. No pills and no circles, the spinner aside. The panel of a select keeps the component library's
-4px: the library has no token for its shape.
+Soft, five radii: 4px for the focus outline, the sort button and a mark at the corner of a clause; 6px for marks,
+chips, status chips and highlighted values; 8px for every control and button, a chip of the count by condition
+and an idea; 12px for a row's bubble, panels, banners, toasts, menus, cards, the rule block, the overview and the
+row of ideas; 20px for the panel and a dialog. No pills and no circles, aside from the spinner, the 6px dot of a
+status chip and the thumb of a scrollbar. The panel of a select keeps the component library's 4px:
+the library has no token for its shape.
 
-Lines are 1px. A field's border is Control line and turns Muted on hover, Action with a soft ring on focus, and
-Danger, doubled to 2px, when invalid. A rule between rows is Line; the rule under a table header and the
-builder's rail are Line strong. No coloured stripe marks the side of a row, a banner or a card.
+Lines are 1px. A field's border is Control line and turns Muted on hover, Action with a soft 3px ring on focus,
+and Danger, doubled to 2px, when invalid. A rule between rows and the edge of a card are Line; the edge of a
+second button, of a choice card and of a hovered row, and the builder's rail, are Line strong. No coloured stripe
+marks the side of a row, a banner or a card.
 
 Icons are Material Symbols, Sharp, weight 400, drawn in the colour of the text beside them: 20px by default, 16px
 inside small text and marks of status, 24px at the head of a state panel. They ship as SVG with the application.
-The suggestions action uses the light bulb; no sparkle stands for intelligence.
+Suggestions carry one icon wherever they are offered, a sparkle: on the button that opens the suggestions
+panel beside "new control", and on the row of ideas in the editor. It is drawn for this project in the same box
+as the Sharp set; the words beside it say what is offered, never that a machine made it. A column that does not sort now shows `unfold_more` at 55%; a sorted one an up or down arrow.
 
 ## Components
 
-### App bar
+### Bar
 
-The frame of every screen. Bar ground, 56px, the brand mark and name at the start linking home. There is no
-language switch: the interface is in Hebrew alone. It scrolls with the page.
+A card across the window, 60px, with a Line under it and the name of the product at the start, linking home. The
+name is the mark (600, Title size): there is no symbol and no language switch. It scrolls with the page. Its
+white and its line are also painted on the canvas, so the bar reaches the window's edge over the scrollbar's room.
 
 ### Buttons
 
 Plain and exact; they step, they do not glow.
 
-- **Shape:** 44px high, 24px side padding, 4px radius, Body strong. Small: 36px, 12px, Small strong, never below
+- **Shape:** 44px high, 24px side padding, 8px radius, Body strong. Small: 36px, 12px, Small strong, never below
   640px.
-- **Primary:** Action ground, On action text. One per view. **Tonal:** Tonal ground, Ink text; every other
-  button. **Text:** Ink text with an underline; cancel, a banner's action.
-- **On the sentence field:** the main action is Ground with Ink text; the second is On action tonal with On action
-  text.
+- **Primary:** Action ground, On action text. One per view. **Second:** Card ground, Ink text, a Line strong
+  edge; Ground under the pointer. Every other button. **Text:** Ink text with an underline; a banner's action,
+  "open in the editor".
+- **On the bar of the rule in words:** the main action is On inverse with Inverse text; the second is clear with
+  an On inverse line edge.
 - **Icon button:** 44px square, Muted icon, Tonal ground on hover; always with a name for assistive technology and
   a tooltip.
 - **States:** hover changes the ground and lifts 1px for a fine pointer; a press sinks 1px and scales to 0.985;
-  focus is the ring; disabled is Tonal ground with Muted text; while its action runs, the button looks the
-  same, is unavailable and keeps the focus (Dialogs and toast, below), and shows a 16px spinner before its label
-  (`ההרצה מתבצעת`).
+  focus is the ring; disabled is Tonal ground with Muted text and no edge; while its action runs, the button
+  looks the same, is unavailable and keeps the focus (Dialogs and toast, below), and shows a 16px spinner before
+  its label (`ההרצה מתבצעת`).
 - An underline anywhere (text button, link, adder) rests at 40% of its text colour and fills on hover.
 
 ### Fields
 
-- **Style:** Ground fill, 1px Control line, 4px radius, 44px, Body text, 12px side padding. A visible label above
+- **Style:** Card fill, 1px Control line, 8px radius, 44px, Body text, 12px side padding. A visible label above
   (Small strong, 8px away), never a floating or placeholder label. A hint under it in Caption.
-- **Kinds:** text, text area (72px at least), select (a caret at the end; a search or a filter may carry its own
-  label inside as a Muted prefix: `ישות ראשית: הכול`), number with a unit at the end (`₪`, `שנים`), date, and a
-  list of values as chips inside the field.
-- **Focus:** Action border and a soft 4px ring, at once. **Hover:** Muted border.
+- **Kinds:** text, text area (two rows, not resizable), select (a caret at the end; a search, a filter or the
+  picker of runs may carry its own label inside as a Muted prefix: `מה נבדק: הכול`, `הרצה:`), number with a unit
+  at the end (`₪`, `שנים`), date, and a list of values as chips inside the field.
+- **Focus:** Action border and a soft 3px ring, at once. **Hover:** Muted border.
 - **Error:** a 2px Danger border, and under the field its reason in Small strong Danger with the error icon: what
   is missing and what to enter (`חסר ערך להשוואה. יש להזין סכום.`). Errors show on save, not while typing.
 
+### Tabs of the list
+
+Two tabs on one Surface track (12px radius, 4px of room): `פעילות` and `ארכיון`, each with the number of controls
+it holds as a small chip (a Card chip on a resting tab, so its Muted digits keep 5.5:1). The chosen tab is
+filled with Inverse. The numbers follow the search and the filter, so
+a tab says how many of what was asked for it holds. One stop of the keyboard: an arrow, Home or End moves to the
+other tab and shows it. Under the archive tab one line says what the archive is: only controls are archived,
+their runs and results are kept, and each can be duplicated into a new control.
+
 ### Segmented control
 
-Two or three joined buttons sharing one border; the selected one is filled with Ink. Used for all of / any of.
-36px, 44px on a phone. Keyboard focus is a 2px ring drawn inside the segment, because the shared border clips
-what is outside it: Action on a resting segment, Ground on the selected one.
+Two or three joined buttons sharing one border; the selected one is filled with Inverse. Used for all of / any
+of. 36px, 44px on a phone. Keyboard focus is a 2px ring drawn inside the segment, because the shared border clips
+what is outside it: Action on a resting segment, On inverse on the selected one.
 
 ### Chips
 
-Tonal ground, Label text, 24px, 4px radius. Facts and evidence, and values in a list field (30px there, with a
-remove button). A chip is never a button.
+- **Chip:** Tonal ground, Label text, 24px, 6px radius. Facts and evidence, the count on a tab, and values in a
+  list field (30px there, with a remove button). A chip is never a button.
+- **Status chip:** the result of a run, on a list row and in the head of an archived control's results. Label at
+  500, 26px, 6px radius, a 6px dot of its colour before the words; a spinner takes the dot's place while a run is
+  on its way. Violations (`3 חריגות`) are Danger on Danger tint, `ללא חריגות` Success on its tint, `ההרצה נעצרה`
+  Warning on its tint, and `טרם הורצה`, `בארכיון` or any archived row Muted on Tonal. It always carries its words.
+- **Chips of the count by condition** are the one chip that is a button: on the overview of a run, Card ground,
+  a Line strong edge, 8px radius, 36px, Small. Card hover and a Control line edge under the pointer; the pressed
+  one (the filter of the records) takes the Ground and an Ink edge doubled to 2px.
 
 ### The mark and the value
 
 The signature of the system.
 
-- **Mark:** 22px square (wider for two letters), 4px radius, Action tint ground, Action letter at weight 600.
-  Letters follow the order of the conditions in the definition, top to bottom, and are recomputed on every edit:
-  Hebrew numerals (א to י, then יא, יב and on). A condition on related records has a letter of its own, given
+- **The rule in words** is plain text with the engine's own spacing: no letter stands in it, and no word and
+  no group has a ground; the only ground is the container's. It is one flowing sentence that wraps as text
+  does: no line is forced and nothing is set in. A condition and the joining word before it are one piece,
+  whole while it fits on a line and broken inside only when it is longer than the line, so a line never ends
+  on a joining word and a condition's words stay together. The words of each condition are underlined in that
+  condition's colour (The Condition Colours, below). The line is drawn under the words, 0.2em thick, and
+  fades out towards both of its ends; where a condition's words run on to another line, each stretch has its
+  own line with its own faded ends. The line takes no room of its own: it starts just under the descenders (a
+  fifth of an em under the baseline) and ends inside its own line of text, so it never reaches into the line
+  below and adds nothing to the height of the rule. So it reads everywhere a rule is shown: the bar of the
+  editor, the top of the results, a suggestion card in the suggestions panel and in the row of a new control,
+  the archived editor.
+- **The groups of a rule** are not drawn: no bracket character of the engine's sentence stands on the screen,
+  and a group has no tint, no line of its own and no step in. Only a condition's own words are underlined; a
+  joining word (`וגם`, `או`) and the space beside it carry no line, inside a group as at the top level. The
+  sentence reads as the engine's words in their order, and which conditions a group holds is told by the
+  builder and by the copy that is read aloud. Only the engine's own group marks are read: the glossary's
+  `groupOpen` and `groupClose`, in the engine's connecting text. A bracket in a value the user typed, in a
+  field's label or in the name of a relationship is data and is written as it is. The engine's text is
+  untouched: beside the drawing the plain sentence, brackets and all, is given to assistive technology, and
+  the drawing is hidden from it. Where the letters stand on the screen beside the rule (the editor, the
+  results) each condition is named by its letter in that copy; a suggestion shows no letters, and its rule is
+  read as the plain sentence. A reason is not a rule: its brackets are its own punctuation and are written as
+  they came.
+- **The Condition Colours.** A fixed set of eight light colours at half strength (`tone-1` to `tone-8`: amber,
+  sky, rose, green, violet, orange, mint, orchid), given to the conditions in the order of the rule and started
+  again when the set ends; neighbours in the set are far apart in hue. A condition's colour is the ground of
+  its letter wherever the letter stands (a row of the builder, a chip of the count by condition, beside a reason
+  in the records) and the line under its words in the rule. Ink on every one of them is 8.8:1 or more on a light
+  ground. The colour never stands alone where a condition must be told: the letter is there with it, and in the
+  rule the order of the words and the copy that is read aloud carry it.
+- **Mark:** an 18px badge (wider for two letters), 6px radius, the condition's colour as its ground, Ink letter
+  (0.75rem, 600). It stands at the start of a row: in the builder, on a chip of the count by condition, beside
+  a reason. The rule in words has no mark. Letters follow the order of the conditions in the definition, top to bottom, and are recomputed on every
+  edit: Hebrew numerals (א to י, then יא, יב and on). A condition on related records has a letter of its own, given
   before the letters of the conditions inside it: a run matches that node as a whole, so its letter is the one a
-  reason and the breakdown show. The mark is display only: it is derived from the order of the definition and
-  never stored. On a run, the marks are those of the version that ran.
-- **States:** resting; **traced**, filled with Action while its condition is under the pointer or in focus
-  anywhere on the screen; **active**, filled while it is the current filter; **open**, an outline in Danger while
-  its condition is incomplete or invalid. On the sentence field the same four read in On action.
-- **Value:** the actual value that matched, inside its reason: Action tint ground, Body strong, 4px radius. A
+  reason and the count by condition show. The mark is display only: it is derived from the order of the
+  definition and never stored. On a run, the marks are those of the version that ran.
+- **A mark is a badge everywhere.** It does not answer the pointer or the keyboard, in the editor included:
+  filtering by a condition is a press on its chip in the count by condition, and that chip says it is chosen.
+- **In the editor** a mark has one more state, **open**: an outline in Danger while its condition is incomplete
+  or invalid. On the bar it reads in On inverse. A clause whose text changed settles (Motion, below).
+- **Value:** the actual value that matched, inside its reason: Action tint ground, Body strong, 6px radius. A
   reason reads as a statement with its value marked: `גיל [15] נמוך מ־16`. A value stays whole while it fits on
   a line; only one longer than the line itself (an address, a long name) breaks inside its tint, so no value
-  widens the page.
+  widens the panel.
 - A mark is hidden from assistive technology where a name already says it (`תנאי ב`), and is its name where
   nothing else does.
 
@@ -570,33 +756,72 @@ The signature of the system.
 The control read back in the user's words, each clause opening with its mark, bound to its first word so a line
 never ends on a mark. Two forms:
 
-- **Field:** in the editor only. Action ground, On action text, 8px radius, 24px padding: a small heading
-  (`הבקרה במילים`), the sentence, under a divider one line of status when something is unfinished (`תנאי ה לא
-  הושלם: חסר ערך להשוואה.`), then save and run, save, and cancel. The sentence is the engine's: the editor asks
-  for it 400ms after the last edit of a complete draft and draws what comes back. While a condition is
-  unfinished nothing is asked; a complete draft the engine refuses is asked about again on its next edit. In
-  both cases the last valid sentence stays, in On action stale, the mark of the open condition is outlined,
-  and the status line names it. Marks are those of the current draft, so a clause
-  whose condition was removed stands without one. Before the first valid sentence the field holds one line of
-  hint, which says why there is no sentence: no condition is complete yet (`כאן תוצג הבקרה במילים, לאחר שהתנאי
-  הראשון יושלם.`), the conditions were refused (`הבקרה תוצג כאן במילים לאחר תיקון התנאים.`), or the engine does
-  not answer (`אי אפשר להציג כעת את הבקרה במילים.`). A sentence that is waiting for its answer is not dimmed, so
-  typing does not make it flicker. Changes of the sentence and of the status line are announced politely.
-- **Plain:** on Ground, for reading: under the title of a run, and for each draft in the suggestions dialog.
+- **The bar:** in the editor only, at the foot of the panel, always in view. Inverse ground, On inverse text: a
+  small heading (`הבקרה במילים`, heard and not seen on a narrow panel), the sentence, one line of status when
+  something is unfinished (`תנאי ה לא הושלם: חסר ערך להשוואה.`), and beside them save and, last, save and run.
+  Before a first sentence exists the status line is silent, unless a save was asked for: the hint already says
+  what is awaited, and a warning over a row nobody touched would be a reproach for no mistake.
+  **The bar never changes its height:** the sentence has the room of two lines and scrolls inside it when it is
+  longer, and the status line keeps its room while it is empty (one line, two on a narrow panel; a status that
+  does not fit is cut, and the same words stand in full under the condition they are about). The sentence is the
+  engine's: the editor asks for it 400ms after the last edit of a complete draft and draws what comes back.
+  While a condition is unfinished nothing is asked; a complete draft the engine refuses is asked about again on
+  its next edit. In both cases the last valid sentence stays, in On inverse muted, the mark of the open condition
+  is outlined, and the status line names it. Marks are those of the current draft, so a clause whose condition
+  was removed stands without one. Before the first valid sentence the bar holds one line of hint, which says why
+  there is no sentence: no condition is complete yet (`כאן תוצג הבקרה במילים, לאחר שהתנאי הראשון יושלם.`), the
+  conditions were refused (`הבקרה תוצג כאן במילים לאחר תיקון התנאים.`), or the engine does not answer (`אי אפשר
+  להציג כעת את הבקרה במילים.`). A sentence that is waiting for its answer is not dimmed, so typing does not make
+  it flicker. Changes of the sentence and of the status line are announced politely.
+- **Plain:** for reading, in Read type. At the top of a results panel it stands in a block of Action tint
+  (12px radius, 16px by 24px of room) under a Label title in Action ink (`הבקרה במילים`), before what the run
+  found. It is also on each suggestion card, on each idea (Small, Muted) and in an archived control's editor. A
+  results panel always shows it: where the run carries none (a control that never ran, a run that stopped), the
+  engine is asked once for the sentence of the control, or of the version that ran.
 
-### Relationship map
+### What to check
 
-The root entity picker. The entities the glossary allows as a root are options of one radio group, 44px, joined by
-their relationships. A link carries the glossary's label of the relationship that leads away from the chosen
-root, so it reads as the user would say it from there (`המשרד`, `עובד במחלקה`); two neighbours that no
-relationship joins have no link. The chosen entity is filled with Ink and says `ישות ראשית`. One sentence under
-the map states what the control will return and lists what else it may ask about (`הבקרה תחזיר מחלקות. אפשר
-להתנות גם על: המשרד ועובד במחלקה.`). It is drawn from the glossary and assumes no number of entities. Arrow
-keys move the choice, and the chosen entity is the group's one tab stop.
+The editor asks `מה רוצים לבדוק?` and answers with one card for each entity the glossary allows a control to
+start from: the entity's name (its plural label, in Name type) and the glossary's own description of it (Caption).
+The cards are compact (12px by 16px of room, at least 13rem wide) and one radio group, 12px radius, a Line strong
+edge; the chosen card is filled with Inverse and shows a check. A new
+control has nothing chosen, and the conditions appear once something is. The group is one tab stop: the chosen
+card, or the first while nothing is chosen. Arrow keys move between the cards and choose nothing; Space, Enter
+or a click chooses. Another choice starts a control's conditions over, so it is never made by passing over a
+card. A save before the choice says so under the cards and puts the focus on the first.
+
+Under the cards, a small chain shows how those things connect: each name as a chip, in glossary order, and
+between two neighbours a line with a few words that say which holds many of the other (`בכל מחלקה יש עובדים`),
+taken from the cardinality of the relationship that joins them. The chip of the chosen one is filled with
+Inverse, as its card is. It is a picture to read: nothing in it can be pressed. One sentence beside it, on the
+same line where there is room, states what the control will return and lists what else it may ask about
+(`הבקרה תחזיר מחלקות. אפשר להתנות גם על: המשרד ועובד במחלקה.`). Everything here is drawn from the glossary and
+assumes no number of entities. The word for an entity is not shown.
+
+**The row of ideas.** A new control that starts from nothing has, under the chain, one collapsed row of Action
+tint (12px radius, 44px, Small strong in Action ink) with a sparkle, its words and, once there are any, their
+count in a small Action chip and a chevron. The row comes in with the choice of what to check (a short rise and
+fade, none under reduced motion): the conditions come in with it, so it moves nothing that was read. Then it
+only changes its words, so nothing moves when the ideas arrive: while they are computed it says so, and when
+there are none it says that too; in those states it is not a button to press, and the same words are a status,
+so the change is also said aloud. Once opened it stays open while the choice of what to check changes (a bar
+holds the place of the new ideas while they are computed; a press closes the list then too) and closes when an
+idea is taken into the form. Pressed, it opens (the chevron
+turns) and shows one line of hint and up to three ideas the engine computed for that choice from the data as
+they are now: each a white button card (8px radius, a Line edge, Raised under the pointer) with its name, its
+rule in words and its first piece of evidence as a chip. One press fills the conditions, and the name and the
+description where nothing was typed; a toast gives back what was there. Its words never say AI.
 
 ### Condition builder
 
-One Surface panel. Inside it:
+One Surface panel (12px radius, 24px of room from 640px), in the editor's panel. Before it is chosen what to
+check, the panel holds its place (two controls high) with one centred line that says what it waits for, so the
+conditions are in the first view from the start.
+
+**Simple by default.** A control starts as a flat list of conditions under one switch, all of them or at least
+one. Groups and conditions on related records are behind one **advanced** action (the tune icon), a Muted text
+button at the end of the adders' line that turns Ink while on. A draft that already holds a group or a condition
+on related records is shown in full, with every adder, and the advanced action is gone. Inside it:
 
 - **Group:** a head with a lead word (`מתקיימים`, `מתקיים`), the segmented control (`כל התנאים` / `אחד התנאים
   לפחות`) and, for a nested group, a remove button; under it a body indented behind a **rail**, a 1px Line
@@ -609,74 +834,100 @@ One Surface panel. Inside it:
   type allows. When a comparison takes no value (`ריק`), the value's place says so in Small, Muted.
 - **Value input:** by the field's type, as under Fields. Beside it, a toggle to compare with another field
   instead of a value: an icon alone when the row is one line, the icon and its words when the row is stacked;
-  filled with Ink while on, and the value input then becomes a field picker.
+  filled with Inverse while on, and the value input then becomes a field picker.
 - **Related records:** a group whose head reads as the start of a sentence: its mark, a quantity (`אין אף` /
   `יש`), the relationship (`עובד במחלקה`), the word `עם` and the segmented control of its own rows (`כל התנאים` /
   `אחד התנאים לפחות`), then a remove button. The wording carries no gender. Its rows are about the related
   entity, and their letters continue after the node's own.
-- **Adders:** at the foot of each group, text buttons with a plus: condition, group, condition on related records.
+- **Adders:** at the foot of each group, text buttons with a plus: condition, and with the advanced part, group
+  and condition on related records.
 - **Removing:** a removed condition or group is offered back by a toast for as long as it stands (`תנאי ב הוסר`
-  or `הקבוצה הוסרה, עם התנאים שבה`, with `שחזור`), and so are the conditions a changed root entity cleared. The
-  offer is withdrawn as soon as the conditions are another draft (edited further, read again from the server,
-  started over), because the way back leads to the draft as it was.
+  or `הקבוצה הוסרה, עם התנאים שבה`, with `שחזור`), and so are the conditions that another choice of what to
+  check cleared, and the ones a suggestion replaced. The offer is withdrawn as soon as the conditions are another
+  draft (edited further, read again from the server, started over), because the way back leads to the draft as
+  it was.
 - **Note:** once, at the foot of the panel, the rule about missing values (a comparison does not match a missing
   value; missing values are found with the comparisons that ask whether a value is missing or empty). The note
   names no comparison: their labels are the glossary's.
 - **Validation:** a server error is placed by its path on the row it names: the row's mark turns open, the
-  offending input takes the error state, the reason stands under the row, and the sentence field's status line
-  names the condition.
+  offending input takes the error state, the reason stands under the row, and the status line of the bar at
+  the foot names the condition.
 
-### Toolbar
+### Search and filters
 
-A strip of Surface, 6px radius, 12px padding, over the table it controls: a search field with a leading icon, then
-filters. It wraps; on a phone the filters fold into one square Tonal button, and unfold by themselves while one of
-them narrows the list, so a narrowed list always shows what narrows it.
+A search field with a leading icon, then the filters, with no ground of their own. On the list they share a row
+with the tabs from 900px and stand at its end; on a phone the filters fold into one square boxed button, and
+unfold by themselves while one of them is not at its default, so a narrowed or reordered list always shows why.
+The list has one filter, `מה נבדק`, and below 640px a select of the order (`מיון: ..., מהתחלה לסוף` and its
+reverse, for each column), since the table has no head to press there.
 
 ### Tables and card rows
 
-- **Table (from 640px):** on Ground with no frame. Headers in Small strong, Muted, over a Line strong rule; rows
-  12px padded, top aligned, divided by Line; Row hover under the pointer. The table bleeds 12px past the content
-  edge on both sides so its text stays on the page's edge.
-- **Sorting:** a header is a button; the sorted column shows an arrow and turns Ink.
-- **Card rows (below 640px):** the same cells, stacked between rules, 16px padded; no boxes. The header row is
-  read by assistive technology and not seen, and its sort button is not there: the toolbar's select sorts.
-- **A link in a row** (a control's name, a result) answers a touch 8px above and below its line, the height of a
-  control in all; the row keeps its height and the focus ring stays on the text.
-- **Controls list:** the name (a link to the editor) over its description; the root entity; the last run; the
-  result; the actions: run (small tonal button with its label) and icon buttons for edit and duplicate. The result
-  is one of: a count as an Action link to that run (`3 חריגות`), `ללא חריגות` with a check in Success, `ההרצה
-  נעצרה` with the error icon in Danger, both linking to their run as the count does, or a dash when the control
-  has never run. Under the page title stands the number of controls of the state shown (`6 בקרות פעילות`); under
-  a search or an entity filter the line says how many were found (`נמצאו 3 בקרות`).
+One table design for the controls, the archive and the records of a run.
+
+- **Every row is a bubble.** From 640px it is a real `<table>` whose rows stand 8px apart (separate borders):
+  each cell carries its part of a Line edge on the Card ground, and the first and the last cell carry the 12px
+  corners, so the columns of every bubble line up. The head is a row of column names in Label, Muted, with no
+  band. Below 640px the same cells are a card per row (12px radius, a Line edge, 16px of room, 12px between
+  cards), and the head is read by assistive technology and not seen.
+- **Sorting.** A column head is a button (`app-sort-header`): a press sorts ascending, the next descending; the
+  sorted column turns Ink and shows its arrow, the others a faint `unfold_more`. The order of the list is the
+  server's (`sort` and `dir` in the address and in `GET /api/v1/controls`); below 640px the toolbar's select
+  sorts. Every head of a run's records sorts as well, the reasons too (by how many there are, then by their
+  text): ascending, descending, then back to the run's order; the api orders a field by its glossary type.
+- **A row of the list** has three parts with a line between them: its details, its run button, its actions. The
+  details are the name over its description; what it checks; the last run; the result as a status chip (Chips,
+  above). The name is a link to the results of the control's last run, and for a control that never ran to the
+  control's own results panel, where it can be run; it says which to assistive technology. The link is stretched
+  over the whole of the details, so a click anywhere on them opens what the name opens, and the keyboard meets the
+  row once; its focus ring is drawn round the details. Under the pointer the details take Card hover and the row's
+  edge Line strong. The run (a small second button with its label) and the actions (icon buttons for edit, the
+  pencil; duplicate; archive, a closed box) stand over the link. On a phone the status and the last run share a
+  line, and under a line the run stands at the start and the actions at the end.
+- **The archive** uses the same table without the run column and without edit; its status chips are grey,
+  whatever its runs found. A row without a run button gives its actions the whole line on a phone.
 - **A run from the list** stays on the list. The row's button keeps the focus and is marked unavailable while
-  the run is on its way, the actions column holds its width, and the start and the outcome are said to assistive
-  technology by name (`הרצת הבקרה ”…” הסתיימה: 3 חריגות`); the row's result and its run button are described by
-  the control's name.
-- **Results:** the record's identifying fields, then the reasons: one line for each condition the record matched,
-  its mark, then the sentence with the value marked.
-- **Foot:** the range in words, a page size select and previous and next icon buttons. The range is a status:
-  after a search, a filter, a sort or another page it is said to assistive technology.
+  the run is on its way, the run column keeps room for the wider running label, so the other columns do not
+  move, and the start and the outcome are said to assistive technology by name (`הרצת הבקרה ”…” הסתיימה: 3
+  חריגות`); the row's run button is described by the control's name.
+- **The records of a run** stand on the ground of the results panel, as wide as the panel: the record's
+  identifying fields (the first in Name type), then the reasons: one line for each condition the record matched,
+  its mark, then the sentence with the value marked, at the Read line height.
+- **Foot:** the range in words, a page size select and previous and next icon buttons, which are drawn when
+  there is more than one page. Under the list it is a bar fixed at the bottom of the window; under the records
+  it is the panel's foot. The range is a status: after a search, a filter, a sort or another page it is said to assistive
+  technology.
 
-### Run summary
+### Run overview
 
-A statement, not a row of tiles: between two Line strong rules, the Figure with its noun (`23 חריגות`), then a
-short list of terms and values: what was checked, how long it took, and the count of the previous run with its
-date. The time is in seconds with one decimal at most (`0.4 שניות`); a run that rounds to nothing is said in
-words (`פחות משנייה`), never as `0 שניות`.
+What the run found, in one white block (12px radius, a Line edge) on the ground of the panel, not a row of
+tiles. Its first part is the Figure with its noun (`23 חריגות`), Danger, or Success for a run that found none,
+then a short list of terms and values: what was checked, how long it took, and the count of the previous run with
+its date, as a link. The time is in seconds with one decimal at most (`0.4 שניות`); a run that rounds to nothing
+is said in words (`פחות משנייה`), never as `0 שניות`.
 
-### Breakdown by condition
+Its second part, under a line or from 720px of panel beside it (2fr to the first part's 1fr), is the count by
+condition: a Label title (`חריגות לפי תנאי`), one line of hint, and a chip for all violations followed by one chip
+for each condition with its mark, its clause and the number of violations that match it, in Danger at 600. Each
+chip filters the records (Chips, above); the chip for all violations carries no number, because the figure
+beside it says it. A record may match several conditions, and the hint says so. To assistive technology a chip's
+number is read with its noun (`8 חריגות`). A clean run has no count by condition: its block is the figure and the
+terms on one line. There are no bars.
 
-A meter list in a Surface panel: one row for each condition with its mark, its clause, the number of violations
-that match it, and that share of the total as an 8px bar (Action on Action track), plus a first row for all
-violations. Each row is a button that filters the table; the chosen row takes Action tint and its mark turns
-active. A record may match several conditions, and the panel says so. To assistive technology a row's number is
-read with its noun (`8 חריגות`).
+### Picker of runs
+
+In the head of a results panel, under the control's name: a small select that lists the control's runs, newest
+first, each as its day, its time and what it found or how it ended (`10.11.2026, 09:12 · 3 חריגות`; a list
+that is scanned counts in digits). Choosing
+one shows that run, at its own address. It is there when the control has more than one run, and lists the 50
+newest; beside it the head says which version of the control ran. With one run the head says when it ran, in a
+line of text.
 
 ### Banner
 
-A message that belongs to the whole screen and leaves the content in place: an icon in the state colour, a title
-in Body strong, one or two sentences in Small, and at most one text button. Tint ground, 1px line in the state
-colour at 35%, 6px radius.
+A message that belongs to the whole list or panel and leaves the content in place: an icon in the state colour,
+a title in Body strong, one or two sentences in Small, and at most one text button. Tint ground, 1px line in the
+state colour at 35%, 12px radius.
 
 ### State panel
 
@@ -689,52 +940,77 @@ Every empty, waiting and failed state, and what it says. The error codes are tho
 
 | State | Where | Component | Says | Next step |
 |---|---|---|---|---|
-| No controls yet | Controls list, in place of the toolbar and the table; the page head leaves its two actions to the panel | State panel, neutral | What a control is, in one sentence. No example: an example would name the entities of one glossary | New control (primary); suggestions (tonal) |
-| Every control archived | Controls list, under the toolbar | State panel, neutral, no icon | That no control is active and where the archived ones are | Show the archived controls |
-| Never run | A list row | Text | `טרם הורצה` as the last run; a dash as the result | Run |
-| Run in progress | List row, results | Button with spinner, unavailable (on a list row it keeps the focus); skeleton rows in the table | `ההרצה מתבצעת` | Wait |
-| No violations | Results | State panel, Success | That the control was checked against every record and none matched | Run again; back to the list |
-| More violations than the cap, `ROW_CAP_EXCEEDED` | Results, above the table | Banner, Warning | The exact total and how many are shown; the figure and the breakdown count all violations; the search, the filter and the sort reach the stored rows only, and a search that finds none there says so | Edit the conditions |
-| Run timed out, `QUERY_TIMEOUT` | Results; the list row shows `ההרצה נעצרה` | State panel, Danger | After how long it stopped, and that nothing was checked | Edit the conditions; run again |
-| Run failed for another reason (a run error other than the two beside it) | Results; the list row shows `ההרצה נעצרה` | State panel, Danger | That the run did not complete, and what stopped it then, in the past tense: the run may be days old, and the text of a live failure would say the system is down now | Run again |
-| Run still in progress when its results are opened (`running`) | Results; the page head offers no run | State panel, neutral, no icon | That the results appear when the run ends | Look again |
-| Engine, database or network not answering, `ENGINE_UNAVAILABLE`, `DATABASE_UNAVAILABLE`, `NETWORK_ERROR` | Any screen, under the page head | Banner, Danger | What still works (reading) and what waits (run, save) | Try again |
-| The saved definition no longer fits the glossary, `CONTROL_DEFINITION_OUTDATED` | Results: state panel, Warning, and the page head offers no run. Editor: banner, Warning, and the error on the row | Which condition, by its mark: the label of a field that left the glossary no longer exists, and a key never reaches the screen | Edit the control |
-| Control archived, `CONTROL_ARCHIVED` | Editor, under the page head: the control is shown as text. Results, after "run again" was refused | Banner, Warning | That it can be read but not changed or run | Editor: duplicate into a new control. Results: none |
-| No such control, run or page | In place of the screen | State panel, neutral | That the address may be wrong or the thing gone | Back to the list |
-| Definition not valid, `DEFINITION_INVALID` | Editor | Field error on the row; status line on the sentence field | What is missing on that condition | Fix the row |
-| Saved elsewhere meanwhile (conflict) | Editor, under the page head | Banner, Warning | That this screen's changes are not saved | Load the current version |
-| Search or filter matches nothing | Under a toolbar | State panel, neutral, no icon | The term searched and what the search looks in | Clear the search |
-| Saved, archived, created | Any | Toast | The result in one line (`הבקרה נשמרה כגרסה 4`) | One optional text button |
+| No controls yet | The list, in place of the tabs, the search and the table; the head leaves its two actions to the panel | State panel, neutral | What a control is, in one sentence. No example: an example would name the entities of one glossary | New control (primary); suggestions (second) |
+| Every control archived | The list, under the tabs | State panel, neutral, no icon | That no control is active and where the archived ones are | Show the archive |
+| Nothing in the archive | The list, under the archive tab | State panel, neutral, no icon | That an archived control is shown here, with its runs | None |
+| Never run | A list row; the results panel opened by the control | A grey status chip on the row; in the panel the control's name, its rule in words and a state panel, neutral | `טרם הורצה` on the row; in the panel that the control has not run yet and what a run will do | Run (primary, in the panel). An archived control that never ran says so and offers nothing |
+| Run in progress | List row, results | Button with spinner, unavailable (on a list row it keeps the focus); a spinner in the row's status chip; skeleton rows in the table | `ההרצה מתבצעת` | Wait |
+| No violations | Results | The overview with a green figure, then a state panel, Success | That the control was checked against every record and none matched | Run again, in the head |
+| More violations than the cap, `ROW_CAP_EXCEEDED` | Results, above the records | Banner, Warning | The exact total and how many are shown; the figure and the count by condition count all violations; the search, the filter and the sort reach the stored rows only, and a search that finds none there says so | Edit the conditions |
+| Run timed out, `QUERY_TIMEOUT` | Results; the list row shows an amber `ההרצה נעצרה` | State panel, Warning, under the rule that was running | After how long it stopped, and that nothing was checked | Edit the conditions; run again, in the head |
+| Run failed for another reason (a run error other than the two beside it) | Results; the list row shows an amber `ההרצה נעצרה` | State panel, Warning | That the run did not complete, and what stopped it then, in the past tense: the run may be days old, and the text of a live failure would say the system is down now | Run again, in the head |
+| Run still in progress when its results are opened (`running`) | Results; the head offers no run | State panel, neutral, no icon | That the results appear when the run ends | Look again |
+| Engine, database or network not answering, `ENGINE_UNAVAILABLE`, `DATABASE_UNAVAILABLE`, `NETWORK_ERROR` | The list or a panel, under its head | Banner, Danger | What still works (reading) and what waits (run, save) | Try again |
+| A control that cannot be archived | The list, under its head | Banner, Danger | Why, by its code | Its row's own button |
+| The saved definition no longer fits the glossary, `CONTROL_DEFINITION_OUTDATED` | Results: state panel, Warning, and the head offers no run. Editor: banner, Warning, and the error on the row | Which condition, by its mark: the label of a field that left the glossary no longer exists, and a key never reaches the screen | Edit the control |
+| Archived control's results | Results panel | A grey `בארכיון` chip in the head, which offers neither run nor edit | That the control is in the archive | None |
+| Control archived, `CONTROL_ARCHIVED` | Editor, under the head: the control is shown as text, with no bar. Results, after "run again" was refused | Banner, Warning | That it can be read but not changed or run | Editor: duplicate into a new control. Results: none |
+| No such control, run or page | In the panel for a control or a run; in place of the page for any other address | State panel, neutral | That the address may be wrong or the thing gone | Back to the list |
+| Nothing chosen to check | Editor, under the cards, on a save | Field error | That nothing was chosen | Choose a card |
+| Definition not valid, `DEFINITION_INVALID` | Editor | Field error on the row; status line on the bar | What is missing on that condition | Fix the row |
+| Saved elsewhere meanwhile (conflict) | Editor, under the head | Banner, Warning | That this screen's changes are not saved | Load the current version |
+| Search or filter matches nothing | Under the search | State panel, neutral, no icon | The term searched and what the search looks in | Clear the search |
+| No suggestions | The suggestions panel: one sentence. The editor: nothing at all | Text | That the data shows no pattern that asks for a new control | None |
+| Saved, archived, created, filled from a suggestion | Any | Toast | The result in one line (`הבקרה נשמרה כגרסה 4`) | One optional text button (`שחזור`) |
 
-Loading never blanks a screen: the head and the toolbar stay, and rows are skeleton bars (Tonal, breathing slowly)
-in the shape of the rows to come.
+The head of a results panel is always in view, so a state never repeats the head's own button: where the
+next step is to run again, it is the head's.
 
-### Dialogs and toast
+Loading never blanks a screen: the head stays, and rows are skeleton bars (Tonal, breathing slowly) in the shape
+of what is to come: rows of the list, records of a run, cards of suggestions. The row of ideas is there from the
+start and says in words that they are being computed.
 
-- **Dialog:** Ground, Line strong edge, 8px radius, 24px padding, the Overlay shadow, over the Scrim. A title and
-  a close button; the buttons at the end edge with the main one last. Used for two things only: to confirm
-  archiving a control, and for suggestions. Everything else happens in the page.
-- **Archive confirmation:** says what archiving does and what it does not: the control leaves the list, its
-  runs and results are kept, and it can be duplicated into a new control (`הבקרה ”…” תוסר מהרשימה. ההרצות
-  והתוצאות שלה יישמרו, ואפשר יהיה לשכפל אותה לבקרה חדשה.`). There is no restore in this version, so the text
-  promises none. Archiving is an action of the editor's page head; the list shows archived controls under its
-  state filter, marked with a chip, with duplicate as their one action.
-- **Suggestions dialog:** a list of drafts, each a checkbox (none ticked at first), a name, its sentence in the
-  plain form with marks, one line of rationale in Small Muted, the evidence as chips, and a text button to open
-  it in the editor. The main button counts what will be created (`יצירת 2 הבקרות שנבחרו`) and is disabled while
-  nothing is ticked. Nothing is saved or run by opening it. The head and the buttons stay in view and the list
-  scrolls between them.
-- **Toast:** Bar ground, On bar text, 6px radius, the Overlay shadow; one line and at most one text button; at the
-  bottom, at the start edge. Never for an error.
-- **Leaving a changed draft** is asked by the browser's own prompt, on closing the tab and on a link of the
-  application alike (`השינויים בבקרה לא נשמרו. לצאת מהעריכה בלי לשמור?`). It is not a dialog of the
-  application, and an unchanged control is left without a question.
-- **A button made unavailable by its own press** (save, run, the last page of a pager) keeps the focus it holds:
-  it is marked unavailable for assistive technology and ignores a second press, and is not removed from the tab
-  order. A button that cannot be used as the screen stands (nothing ticked, a limit reached) is disabled. The
-  pager's two buttons are of the first kind at both ends, also on a first page nobody has pressed yet: one
-  button, one behaviour.
+### The panel, dialogs and toast
+
+- **The panel** (Layout, above) is modal: `role="dialog"`, named by its title. The list behind it is still seen
+  and is out of reach of the pointer and the keyboard. It is closed by its X, by Esc and by a click beside it;
+  an open select takes Esc for itself first. Closing returns to the list as it was (its search, tab and page) and
+  puts the focus back on the element that opened the panel, else on the row of the panel's control, else on the
+  list's title. The browser's Back closes it too: a panel is an address. The list is read again when a panel
+  closes and when the panel moves on (a save, a run), so it never shows a stale row; opening a panel reads
+  nothing again. A save or a run that lands after its panel was closed does not open the panel again: it says
+  what it did in a toast, and the list reads the row it changed.
+- **Suggestions panel:** the same card, opened from the list's head. A head with the title, one line that says
+  where the suggestions come from (they are computed from the data as they are now, on every opening and every
+  refresh, and nothing is saved or run without a choice) and a refresh button; a body of cards, one for each
+  suggestion: a checkbox (none ticked at first) with its name, its rule in words with marks, one line of
+  rationale in Small Muted, the evidence as chips, and a text button to open it in the editor; a foot with close
+  and the main button, which counts what will be created (`יצירת 2 הבקרות שנבחרו`) and is disabled while nothing
+  is ticked. A ticked card takes an Ink edge. A refresh keeps the cards on the screen until the new ones arrive,
+  and drops the ticks.
+- **Dialog:** a Card, 20px radius, 24px padding, the Overlay shadow, over the Scrim. A title and a close button;
+  the buttons at the end edge with the main one last. Used for one thing: to confirm archiving a control.
+- **Archive confirmation:** archiving is an action of the row. The dialog says what it does and what it does
+  not: the control leaves the list, its runs and results are kept, and it can be duplicated into a new control
+  (`הבקרה ”…” תוסר מהרשימה. ההרצות והתוצאות שלה יישמרו, ואפשר יהיה לשכפל אותה לבקרה חדשה.`). There is no
+  restore in this version, so the text promises none. After it the focus goes to the row that took the place of
+  the archived one.
+- **Toast:** Inverse ground, On inverse text, 12px radius, the Overlay shadow; one line and at most one text
+  button; at the start edge, over the bar that is fixed at the bottom of the window and not on it. Never for an
+  error.
+- **Closing a changed draft never asks.** The panel closes at once, by its X, by Esc or by a click beside it,
+  and a toast says so (`הבקרה נסגרה בלי שמירה`) with `שחזור`, which opens the editor again at the same address
+  with the draft as it was. That toast stands twelve seconds, twice a plain one: its button is the only way back
+  and has to be reached. One closed draft is kept, for as long as the page lives; a draft that is asked back
+  while another changed draft is on the screen takes its place, and that one is offered back in its turn. A
+  draft closed while its save was on its way is offered back only if that save fails: otherwise it is stored.
+  Leaving the page itself (closing the tab, reloading) over a changed draft is
+  asked by the browser's own prompt; that is not a dialog of the application.
+- **A button made unavailable by its own press** (save, run, refresh, the last page of a pager) keeps the focus
+  it holds: it is marked unavailable for assistive technology and ignores a second press, and is not removed
+  from the tab order. A button that cannot be used as the screen stands (nothing ticked, a limit reached) is
+  disabled. The pager's two buttons are of the first kind at both ends, also on a first page nobody has pressed
+  yet: one button, one behaviour.
 
 ### Motion
 
@@ -744,50 +1020,58 @@ two signs of waiting.
 | Token | Value | Use |
 |---|---|---|
 | `--ease-out` | `cubic-bezier(0.2, 0.8, 0.2, 1)` | Every transition |
-| `--duration-in` | 150ms | A hover arriving: ground, border, underline, a mark being traced |
+| `--duration-in` | 150ms | A hover arriving: ground, border, underline, a card's lift; the chevron of the row of ideas turning |
 | `--duration-out` | 120ms | The same leaving |
 | `--duration-press` | 90ms | A button's step: 1px up on hover (fine pointer only), 1px down and 0.985 on press |
-| `--duration-panel` | 200ms | A dialog opening: fades in and rises 6px |
+| `--duration-panel` | 220ms | The panel and a dialog opening: the panel fades in and slides 32px from its edge, a dialog rises 6px, the scrim fades in |
 | `--duration-close` | 120ms | A dialog closing: the component library's own fade, inside this time |
 | `--duration-settle` | 600ms | The settle, below |
 
 - **Focus is instant:** the ring and a field's focus border appear with no transition.
-- **The trace:** while a condition is under the pointer or in focus (its row, its clause, its meter row), its mark
-  fills everywhere it stands on the screen.
+- **No trace.** A mark never fills because its row or its clause is under the pointer or in focus.
 - **The settle:** when a new sentence arrives from the engine, each clause whose text changed is rewritten in
   place and its mark there fills at once and eases back over 600ms, so the eye finds what the edit changed. The
-  first sentence of a screen settles nothing. This is the one authored moment of the product.
-- **Waiting:** a 16px spinner turning once a second inside the button that started the work, and skeleton rows
+  first sentence of a panel settles nothing. This is the one authored moment of the product.
+- **Waiting:** a 16px spinner turning once a second inside the button that started the work, and skeleton bars
   breathing between full and 45% opacity over 1.4s.
-- **Panels of a select:** they keep the component library's own opening and closing (about 120ms); only the
-  dialog's opening is authored, on the application's own panel class.
+- **Panels of a select:** they keep the component library's own opening and closing (about 120ms).
 - **Reduced motion:** buttons do not step and a press shows as a tone (Action pressed); the spinner and the
-  skeletons stand still; a dialog and a select's panel appear at once; the settle does not run.
+  skeletons stand still; the panel, a dialog and a select's panel appear at once; the settle does not run.
 
 ## Do's and Don'ts
 
 ### Do:
 
 - **Do** give every condition its mark and show that mark wherever the condition is named: builder, sentence,
-  breakdown, reasons.
-- **Do** keep reading on Ground and operating on Surface, with fields filled with Ground.
-- **Do** keep one filled Action button in a view and make every other button tonal or text.
+  count by condition, reasons.
+- **Do** keep the three lights to their jobs: the ground is the page, a card stands on it, the surface is
+  operated on, and a field is always a white well.
+- **Do** keep one filled Action button in a view and make every other button the second kind or text.
+- **Do** give a status its one colour and its words together: red violations, green clean, amber stopped, grey
+  never ran or archived.
+- **Do** draw every row as its own bubble, from the same table design, in the list, the archive and the results.
+- **Do** fill what is chosen with the ink: a tab, a card, an option.
 - **Do** write a state as an icon, a sentence and a next step, in the words of [PRODUCT.md](PRODUCT.md): action
   nouns (`שמירה`, `הרצה`), no gendered address, no database terms.
 - **Do** take every colour, size, radius and duration from the tokens; a component holds no literal value.
 - **Do** keep every control 44px high on a phone and every label visible above its field.
-- **Do** build each screen at 390 first and check it at 390 and 1440.
+- **Do** size what stands in a panel by the panel's width, and check it at 390 and 1440.
 
 ### Don't:
 
-- **Don't** colour a count of violations red or put an alarm icon on it. Red means the system or the input failed.
-- **Don't** put a panel inside a panel, a shadow on anything that is part of the page, or a coloured stripe down
-  the side of a row or a banner.
+- **Don't** colour a status with anything but its own colour, or let the colour stand without its words.
+- **Don't** put a card inside a card, a shadow on anything at rest that is part of the page, or a coloured stripe
+  down the side of a row or a banner.
+- **Don't** make a condition's letter answer the pointer or the focus, anywhere. It is a badge.
+- **Don't** let the bar of the rule in words change its height, or leave the view.
 - **Don't** use a physical `left` or `right` in CSS, mirror an icon that shows a thing, or letter-space Hebrew.
-- **Don't** set a number in the summary as a row of metric cards, add a chart for its own sake, or animate a
-  number counting up.
-- **Don't** open a dialog for anything but confirming an archive and reviewing suggestions.
-- **Don't** let a table name, a column name, a condition id or an error code reach the screen.
+- **Don't** set the overview of a run as a row of metric cards, add a chart or a bar for its own sake, or animate
+  a number counting up.
+- **Don't** ask before closing a changed draft; close it and offer it back.
+- **Don't** open a dialog for anything but confirming an archive; a control, a run and the suggestions open in
+  the panel.
+- **Don't** let a table name, a column name, a condition id, an error code or the word for an entity reach the
+  screen.
 - **Don't** load a font or an icon from a network: the product may run with no internet access.
 - **Don't** restyle Angular Material by its internal classes. Where no token exists (the focus ring of a segment)
   the rule names the component's element and its state in ARIA.
@@ -796,24 +1080,32 @@ two signs of waiting.
 
 Notes for the client task; the visual system above does not depend on them.
 
-- **Tokens.** One stylesheet declares them on `:root` under the names used here: `--color-*`, `--text-*`
-  (`label`, `small`, `body`, `title`, `sentence`, `page`, `figure`), `--space-1` to `--space-8`, `--radius-xs` to
-  `--radius-lg`, `--size-control` (44px), `--size-control-sm` (36px, 44px below 640px), `--size-icon`,
-  `--size-mark`, `--size-bar`, `--gutter`, `--container`, `--shadow-overlay`, `--ease-out` and the `--duration-*`
-  set. Component styles read only these.
+- **Tokens.** One stylesheet (`web/src/styles/tokens.scss`) declares them on `:root` under the names used here:
+  `--color-*`, `--font-sans`, `--text-*` (`label`, `small`, `body`, `title`, `page`, `figure`, `mark`),
+  `--weight-regular`, `--weight-medium`, `--weight-strong`, `--leading-tight`, `--leading-title`,
+  `--leading-body`, `--leading-read`, `--space-1` to `--space-8`, `--radius-xs`, `--radius-chip`, `--radius-sm`,
+  `--radius-md`, `--radius-lg`, `--size-control` (44px), `--size-control-sm` (36px, 44px below 640px),
+  `--size-icon`, `--size-mark` (18px), `--size-bar`, `--gutter`, `--container`,
+  `--sheet-inset`, `--sheet-width`, `--sheet-peek`, `--shadow-overlay`, `--shadow-raised`, `--ease-out` and the
+  `--duration-*` set. Component styles read only these; the type roles of `base.scss` (`t-page`, `t-title`,
+  `t-small`, `t-label`) set a size with its weight and line height. There is one theme: no second set of values
+  and no switch.
 - **Angular Material.** One light theme through `mat.theme`, then Material's system tokens are pointed at these
-  values with `mat.theme-overrides` (or the mixin's `$overrides` map): primary to Action, the surfaces to Ground
-  and Surface, on-surface to Ink, outline to Control line, error to Danger, and the corner tokens to the radius
-  scale. Where a component still differs (pill buttons, button height, dialog corners, elevation) it is corrected
-  with that component's own `overrides` mixin, whose token names are on the component's Styling tab. Fields reach
-  44px by density: Material's field is 56px and each density step removes 4px, so the form field takes −3; buttons
-  start at 40px and take their height from the button overrides.
+  values with the mixin's `$overrides` map: primary to Action, the surfaces to Card and Surface, on-surface to
+  Ink, the inverse pair to Inverse, outline to Control line, error to Danger, and the corner tokens to the radius
+  scale. Where a component still differs (button height, dialog corners, elevation) it is corrected with that
+  component's own `overrides` mixin. Fields reach 44px through the form field's own height tokens.
+- **The panel.** The list is the parent route and renders the routed screen inside its panel; the suggestions
+  use the component library's dialog, shown as the same card (a clear container, the screen inside it floating
+  with the panel's room). Both name the panel's width for container queries (`sheet`).
 - **Fields in Material.** A plain `<label>` above the form field and no `mat-label` inside it; outline
   appearance; dynamic subscript sizing so a field with no hint or error reserves no space under it.
-- **Tables.** One data source and two templates: the table from 640px, the card rows below.
-- **Paginator and other built-in text.** Material's own strings come from the translation files; the range uses
-  the worded form.
-- **Fonts and icons.** IBM Plex Sans Hebrew (SIL Open Font License 1.1) in weights 400, 500 and 600 and the
+- **Tables.** One data source and one template, a real `<table>`: from 640px it is laid out as a table with
+  separate borders, below it the same cells are laid out as a card by the stylesheet (`_tables.scss`). The status
+  colour of a result comes from one function (`toneOf` in `run-result.ts`).
+- **Closed drafts.** The editor's store gives a snapshot of a draft and restores one (`EditorStore.snapshot` and
+  `restore`); `closed-drafts.ts` keeps the last one closed, by its address.
+- **Fonts and icons.** Heebo (SIL Open Font License 1.1), as one variable file each for Hebrew and Latin, and the
   Material Symbols Sharp icons in use (Apache 2.0) are bundled with the build; icons are registered as SVG.
 - **What the contracts provide.** Every sentence arrives with `sentenceParts` and every reason with `textParts`
   (`contracts/api.md`): pieces of text, each tied to the condition it speaks for and to its role (the field, a
@@ -821,3 +1113,5 @@ Notes for the client task; the visual system above does not depend on them.
   before the first clause of each condition, and an actual value is drawn as the value. A run carries a count per
   condition that can be matched, exact also above the row cap, and its results filter by condition. The
   definition of the version that ran is one request away, so the marks of a run are those of what was checked.
+  A control's runs are one request away (`GET /controls/{id}/runs`), and the suggestions can be asked for one
+  entity (`POST /suggestions` with `rootEntity`).

@@ -12,7 +12,7 @@ namespace DataControls.Api.Controls;
 [Problem(StatusCodes.Status500InternalServerError)]
 public sealed class ControlsController(ControlService controls, DefinitionChecker definitions) : ControllerBase
 {
-    /// <summary>The controls, ordered by name: active ones unless <c>active</c> is <c>false</c> or <c>all</c>.</summary>
+    /// <summary>The controls, ordered by name unless <c>sort</c> asks otherwise: active ones unless <c>active</c> is <c>false</c> or <c>all</c>.</summary>
     [ProducesResponseType(StatusCodes.Status200OK)]
     [Problem(StatusCodes.Status503ServiceUnavailable)]
     [HttpGet]
@@ -20,10 +20,12 @@ public sealed class ControlsController(ControlService controls, DefinitionChecke
         string? search,
         string? rootEntity,
         string? active,
+        string? sort,
+        string? dir,
         int? page,
         int? pageSize,
         CancellationToken cancellationToken) =>
-        controls.ListAsync(new ControlListQuery(search, rootEntity, active, page, pageSize), cancellationToken);
+        controls.ListAsync(new ControlListQuery(search, rootEntity, active, sort, dir, page, pageSize), cancellationToken);
 
     /// <summary>Creates a control with version 1, after the schema and the engine have accepted its definition.</summary>
     [ProducesResponseType<ControlResponse>(StatusCodes.Status201Created)]

@@ -1,5 +1,3 @@
-import { Page } from '@playwright/test';
-
 import { Control } from '../../src/app/core/api/api.types';
 import { ConditionNode } from '../../src/app/core/definition/definition.types';
 import { exampleNumber } from '../fixtures/examples';
@@ -7,30 +5,15 @@ import { glossary, label } from '../fixtures/glossary';
 import { engine } from '../fixtures/runs';
 import { BuilderDriver } from '../support/builder-driver';
 import { normalized } from '../support/definitions';
+import { letters, openStored, row, sentence, stored, ui } from '../support/editor-screen';
 import { t } from '../support/i18n';
 import { expect, test } from '../support/mocked';
-import { FakeApi, problem } from '../support/routes';
+import { problem } from '../support/routes';
 import { shot } from '../support/shots';
-
-const letters = t('common.markLetters').split(' ');
-
-/** The stored control of example 1: two conditions, both with a typed number. */
-function stored(api: FakeApi): Control {
-  const example = exampleNumber(1);
-  return api.controls.find((control) => JSON.stringify(control.definition) === JSON.stringify(example.definition))!;
-}
-
-async function openStored(page: Page, control: Control): Promise<void> {
-  await page.goto(`/controls/${control.id}`);
-  await expect(page.getByTestId('control-name')).toHaveValue(control.name);
-  await expect(page.getByTestId('condition-row')).toHaveCount(control.definition.where.children.length);
-}
-
-const sentence = (page: Page) => page.getByTestId('sentence');
-const row = (page: Page, index: number) => page.getByTestId('condition-row').nth(index);
+import { groundOf, lineOf, ruleTones, strengthOf, tonesOf } from '../support/rule';
 
 test.describe('control editor', () => {
-  test('a new control is built, read back as the engine sentence with a mark per clause, and saved', async ({ page, api }, testInfo) => {
+  test('a new control is built, read back as the engine sentence with each condition in its colour, and saved', async ({ page, api }, testInfo) => {
     const example = exampleNumber(1);
     await page.goto('/controls/new');
     await expect(page.getByTestId('sentence-hint')).toHaveText(t('editor.sentence.hint'));
@@ -40,7 +23,7 @@ test.describe('control editor', () => {
 
     const rendered = engine.sentenceOf(example.definition);
     await expect(sentence(page)).toHaveAttribute('data-stale', 'false');
-    await expect(sentence(page).getByTestId('mark')).toHaveText(letters.slice(0, rendered.conditions.length));
+    await expect.poll(() => ruleTones(sentence(page))).toEqual(tonesOf(rendered.conditions.length));
     await expect(sentence(page)).toContainText(rendered.conditions[1].sentence.split(' ').slice(1).join(' '));
     await expect(page.getByTestId('sentence-status')).toHaveCount(0);
     await shot(page, testInfo, 'editor-new');
@@ -52,7 +35,9 @@ test.describe('control editor', () => {
     expect(created.body).toMatchObject({ name: example.name['he'], description: null });
     expect(normalized((created.body as Control).definition)).toEqual(normalized(example.definition));
     await expect(page).toHaveURL(new RegExp(`/controls/${api.controls.at(-1)!.id}$`));
-    await expect(page.getByTestId('archive')).toBeVisible();
+    await expect(page.getByTestId('page-meta')).toContainText('1');
+    // the list behind the panel was read again: it holds the new control
+    await expect(page.locator(`[data-testid="control-row"][data-id="${api.controls.at(-1)!.id}"]`)).toHaveCount(1);
   });
 
   test('a stored control opens with its details, its tree and its sentence', async ({ page, api }, testInfo) => {
@@ -61,7 +46,7 @@ test.describe('control editor', () => {
 
     await expect(page.getByTestId('control-description')).toHaveValue(control.description!);
     await expect(page.getByTestId('page-meta')).toContainText(String(control.version));
-    await expect(sentence(page).getByTestId('mark')).toHaveText(letters.slice(0, 2));
+    await expect.poll(() => ruleTones(sentence(page))).toEqual(tonesOf(2));
     for (const [index, child] of control.definition.where.children.entries()) {
       const field = glossary.entities
         .find((entity) => entity.key === control.rootEntity)!
@@ -101,7 +86,6 @@ test.describe('control editor', () => {
     await expect(page.getByTestId('sentence-status')).toHaveText(
       t('editor.status.incomplete', { mark: letters[1], reason: t('editor.issueWhat.missingValue') }),
     );
-    await expect(sentence(page).getByTestId('mark').nth(1)).toHaveAttribute('data-state', 'open');
     await expect(page.getByTestId('row-error')).toHaveCount(0);
 
     await page.getByTestId('save').click();
@@ -142,7 +126,7 @@ test.describe('control editor', () => {
     await expect(row(page, 1).getByTestId('row-error')).toHaveText(t('errors.definition.VALUE_TYPE_MISMATCH'));
     await expect(row(page, 0).getByTestId('row-error')).toHaveCount(0);
     await expect(row(page, 1).getByTestId('mark')).toHaveAttribute('data-state', 'open');
-    await expect(page.getByTestId('error-banner')).toHaveCount(0);
+    await expect(ui(page).getByTestId('error-banner')).toHaveCount(0);
     await shot(page, testInfo, 'editor-row-error');
   });
 
@@ -199,7 +183,7 @@ test.describe('control editor', () => {
     api.fail('POST /controls/validate', problem(503, 'ENGINE_UNAVAILABLE'));
     await openStored(page, control);
 
-    const banner = page.getByTestId('error-banner');
+    const banner = ui(page).getByTestId('error-banner');
     await expect(banner).toHaveAttribute('data-code', 'ENGINE_UNAVAILABLE');
     await expect(banner).toContainText(t('errors.ENGINE_UNAVAILABLE.title'));
     // both conditions are complete: the field must not say it waits for a first one
@@ -217,14 +201,17 @@ test.describe('control editor', () => {
     api.fail('GET /glossary', problem(503, 'ENGINE_UNAVAILABLE'));
     await page.goto('/controls/new');
 
-    const banner = page.getByTestId('error-banner');
+    const banner = ui(page).getByTestId('error-banner');
     await expect(banner).toHaveAttribute('data-code', 'ENGINE_UNAVAILABLE');
     await expect(page.getByTestId('control-name')).toBeVisible();
+
+    // without the glossary there is nothing to choose from: the question waits for it
+    await expect(page.getByTestId('root-entity')).toHaveCount(0);
 
     api.heal('GET /glossary');
     await banner.getByRole('button', { name: t('common.retry'), exact: true }).click();
 
-    await expect(page.getByTestId('condition-row')).toHaveCount(1);
+    await expect(page.getByTestId('root-entity')).toHaveCount(glossary.entities.filter((entity) => entity.rootable).length);
     await expect(banner).toHaveCount(0);
   });
 
@@ -236,10 +223,10 @@ test.describe('control editor', () => {
     await expect(page.getByTestId('condition-builder')).toHaveCount(0);
 
     api.heal('GET /glossary');
-    await page.getByTestId('error-banner').getByRole('button', { name: t('common.retry'), exact: true }).click();
+    await ui(page).getByTestId('error-banner').getByRole('button', { name: t('common.retry'), exact: true }).click();
 
     await expect(page.getByTestId('condition-row')).toHaveCount(control.definition.where.children.length);
-    await expect(page.getByTestId('error-banner')).toHaveCount(0);
+    await expect(ui(page).getByTestId('error-banner')).toHaveCount(0);
     await expect(sentence(page)).toHaveAttribute('data-stale', 'false');
   });
 
@@ -288,7 +275,7 @@ test.describe('control editor', () => {
     expect(api.callsTo(`POST /controls/${control.id}/runs`)).toHaveLength(1);
   });
 
-  test('another root entity starts the conditions over, and the toast brings them back', async ({ page, api }) => {
+  test('another choice of what to check starts the conditions over, and the toast brings them back', async ({ page, api }) => {
     const control = stored(api);
     await openStored(page, control);
     const other = glossary.entities.find((entity) => entity.rootable && entity.key !== control.rootEntity)!;
@@ -304,32 +291,40 @@ test.describe('control editor', () => {
     );
   });
 
-  test('the condition under the pointer fills its mark on its clause in the sentence', async ({ page, api }) => {
+  test('a condition has one colour: on its letter in the builder and under its words in the rule, and neither answers the pointer', async ({ page, api }) => {
     await openStored(page, stored(api));
-    const marks = sentence(page).getByTestId('mark');
-    await expect(marks.nth(1)).toHaveAttribute('data-state', 'resting');
+    await expect(sentence(page)).toHaveAttribute('data-stale', 'false');
+    const letter = (index: number) => row(page, index).getByTestId('mark');
+    const words = (index: number) => sentence(page).getByTestId('clause').nth(index);
+    // both as the browser paints them: the ground of the letter, and the solid stretch of the drawn line
+    const ground = (index: number) => groundOf(letter(index));
+    const line = (index: number) => lineOf(words(index));
+
+    // the rule is plain text: no letter in it, and no ground under its words
+    await expect(sentence(page).getByTestId('mark')).toHaveCount(0);
+    expect(await words(0).evaluate((element) => getComputedStyle(element).backgroundColor)).toBe('rgba(0, 0, 0, 0)');
+    // the same colour on the letter and under the words, and another colour for the next condition
+    expect(await line(0)).toBe(await ground(0));
+    expect(await line(1)).toBe(await ground(1));
+    expect(await ground(0)).not.toBe(await ground(1));
+    // a light colour at half strength
+    expect(strengthOf(await ground(0))).toBeCloseTo(0.5, 1);
+    // drawn under the words, fading at its ends, and not a decoration of the text
+    expect(await words(0).evaluate((element) => getComputedStyle(element).backgroundImage)).toContain('linear-gradient');
+    expect(await words(0).evaluate((element) => getComputedStyle(element).textDecorationLine)).toBe('none');
+    // the line lies inside the words' own line of text: it adds nothing to the height of the rule
+    const fits = await words(0).evaluate((element) => {
+      const [box] = element.getClientRects();
+      return box.height <= parseFloat(getComputedStyle(element).lineHeight) + 0.5;
+    });
+    expect(fits).toBe(true);
+    const resting = [await ground(0), await ground(1), await line(0), await line(1)];
 
     await row(page, 1).hover();
-    await expect(marks.nth(1)).toHaveAttribute('data-state', 'traced');
-    await expect(marks.nth(0)).toHaveAttribute('data-state', 'resting');
+    await words(0).hover();
+    await page.waitForTimeout(300);
 
-    await sentence(page).getByTestId('clause').first().hover();
-    await expect(row(page, 0).getByTestId('mark')).toHaveAttribute('data-state', 'traced');
-  });
-
-  test('archiving asks first, then leaves for the list', async ({ page, api }, testInfo) => {
-    const control = stored(api);
-    await openStored(page, control);
-
-    await page.getByTestId('archive').click();
-    const dialog = page.getByTestId('confirm-dialog');
-    await expect(dialog).toContainText(t('editor.archive.body', { name: control.name }));
-    await shot(page, testInfo, 'editor-archive-dialog');
-    await dialog.getByTestId('confirm-accept').click();
-
-    await expect(page).toHaveURL(/\/$/);
-    await expect(page.getByText(t('editor.toast.archived'), { exact: true })).toBeVisible();
-    expect(api.controls.find((candidate) => candidate.id === control.id)!.isActive).toBe(false);
+    expect([await ground(0), await ground(1), await line(0), await line(1)]).toEqual(resting);
   });
 
   test('an archived control is read-only and can be duplicated into a new one', async ({ page, api }, testInfo) => {
@@ -340,7 +335,10 @@ test.describe('control editor', () => {
     const banner = page.getByTestId('archived-banner');
     await expect(banner).toContainText(t('errors.CONTROL_ARCHIVED.title'));
     await expect(page.getByTestId('archived-view')).toContainText(control.name);
+    // it can be read: its rule is there in words, under its name
+    await expect.poll(() => ruleTones(page.getByTestId('archived-view'))).toEqual(tonesOf(2));
     await expect(page.getByTestId('save')).toHaveCount(0);
+    await expect(page.getByTestId('sentence-field')).toHaveCount(0);
     await expect(page.getByTestId('condition-builder')).toHaveCount(0);
     await shot(page, testInfo, 'editor-archived');
 
@@ -409,26 +407,170 @@ test.describe('control editor', () => {
     await expect(page.getByTestId('control-description')).toHaveValue('typed while it saved');
   });
 
-  test('a changed draft is not left by a link of the app without a word', async ({ page, api }) => {
-    await openStored(page, stored(api));
-    await page.getByTestId('control-name').fill('changed and not saved');
-
-    // the browser's own prompt, as on closing the tab: a "no" keeps the screen and what was typed
-    page.once('dialog', (dialog) => {
-      expect(dialog.type()).toBe('confirm');
-      expect(dialog.message()).toBe(t('editor.leave.confirm'));
+  test('a changed draft closes at once, with no question, and the toast brings it back as it was', async ({ page, api }, testInfo) => {
+    const control = stored(api);
+    await openStored(page, control);
+    let asked = false;
+    page.on('dialog', (dialog) => {
+      asked = true;
       void dialog.dismiss();
     });
-    await page.getByTestId('cancel').click();
-    await expect(page).toHaveURL(/\/controls\/\d+$/);
-    await expect(page.getByTestId('control-name')).toHaveValue('changed and not saved');
+    const restore = page.getByRole('button', { name: t('editor.toast.restore'), exact: true });
+    await page.getByTestId('control-name').fill('changed and not saved');
+    await row(page, 1).getByTestId('remove-row').click();
+    await expect(page.getByTestId('condition-row')).toHaveCount(control.definition.where.children.length - 1);
 
-    page.once('dialog', (dialog) => void dialog.accept());
-    await page.getByTestId('back-to-list').click();
+    // the X closes the panel at once: no prompt of the browser, no dialog of the app
+    await page.getByTestId('panel-close').click();
+    await expect(page).toHaveURL(/\/$/);
+    await expect(ui(page)).toHaveCount(0);
+    expect(asked).toBe(false);
+    await expect(page.getByText(t('editor.toast.closed'))).toBeVisible();
+
+    // the toast's one button puts the draft back on the screen, at its own address, still unsaved
+    await restore.click();
+    await expect(page).toHaveURL(new RegExp(`/controls/${control.id}$`));
+    await expect(page.getByTestId('control-name')).toHaveValue('changed and not saved');
+    await expect(page.getByTestId('condition-row')).toHaveCount(control.definition.where.children.length - 1);
+    expect(api.callsTo(`GET /controls/${control.id}`)).toHaveLength(1);
+
+    // Esc closes at once as well, and so does a click beside the panel where the list shows
+    await page.getByTestId('control-name').press('Escape');
+    await expect(ui(page)).toHaveCount(0);
+    await restore.click();
+    await expect(page.getByTestId('control-name')).toHaveValue('changed and not saved');
+    if (testInfo.project.name === 'desktop') {
+      await page.getByTestId('panel-scrim').click({ position: { x: 8, y: 8 } });
+      await expect(ui(page)).toHaveCount(0);
+      await restore.click();
+      await expect(page.getByTestId('control-name')).toHaveValue('changed and not saved');
+    }
+    expect(asked).toBe(false);
+
+    // what came back is the stored control's draft: it saves over it, with its token
+    await page.getByTestId('save').click();
+    await expect.poll(() => api.callsTo(`PUT /controls/${control.id}`).length).toBe(1);
+    expect(api.callsTo(`PUT /controls/${control.id}`)[0].body).toMatchObject({
+      name: 'changed and not saved',
+      concurrencyToken: control.concurrencyToken,
+    });
+
+    // a saved control has nothing to bring back: closing it says nothing
+    await expect(page.getByText(t('editor.toast.saved'), { exact: false }).first()).toBeVisible();
+    await page.getByTestId('panel-close').click();
+    await expect(ui(page)).toHaveCount(0);
+    await expect(page.getByText(t('editor.toast.closed'))).toHaveCount(0);
+  });
+
+  test('a new control that was closed comes back with its choice, its name and its conditions', async ({ page, api }) => {
+    await page.goto('/controls/new');
+    await page.getByTestId('root-entity').first().click();
+    await page.getByTestId('control-name').fill('not saved yet');
+    await page.locator('[data-adder="condition"]').click();
+    await expect(page.getByTestId('condition-row')).toHaveCount(2);
+
+    await page.getByTestId('panel-close').click();
+    await expect(ui(page)).toHaveCount(0);
+    await page.getByRole('button', { name: t('editor.toast.restore'), exact: true }).click();
+
+    await expect(page).toHaveURL(/\/controls\/new$/);
+    await expect(page.getByTestId('control-name')).toHaveValue('not saved yet');
+    await expect(page.getByTestId('root-entity').first()).toHaveAttribute('aria-checked', 'true');
+    await expect(page.getByTestId('condition-row')).toHaveCount(2);
+    expect(api.callsTo('POST /controls')).toHaveLength(0);
+
+    // an untouched new control has nothing to lose: closing it says nothing
+    await page.getByTestId('panel-close').click();
+    await page.getByRole('button', { name: t('editor.toast.restore'), exact: true }).click();
+    await page.getByTestId('panel-close').click();
+    await page.goto('/controls/new');
+    await page.getByTestId('panel-close').click();
+    await expect(ui(page)).toHaveCount(0);
+    await expect(page.getByText(t('editor.toast.closed'))).toHaveCount(0);
+  });
+
+  test('a draft that is asked back is not lost to the draft on the screen, which is offered back in its turn', async ({ page, api }) => {
+    const control = stored(api);
+    const other = api.controls.find((candidate) => candidate.id !== control.id)!;
+    const copyName = t('editor.copyName', { name: other.name });
+    const restore = page.getByRole('button', { name: t('editor.toast.restore'), exact: true });
+    await openStored(page, control);
+    await page.getByTestId('control-name').fill('first draft');
+    await page.getByTestId('panel-close').click();
+    await expect(ui(page)).toHaveCount(0);
+
+    // while the toast still stands, a copy of another control is opened: a changed draft from its first moment
+    await page.locator(`[data-testid="control-row"][data-id="${other.id}"]`).getByTestId('duplicate').click();
+    await expect(page.getByTestId('control-name')).toHaveValue(copyName);
+
+    await restore.click();
+    await expect(page).toHaveURL(new RegExp(`/controls/${control.id}$`));
+    await expect(page.getByTestId('control-name')).toHaveValue('first draft');
+
+    // the copy it took the place of was kept, and comes back the same way
+    await restore.click();
+    await expect(page).toHaveURL(/\/controls\/new$/);
+    await expect(page.getByTestId('control-name')).toHaveValue(copyName);
+    expect(api.callsTo('POST /controls')).toHaveLength(0);
+  });
+
+  test('a draft asked back at the address that is already open comes back there', async ({ page }) => {
+    await page.goto('/controls/new');
+    await page.getByTestId('root-entity').first().click();
+    await page.getByTestId('control-name').fill('not saved yet');
+    await page.getByTestId('panel-close').click();
+    await expect(ui(page)).toHaveCount(0);
+
+    // a new control is opened again, empty: the same address the closed draft has
+    await page.getByTestId('new-control').click();
+    await expect(page.getByTestId('control-name')).toHaveValue('');
+    await expect(page.getByTestId('builder-waiting')).toBeVisible();
+
+    await page.getByRole('button', { name: t('editor.toast.restore'), exact: true }).click();
+    await expect(page.getByTestId('control-name')).toHaveValue('not saved yet');
+    await expect(page.getByTestId('root-entity').first()).toHaveAttribute('aria-checked', 'true');
+    await expect(page.getByTestId('condition-row')).toHaveCount(1);
+  });
+
+  test('a panel closed over a save that then fails offers the draft back: it was stored nowhere', async ({ page, api }) => {
+    const control = stored(api);
+    api.delay(`PUT /controls/${control.id}`, 700);
+    api.fail(`PUT /controls/${control.id}`, problem(503, 'DATABASE_UNAVAILABLE'));
+    await openStored(page, control);
+    await page.getByTestId('control-name').fill('kept although the save failed');
+
+    await page.getByTestId('save').click();
+    await page.getByTestId('panel-close').click();
+    await expect(ui(page)).toHaveCount(0);
+
+    // the save answers with a failure after the panel is gone: the draft is offered back then
+    await expect(page.getByText(t('editor.toast.closed'))).toBeVisible();
+    await page.getByRole('button', { name: t('editor.toast.restore'), exact: true }).click();
+    await expect(page.getByTestId('control-name')).toHaveValue('kept although the save failed');
+    await expect(page).toHaveURL(new RegExp(`/controls/${control.id}$`));
+  });
+
+  test('a panel that was closed while a save was on its way stays closed when the save lands', async ({ page, api }) => {
+    const control = stored(api);
+    api.delay(`PUT /controls/${control.id}`, 700);
+    await openStored(page, control);
+    await page.getByTestId('control-name').fill(`${control.name} 2`);
+
+    await page.getByTestId('save-run').click();
+    await expect(page.getByTestId('save-run')).toBeDisabled();
+    // the draft is being stored at this moment: the panel closes, and offers no draft back
+    await page.getByTestId('panel-close').click();
+    await expect(ui(page)).toHaveCount(0);
+    await expect(page.getByText(t('editor.toast.closed'))).toHaveCount(0);
+
+    // the save lands and the run after it: the control is saved and ran, and the panel stays closed
+    await expect.poll(() => api.callsTo(`POST /controls/${control.id}/runs`).length).toBe(1);
+    await expect(page.getByText(`${control.name} 2`, { exact: true })).toBeVisible();
+    await expect(ui(page)).toHaveCount(0);
     await expect(page).toHaveURL(/\/$/);
   });
 
-  test('an unchanged control is left without a question', async ({ page, api }) => {
+  test('an unchanged control is left without a question, and Esc on an open select closes the select only', async ({ page, api }) => {
     await openStored(page, stored(api));
     let asked = false;
     page.on('dialog', (dialog) => {
@@ -436,9 +578,16 @@ test.describe('control editor', () => {
       void dialog.accept();
     });
 
-    await page.getByTestId('cancel').click();
+    await row(page, 0).getByTestId('operator-picker').click();
+    await expect(page.getByRole('option').first()).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('option')).toHaveCount(0);
+    await expect(ui(page)).toBeVisible();
+
+    await page.keyboard.press('Escape');
 
     await expect(page).toHaveURL(/\/$/);
+    await expect(ui(page)).toHaveCount(0);
     expect(asked).toBe(false);
   });
 

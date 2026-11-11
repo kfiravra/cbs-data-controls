@@ -1,7 +1,7 @@
 import { ApiError } from '../../core/api/api-error';
-import { Control, DefinitionError, Run, TextPart } from '../../core/api/api.types';
+import { Control, DefinitionError, Run, SuggestionItem, TextPart } from '../../core/api/api.types';
 import { Definition } from '../../core/definition/definition.types';
-import { DraftGroup } from '../../core/definition/draft';
+import { DraftGroup, IdSource } from '../../core/definition/draft';
 import { DraftIssue } from '../../core/definition/draft.check';
 
 export type LoadState = 'loading' | 'ready' | 'notFound' | 'failed';
@@ -55,4 +55,25 @@ export interface Sent {
   readonly description: string;
   readonly draft: DraftGroup;
   readonly rootEntity: string | null;
+}
+
+/** What a removal took away, and the way back. */
+export interface Removal {
+  /** The mark of the condition that was removed; undefined for a group, which goes with its conditions. */
+  readonly mark?: string;
+  readonly undo: () => void;
+}
+
+/**
+ * A draft as the editor held it when it was closed without a save: the details, the choice and the tree,
+ * and beside them what is needed to put it back on the screen.
+ */
+export interface EditorSnapshot extends Sent {
+  /** The stored control the draft edits, with its token; null for a control that was never saved. */
+  readonly control: Control | null;
+  /** The source of the draft's ids: an id given after the draft came back must not repeat one of its own. */
+  readonly ids: IdSource;
+  readonly fromNothing: boolean;
+  readonly advanced: boolean;
+  readonly ideas: readonly SuggestionItem[];
 }

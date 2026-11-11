@@ -4,7 +4,7 @@
   display: grid;
   gap: var(--space-4);
   padding: var(--space-4) var(--space-3);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
   background: var(--color-surface);
 }
 
@@ -30,7 +30,7 @@
 }
 
 .group__lead {
-  font-weight: 500;
+  font-weight: var(--weight-medium);
 }
 
 .group__pick {
@@ -58,9 +58,9 @@
   background: var(--color-surface);
   text-align: center;
   font-size: var(--text-label);
-  font-weight: 500;
+  font-weight: var(--weight-medium);
   color: var(--color-muted);
-  line-height: 1.4;
+  line-height: var(--leading-title);
 }
 
 .cond {
@@ -73,7 +73,7 @@
 
 .cond__name {
   font-size: var(--text-small);
-  font-weight: 500;
+  font-weight: var(--weight-medium);
   color: var(--color-muted);
 }
 
@@ -112,7 +112,7 @@
   background: none;
   color: var(--color-muted);
   font-size: var(--text-small);
-  font-weight: 500;
+  font-weight: var(--weight-medium);
   transition:
     background-color var(--duration-out) var(--ease-out),
     color var(--duration-out) var(--ease-out);
@@ -125,7 +125,7 @@
 
   &[aria-pressed='true'] {
     background: var(--color-ink);
-    color: var(--color-ground);
+    color: var(--color-on-inverse);
   }
 }
 
@@ -213,7 +213,7 @@
   background: none;
   color: var(--color-ink);
   font-size: var(--text-small);
-  font-weight: 500;
+  font-weight: var(--weight-medium);
 
   span {
     text-decoration: underline;
@@ -233,12 +233,30 @@
   }
 }
 
+// the one action for what is beyond a flat list stands at the end of the adders' line
+.adder--more {
+  margin-inline-start: auto;
+  color: var(--color-muted);
+
+  &[aria-pressed='true'] {
+    color: var(--color-ink);
+  }
+}
+
+// before a choice the builder's place is held, and says what it waits for
+.builder--waiting {
+  min-block-size: calc(2 * var(--size-control) + var(--space-5));
+  align-content: center;
+  justify-items: center;
+  text-align: center;
+}
+
 .note {
   display: flex;
   align-items: flex-start;
   gap: var(--space-2);
   font-size: var(--text-small);
-  line-height: 1.55;
+  line-height: var(--leading-body);
   color: var(--color-muted);
 
   .icon {
@@ -256,123 +274,300 @@
   }
 }
 
-// the relationship map: the root entity picker
-.relmap {
+// what a control checks: one card per entity of the glossary, a radio group. Ink selects.
+.choices {
   display: grid;
-  gap: 0;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+  gap: var(--space-3);
 }
 
-.entity {
-  display: inline-flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-  min-block-size: var(--size-control);
-  padding-inline: var(--space-4);
-  border: 1px solid var(--color-control-line);
-  border-radius: var(--radius-sm);
-  background: var(--color-ground);
-  font-weight: 500;
+.choice {
+  display: grid;
+  align-content: start;
+  gap: 2px;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-line-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-card);
   text-align: start;
   transition:
     background-color var(--duration-out) var(--ease-out),
-    border-color var(--duration-out) var(--ease-out);
+    border-color var(--duration-out) var(--ease-out),
+    box-shadow var(--duration-out) var(--ease-out),
+    transform var(--duration-press) var(--ease-out);
 
+  // a card that is about to be pressed lifts a little
   &:hover {
-    border-color: var(--color-muted);
-    background: var(--color-row-hover);
+    border-color: var(--color-control-line);
+    box-shadow: var(--shadow-raised);
+    transition-duration: var(--duration-in);
   }
 
   &[aria-checked='true'] {
-    background: var(--color-ink);
-    border-color: var(--color-ink);
-    color: var(--color-ground);
+    border-color: var(--color-inverse);
+    background: var(--color-inverse);
+    box-shadow: none;
+    color: var(--color-on-inverse);
   }
 }
 
-.entity__role {
-  font-size: var(--text-label);
-  font-weight: 400;
-  opacity: 0.8;
+.choices[aria-invalid='true'] .choice {
+  border-color: var(--color-danger);
 }
 
-.relmap__link {
+.choice__name {
   display: flex;
   align-items: center;
-  min-block-size: 32px;
-  margin-inline-start: var(--space-5);
-  padding-inline-start: var(--space-3);
-  border-inline-start: 1px solid var(--color-line-strong);
+  justify-content: space-between;
+  gap: var(--space-2);
+  font-weight: var(--weight-strong);
+  line-height: var(--leading-title);
+}
+
+.choice__check {
+  visibility: hidden;
+}
+
+.choice[aria-checked='true'] .choice__check {
+  visibility: visible;
+}
+
+.choice__about {
   font-size: var(--text-label);
+  line-height: var(--leading-body);
+  color: var(--color-muted);
+  text-wrap: pretty;
+}
+
+.choice[aria-checked='true'] .choice__about {
+  color: var(--color-on-inverse-muted);
+}
+
+// how those entities connect: a picture to read, in the small type of a caption
+.chain-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  font-size: var(--text-label);
+  line-height: var(--leading-title);
   color: var(--color-muted);
 }
 
-@media (min-width: 640px) {
-  .relmap {
-    display: flex;
-    align-items: center;
-  }
+.chain {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
 
-  .relmap__link {
-    flex: 1 1 0;
-    min-inline-size: 120px;
-    max-inline-size: 220px;
-    margin: 0;
-    padding: 0 var(--space-2) var(--space-5);
-    min-block-size: 0;
-    block-size: 0;
-    border: 0;
-    border-block-start: 1px solid var(--color-line-strong);
-    justify-content: center;
-    text-align: center;
-    position: relative;
-    inset-block-start: -1px;
+.chain__node {
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-chip);
+  background: var(--color-tonal);
+  color: var(--color-ink);
+  font-weight: var(--weight-medium);
 
-    span {
-      position: relative;
-      inset-block-start: 14px;
-      background: var(--color-ground);
-      padding-inline: var(--space-2);
-      white-space: nowrap;
-    }
+  // the chosen one, as the card above it: filled with the ink, and nothing in the chain looks pressable
+  &.is-chosen {
+    background: var(--color-inverse);
+    color: var(--color-on-inverse);
   }
 }
 
-// two neighbours that no relationship joins: a gap, no line (after the wide layout, whose border it removes)
-.relmap__link.relmap__link--none {
-  border-color: transparent;
+.chain__link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+
+  &::before,
+  &::after {
+    content: '';
+    inline-size: var(--space-4);
+    block-size: 1px;
+    background: var(--color-line-strong);
+  }
 }
 
-// editor layout
+// two neighbours that say nothing of each other: one short line between them
+.chain__link--bare::after {
+  display: none;
+}
+
+// What the engine would check about the choice, behind one row: the accent's tint and a sparkle say it is an
+// offer, and the row is there from the start so nothing moves when the offer arrives. Pressed, it opens up
+// to three suggestions, each a button that fills the conditions.
+.ideas {
+  display: grid;
+  border-radius: var(--radius-md);
+  background: var(--color-action-tint);
+  color: var(--color-action-ink);
+  // it comes in with the choice it is about; under reduced motion it is simply there (_motion.scss)
+  animation: ideas-in var(--duration-panel) var(--ease-out) both;
+}
+
+@keyframes ideas-in {
+  from {
+    opacity: 0;
+    transform: translateY(calc(-1 * var(--space-2)));
+  }
+}
+
+.ideas__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  inline-size: 100%;
+  min-block-size: var(--size-control);
+  padding: 0 var(--space-4);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: none;
+  color: inherit;
+  font-size: var(--text-small);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-title);
+  text-align: start;
+
+  // nothing to open yet, or nothing to offer: the row says so and is not a button to press
+  &[aria-disabled='true'] {
+    cursor: default;
+    font-weight: var(--weight-regular);
+  }
+}
+
+.ideas__label {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+}
+
+.ideas__count {
+  display: inline-grid;
+  place-items: center;
+  min-inline-size: 22px;
+  block-size: 20px;
+  padding-inline: 6px;
+  border-radius: var(--radius-chip);
+  background: var(--color-action);
+  color: var(--color-on-action);
+  font-size: var(--text-label);
+  line-height: 1;
+}
+
+.ideas__chevron {
+  transition: transform var(--duration-in) var(--ease-out);
+}
+
+.ideas__row[aria-expanded='true'] .ideas__chevron {
+  transform: rotate(180deg);
+}
+
+.ideas__list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+  gap: var(--space-3);
+  padding: 0 var(--space-4) var(--space-4);
+
+  > p {
+    grid-column: 1 / -1;
+    color: var(--color-action-ink);
+  }
+}
+
+.idea {
+  display: grid;
+  align-content: start;
+  justify-items: start;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-sm);
+  background: var(--color-card);
+  color: var(--color-ink);
+  text-align: start;
+  transition:
+    border-color var(--duration-out) var(--ease-out),
+    box-shadow var(--duration-out) var(--ease-out);
+}
+
+button.idea:hover {
+  border-color: var(--color-control-line);
+  box-shadow: var(--shadow-raised);
+  transition-duration: var(--duration-in);
+}
+
+// holds the place of the suggestions of a new choice while they are computed, in an opened list
+.idea--pending {
+  min-block-size: 5.5rem;
+  justify-items: stretch;
+}
+
+.idea__name {
+  font-weight: var(--weight-strong);
+  line-height: var(--leading-title);
+}
+
+.idea__rule {
+  font-size: var(--text-small);
+  line-height: var(--leading-body);
+  color: var(--color-muted);
+}
+
+// The editor: one column in its panel, set close enough that the conditions are in the first view. The
+// name and the description keep a width that is easy to read, side by side where the panel has the room.
 .editor {
   display: grid;
-  gap: var(--space-6);
-}
-
-.editor__main {
-  display: grid;
-  gap: var(--space-6);
-  min-inline-size: 0;
+  gap: var(--space-5);
 
   > section {
     display: grid;
-    gap: var(--space-4);
+    gap: var(--space-3);
+    min-inline-size: 0;
+  }
+
+  .section__head {
+    margin-block-end: 0;
   }
 }
 
-@media (min-width: 1024px) {
-  .editor {
-    grid-template-columns: minmax(0, 2fr) minmax(320px, 1fr);
-    gap: var(--space-7);
-    align-items: start;
+.editor__details {
+  align-items: start;
+
+  .field {
+    max-inline-size: 40rem;
+  }
+}
+
+.editor__what {
+  display: grid;
+  gap: var(--space-3);
+}
+
+// how the choices connect and what the chosen one returns, as one line of caption
+.editor__reach {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-4);
+  min-block-size: 1.75rem;
+}
+
+// the description is two rows, and stays two rows
+textarea.two-rows {
+  resize: none;
+}
+
+@container sheet (min-width: 900px) {
+  .editor > .editor__details {
+    grid-template-columns: minmax(0, 22rem) minmax(0, 36rem);
+    gap: var(--space-4);
   }
 
-  .editor__main {
-    gap: var(--space-7);
-  }
-
-  .editor__side {
-    position: sticky;
-    inset-block-start: var(--space-5);
+  // a section's title and its one line of explanation share a line where the panel has the room
+  .editor .section__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--space-1) var(--space-3);
   }
 }

@@ -1,13 +1,18 @@
-// A strip of the operating grey over the table it controls; a table from 640, card rows below it.
+// One table design for the controls, the archive and the records of a run: a head of column names that sort
+// on a click, and under it one bubble per row. From 640 it is a real table, so the columns of every bubble
+// line up; below it a row is a card. A row of the list has three parts (its details, its run button, its
+// actions) with a line between them.
 
 .toolbar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-3);
-  padding: var(--space-3);
-  border-radius: var(--radius-md);
-  background: var(--color-surface);
+}
+
+// at the end edge of the list's bar, beside the tabs
+.list-bar .toolbar {
+  justify-content: flex-end;
 }
 
 .toolbar__search {
@@ -52,10 +57,14 @@
   }
 }
 
+// ---------------------------------------------------------------- the table, below 640: cards
+
 .table {
   inline-size: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
 
+  // the head is read and not seen: the toolbar's select sorts
   thead {
     position: absolute;
     inline-size: 1px;
@@ -64,12 +73,20 @@
     clip-path: inset(50%);
   }
 
-  tr {
+  tbody {
+    display: grid;
+    gap: var(--space-3);
+  }
+
+  tbody tr {
+    position: relative;
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
-    gap: var(--space-1) var(--space-3);
-    padding-block: var(--space-4);
-    border-block-end: 1px solid var(--color-line);
+    row-gap: var(--space-2);
+    padding: var(--space-4);
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-md);
+    background: var(--color-card);
   }
 
   td {
@@ -79,113 +96,168 @@
   }
 
   .cell-main,
+  .cell-checked,
   .cell-full {
     grid-column: 1 / -1;
   }
 
-  .cell-end {
+  // what the run found, and when it ran, share a line
+  .cell-result {
+    grid-column: 1;
+    grid-row: 3;
+    align-self: center;
+  }
+
+  .cell-last {
+    grid-column: 2;
+    grid-row: 3;
+    align-self: center;
     text-align: end;
   }
 
-  .cell-result {
-    align-self: center;
+  // the second and third part of the row: under a line, run at the start and the actions at the end
+  .cell-run,
+  .cell-actions {
+    grid-row: 4;
+    display: flex;
+    align-items: center;
+    margin-block-start: var(--space-2);
+    padding-block-start: var(--space-3);
+    border-block-start: 1px solid var(--color-line);
+  }
+
+  .cell-run {
+    grid-column: 1;
   }
 
   .cell-actions {
     grid-column: 2;
-    display: flex;
-    align-items: center;
     justify-content: flex-end;
     gap: var(--space-1);
   }
 
-  .cell-void {
-    display: none;
+  // a row with no run button (the archive): its actions take the line
+  tr:not(:has(.cell-run)) .cell-actions {
+    grid-column: 1 / -1;
   }
 }
 
-// the records of a run: below 640 the identifying fields share the card's first line and the reasons take
-// the line under it
-.table--records {
-  tr {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: var(--space-1) var(--space-3);
-  }
-
-  .cell-full {
-    flex: 1 1 100%;
-    margin-block-start: var(--space-2);
-  }
-}
-
-.cell-title {
-  font-weight: 500;
+// The whole of a row's details opens what its name opens: the name's link is stretched over the row, and
+// the run button and the actions stand over it. One link, so the keyboard meets the row once.
+.row-link {
+  font-weight: var(--weight-strong);
+  line-height: var(--leading-title);
   text-decoration: none;
-}
-
-a.cell-title:hover {
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 4px;
-}
-
-// A link that stands alone in a row is a target of its own: its box is a step taller than its line, and it
-// answers a touch two more steps above and below, the height of a control in all. The row keeps its height
-// (the negative margin) and the focus ring stays close to the text.
-a.cell-title,
-.table a.link,
-.table a.status {
-  position: relative;
-  padding-block: var(--space-1);
-  margin-block: calc(-1 * var(--space-1));
 
   &::after {
     content: '';
     position: absolute;
-    inset-inline: 0;
-    inset-block: calc(-1 * var(--space-2));
+    inset: 0;
+    border-radius: var(--radius-md);
+  }
+
+  // the ring of the keyboard is drawn round the row's details, where the link is
+  &:focus-visible {
+    outline: none;
+  }
+
+  &:focus-visible::after {
+    outline: 2px solid var(--color-action);
+    outline-offset: -2px;
   }
 }
 
-a.cell-title,
-.table a.link {
-  display: inline-block;
+.cell-run,
+.cell-actions {
+  position: relative;
+  z-index: 1;
+}
+
+// the records of a run: below 640 the identifying fields share the card's first line and the reasons take
+// the line under it
+.table--records tbody tr {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1) var(--space-3);
+}
+
+.table--records .cell-full {
+  flex: 1 1 100%;
+  margin-block-start: var(--space-2);
+}
+
+.cell-title {
+  font-weight: var(--weight-strong);
+  line-height: var(--leading-title);
 }
 
 .cell-desc {
+  margin-block-start: 2px;
   font-size: var(--text-small);
-  line-height: 1.5;
+  line-height: var(--leading-body);
   color: var(--color-muted);
   text-wrap: pretty;
 }
 
 .cell-meta {
   font-size: var(--text-small);
+  line-height: var(--leading-body);
   color: var(--color-muted);
 }
 
-.status {
+// ---------------------------------------------------------------- status: one colour language everywhere
+// Violations are red, a clean run green, a run that stopped amber, and what is archived or has not run a
+// muted grey. A chip always carries its words; the colour repeats them and never stands alone.
+
+.status-chip {
+  --chip-ink: var(--color-muted);
+  --chip-tint: var(--color-tonal);
+
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: var(--text-small);
-  font-weight: 500;
+  min-block-size: 26px;
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-chip);
+  background: var(--chip-tint);
+  color: var(--chip-ink);
+  font-size: var(--text-label);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-title);
+  white-space: nowrap;
+
+  &::before {
+    content: '';
+    flex: none;
+    inline-size: 6px;
+    block-size: 6px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  // a run on its way shows its spinner in the dot's place
+  &:has(.spinner)::before {
+    display: none;
+  }
 }
 
-.status--success {
-  color: var(--color-success);
+.status-chip--violations {
+  --chip-ink: var(--color-danger);
+  --chip-tint: var(--color-danger-tint);
 }
 
-.status--danger {
-  color: var(--color-danger);
+.status-chip--clean {
+  --chip-ink: var(--color-success);
+  --chip-tint: var(--color-success-tint);
 }
 
-.status--quiet {
-  color: var(--color-muted);
-  font-weight: 400;
+.status-chip--stopped {
+  --chip-ink: var(--color-warning);
+  --chip-tint: var(--color-warning-tint);
 }
+
+// ---------------------------------------------------------------- reasons
 
 .reasons {
   display: grid;
@@ -197,10 +269,10 @@ a.cell-title,
   grid-template-columns: var(--size-mark) minmax(0, 1fr);
   gap: var(--space-2);
   align-items: start;
-  line-height: 1.6;
+  line-height: var(--leading-read);
 
   .mark {
-    margin-block-start: 2px;
+    margin-block-start: 4px;
   }
 }
 
@@ -209,15 +281,36 @@ a.cell-title,
   grid-template-columns: minmax(0, 1fr);
 }
 
+// ---------------------------------------------------------------- the foot: the count and the pager
+
 .table-foot {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-3);
-  padding-block-start: var(--space-4);
+  gap: var(--space-2) var(--space-3);
+  min-block-size: var(--size-control);
   font-size: var(--text-small);
+  line-height: var(--leading-body);
   color: var(--color-muted);
+}
+
+// Under the list the count and the pager are a bar at the bottom of the window, as they are at the foot of
+// the results panel: there whether the list is longer than the window or a single row.
+.table-foot--page {
+  position: fixed;
+  inset-block-end: 0;
+  inset-inline: 0;
+  z-index: 2;
+  border-block-start: 1px solid var(--color-line);
+  background: var(--color-card);
+
+  .table-foot {
+    max-inline-size: calc(var(--container) + 2 * var(--gutter));
+    margin-inline: auto;
+    padding: var(--space-2) var(--gutter);
+    padding-block-end: max(var(--space-2), env(safe-area-inset-bottom));
+  }
 }
 
 .pager {
@@ -226,26 +319,51 @@ a.cell-title,
   gap: var(--space-2);
 }
 
-// The header's button is taller than its text; the negative margin keeps the header row at its height.
-// Below 640 the header is read and not seen, and the toolbar's select sorts: the button is not there, so
-// the keyboard never lands on something invisible, and the header cell is named by its own label.
+// ---------------------------------------------------------------- the head: names that sort
+
+// The button is taller than its text; the negative margin keeps the head at its height. Below 640 the head
+// is read and not seen and a select in the toolbar sorts: the button is not there, so the keyboard never
+// lands on something invisible, and the header cell is named by its own label.
 .th-sort {
   display: none;
   align-items: center;
   gap: var(--space-1);
   border: 0;
+  border-radius: var(--radius-xs);
   padding-block: var(--space-2);
   padding-inline: 0;
   margin-block: calc(-1 * var(--space-2));
   background: none;
   font: inherit;
   color: inherit;
+  transition: color var(--duration-out) var(--ease-out);
+
+  // the arrows of a column that does not sort now are a hint, not a state
+  .icon {
+    opacity: 0.55;
+    transition: opacity var(--duration-out) var(--ease-out);
+  }
+
+  &:hover {
+    color: var(--color-ink);
+    transition-duration: var(--duration-in);
+
+    .icon {
+      opacity: 1;
+    }
+  }
 }
 
 th[aria-sort='ascending'] .th-sort,
 th[aria-sort='descending'] .th-sort {
   color: var(--color-ink);
+
+  .icon {
+    opacity: 1;
+  }
 }
+
+// ---------------------------------------------------------------- the table, from 640
 
 @media (min-width: 640px) {
   .th-sort {
@@ -253,6 +371,10 @@ th[aria-sort='descending'] .th-sort {
   }
 
   .table {
+    // the room between two bubbles; the same room above the first and under the last is taken back
+    border-spacing: 0 var(--space-2);
+    margin-block: calc(-1 * var(--space-2));
+
     thead {
       position: static;
       inline-size: auto;
@@ -261,44 +383,76 @@ th[aria-sort='descending'] .th-sort {
       clip-path: none;
     }
 
-    tr {
+    tbody {
+      display: table-row-group;
+    }
+
+    tbody tr {
       display: table-row;
       padding: 0;
+      border: 0;
+      border-radius: 0;
+      background: none;
     }
 
     th,
     td {
       display: table-cell;
-      padding: var(--space-3);
       text-align: start;
-      vertical-align: top;
-      border-block-end: 1px solid var(--color-line);
     }
 
     th {
-      padding-block: var(--space-2);
-      font-size: var(--text-small);
-      font-weight: 500;
+      padding: var(--space-2) var(--space-4);
+      font-size: var(--text-label);
+      font-weight: var(--weight-medium);
+      line-height: var(--leading-title);
       color: var(--color-muted);
       white-space: nowrap;
-      border-block-end-color: var(--color-line-strong);
       vertical-align: bottom;
     }
 
-    tbody tr {
-      transition: background-color var(--duration-out) var(--ease-out);
+    // a bubble: every cell carries its part of the edge, and the first and the last carry the corners
+    td {
+      padding: var(--space-3) var(--space-4);
+      border-block: 1px solid var(--color-line);
+      background: var(--color-card);
+      vertical-align: middle;
+      transition:
+        background-color var(--duration-out) var(--ease-out),
+        border-color var(--duration-out) var(--ease-out);
     }
 
-    tbody tr:hover {
-      background: var(--color-row-hover);
+    td:first-child {
+      padding-inline-start: var(--space-5);
+      border-inline-start: 1px solid var(--color-line);
+      border-start-start-radius: var(--radius-md);
+      border-end-start-radius: var(--radius-md);
     }
 
+    td:last-child {
+      border-inline-end: 1px solid var(--color-line);
+      border-start-end-radius: var(--radius-md);
+      border-end-end-radius: var(--radius-md);
+    }
+
+    th:first-child {
+      padding-inline-start: var(--space-5);
+    }
+
+    // the three parts: a line before the run button and before the actions
+    .cell-run,
     .cell-actions {
       display: table-cell;
       inline-size: 1%;
-      white-space: nowrap;
-      text-align: end;
+      margin: 0;
       padding-block: var(--space-2);
+      border-block: 1px solid var(--color-line);
+      border-inline-start: 1px solid var(--color-line);
+      white-space: nowrap;
+    }
+
+    .cell-actions {
+      padding-inline: var(--space-3);
 
       > * {
         vertical-align: middle;
@@ -308,25 +462,57 @@ th[aria-sort='descending'] .th-sort {
     // A run button is wider while it runs (the spinner and the text of `list.actions.running`, about
     // 9.25rem in Hebrew): the column keeps room for that, so starting a run does not move the other columns
     // of the table. A longer text in another language only brings the movement back; nothing breaks.
-    .cell-actions:has(.btn--run) {
-      min-inline-size: calc(9.25rem + 2 * var(--size-control) + 2 * var(--space-3) + var(--space-2));
+    .cell-run {
+      min-inline-size: calc(9.25rem + 2 * var(--space-4));
+      text-align: center;
     }
 
-    .cell-end {
-      text-align: start;
+    // The ring of the keyboard is drawn by the cells of the details themselves, so it closes where they end:
+    // the stretched link lies under the run and the action cells, and a ring on it would have no end edge.
+    .row-link:focus-visible::after {
+      outline: none;
     }
 
-    .cell-void {
-      display: table-cell;
-      color: var(--color-muted);
+    tr:has(.row-link:focus-visible) td:not(.cell-run, .cell-actions) {
+      --ring: var(--color-action);
+
+      box-shadow:
+        inset 0 2px 0 var(--ring),
+        inset 0 -2px 0 var(--ring);
     }
 
-    .cell-meta {
-      padding-block-start: var(--space-4);
+    tr:has(.row-link:focus-visible) td:first-child {
+      box-shadow:
+        inset 0 2px 0 var(--ring),
+        inset 0 -2px 0 var(--ring),
+        inset calc(var(--inline-end) * 2px) 0 0 var(--ring);
     }
 
-    .cell-nowrap {
+    tr:has(.row-link:focus-visible) td.cell-result {
+      box-shadow:
+        inset 0 2px 0 var(--ring),
+        inset 0 -2px 0 var(--ring),
+        inset calc(var(--inline-end) * -2px) 0 0 var(--ring);
+    }
+
+    // the details of a row that opens something answer the pointer as one part
+    tr:has(.row-link:hover) td {
+      border-color: var(--color-line-strong);
+      transition-duration: var(--duration-in);
+    }
+
+    tr:has(.row-link:hover) td:not(.cell-run, .cell-actions) {
+      background: var(--color-card-hover);
+    }
+
+    .cell-result,
+    .cell-last,
+    .cell-checked {
       white-space: nowrap;
+    }
+
+    .cell-last {
+      text-align: start;
     }
 
     .col-40 {
@@ -341,35 +527,23 @@ th[aria-sort='descending'] .th-sort {
       inline-size: 18%;
     }
 
-    .col-20 {
-      inline-size: 20%;
-    }
-
-    .col-12 {
-      inline-size: 12%;
-    }
-
     .col-id {
-      inline-size: 13%;
+      inline-size: 14%;
     }
   }
 
+  // the records of a run: a reason may take several lines, and the record's name stands beside the first
   .table--records {
-    tr {
+    tbody tr {
       display: table-row;
+    }
+
+    td {
+      vertical-align: top;
     }
 
     .cell-full {
       margin-block-start: 0;
     }
-
-    .cell-meta {
-      padding-block-start: var(--space-3);
-    }
-  }
-
-  // the table's text stays on the page's edge
-  .table-bleed {
-    margin-inline: calc(-1 * var(--space-3));
   }
 }

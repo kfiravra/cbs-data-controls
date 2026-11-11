@@ -75,10 +75,13 @@ internal static class RunAnswers
 
     /// <summary>The display values of a violation as text, one per identifying field, in the glossary's order.</summary>
     public static IReadOnlyList<string> DisplayTokens(string rootEntity, Violation violation) =>
-        [.. IdentifyingFields(rootEntity).Select((field, position) => Token(field, position, violation))];
+        [.. IdentifyingFields(rootEntity).Select((field, position) => Token(field, position, violation) ?? string.Empty)];
 
-    private static string Token(Field field, int position, Violation violation) =>
-        violation.Display?[position] ?? (field.IsNumber ? $"{position + 1}00" : $"value{position}of{violation.Key}");
+    /// <summary>The display value as text; null when the violation was given a display whose value here is missing.</summary>
+    private static string? Token(Field field, int position, Violation violation) =>
+        violation.Display is { } display
+            ? display[position]
+            : field.IsNumber ? $"{position + 1}00" : $"value{position}of{violation.Key}";
 
     /// <summary>The root entity's identifying fields in the glossary's order, each with whether it is a number.</summary>
     private static List<Field> IdentifyingFields(string rootEntity)
@@ -101,7 +104,8 @@ internal static class RunAnswers
         for (var position = fields.Count - 1; position >= 0; position--)
         {
             var token = Token(fields[position], position, violation);
-            display[fields[position].Key] = fields[position].IsNumber ? long.Parse(token) : token;
+            // a number field takes a number; a token that is none is stored as it is, as an older run may hold
+            display[fields[position].Key] = token is null ? null : fields[position].IsNumber && long.TryParse(token, out var number) ? number : token;
         }
 
         return new JsonObject
@@ -131,8 +135,35 @@ internal static class RunAnswers
     public sealed record Violation(
         string Key,
         IReadOnlyList<string> Matched,
-        IReadOnlyList<string>? Display = null,
+        IReadOnlyList<string?>? Display = null,
         string? ReasonText = null);
+
+    /// <summary>
+    /// A violation whose display differs from its neighbours' in one identifying field only (by position; null
+    /// for a missing value): every other field holds the same token, so only that field can order them.
+    /// </summary>
+    public static Violation Differing(string rootEntity, string key, int position, string? value) =>
+        new(key, ["c1"], [.. IdentifyingFields(rootEntity).Select((field, index) => index == position ? value : field.IsNumber ? "7" : "same")]);
+
+    /// <summary>The position and the key of the root entity's first identifying field that is, or is not, a number.</summary>
+    public static (int Position, string Key) IdentifyingField(string rootEntity, bool number)
+    {
+        var fields = IdentifyingFields(rootEntity);
+        var position = fields.FindIndex(field => field.IsNumber == number);
+        return (position, fields[position].Key);
+    }
+
+    /// <summary>A field of the root entity that is not one of its identifying fields.</summary>
+    public static string OtherField(string rootEntity)
+    {
+        using var glossary = JsonDocument.Parse(EngineFixtures.Read("glossary.json"));
+        var entity = glossary.RootElement.GetProperty("entities").EnumerateArray()
+            .Single(candidate => candidate.GetProperty("key").GetString() == rootEntity);
+        var identifying = IdentifyingFields(rootEntity).Select(field => field.Key).ToHashSet();
+        return entity.GetProperty("fields").EnumerateArray()
+            .Select(field => field.GetProperty("key").GetString()!)
+            .First(key => !identifying.Contains(key));
+    }
 
     private sealed record Field(string Key, bool IsNumber);
 }

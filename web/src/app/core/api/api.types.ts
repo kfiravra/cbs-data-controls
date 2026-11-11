@@ -113,10 +113,15 @@ export interface ControlUpdateBody extends ControlDraftBody {
 
 export type ActiveFilter = 'true' | 'false' | 'all';
 
+/** What the controls list can be ordered by: the name, what is checked, the newest run, what that run found. */
+export type ControlsSort = 'name' | 'rootEntity' | 'lastRun' | 'violations';
+
 export interface ControlsQuery {
   readonly search?: string;
   readonly rootEntity?: string;
   readonly active?: ActiveFilter;
+  readonly sort?: ControlsSort;
+  readonly dir?: SortDirection;
   readonly page?: number;
   readonly pageSize?: number;
 }
@@ -206,7 +211,8 @@ export interface ResultItem extends Violation {
   readonly seq: number;
 }
 
-export type ResultsSort = 'key' | 'display';
+/** How a run's records are ordered: the run's own order, the identifying text, one identifying field, or the reasons. */
+export type ResultsSort = 'key' | 'display' | 'field' | 'reasons';
 export type SortDirection = 'asc' | 'desc';
 
 export interface ResultsQuery {
@@ -215,6 +221,8 @@ export interface ResultsQuery {
   readonly search?: string;
   readonly condition?: string;
   readonly sort?: ResultsSort;
+  /** With `sort: 'field'`: the key of the identifying field to sort by. */
+  readonly field?: string;
   readonly dir?: SortDirection;
 }
 

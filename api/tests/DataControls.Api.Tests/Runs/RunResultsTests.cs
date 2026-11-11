@@ -66,6 +66,95 @@ public sealed class RunResultsTests(ApiFixture fixture, ITestOutputHelper output
     }
 
     [Fact]
+    public async Task Results_are_ordered_by_an_identifying_text_field_with_a_missing_value_last_and_seq_breaking_a_tie()
+    {
+        var (position, field) = RunAnswers.IdentifyingField(_rootEntity, number: false);
+        var run = await RunAsync(RunAnswers.Build(_rootEntity, [Differing("1", position, "b"), Differing("2", position, null), Differing("3", position, "a"), Differing("4", position, "b")], 4));
+
+        var ascending = await RunRequests.ResultsAsync(_client, run, $"?sort=field&field={field}");
+        var descending = await RunRequests.ResultsAsync(_client, run, $"?sort=field&field={field}&dir=desc");
+
+        // Rows 1 and 4 hold the same value: seq orders them, ascending in both directions. Row 2 has none.
+        Assert.Equal(["3", "1", "4", "2"], RunRequests.Keys(ascending));
+        Assert.Equal(["1", "4", "3", "2"], RunRequests.Keys(descending));
+    }
+
+    [Fact]
+    public async Task Results_are_ordered_by_the_value_of_an_identifying_number_field_and_not_by_its_digits()
+    {
+        var (position, field) = RunAnswers.IdentifyingField(_rootEntity, number: true);
+        var run = await RunAsync(RunAnswers.Build(_rootEntity, [Differing("1", position, "100"), Differing("2", position, "9"), Differing("3", position, null), Differing("4", position, "10")], 4));
+
+        var ascending = await RunRequests.ResultsAsync(_client, run, $"?sort=field&field={field}");
+        var descending = await RunRequests.ResultsAsync(_client, run, $"?sort=field&field={field}&dir=desc");
+
+        // As text the order would be 10, 100, 9.
+        Assert.Equal(["2", "4", "1", "3"], RunRequests.Keys(ascending));
+        Assert.Equal(["1", "4", "2", "3"], RunRequests.Keys(descending));
+    }
+
+    [Fact]
+    public async Task Results_place_a_stored_value_that_is_no_number_last_and_do_not_fail_when_the_field_is_a_number()
+    {
+        // A run stored while the field was text keeps its text: the sort must not fail the whole page on it.
+        var (position, field) = RunAnswers.IdentifyingField(_rootEntity, number: true);
+        var run = await RunAsync(RunAnswers.Build(_rootEntity, [Differing("1", position, "100"), Differing("2", position, "n/a"), Differing("3", position, "9")], 3));
+
+        var ascending = await RunRequests.ResultsAsync(_client, run, $"?sort=field&field={field}");
+        var descending = await RunRequests.ResultsAsync(_client, run, $"?sort=field&field={field}&dir=desc");
+
+        Assert.Equal(["3", "1", "2"], RunRequests.Keys(ascending));
+        Assert.Equal(["1", "3", "2"], RunRequests.Keys(descending));
+    }
+
+    [Fact]
+    public async Task Results_are_ordered_by_the_number_of_reasons_and_then_by_their_text_when_sort_is_reasons()
+    {
+        var run = await RunAsync(RunAnswers.Build(
+            _rootEntity,
+            [
+                new RunAnswers.Violation("1", ["c1"], ReasonText: "b"),
+                new RunAnswers.Violation("2", ["c1", "c2"], ReasonText: "a"),
+                new RunAnswers.Violation("3", ["c1"], ReasonText: "a"),
+                new RunAnswers.Violation("4", ["c1"], ReasonText: "a"),
+            ],
+            4));
+
+        var ascending = await RunRequests.ResultsAsync(_client, run, "?sort=reasons");
+        var descending = await RunRequests.ResultsAsync(_client, run, "?sort=reasons&dir=desc");
+
+        // One reason before two; among one reason by its text; rows 3 and 4 are equal in both and stand by seq.
+        Assert.Equal(["3", "4", "1", "2"], RunRequests.Keys(ascending));
+        Assert.Equal(["2", "1", "3", "4"], RunRequests.Keys(descending));
+    }
+
+    [Fact]
+    public async Task Results_return_400_on_field_when_the_field_is_not_an_identifying_field_of_the_run_root_entity()
+    {
+        var run = await RunAsync(RunAnswers.Numbered(1));
+
+        foreach (var field in new[] { "no_such_field", RunAnswers.OtherField(_rootEntity), "x\"; DROP TABLE dq.Run; --" })
+        {
+            var response = await _client.GetAsync($"{RunRequests.PathOf(run)}/results?sort=field&field={Uri.EscapeDataString(field)}");
+
+            var problem = await HttpAssert.ProblemAsync(response, HttpStatusCode.BadRequest, "REQUEST_INVALID");
+            HttpAssert.JsonEqual("""[{"path":"field","code":"MALFORMED","params":{}}]""", HttpAssert.Errors(problem));
+        }
+
+        // The rows are still there, and a field that is given without sort=field is not read at all.
+        var unsorted = await RunRequests.ResultsAsync(_client, run, "?field=no_such_field");
+        Assert.Equal(1, unsorted.GetProperty("total").GetInt32());
+    }
+
+    [Fact]
+    public async Task Results_return_404_before_the_field_is_checked_when_the_run_does_not_exist()
+    {
+        var response = await _client.GetAsync($"{RunRequests.PathOf(int.MaxValue)}/results?sort=field&field=no_such_field");
+
+        await HttpAssert.ProblemAsync(response, HttpStatusCode.NotFound, "RUN_NOT_FOUND");
+    }
+
+    [Fact]
     public async Task Results_search_reads_the_display_values_in_the_glossary_order_when_the_engine_wrote_them_in_another()
     {
         var violation = new RunAnswers.Violation("1051", ["c1"]);
@@ -140,6 +229,8 @@ public sealed class RunResultsTests(ApiFixture fixture, ITestOutputHelper output
     [Theory]
     [InlineData("sort=name", """[{"path":"sort","code":"MALFORMED","params":{}}]""")]
     [InlineData("dir=up", """[{"path":"dir","code":"MALFORMED","params":{}}]""")]
+    [InlineData("sort=field", """[{"path":"field","code":"REQUIRED","params":{}}]""")]
+    [InlineData("sort=field&field=", """[{"path":"field","code":"REQUIRED","params":{}}]""")]
     [InlineData("pageSize=201", """[{"path":"pageSize","code":"OUT_OF_RANGE","params":{"min":1,"max":200}}]""")]
     [InlineData("page=x", """[{"path":"page","code":"MALFORMED","params":{}}]""")]
     public async Task Results_return_400_naming_the_parameter_when_a_query_value_is_not_accepted(string query, string expectedErrors)
@@ -190,6 +281,8 @@ public sealed class RunResultsTests(ApiFixture fixture, ITestOutputHelper output
     }
 
     private RunAnswers.Violation Row(string key, string text) => RunAnswers.Uniform(_rootEntity, key, text);
+
+    private RunAnswers.Violation Differing(string key, int position, string? value) => RunAnswers.Differing(_rootEntity, key, position, value);
 
     private static IEnumerable<string> Numbers(int from, int count) => Enumerable.Range(from, count).Select(number => number.ToString());
 }

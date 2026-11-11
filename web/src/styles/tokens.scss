@@ -1,49 +1,73 @@
 // Design tokens. Names and values are those of the docs/design.md frontmatter; the only stylesheet that may
 // hold a colour literal. Component styles read these custom properties and nothing else.
+//
+// The palette is "Frost and slate": an off-white ground, white cards on it, a slate ink and one teal.
 
 :root {
-  // colour: the two greys, the ink, the one accent
-  --color-ground: #eef0f3; // where things are read: the page, tables, sentences
-  --color-surface: #e2e5ea; // where things are operated: the builder, toolbars
-  --color-ink: #0b0c0e;
-  --color-muted: #5d6470; // 5.2:1 on ground, 4.7:1 on surface
-  --color-action: #1f2de6; // 7.1:1 on ground
-  --color-action-hover: #355aec;
-  --color-action-pressed: #486fef;
-  --color-on-action: #ffffff; // 8.2:1 on action
-  --color-on-action-stale: #ffffffb8; // 72% white, 4.9:1 on action: the last valid sentence of an unfinished draft
-  --color-action-tint: #1f2de61a; // 10%: marks, highlighted values, selection
-  --color-action-track: #1f2de629; // 16%: the meter's unfilled track
-  --color-on-action-tonal: #ffffff2e; // 18% white on the cobalt field: marks, the second button
-  --color-on-action-line: #ffffff47; // 28% white on the cobalt field: the divider
-  --color-bar: #0b0c0e; // the app bar
-  --color-on-bar: #eef0f3;
-  --color-line: #0b0c0e1c; // 11% ink: row rules, dividers
-  --color-line-strong: #0b0c0e33; // 20% ink: header rules, panel edges, the tree rail
-  --color-control-line: #767c87; // field borders: 3.3:1 on surface, 3.7:1 on ground
-  --color-tonal: #0b0c0e14; // 8% ink: the secondary button, chips
-  --color-tonal-hover: #0b0c0e24; // 14% ink
-  --color-row-hover: #0b0c0e0a; // 4% ink
-  --color-danger: #b51522; // 5.9:1 on ground
+  // colour: three lights, the ink, the one accent
+  --color-ground: #f7f9fa; // the page
+  --color-surface: #ecf0f2; // where things are operated: the builder, the track of the tabs
+  --color-card: #ffffff; // what stands on the page: the list, the panel, a card, the inside of a field
+  --color-ink: #1f3038; // 12.9:1 on ground, 13.7:1 on card
+  --color-muted: #5d6b72; // 5.2:1 on ground, 4.8:1 on surface, 5.5:1 on card
+  --color-action: #0d7480; // 5.2:1 on ground, 4.8:1 on surface, 5.5:1 on card
+  --color-action-hover: #106a76;
+  --color-action-pressed: #12616c;
+  --color-on-action: #ffffff; // 5.5:1 on action
+  --color-action-ink: #0b5f69; // the letter of a mark: 5.6:1 on the tint, also over surface
+  --color-action-tint: #0d74801a; // 10%: marks, highlighted values, the chosen filter row
+  --color-inverse: #1f3038; // the ink as a ground: the bar of the rule in words, a chosen option, the toast
+  --color-on-inverse: #f7f9fa; // 12.9:1 on inverse
+  --color-on-inverse-muted: #bbc1c4; // 7.5:1 on inverse: the last valid sentence of an unfinished draft
+  --color-on-inverse-tonal: #f7f9fa24; // 14% of the light on the inverse: marks, the second button
+  --color-on-inverse-line: #f7f9fa3d; // 24%: a divider, a button's edge
+  --color-line: #1f30381c; // 11% ink: row rules, the edge of a card
+  --color-line-strong: #1f303833; // 20% ink: header rules, the edge of a button, the tree rail
+  --color-control-line: #74838b; // field borders: 3.9:1 on card, 3.7:1 on ground, 3.4:1 on surface
+  --color-tonal: #1f303812; // 7% ink: chips, skeleton bars, an icon button under the pointer
+  --color-card-hover: #f4f7f8; // a row of the table under the pointer: the card, one step towards the ground
+  --color-scroll: #1f303880; // 50% ink: the thumb of a scrollbar
+  --color-scroll-on-inverse: #f7f9fa80; // the same on the inverse ground
+  --color-danger: #b51522; // 6.4:1 on ground
   --color-danger-tint: #b515221a;
   --color-danger-line: #b5152259;
-  --color-warning: #825100; // 5.9:1 on ground
+  --color-warning: #825100; // 6.4:1 on ground
   --color-warning-tint: #8251001a;
   --color-warning-line: #82510059;
-  --color-success: #1d6835; // 6.0:1 on ground
-  --color-success-tint: #1d68351a;
-  --color-success-line: #1d683559;
-  --color-scrim: #0b0c0e66; // 40% ink behind a dialog
+  --color-success: #2d6a1e; // 6.2:1 on ground; a leaf green, away from the teal
+  --color-success-tint: #2d6a1e1a;
+  --color-success-line: #2d6a1e59;
+  // The colours of the conditions: a fixed set of light colours at half strength (50%), one per condition
+  // in the order of the rule, round again when the set ends. Each is the ground of a condition's letter (Ink
+  // on it is 8.8:1 at the least on a light ground) and the line under its words in the rule. Neighbours in
+  // the set are far apart in hue.
+  --color-tone-1: #f2c74480; // amber
+  --color-tone-2: #7fc0f580; // sky
+  --color-tone-3: #f59ab880; // rose
+  --color-tone-4: #8ed47c80; // green
+  --color-tone-5: #b9a6f280; // violet
+  --color-tone-6: #f5a46880; // orange
+  --color-tone-7: #5fd2c280; // mint
+  --color-tone-8: #e29aea80; // orchid
+  --color-scrim: #1f303847; // 28% ink behind a panel or a dialog: the list stays readable under it
 
-  // type
-  --font-sans: 'IBM Plex Sans Hebrew', 'IBM Plex Sans', system-ui, sans-serif;
-  --text-label: 0.8125rem; // 13
-  --text-small: 0.875rem; // 14
+  // type: one family, five sizes and a figure, three weights, four line heights. A role is a size with its
+  // weight and its line height (base.scss, "type roles"); nothing sets one of the three alone
+  --font-sans: 'Heebo', system-ui, sans-serif;
+  --text-label: 0.8125rem; // 13: column heads, field labels, chips, captions
+  --text-small: 0.875rem; // 14: descriptions, hints, meta lines
   --text-body: 1rem; // 16
-  --text-title: 1.125rem; // 18
-  --text-sentence: 1.25rem; // 20
-  --text-page: 1.5rem; // 24, 28 from 1024
-  --text-figure: 2.5rem; // 40, 48 from 1024
+  --text-title: 1.125rem; // 18: the title of a section
+  --text-page: 1.5rem; // 24: the title of the page and of a panel
+  --text-figure: 2.25rem; // 36: the count of a run
+  --text-mark: 0.75rem; // 12: the letter of a condition at the start of its row
+  --weight-regular: 400; // what is read
+  --weight-medium: 500; // labels, buttons, chips
+  --weight-strong: 600; // titles, names, figures
+  --leading-tight: 1.2; // page titles, figures
+  --leading-title: 1.35; // section titles, names, labels
+  --leading-body: 1.5; // body and small text
+  --leading-read: 1.7; // lines that carry a letter and marked values: a reason, the hint under the rule
 
   // space: 4, 8, 12, 16, 24, 32, 48, 64
   --space-1: 4px;
@@ -55,30 +79,35 @@
   --space-7: 48px;
   --space-8: 64px;
 
-  // shape
-  --radius-xs: 2px; // the meter, the focus outline
-  --radius-sm: 4px; // controls, buttons, chips, marks
-  --radius-md: 6px; // toolbars, banners, toasts, menus
-  --radius-lg: 8px; // panels, dialogs, the sentence field
+  // shape: soft
+  --radius-xs: 4px; // the meter, the focus outline
+  --radius-chip: 6px; // marks, chips, highlighted values
+  --radius-sm: 8px; // controls, buttons
+  --radius-md: 12px; // toolbars, banners, toasts, menus, small cards
+  --radius-lg: 20px; // the list, the panel, dialogs, large cards
 
   // sizes
   --size-control: 44px;
   --size-control-sm: 36px;
   --size-icon: 20px;
-  --size-mark: 22px;
-  --size-bar: 56px;
+  --size-mark: 18px; // the letter of a condition at the start of its row
+  --size-bar: 60px;
   --gutter: 16px; // 32 from 640, 48 from 1024
   --container: 1280px;
+  --sheet-inset: 0px; // the room around the panel: 12px from 640, where it floats over the list
+  --sheet-width: 1120px; // the panel at its widest
+  --sheet-peek: clamp(48px, 22vw, 320px); // how much of the list stays in view beside the panel
 
-  // depth: flat; one shadow, for things that float over the page
-  --shadow-overlay: 0 8px 24px #0b0c0e1a, 0 1px 2px #0b0c0e14;
+  // depth: the page is flat; a shadow belongs to what floats over it, and to a card that is about to be pressed
+  --shadow-overlay: 0 24px 48px -12px #1f303829, 0 2px 8px #1f303814;
+  --shadow-raised: 0 6px 16px -6px #1f303824, 0 1px 2px #1f30380f;
 
   // motion
   --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
   --duration-in: 150ms;
   --duration-out: 120ms;
   --duration-press: 90ms;
-  --duration-panel: 200ms;
+  --duration-panel: 220ms;
   --duration-close: 120ms;
   --duration-settle: 600ms; // a changed condition's mark easing back in the sentence
 }
@@ -93,13 +122,12 @@
 @media (min-width: 640px) {
   :root {
     --gutter: 32px;
+    --sheet-inset: 12px;
   }
 }
 
 @media (min-width: 1024px) {
   :root {
     --gutter: 48px;
-    --text-page: 1.75rem;
-    --text-figure: 3rem;
   }
 }

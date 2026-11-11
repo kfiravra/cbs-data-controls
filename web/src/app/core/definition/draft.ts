@@ -58,14 +58,19 @@ export function nodeName(node: DraftNode): string {
 const NUMBERED_ID = /^[crg](\d+)$/;
 
 /**
- * Gives node ids (`c<n>`, `r<n>`) and group keys (`g<n>`) from one counter. Seeded above the highest id of a
- * loaded definition, so an id is created once with its node and never reused in a session.
+ * Gives node ids (`c<n>`, `r<n>`) and group keys (`g<n>`) from one counter. Kept above the highest id of
+ * every definition that is brought in, so an id is created once with its node and never reused in a session.
  */
 export class IdSource {
   private last: number;
 
   constructor(seed = 0) {
     this.last = seed;
+  }
+
+  /** Moves the counter past the ids a definition comes with; it never moves back. */
+  reserve(highest: number): void {
+    this.last = Math.max(this.last, highest);
   }
 
   next(prefix: 'c' | 'r' | 'g'): string {

@@ -2,11 +2,11 @@ import { contractExamples, contractGlossary } from '../../../testing/contracts';
 import { SYNTHETIC_GLOSSARY } from '../../../testing/synthetic-glossary';
 import { Glossary } from '../api/api.types';
 import {
+  chainFor,
   comparableFields,
   fieldGroups,
   findEntity,
   findOperator,
-  mapFor,
   operatorLabel,
   operatorsOf,
   relatedOptions,
@@ -105,22 +105,22 @@ describe('glossary lookups over the contract glossary', () => {
     expect(valueLabel(textField, 'anything')).toBeUndefined();
   });
 
-  it('draws the map with every rootable entity and a link wherever two neighbours are related', () => {
-    for (const root of rootEntities(glossary)) {
-      const map = mapFor(glossary, root.key);
-      expect(map.entities.map((entry) => entry.entity.key)).toEqual(rootEntities(glossary).map((e) => e.key));
-      expect(map.entities.filter((entry) => entry.selected).map((entry) => entry.entity.key)).toEqual([root.key]);
-      expect(map.links).toHaveLength(map.entities.length - 1);
-      map.links.forEach((link, index) => {
-        const pair = [map.entities[index].entity.key, map.entities[index + 1].entity.key];
-        const related = glossary.relationships.some((r) => pair.includes(r.from) && pair.includes(r.to));
-        expect(link !== null).toBe(related);
-        if (link) {
-          expect(pair).toContain(link.from);
-          expect(pair).toContain(link.to);
-        }
-      });
+  it('draws the chain with every rootable entity in glossary order, whatever is chosen, and marks the chosen one', () => {
+    for (const root of [...rootEntities(glossary).map((entity) => entity.key), null]) {
+      const chain = chainFor(glossary, root);
+      expect(chain.entities.map((entry) => entry.entity.key)).toEqual(rootEntities(glossary).map((e) => e.key));
+      expect(chain.entities.filter((entry) => entry.selected).map((entry) => entry.entity.key)).toEqual(root ? [root] : []);
+      expect(chain.links).toHaveLength(chain.entities.length - 1);
     }
+  });
+
+  it('says of the sample organization that a department holds many employees and a ministry many departments', () => {
+    // the contract glossary lists employee, department, ministry: the pairs are written out, not derived
+    expect(rootEntities(glossary).map((entity) => entity.key)).toEqual(['employee', 'department', 'ministry']);
+    expect(chainFor(glossary, null).links.map((link) => link && [link.one.key, link.many.key])).toEqual([
+      ['department', 'employee'],
+      ['ministry', 'department'],
+    ]);
   });
 });
 
@@ -185,11 +185,12 @@ describe('glossary lookups over a glossary with other entities', () => {
     expect(comparableFields(glossary, 'order', { field: 'nickname' }, 'above')).toEqual([]);
   });
 
-  it('draws no link between neighbours that no relationship joins, and words a link from the root side', () => {
-    const fromOrder = mapFor(glossary, 'order');
-    expect(fromOrder.links.map((link) => link?.key ?? null)).toEqual(['order.customer', null]);
+  it('says which neighbour holds many of the other, whatever is chosen, and nothing where no relationship joins them', () => {
+    const sides = (root: string | null) => chainFor(glossary, root).links.map((link) => link && [link.one.key, link.many.key]);
 
-    const fromCustomer = mapFor(glossary, 'customer');
-    expect(fromCustomer.links.map((link) => link?.key ?? null)).toEqual(['customer.orders', null]);
+    // roots in glossary order: order, customer, line. A customer has many orders; customer and line are not joined
+    expect(sides('order')).toEqual([['customer', 'order'], null]);
+    expect(sides('customer')).toEqual(sides('order'));
+    expect(sides(null)).toEqual(sides('order'));
   });
 });

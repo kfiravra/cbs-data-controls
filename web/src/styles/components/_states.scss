@@ -17,12 +17,12 @@
 }
 
 .banner__title {
-  font-weight: 500;
+  font-weight: var(--weight-medium);
 }
 
 .banner__body {
   font-size: var(--text-small);
-  line-height: 1.55;
+  line-height: var(--leading-body);
 }
 
 .banner__actions {
@@ -102,12 +102,6 @@
   padding: var(--space-5);
 }
 
-// a dialog with a list keeps its head and its buttons in view and scrolls the list between them
-.dialog--tall {
-  grid-template-rows: auto minmax(0, 1fr) auto;
-  max-block-size: calc(100dvh - 2 * var(--space-6));
-}
-
 .stack--tight {
   gap: var(--space-1);
 }
@@ -124,11 +118,6 @@
   }
 }
 
-.dialog__body {
-  min-block-size: 0;
-  overflow: auto;
-}
-
 .dialog__foot {
   display: flex;
   flex-wrap: wrap;
@@ -136,16 +125,53 @@
   gap: var(--space-3);
 }
 
+// the suggestions panel: one card per suggested control, two in a row when the panel is wide
+.suggestions {
+  display: grid;
+  gap: var(--space-4);
+}
+
 .suggestion {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: var(--space-2) var(--space-3);
-  padding-block: var(--space-4);
-  border-block-end: 1px solid var(--color-line);
+  align-content: start;
+  gap: var(--space-3);
+  block-size: 100%;
+  padding: var(--space-4) var(--space-5) var(--space-3);
+  border: 1px solid var(--color-line-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-card);
+  transition: border-color var(--duration-out) var(--ease-out);
 
-  > :not(.suggestion__check) {
-    grid-column: 2;
+  // ink selects
+  &.is-chosen {
+    border-color: var(--color-ink);
+    box-shadow: inset 0 0 0 1px var(--color-ink);
   }
+}
+
+// the checkbox keeps its touch target: the head gives back the room that target takes at the start edge
+.suggestion__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-inline-start: calc(-1 * var(--space-3));
+}
+
+.suggestion__name {
+  font-size: var(--text-title);
+  font-weight: var(--weight-strong);
+  line-height: var(--leading-title);
+}
+
+.suggestion__why {
+  font-size: var(--text-small);
+  line-height: var(--leading-body);
+  color: var(--color-muted);
+}
+
+.suggestion__open {
+  justify-self: start;
+  margin-inline-start: calc(-1 * var(--space-2));
 }
 
 .evidence {
@@ -153,4 +179,16 @@
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2);
+}
+
+@container sheet (min-width: 880px) {
+  .suggestions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+// The toast stands over the bar that is fixed at the bottom of the window (the list's count, a panel's foot
+// of a table), not on it: the bar's own height and a step of air under the toast.
+.app-toast {
+  margin-block-end: calc(var(--size-control) + 2 * var(--space-2) + var(--space-2));
 }

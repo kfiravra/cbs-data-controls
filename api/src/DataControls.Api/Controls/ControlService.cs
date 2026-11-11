@@ -1,4 +1,6 @@
+using System.Linq.Expressions;
 using DataControls.Api.Errors;
+using DataControls.Api.Glossary;
 using DataControls.Api.Hosting;
 using DataControls.Api.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -9,11 +11,22 @@ namespace DataControls.Api.Controls;
 /// Controls with immutable versions. A definition is checked by the schema and then by the engine before
 /// anything is saved, and each change is one <c>SaveChanges</c>.
 /// </summary>
-public sealed class ControlService(DqDbContext db, DefinitionChecker definitions, UtcClock clock)
+public sealed class ControlService(
+    DqDbContext db,
+    DefinitionChecker definitions,
+    GlossaryService glossary,
+    RequestContextAccessor requests,
+    UtcClock clock)
 {
     private const string ActiveOnly = "true";
     private const string ArchivedOnly = "false";
     private const string ActiveAndArchived = "all";
+    private const string SortByName = "name";
+    private const string SortByRootEntity = "rootEntity";
+    private const string SortByLastRun = "lastRun";
+    private const string SortByViolations = "violations";
+    private const string Ascending = "asc";
+    private const string Descending = "desc";
     private const int MaxArchiveAttempts = 3;
 
     public async Task<ControlResponse> CreateAsync(CreateControlRequest? request, CancellationToken cancellationToken)
@@ -140,13 +153,14 @@ public sealed class ControlService(DqDbContext db, DefinitionChecker definitions
             check.Add("active", RequestErrorCodes.Malformed);
         }
 
+        var sort = check.Word("sort", query.Sort, SortByName, SortByRootEntity, SortByLastRun, SortByViolations);
+        var descending = check.Word("dir", query.Dir, Ascending, Descending) == Descending;
         check.ThrowIfInvalid();
 
         var filtered = Filter(db.Controls.AsNoTracking(), active, query.Search?.Trim(), query.RootEntity);
         var total = await filtered.CountAsync(cancellationToken);
-        var page = await filtered
-            .OrderBy(control => control.Name)
-            .ThenBy(control => control.Id)
+        var entityOrder = sort == SortByRootEntity ? glossary.HeldEntityKeysByLabel(requests.Current.Language) : null;
+        var page = await Order(filtered, sort, descending, entityOrder)
             .Skip(paging.Skip)
             .Take(paging.PageSize)
             .ToListAsync(cancellationToken);
@@ -176,6 +190,66 @@ public sealed class ControlService(DqDbContext db, DefinitionChecker definitions
 
         return controls;
     }
+
+    /// <summary>
+    /// The list in the order asked for. The direction applies to the sort key; controls that are equal in it
+    /// stand by name and then by id, ascending, so a page is the same page whenever it is asked for. What a
+    /// sort key cannot place comes last in both directions: a root entity the glossary does not hold, a
+    /// control that never ran, and under <c>violations</c> a control whose newest run has no count, before it.
+    /// </summary>
+    private IQueryable<Control> Order(IQueryable<Control> controls, string sort, bool descending, IReadOnlyList<string>? entityOrder)
+    {
+        var ordered = sort switch
+        {
+            SortByRootEntity when entityOrder is not null => ByEntityOrder(controls, entityOrder, descending),
+            SortByRootEntity => By(controls, control => control.RootEntityKey, descending),
+            SortByLastRun => ThenBy(controls.OrderBy(NeverRan), NewestStart, descending),
+            // a run without a count stands where the largest count would when ascending and under the
+            // smallest when descending: last either way, and among those a control that never ran is last
+            SortByViolations => By(controls, NewestCountOr(descending ? int.MinValue : int.MaxValue), descending).ThenBy(NeverRan),
+            _ => null,
+        };
+        return (ordered?.ThenBy(control => control.Name) ?? By(controls, control => control.Name, descending))
+            .ThenBy(control => control.Id);
+    }
+
+    /// <summary>
+    /// By the place of the root entity in <paramref name="keys"/>, which the glossary ordered by label: one
+    /// comparison with a bound key per entity, so no key and no label is written into the statement. An
+    /// entity the glossary does not hold comes after the others in both directions.
+    /// </summary>
+    private static IOrderedQueryable<Control> ByEntityOrder(IQueryable<Control> controls, IReadOnlyList<string> keys, bool descending)
+    {
+        var ordered = controls.OrderBy(control => !keys.Contains(control.RootEntityKey));
+        foreach (var key in keys)
+        {
+            // "is this entity" sorts true last, so its own direction is the opposite of the list's
+            ordered = ThenBy(ordered, control => control.RootEntityKey == key, !descending);
+        }
+
+        return ordered;
+    }
+
+    private Expression<Func<Control, bool>> NeverRan =>
+        control => !db.Runs.Any(run => run.ControlId == control.Id);
+
+    private Expression<Func<Control, DateTime?>> NewestStart =>
+        control => db.Runs.Where(run => run.ControlId == control.Id).Max(run => (DateTime?)run.StartedAt);
+
+    /// <summary>The count of the control's newest run, or <paramref name="none"/> when it has no run or the run has no count.</summary>
+    private Expression<Func<Control, int>> NewestCountOr(int none) =>
+        control => db.Runs
+            .Where(run => run.ControlId == control.Id)
+            .OrderByDescending(run => run.StartedAt)
+            .ThenByDescending(run => run.Id)
+            .Select(run => run.TotalCount)
+            .FirstOrDefault() ?? none;
+
+    private static IOrderedQueryable<Control> By<TKey>(IQueryable<Control> controls, Expression<Func<Control, TKey>> key, bool descending) =>
+        descending ? controls.OrderByDescending(key) : controls.OrderBy(key);
+
+    private static IOrderedQueryable<Control> ThenBy<TKey>(IOrderedQueryable<Control> controls, Expression<Func<Control, TKey>> key, bool descending) =>
+        descending ? controls.ThenByDescending(key) : controls.ThenBy(key);
 
     /// <summary>
     /// The newest run of each control of one page, of any status. Asked only for the page's controls, so

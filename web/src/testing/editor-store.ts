@@ -2,16 +2,18 @@ import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, TestRequest, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 
-import { Control, DefinitionError, TextPart } from '../app/core/api/api.types';
+import { Control, DefinitionError, SuggestionItem, TextPart } from '../app/core/api/api.types';
 import { Definition } from '../app/core/definition/definition.types';
 import { DraftCondition } from '../app/core/definition/draft';
 import { problemInterceptor } from '../app/core/http/problem.interceptor';
-import { EditorStore, VALIDATE_DEBOUNCE_MS } from '../app/features/control-editor/editor.store';
+import { EditorStore } from '../app/features/control-editor/editor.store';
+import { VALIDATE_DEBOUNCE_MS } from '../app/features/control-editor/editor.validation';
 import { SYNTHETIC_GLOSSARY } from './synthetic-glossary';
 import { provideTestTranslations, t } from './translate';
 
 /** Support for the specs of the editor store: a stored control, and the store driven through its requests. */
 export const VALIDATE = '/api/v1/controls/validate';
+export const SUGGEST = '/api/v1/suggestions';
 export const letters = t('common.markLetters').split(' ');
 
 export const STORED: Definition = {
@@ -91,9 +93,29 @@ export function editorHarness() {
     settle();
   }
 
+  /**
+   * Chooses what a new control checks, and answers the suggestions the store asks for about that choice
+   * (a control that starts from nothing is offered them).
+   */
+  async function choose(key = 'order', ideas: SuggestionItem[] = []): Promise<TestRequest> {
+    store.chooseRoot(key);
+    const request = await next(SUGGEST);
+    request.flush({ items: ideas });
+    await Promise.resolve();
+    await Promise.resolve();
+    settle();
+    return request;
+  }
+
+  /** A new control that checks orders, with its one empty row. */
+  async function openNew(): Promise<void> {
+    await open({ id: null });
+    await choose();
+  }
+
   /** A new control with one finished row: total above 5. */
   async function openComplete(): Promise<string> {
-    await open({ id: null });
+    await openNew();
     const id = firstRow().id;
     store.apply({ kind: 'field', id, left: { field: 'total' }, scope: 'order' });
     store.apply({ kind: 'operator', id, operator: 'above' });
@@ -115,5 +137,5 @@ export function editorHarness() {
     vi.useRealTimers();
   }
 
-  return { http, store, settle, wait, firstRow, next, open, openComplete, answerValidate, finish };
+  return { http, store, settle, wait, firstRow, next, open, openNew, choose, openComplete, answerValidate, finish };
 }

@@ -39,12 +39,6 @@
               }
             ],
             "styles": [
-              "@fontsource/ibm-plex-sans-hebrew/hebrew-400.css",
-              "@fontsource/ibm-plex-sans-hebrew/latin-400.css",
-              "@fontsource/ibm-plex-sans-hebrew/hebrew-500.css",
-              "@fontsource/ibm-plex-sans-hebrew/latin-500.css",
-              "@fontsource/ibm-plex-sans-hebrew/hebrew-600.css",
-              "@fontsource/ibm-plex-sans-hebrew/latin-600.css",
               "src/styles.scss"
             ],
             "loader": {

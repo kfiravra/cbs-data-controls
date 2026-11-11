@@ -1,0 +1,97 @@
+dc-web phase 11: the database reset and the six examples
+2026-11-11T18:21:46Z
+worktree at 039690b, main tree at 612b2b7 on main
+no suite running
+before the reset the store holds 56 controls
+this worktree's api and engine are stopped
+=== scripts/db-init.sh --reset, from the main tree
+ Container data-controls-db-1 Running 
+ Container data-controls-db-1 Waiting 
+ Container data-controls-db-1 Healthy 
+ Container data-controls-db-init-run-5c4d8753fec0 Creating 
+ Container data-controls-db-init-run-5c4d8753fec0 Created 
+db-init: --reset: dropping DataControls (the dq rows of every session go with it)
+db-init: sql/00_database.sql
+db-init: sql/10_schemas.sql
+db-init: sql/20_hr_tables.sql
+db-init: sql/30_dq_tables.sql
+db-init: sql/40_logins.sql
+db-init: sql/50_indexes.sql
+db-init: sql/60_seed_hr.sql
+db-init: DataControls is ready on db,1433 (7 scripts)
+db-init --reset: ok
+=== scripts/db-check.sh
+PASS structure: database collation
+PASS structure: server collation, which tempdb and #temp tables share
+PASS structure: schemas hr and dq
+PASS structure: the seven tables of hr and dq, and no other
+PASS structure: the indexes of 50_indexes.sql
+PASS permissions: dq_engine_ro reads hr.Employee
+PASS permissions: dq_engine_ro is refused a read of dq.Control (error 229)
+PASS permissions: dq_engine_ro is refused an UPDATE of hr.Employee (error 229)
+PASS permissions: dq_engine_ro is refused CREATE TABLE (error 262)
+PASS permissions: dq_app inserts into dq.Control (rolled back)
+PASS permissions: dq_app is refused a read of hr.Employee (error 229)
+PASS permissions: dq_app is refused CREATE TABLE (error 262)
+PASS permissions: public holds no permission on hr or dq
+PASS glossary: all 19 columns the glossary names exist for dq_engine_ro
+PASS glossary: every stored field's type fits its column
+PASS glossary: dq_engine_ro sees hr alone in INFORMATION_SCHEMA
+PASS hebrew: the seed is loaded: 191 names in hr
+PASS hebrew: no seeded name holds a question mark
+PASS hebrew: every seeded name starts with a letter of the Hebrew block
+PASS hebrew: ministry and department names read back byte for byte as sql/60_seed_hr.sql writes them
+       1071   רנא חורי  [c1,c2]
+       1072   אלעד ממן  [c1,c2]
+       1076   מוחמד אגבאריה  [c1,c2]
+       1077   ליאור בן שושן  [c1,c2]
+       1117   עומרי דאהר  [c1,c2]
+       1118   הדס עטיה  [c1,c2]
+PASS examples: active-in-inactive-department on 2026-11-01: 6 records, keys and matched ids as the example expects
+       104    מחלקת ארכיון רפואי  [c1,r1]
+       204    יחידת חינוך דיגיטלי  [c1,r1]
+       403    יחידת התחבורה הציבורית  [c1,r1]
+PASS examples: department-without-active-employees on 2026-11-01: 3 records, keys and matched ids as the example expects
+       1111   עוז ירושלמי  [c1,c2,c3]
+       1112   בתיה שוורץ  [c1,c2,c4]
+       1117   עומרי דאהר  [c1,c2,c3]
+PASS examples: inactive-ministry-salary-out-of-range on 2026-11-01: 3 records, keys and matched ids as the example expects
+       1051   אריאל מור  [c1,c2]
+       1052   רותם יוסף  [c1,c2]
+       1053   גל עמר  [c1,c2]
+PASS examples: minor-high-salary on 2026-11-01: 3 records, keys and matched ids as the example expects
+       1051   אריאל מור  [c1,c2]
+       1052   רותם יוסף  [c1,c2]
+       1053   גל עמר  [c1,c2]
+       1054   אביגיל טל  [c1,c2]
+PASS examples: minor-high-salary on 2026-10-31: 4 records, keys and matched ids as the example expects
+       1058   לאה בן דוד  [c1,c3]
+       1081   יובל שמש  [c1,c2]
+       1082   מורן אלבז  [c1,c2]
+       1083   אופיר דיין  [c1,c2]
+       1084   שני וולך  [c1,c3]
+       1085   ברק יעקב  [c1,c4]
+       1086   אחינועם לביא  [c1,c2,c3]
+       1087   צחי אפריים  [c5,c6]
+       1088   רבקה מימון  [c5,c6]
+       1115   אביב קדוש  [c1,c3]
+PASS examples: missing-mandatory-data on 2026-11-01: 10 records, keys and matched ids as the example expects
+       1061   אסף גרינברג  [c1]
+       1062   סיגל חזן  [c1]
+       1063   אסתר וקנין  [c1]
+PASS examples: termination-before-hire on 2026-11-01: 3 records, keys and matched ids as the example expects
+db-check: 27 passed, 0 failed (structure permissions glossary hebrew examples)
+db-check: ok (27 passed, 0 failed)
+the database container: data-controls-db-1 Up 21 hours (healthy)
+engine: {"status":"ok","database":"ok","glossaryVersion":"1.0.0","engineVersion":"0.1.0"}
+api: {"status":"ok","database":"ok","engine":"ok","version":"1.0.0"}
+the api serves main-XWP4W66M.js (dist: main-XWP4W66M.js)
+after the reset the store holds 0 controls
+posted active-in-inactive-department: id 2, version 1
+posted department-without-active-employees: id 3, version 1
+posted inactive-ministry-salary-out-of-range: id 4, version 1
+posted minor-high-salary: id 5, version 1
+posted missing-mandatory-data: id 6, version 1
+posted termination-before-hire: id 7, version 1
+the store now holds 6 controls, 6 of them active
+the list, by name: [[4,"employee",null],[3,"department",null],[6,"employee",null],[7,"employee",null],[2,"employee",null],[5,"employee",null]]

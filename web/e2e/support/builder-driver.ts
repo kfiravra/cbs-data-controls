@@ -72,7 +72,7 @@ export class BuilderDriver {
     return (await group.getAttribute('data-group'))!;
   }
 
-  // ---------------------------------------------------------------- the root entity
+  // ---------------------------------------------------------------- what the control checks
 
   private async chooseRoot(key: string): Promise<void> {
     const options = this.page.getByTestId('root-entity');
@@ -82,18 +82,33 @@ export class BuilderDriver {
       await expect(wanted).toHaveAttribute('aria-checked', 'true');
       return;
     }
-    // arrow keys walk the radio group; next is the left arrow in a right-to-left page
-    await options.and(this.page.locator('[aria-checked="true"]')).focus();
-    for (let step = 0; step < (await options.count()); step++) {
-      if ((await wanted.getAttribute('aria-checked')) === 'true') {
-        return;
+    // arrow keys walk the radio group and choose nothing; next is the left arrow in a right-to-left page. The
+    // group's one tab stop is the chosen card, or the first while nothing is chosen; Space chooses
+    await options.and(this.page.locator('[tabindex="0"]')).focus();
+    for (let step = 0; step <= (await options.count()); step++) {
+      if (await wanted.evaluate((card) => card === document.activeElement)) {
+        break;
       }
       await this.page.keyboard.press('ArrowLeft');
     }
+    await expect(wanted).toBeFocused();
+    await this.page.keyboard.press('Space');
     await expect(wanted).toHaveAttribute('aria-checked', 'true');
   }
 
   // ---------------------------------------------------------------- groups
+
+  /**
+   * Groups and related records are behind the builder's "advanced" action: it is pressed once, while the
+   * list is still flat. A draft that holds one of them shows the adders by itself, and has no such action.
+   */
+  private async askForAdvanced(): Promise<void> {
+    const advanced = this.builder.getByTestId('advanced');
+    if ((await advanced.count()) > 0 && (await advanced.getAttribute('aria-pressed')) !== 'true') {
+      await this.press(advanced);
+      await expect(advanced).toHaveAttribute('aria-pressed', 'true');
+    }
+  }
 
   private async fillGroup(key: string, definition: GroupNode, scope: string): Promise<void> {
     const toggle = this.builder.locator(`[data-op-of="${key}"]`);
@@ -104,6 +119,9 @@ export class BuilderDriver {
       const takesBlank = index === 0 && child.type === 'condition';
       if (!takesBlank) {
         const adder = { condition: 'condition', group: 'group', related: 'related' }[child.type];
+        if (child.type !== 'condition') {
+          await this.askForAdvanced();
+        }
         await this.press(this.builder.locator(`[data-adder-of="${key}"][data-adder="${adder}"]`));
         await expect(nodes).toHaveCount(index === 0 ? 2 : index + 1);
       }

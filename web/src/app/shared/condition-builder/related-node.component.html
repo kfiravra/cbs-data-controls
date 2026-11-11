@@ -1,13 +1,7 @@
 <div class="group related" role="group" [attr.aria-label]="'common.condition' | translate: { mark: mark() }">
-  <div
-    class="group__head"
-    (focusin)="trace.emit(node().id)"
-    (focusout)="trace.emit(null)"
-    (pointerenter)="trace.emit(node().id)"
-    (pointerleave)="trace.emit(null)"
-  >
+  <div class="group__head">
     <div class="group__how">
-      <app-mark [label]="mark()" [state]="markState()" />
+      <app-mark [label]="mark()" [state]="markState()" [tone]="tone()" />
       <mat-form-field class="field--sm group__pick" appearance="outline" subscriptSizing="dynamic">
         <mat-select
           data-testid="related-quantity"
@@ -74,6 +68,5 @@
     [view]="view()"
     [bare]="true"
     (edit)="edit.emit($event)"
-    (trace)="trace.emit($event)"
   />
 </div>

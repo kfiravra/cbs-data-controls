@@ -1,19 +1,30 @@
 # dc-web notes
 
 ## State
-All eight phases are done (2026-11-11). Phase 7 ran in the morning on Kfir's word: `origin/main` (`eec007d`, the
-engine and the api) merged into `feat/web`, both services started from this worktree against the shared
-database, the gate specs green on the real stack, on the pre-loaded list twice and on the build the api hosts.
-The six examples are in the dev `dq` under their Hebrew names. Kept by Kfir (2026-11-11): decision 38, the leave
-prompt; the four items the critiques left open stay open, and dc-delivery lists them as limitations.
+Phase 13, the flowing rule (2026-11-11, Kfir's look at phase 12), is done on `feat/web-ux` for the same PR,
+which is open and not merged. Before it on this branch: phase 12 (`54947e8`, the rule in words in the colours
+of its conditions, and its review fixes `00f8600`), phase 11 (the hot fixes), phase 10 (the last design
+round). `/check all --tests` is green and the gate passed on the real stack, behind the dev server and on the
+build the api hosts (`gates/phase-13.txt`).
 
 ## Next
-1. Kfir reads the Hebrew interface in the browser, on the stack this session leaves running
-   (`http://localhost:5000`). The texts added since his last reading are decisions 44 and 46.
-2. The PR is opened on his word at the end of this session; the merge is his.
-3. For dc-delivery (limitations, on Kfir's word): the phone results layout (the breakdown stands before the
-   records), nested groups unnamed for a screen reader, a conflict that discards the draft, a list row's count
-   that may belong to an older version of the rule. Each is in the Log of 2026-11-11 with its reason.
+1. Kfir reads the rule in words at `http://localhost:5000`: one flowing sentence, only the conditions
+   underlined, no line under a joining word (decision 117). The last commit is local: the push to the PR is
+   his word (decision 118). Two things are his to decide: the strength of the coloured lines (decision 103:
+   faint at 50%, the review's one critical point), and whether a group should be shown in the sentence in
+   some other way, now that nothing draws it. The commits after the reset had no gate run on the real stack
+   (decision 116).
+   No new Hebrew text in phases 12 and 13. The texts of phase 10 are still to be read (`list.columns.run`,
+   `list.sort.*`, `results.rule`, `results.archived`, `editor.conditions.waiting`, `editor.ideas.loading`
+   and `.none`, `editor.add.advanced` and `.advancedHint`, `editor.toast.closed`).
+2. The merge of the PR is his.
+3. Still open for dc-delivery (limitations, on Kfir's word): nested groups unnamed for a screen reader in the
+   builder, a conflict that discards the draft, a list row's count that may belong to an older version of the
+   rule, a closed draft that lives in memory only and for twelve seconds; and for `docs/architecture.md` §7
+   and §8, beside the lines of phase 10: `GET /api/v1/runs/{id}/results` takes `sort=field` with `field` and
+   `sort=reasons`; every head of the results sorts; a rule in words is one flowing sentence of plain text
+   with no letter and no bracket, each condition's words underlined in the colour of its letter, a group
+   shown by a thin neutral line under its joining words (the engine's text is unchanged).
 
 ## Blockers
 - None.
@@ -169,6 +180,282 @@ Taken on 2026-11-11 in the morning (Kfir's second message: "no questions"):
     process ids and logs are in the session's scratch folder, and `pkill -f "uvicorn app.main"` and
     `pkill -f DataControls.Api` stop them. The database container is not theirs to stop.
 
+### The UX pass (phase 9, 2026-11-11; Kfir: "no questions")
+53. Phase 9 has three commits and not one: the structure, the look, the review fixes. Each is one logical
+    change, and the first protects a day's work before the theme is replaced.
+54. `/impeccable shape` asks for an interview and a confirmation. Kfir said "no questions", so none was held:
+    the brief is Design R of the plan, built from his ten items, and what he did not spell out is decided here.
+55. The panel is a modal sheet at the inline end, as tall as the window and 1120px wide at most; it leaves
+    between 48px and 320px of the list in view at the start edge (the names column) and is the whole window
+    below 640. Not a centred dialog: beside the panel the names of the list stay readable. The list behind it
+    is inert under the scrim, and a click on the scrim closes the panel, as do its X and Esc.
+56. One address is added to the three that stay: `/controls/<id>/runs`, the results panel by the control. It is
+    where the name of a control that never ran leads (there is no run id to link to), and for a control with
+    runs it moves on to `/runs/<newest>`, replacing itself in the history.
+57. Under a panel the list keeps its search, tab and page in memory and gets them back in the address when the
+    panel closes. The panel's own query uses the same names (`page`, `search`), so the address cannot hold
+    both. A direct link to a panel opens it over the list's first page.
+58. The counts on the two tabs follow the search and the filter (one more request, one control of the other
+    tab, for its total). The line under the list's title ("6 active controls") is gone: the tabs say it.
+59. Item 5 ("no hover effect on the condition letters") is read as the results and the suggestions, where the
+    letters are now one static badge. The editor keeps its trace between a row and its clause in the bar at
+    the foot: it was not named, and with the sentence far from the rows it is what ties them. One line in
+    `_mark.scss` and two bindings remove it if Kfir meant the editor too.
+60. The picker of runs lists the 50 newest and is shown when the control has more than one run; with one run
+    the head says when it ran, as before. A run older than the 50 that is opened by its address joins the list.
+61. A new control starts with nothing chosen, and the conditions appear after the choice. The suggestions for
+    the choice are offered to a control that starts from nothing only (not to a copy, not to a draft from the
+    suggestions panel, not to a stored control). One fills the conditions, and the name and the description
+    only where nothing was typed; a toast gives back what was there. While they are computed one bar holds
+    their place; an engine that does not answer leaves nothing there and says nothing.
+62. The chain says how two neighbours connect with one text of `he.json`, `בכל {{one}} יש {{many}}`, filled
+    with the glossary's singular and plural labels and chosen by the relationship's cardinality. It is a
+    sentence of the interface about the glossary, not a rendering of a rule: the engine's renderer is untouched.
+63. The word "ישות" left `he.json` altogether (a unit guard keeps it out): the question is `מה רוצים לבדוק?`,
+    the list's column and filter are `מה נבדק`, and the two definition errors that named it are reworded.
+    `docs/PRODUCT.md` fixed "ישות ראשית" as vocabulary; that line is rewritten.
+64. The editor's `ביטול` button is gone: the panel's X is the way out, with the same question about a changed
+    draft (decision 38). The "back to the list" link of the no-violations state is gone for the same reason.
+    The archive action left the editor for the row; the confirmation keeps its text.
+65. The bar of the rule in words is two lines of sentence and one line of status high (two lines of status on
+    a narrow panel), whatever it holds: a longer sentence scrolls inside its room, and a status line that does
+    not fit is cut, since the same words stand in full under the condition they are about.
+66. Esc is heard in the capturing phase. Material's tooltip takes the first Esc for itself when one is shown,
+    and one is shown whenever the pointer rests where the panel's X appears; a user would press twice.
+67. `docs/design.md` is rewritten once, with the look (part 2): its layout and component sections are untrue
+    between the first commit of this phase and the second.
+68. Kfir changed part 2 while part 1 was being built (2026-11-11): one direction dealt with the
+    `design-taste-frontend` skill and applied as the only theme, the reason in these notes, and no stop.
+69. The one direction, and why. It was dealt, not picked: `design-taste-frontend`'s dealer, continued from
+    the history of the first deal so nothing repeats. Its first hand for a software page was a dark one
+    (`blue-black-cornflower`); PRODUCT.md's scene is a desk in daylight and long reading of tables, which asks
+    for a light page, so the deal was run again with `--light` and its first palette taken:
+    `cool-white-slate`, "Frost and slate" (ground `#f7f9fa`, surface `#ecf0f2`, ink `#1f3038`, teal
+    `#0d7480`). Why it answers "not 2026, quite boring": the old page was two greys under a black bar with
+    square 4px corners, which reads as a form of a decade ago; this one is white cards on a frost ground,
+    soft 8/12/20 corners (the dealer's `soft`, its default), a panel that floats, and one teal that is far
+    from the three state colours, so a count is still never red. The second palette (`white-link-blue`) is
+    the blue Kfir called boring; the third (`card-pastels`) has a pink accent that would sit beside the red
+    of an error. Type: the dealt `host` has no Hebrew, and no face of the dealer but Plex (used before) has,
+    so the face is Heebo, the Hebrew-capable neo-grotesk nearest the dealt one, as one variable file per
+    script; the dealer's rule (never by taste) is kept by taking the class it dealt. Buttons `arrow` and mark
+    `wordmark` were dealt by the skill's one-liner: the name is now the mark (the dots are gone from the
+    bar), and the arrow, a device of a site's calls to action, is on no button, because the buttons of this
+    page act in place; the second button takes the system's plain form, white with a line round it.
+70. The skill's finish gate, its checker and its copy lint are for a company's website (a hero, sections a
+    screen tall, photographs). They do not apply to an application panel and were not run; the gate was armed
+    by the deal in the session's scratch folder, not in the repository. What was run instead: this repo's own
+    checks, the mocked specs at 390 and 1440, and `/impeccable critique` in part 3.
+71. What changed with the look beyond colours, each a consequence of the dealt system: the list stands in one
+    card with a quiet head band; the tabs are a segmented track and the search and filter share their row;
+    the bar of the rule in words is on the ink (it was on the accent), so the teal is spent on one button a
+    view; the selected tab, card and option are filled with the ink ("ink selects" kept); a mark is a 20px
+    badge; the summary of a run is a band and no longer two rules; the panel floats with 12px of room and the
+    large radius from 640px. The class `btn--tonal` is now `btn--secondary`, and the tokens `--color-bar` and
+    `--color-on-action-*` are `--color-inverse` and `--color-on-inverse-*`.
+
+### The last design round (phase 10, 2026-11-11; Kfir: "no questions")
+72. The api and the contract change ride on this branch, in a commit of their own before the client's
+    (`feat(api): sort the controls list`), and not as a commit to `contracts/` on main: Kfir gave his word
+    for one api and contract change in this round and for the push to this PR.
+73. `sort=rootEntity` orders by the entity's plural label in the request's language, not by its key: the
+    user reads "מה נבדק" and was promised the alphabet, and the three keys stand in another order than their
+    Hebrew labels. The api holds the glossary already; it orders the keys by label and sends one bound
+    comparison per entity. With no glossary to read it falls back to the keys. Labels are compared without
+    regard to case and without a culture (code points put Hebrew in its alphabet's order).
+74. Equal controls stand by name and then id, ascending, in both directions; `dir` turns the sort key only.
+    Under `violations` a control whose newest run has no count (stopped or still running) comes after those
+    with one and before a control that never ran, in both directions: Kfir asked that never-ran sort last,
+    and a stopped run has no number to place either.
+
+75. Results sort: no api change. The word for one api change covers the controls list. The api orders a
+    run's records by their identifying text (`sort=display`), which the first identifying column leads, so
+    that column's name is the one that sorts (ascending, descending, back to the order of the run, as
+    before); the other heads are plain names. The list's heads have two states, ascending then descending:
+    the list is always sorted by some column (by name when the address says nothing).
+76. Below 640px a table has no head to press, so the list has a sort select in its toolbar, as the results
+    have had (`list.sort.*`, the same wording as `results.sort.*`).
+77. "A click anywhere on the details" is the name's own link stretched over the row, with the run and the
+    action cells over it: one link per row, so the keyboard meets a row once and the link keeps what a link
+    does (a new tab, the address on hover). The tooltip on the name is gone (it would follow the pointer
+    over every row); where the row leads is said to assistive technology (`aria-description`).
+78. Colour is status, on Kfir's word: violations red, clean green, a stopped run amber, grey for what never
+    ran and for the archive. This retires the first design's rule that a count is never red. Read as: in
+    the archive a row's chip keeps its words and loses its colour (the archive is the control's status); in
+    the results panel the count keeps the colour of what the run found, and a grey chip beside the head
+    says the control is archived. The states of a run that timed out or failed were red and are amber.
+    The design-taste skill's own rule (status chips are ink tints, never a row of coloured dots) gives way
+    to the item; what is kept from it: a chip always carries its words.
+79. The archive "behaves like active": the results panel must know that a run's control is archived, and a
+    run does not say. The results store reads the control beside the run (one more `GET /controls/<id>`);
+    the panel then shows no run and no edit, in its head and in its states. Until that answer, and when it
+    fails, the buttons stay: the api refuses them for an archived control, as before.
+80. Scrollbars are drawn with the `::-webkit-scrollbar` pseudo-elements (thin, a half transparent thumb, no
+    arrows, no track), with the two standard properties for a browser without them. The room of a scrollbar
+    is kept (`scrollbar-gutter: stable`) for the page and for a panel's body from 640px only: below it the
+    layout is a phone's, whose scrollbar takes no room, and a kept gutter would stand as an empty strip
+    beside a full-screen panel. The app bar's white is also painted on the canvas, so it reaches the edge
+    of the window over the kept room.
+81. The results' one block says the count once: the chip for all violations carries no number. The count by
+    condition is a row of chips and not a list with bars: with six conditions the list was 400px tall and
+    pushed the records out of the first view. The body of the results panel is on the page's ground, so a
+    record is the same white bubble a control is in the list.
+82. The count and the pager are sticky under the list as well, not only in the results panel: item 1 asks
+    for one table design, and the foot is part of the table.
+83. The letters are 18px at the start of a row and 15px in a sentence, where they are raised over the first
+    word of their clause by position, not by alignment (a raised box would spread the lines of a sentence
+    whose room is fixed in the editor's bar). The same in every sentence: results, the bar, suggestions.
+84. Type (`/impeccable typeset`): one family, six sizes, three weights and four line heights, all tokens;
+    a section title and a name are 600 (they were 500, one step from a label); the page title is 24px at
+    every width (a panel's width is not the window's, and the step at 1024 made two sizes of one role).
+    The detector's type scan reports nothing.
+85. The panel closes at once (item 12). The draft is kept in memory, one at a time (`ClosedDrafts`), and a
+    toast offers it back for its six seconds; taken, it returns under its own address, unsaved, with the
+    stored control's token. Not while a save is on its way (that draft is being stored). The browser's own
+    prompt on closing the tab or reloading stays: no toast can bring a draft back from there. This
+    supersedes decision 38; `editor.leave.confirm` is gone from `he.json`.
+86. The row of suggestions stands from the start for a control that begins from nothing, and says what it
+    waits for, that it computes, that there is none, or (with a count) that it can be opened. This
+    supersedes "nothing when none" of decision 61: a row that appeared with the answer would move the
+    conditions, which item 13 forbids. Its words name no machine.
+87. "The condition builder is visible in the first view" (item 14): decision 61 stands (nothing is chosen
+    for the user), so before a choice the builder's place is held and says what it waits for; after it the
+    switch, the first row and the adder are above the bar without scrolling. Measured at 1440×900 and
+    1366×768. What made the room: the name and the description side by side on a wide panel, the details'
+    heading heard and not seen, a section's title and hint on one line, smaller cards.
+88. Simple and advanced (item 15) is a state of the screen, not of the control: `advanced` in the editor's
+    store, off for every control that is opened, forced on while the draft holds a group or related
+    records (then the action itself is gone: there is nothing to put away).
+89. The trace between a row and its clause is removed everywhere (item 16; decision 59 is superseded). The
+    settle of a changed clause and the outline of an unfinished row's letter stay: neither is a hover.
+90. `docs/design.md` is brought in line by one opus sub-agent (`impeccable-documenter`) from the shipped
+    code; it edits that file alone.
+
+### The hot fixes (phase 11, 2026-11-11; Kfir's third read, "be fast")
+91. Results sort in the api (item 4): `sort=field` with a `field`, and `sort=reasons`, beside `key` and
+    `display`, which stand. A field's key is not itself a word of `sort`: a field named `key` or `reasons`
+    would collide. The field is checked against the glossary's identifying fields of the run's root entity
+    (400 `MALFORMED` otherwise, after the run's 404), through the api's glossary service, which may ask the
+    engine once when the api holds no copy: hence 503 `ENGINE_UNAVAILABLE` for that one case. The value is
+    read with `JSON_VALUE` from the stored display by a bound path (a mapped function of the context): a
+    number by value, anything else as text under the database collation (a date is ISO text), a missing value
+    last both ways, ties by `seq`. Reasons: how many, then their text.
+92. In the client a results view sorts by a column (an identifying field's key, or `reasons`); the three
+    states stay (ascending, descending, back to the run's order). A column the table does not have (an older
+    link with `sort=display`) is the run's order, not an error.
+93. Item 5 is the rule's brackets, and only the rule's: the engine's reasons use brackets as punctuation
+    round a value ("16 (under 18)"), which the tests found, and a reason is written as it came. The plain
+    sentence is given to assistive technology only where the drawing has blocks; there the letters are not
+    read (he asked for the plain sentence). In the editor's bar the lines of a rule scroll inside the bar's
+    fixed room, as a long sentence already did: the bar keeps its height.
+94. Item 6: the superscript is a 13px tinted badge with a 10px letter, placed over the first word and out of
+    the line. A bare letter was not used: beside Hebrew words it would read as a letter of the word.
+95. Item 1 supersedes decision 86: the row of suggestions is not in the page before the choice; it comes in
+    with it. Item 2 supersedes the "only where nothing was typed" of decision 61: every suggestion replaces
+    the name, the description and the conditions, and the toast gives back what was there.
+96. Item 7: the list's count is a bar fixed at the bottom of the window. The sticky foot of phase 10 stood
+    under the last row of a short list, not at the bottom, which is what he saw. Item 3: the results' search
+    is given a column of 26rem; its placeholder is 215px in a field with 356px of room.
+
+### The rule in words (phase 12, 2026-11-11; Kfir's fourth read, and four notes he sent while it was built)
+97. The set is eight colours (`--color-tone-1` to `8`: amber, sky, rose, green, violet, orange, mint,
+    orchid), ordered so neighbours are far apart in hue, at half strength on his word ("make the color
+    opacity 50"). A node's colour is its place among the marks, round again after eight (`toneOf`), so a
+    related node has a colour of its own as it has a letter of its own. The page carries the place
+    (`data-tone`), the stylesheet the colour.
+98. The line under a condition's words is drawn (a gradient under the text that fades at both ends, his
+    "faded from the edges"), not a text decoration: a decoration cannot fade. Each stretch of a condition
+    that runs on to another line has its own line. No word has a ground colour.
+99. Lines: a group of the top level is a line led by its joining word; any group inside a group, and what a
+    condition on related records holds, is a line one step in, and what follows goes on from a new line at
+    the edge. The joining word before an inner group stays at the end of the line above it. A rule with no
+    group is one sentence, as before.
+100. The plain sentence is given to a screen reader wherever the drawing has colours or lines, each condition
+    named by its letter; the drawing is hidden from it. The letters are gone from every sentence, so the
+    outline of an unfinished condition's letter in the bar is gone with them; the bar's status line names
+    that condition, as before. The settle of a changed condition is the line under its words, heavy for a
+    moment.
+101. "Fix the sentence typography to look like a normal sentence": the rule is set as body text (400, 1.5)
+    and has no weight or line height of its own; the Read line height stays for a reason only.
+102. "When I open the suggestions in the create, make them stay open even when I change tables; close only
+    when it is taken into the form": the opened list survives a change of what to check (a bar holds the
+    place of the new ones while they are computed) and closes when a suggestion is applied.
+103. Review, the one critical finding: at half strength the line under the words is faint (1.2 to 1.4:1
+    against the light grounds, 2.7 to 3.3:1 on the editor's bar), and in the sentence it is the only thing
+    that ties words to a condition; some pairs of the set are close for a colour-blind reader; the set
+    starts again after eight while a rule may hold thirty conditions. Kept as it is: the 50%, the sentence
+    without letters and the set that repeats are his own words of this round, given while he read the
+    screen. It goes to him in the report with the numbers and the fix that would keep his letters' grounds:
+    a second, full-strength token per colour for the line alone. Mine: nothing is lost that was told by
+    colour alone, since the letter stands beside the colour in the builder, the filter and the reasons, and
+    the copy that is read aloud names each condition.
+104. Lines, in place of the third sentence of decision 99 (review): the joining word leads the line of
+    every group, an inner one too, and no line is a joining word alone (a group that opens a group hands
+    its word on to it). A joining word that nothing follows stays at the end of the line before it.
+105. The line under the words takes no room (review): no padding; it is placed 0.05em above the foot of the
+    words' own box, which in Heebo is as tall as a body line, so it starts a fifth of an em under the
+    baseline and ends inside its own line of text. Measured before: the padded line reached 2.6px into the
+    line below and made a rule that fits scroll in the editor's bar.
+106. A suggestion's rule is read aloud as the plain sentence, no condition named (review): a card shows no
+    letter, so "condition A" pointed at nothing. His item 6 ("each condition named") holds where the
+    letters stand: the editor and the results. Mine, as a reading of his item.
+107. The row of suggestions (review): an open list closes on a press also while new suggestions are on
+    their way; the row says it is unavailable only when it is closed with nothing to offer; its words are
+    repeated in a status, so "computing", "none" and "suggestions" are said when they change.
+108. An unfinished row's letter keeps its hollow, red-edged look and takes no colour (review: the colour
+    rule had outranked it). Tests (review): a colour is compared as the browser paints it (the letter's
+    ground against the solid stretch of the line), the colours a spec expects are written out and never
+    computed the way the code computes them, the nested lines are checked on example 4, where a group
+    stands inside a group, and the checks that could not fail are replaced. The spec of "running again"
+    waits 1500 ms instead of 600: it failed once under load, when the run ended between two of its checks.
+
+### The flowing rule (phase 13, 2026-11-11; Kfir's look at phase 12, "fast")
+109. His items 1 and 2 take back decisions 99 and 104: a rule has no line of its own and no step in, anywhere.
+    It is one flow of pieces: a condition with the joining word before it is one piece (an inline block,
+    whole while it fits on a line), and the engine's space before the word is what stands between two
+    pieces, the only place a line breaks. So no line ends on a joining word and a condition's words stay
+    together. A condition longer than the line breaks inside its own piece and nothing runs out of the
+    sentence; what follows it then starts a new line (mine: the price of keeping every shorter one whole).
+110. The thread ("a thin neutral underline"): 1px, the text's own colour at 60% (mine: neutral on every
+    ground the rule stands on, the tint, the card and the dark bar, with no token per ground; 3.9:1 on the
+    card). It is under the joining words and the spaces inside a group or a related node's scope, and each
+    coloured line inside runs into it where it fades (a second, complementary line under the condition's
+    words), which is what makes the run unbroken: without it the two faded ends left a hole at every
+    joint. A run therefore starts and ends on a short stretch of the thread. The words of a related node
+    are tied to what the node holds. Top-level joining words carry nothing.
+111. Mine, beyond his words: a group inside a group has the thread at 2px. Without it "(A and (B or C)) or
+    D" and "(A and B or C) or D" would be drawn alike, since the step in that told them apart is gone. Still
+    one neutral underline; if he wants every thread alike it is one line of the stylesheet.
+112. A text without marks (a chip of the count by condition) is drawn as its words in a row: no pieces and
+    no thread, since it has no coloured lines for a thread to join. Its brackets stay unwritten.
+113. No reviewer in this round: his message asks for the specs, the checks, the gate and the push, and names
+    none ("fast"). The review of phase 12 stands as the last one.
+114. After the push he wrote "now the colors underline are override each other": the thread was also drawn
+    under the two ends of every coloured line (the second line of decision 110) and at 2px in a group inside
+    a group (decision 111), and on the editor's dark bar it outshone the colours it lay over. Both are taken
+    back. The thread is under the joining words and the spaces beside them only, one weight (1px), at 45% of
+    the text's colour instead of 60% (mine: quieter than the colours it stands between). A coloured line is
+    its own colour alone from end to end, with its faded ends as he asked for them; no line lies over
+    another. What is lost with decision 111: a group inside a group is drawn like its parent. That is his
+    item 2 as he wrote it.
+115. "also use the same stars icon of the suggestion in the create controler also in the get suggestion in
+    the main page new the button new controller" (read as: near the "new control" button): the sparkle is on both buttons that open the suggestions panel (the
+    list's head, and the first-use state, which is the same action). The light bulb had no other use and is
+    removed from the registry and the assets.
+116. No gate run on the real stack for these two notes: the dev database had just been reset on his word,
+    a gate run leaves 18 archived `e2e-` controls in it, and this message gives neither a reset nor a run
+    against the live services. The client's checks and the mocked specs ran; the build is hosted by the api
+    again so he reads it at the same address.
+117. Then he wrote: "there is a problem where the connection words get undderline line  וגם או and things
+    like that there underline also thiner what make everything ugly remove the underline from these
+    connection\operators words. we want only on the condition it self". The thread is removed altogether:
+    no joining word and no space carries a line, in a group or at the top level; only a condition's own
+    words are underlined. This takes back his own item 2 of phase 13 and what was left of decisions 110
+    and 114. What follows from it, and is his: a group is no longer drawn in the sentence at all (no
+    bracket, no tint, no line, no step in), so "A and (B or C)" and "(A and B) or C" read alike on the
+    screen; the builder and the copy that is read aloud still tell them apart.
+118. Not pushed: his message has no word for a push. The commit is local and the api hosts its build.
+
 ## Reconciliation with `contracts/` (phase 2, 2026-11-11)
 Read: `api.md`, `errors.md`, `glossary.json`, `control-definition.schema.json`, the six examples and the thirteen
 invalid fixtures, as merged in `f9928bf`. Where they differ from Design E to M of the plan, the contracts were built:
@@ -189,11 +476,25 @@ invalid fixtures, as merged in `f9928bf`. Where they differ from Design E to M o
 - Nothing in `contracts/` looked wrong, and nothing blocks a screen: no line for Kfir from this step.
 
 ## Last reviewed
-8be9e82 (phase 7 on the real stack), fixed in the `fix(web): review fixes` commit that follows it. Before it:
-fcf0036 (phase 8) together with 44a7219 (the gate specs), fixed in 50a4e1d. The fix commits are not reviewed.
+`54947e8` (web), 2026-11-11: the one review of the rule in words, one opus `reviewer` sub-agent. Findings and
+what happened to each are in the Log. Before it: `929ff6f` and `0428a67` (the hot fixes), `b47d203` and
+`15658ca` (the last design round).
 
 ## Hand-over to dc-delivery
 Read by its phase B0 (plan.md Design Q). Complete: phase 7 ran on the real stack on 2026-11-11.
+
+**After the UX pass (phase 9, 2026-11-11), these lines of "As built" below read differently:**
+- The gate is 9 tests in each project, not 8: the six examples, the one page (a control of its own found,
+  opened, run, read, its runs picked, duplicated and archived from its row), the suggestions panel, and a new
+  control filled from the engine's suggestions for its choice (it saves nothing). It still leaves 18 archived
+  `e2e-` controls a run.
+- The screenshots are five names: `gate-list`, `gate-editor`, `gate-results`, `gate-panel`, `gate-suggestions`;
+  one with a panel open is of the window. Every image of the first delivery shows the old look.
+- The build is 556 kB initial and 139 kB estimated transfer.
+- The gate ran on this branch's last state on the real stack, on the build the api hosts: 18 of 18, with the
+  listing of the 12 controls without a tag equal before and after (`gates/phase-9.txt`, its last section).
+- The dev `dq` holds 246 controls on 2026-11-11: 12 without a tag (the six examples and what Kfir made by
+  hand), the rest archived `e2e-` controls of the gate runs (144 of the first delivery, 90 of this pass).
 
 - Its asks of 2026-11-10. (1) Built: the gate specs run at `E2E_BASE_URL=http://localhost:5000` as well as behind
   the dev server, on any list; no spec assumes an empty list, counts or orders the list as a whole, or finds a
@@ -237,15 +538,16 @@ Read by its phase B0 (plan.md Design Q). Complete: phase 7 ran on the real stack
 ## Docs for dc-delivery
 Kept as the work goes (plan.md decision 23, Design Q) and copied into the PR body under this heading at `/ship`.
 Checked on 2026-11-11 against the documents as they stand on main (`eec007d`, which changed the README and no
-file under `docs/`) and against what was built.
+file under `docs/`) and against what was built; read again after the UX pass (phase 9, main at `612b2b7`), which
+rewrote two lines and added the last four.
 
 - `docs/architecture.md` §8, screen 2 ("live sentence preview") and the component list ("rule sentence
   preview"), and §13 ("preview sentence" among the focused Angular tests): the client has no sentence renderer.
   The editor draws the engine's sentence from `POST /controls/validate`, called 400ms after the last edit, and
   keeps the last valid sentence, dimmed, while a row is incomplete. The focused test is that validate loop
   (`editor.sentence.spec.ts`), not a rendering test.
-- `docs/architecture.md` §8, screen 1: the list's actions are run, edit and duplicate, as written; archiving is
-  an action of the editor's page head, and the list has an archived view (the state filter). Screen 3: sorting is
+- `docs/architecture.md` §8, screen 1: the list's actions are run, edit, duplicate and archive (archiving is an
+  action of the row since the UX pass), and the archived controls stand under the list's second tab. Screen 3: sorting is
   by the record's identifying fields only (`sort=display`), filtering is by condition through the breakdown, and a
   definition that no longer fits the glossary is the run error `CONTROL_DEFINITION_OUTDATED`, with the condition
   named by its mark.
@@ -271,17 +573,64 @@ file under `docs/`) and against what was built.
   reads one page. The dev store held 154 controls on 2026-11-11 and each gate run adds 18, so the listing must
   page (the loop of this task's plan.md, Design O), or an example that sorts last drops out and reads as changed.
 - `docs/assumptions-limitations-extensions.md`: the api deletes nothing, so archived controls, the gate's among
-  them, stay in the store and in the archived view of the list.
+  them, stay in the store and under the archive tab of the list.
 - `docs/assumptions-limitations-extensions.md`, on Kfir's word of 2026-11-11, as limitations: on a phone the
   breakdown stands before the records; nested groups have no name for a screen reader; a save conflict loads the
   current version and discards the draft; a list row's count may belong to an older version of the rule. The
   line above about a changed draft holds for a link of the app as well as for a reload or a closed tab
   (decision 38, kept by Kfir).
 - `docs/ai-usage.md`: the Log below. The design pass of phase 8 used the impeccable skill's detector and two
-  opus sub-agents per critique run.
+  opus sub-agents per critique run. The UX pass of phase 9 used `/impeccable shape` (the brief, with no
+  interview), the `design-taste-frontend` dealer for the one direction, one critique run of two opus sub-agents
+  and one opus reviewer.
 - Dropped since the plan: the 1024 screenshot (main's §8 already says 390 and 1440), the missing
   `docs/design.md` row and the "client renders the text" gotcha of `.claude/CLAUDE.md` (both already right on
   main).
+- `docs/architecture.md` §8 and §9, since the UX pass of 2026-11-11: the client is one page. The list is the
+  parent route and the editor and the results open in a panel over it; the suggestions are the same panel. The
+  addresses of §8 stand, and `/controls/<id>/runs` is added. Screen 1: the name of a control opens its last run
+  (or its state before a first run), edit is the pencil, archive is an action of the row, and the state filter
+  is two tabs with counts. Screen 2: the root entity is chosen as an answer to "what to check" from one card per
+  entity, with nothing chosen in a new control, and a new control is offered up to three suggestions for the
+  choice (`POST /suggestions` with `rootEntity`, `max: 3`). Screen 3: a picker of the control's runs
+  (`GET /controls/{id}/runs`, the 50 newest). The reusable components list: "relationship map" is now "entity
+  cards" and "entity chain".
+- `docs/assumptions-limitations-extensions.md`: the list's search, tab and page are not in the address while a
+  panel is open (they are kept in memory and return when it closes), so a link to a run or a control opens it
+  over the first page of the list. The picker offers a control's 50 newest runs. The word for an entity is not
+  shown anywhere in the interface.
+- README, the screenshots: a picture with a panel open is of the window, not of the whole page; the gate leaves a
+  fifth name, `gate-panel`. Every screenshot of the first delivery shows the old look and the old three screens:
+  the README's images are to be taken again from a gate run on this branch.
+- Any document that names the look or the font (the first design was a cool grey page, a black bar, one cobalt
+  and IBM Plex): the client is now "Frost and slate", white cards on an off-white ground with a slate ink and one
+  teal, in Heebo; `docs/design.md` is rewritten for it, and the third-party notice of the font changes from IBM
+  Plex Sans Hebrew to Heebo (both SIL Open Font License 1.1).
+
+- After the last design round (phase 10, 2026-11-11), for the same documents:
+  - `docs/architecture.md` §7 (the api's surface): `GET /api/v1/controls` takes `sort` (`name`, `rootEntity`,
+    `lastRun`, `violations`) and `dir`; a control that never ran sorts last, and `rootEntity` follows the
+    glossary's labels in the request's language (`contracts/api.md` has the text).
+  - `docs/architecture.md` §8: every table is one design, a bubble per row; a row of the list has three parts
+    (details, run, actions) and the whole of its details opens the last run's results; a column's name sorts by
+    it and the order is the server's; a status has one colour everywhere (violations red, clean green, stopped
+    amber, never ran and archived grey), which replaces "a count is never red". Screen 2: the panel closes
+    without asking and a toast gives a changed draft back; the builder is a flat list with one switch, and
+    groups and related records are behind "advanced"; a new control's suggestions are one collapsed row; no
+    link between a row and its clause on hover. Screen 3: the rule in words on a tint, then one block (the
+    count, the run's facts, the count by condition as the filter), then the records as wide as the panel, with
+    the count and the pager always in view; an archived control's runs are read the same way, with no run and
+    no edit. The reusable components list: "run summary" and "breakdown" are one "run overview"; "sort header"
+    is new.
+  - `docs/assumptions-limitations-extensions.md`: a run's records sort by their identifying text only (the
+    api's `sort=display`), so one column head of the results sorts; a closed draft is kept in memory, one at
+    a time, until the page is reloaded; the simple and the advanced form of the builder is a state of the
+    screen and is not stored with the control.
+  - README, the screenshots: to be taken again from a gate run on this branch (the look of the rows, the
+    results panel and the editor changed).
+  - `docs/ai-usage.md`: this round used the `design-taste-frontend` skill's rules for a UI fragment for the
+    row (not a new deal: the direction is the one chosen in phase 9), `/impeccable typeset` and `polish`, one
+    opus `impeccable-documenter` sub-agent for `docs/design.md`, and the phase review's reviewers.
 
 ## Log
 A review's line follows plan.md Design Q: who reviewed and on which model, the diff range, findings per axis and
@@ -690,3 +1039,289 @@ rewrote. A review that found nothing, or did not run, is logged as that.
   properly restarted api and stands as written. In the same commit, the review's item on the 49/50 ms edge,
   left an hour earlier, is taken after all: the mocked spec now reads 9, 49, 50 and 412 ms (36 passed, 2
   skipped by project). That commit is pushed to the open PR.
+- 2026-11-11 the UX pass (phase 9) opened on Kfir's message after his first read of the running app, PR #4
+  merged. His ten items of structure: one page with the editor and the results in a wide panel over the list
+  (X, Esc, focus back to the row, no back arrow, full screen on a phone, the routes kept); the name opens the
+  last run and edit stays on the pencil; a picker of the control's runs; two tabs with counts in place of the
+  state filter and archive on the row; no hover effect on the condition letters in the results; the
+  suggestions as a wide panel of cards with a refresh and a line about the current data; up to three
+  suggestions for a new control's choice; the word "ישות" out, a plain question with a card per entity and a
+  small chain; name and description at a fixed width, the description two rows; the rule in words as a bar at
+  the foot beside save, with no layout shift. His word on the look: "this design looks not 2026, quite boring".
+  He gave his word for the agent runs and critiques of the pass, and for its push and PR; no merge.
+- 2026-11-11 phase 9, part 1: the structure is built as Design R says, with decisions 53 to 67 for what the
+  ten items left open. No `contracts/`, api or engine file is touched. Costs, said here and not waited for
+  (he said no questions): four unit runs (about 40 s each), six runs of mocked specs (0.5 to 2.3 minutes),
+  one build; no agent. `gates/phase-9-part-1.txt`: ngc, lint, the e2e type check, 326 unit tests in 33 files,
+  the build (555 kB initial, 139 kB transfer; it was 545 and 137), `e2e/mocked` 186 passed and 2 skipped by
+  project on purpose. While it was being built Kfir changed part 2 (decision 68).
+- 2026-11-11 phase 9, part 2 (as Kfir changed it: one direction, no stop): dealt and applied as the only
+  theme, decisions 69 to 71. Font package swapped (`@fontsource-variable/heebo` in, the Plex package out; two
+  subsets, one variable file each). `docs/design.md` rewritten for the structure and the look, its frontmatter
+  linted with `@google/design.md` (0 errors; the warnings are the orphaned-token kind the first version had).
+  Costs said here: one npm install and uninstall, three runs of mocked specs, two unit runs, no agent.
+- 2026-11-11 phase 9, part 3, `/impeccable critique`, once: two opus sub-agents (A read the 50 screenshots of
+  the mocked specs and the sources, 226k tokens; B ran the detector, its overlay and measurements in the
+  browser on the real stack, 153k tokens), said here and not waited for. Score 29 of 40; no P0. What they found
+  and what happened to each, in the polish that followed (once):
+  - P1, arrow keys on the cards of what to check chose the next card and reset the conditions, so two presses
+    lost a control's tree: fixed. The arrows move the focus and choose nothing; Space, Enter or a click chooses
+    (unit and mocked specs; the driver walks with arrows and presses Space).
+  - P2, the list reads as an inventory, the finding its quietest cell: the count is now set as strongly as the
+    name; the archive icon, which read as a download, is a closed box; the name's tooltip says where it leads.
+    Left: a "more" menu for duplicate and archive (Kfir asked for the archive action on the row, in view), a
+    summary line of findings above the list (a new feature).
+  - P2, after a refused save the invalid row sat at the edge of the bar: fixed with a scroll margin on what
+    takes the focus in the panel's body.
+  - P2, the bar warned of an unfinished condition as soon as a card was chosen: fixed. Before a first sentence
+    the status line is silent unless a save was asked for. Left: the bar's height on a phone (174px); it is
+    fixed on purpose, item 10 of the pass.
+  - P2, a run that stopped showed no rule, and its state repeated the head's "run again": fixed. The engine is
+    asked once for the sentence of the version that ran; the three states keep only what the head does not offer.
+  - Measured by B: the count on the resting tab was 4.24:1, fixed (a white chip, 5.5:1); the "previous run" link
+    was 24px tall at 390, fixed (it answers a touch 44px tall); a skipped heading level in the suggestions panel,
+    fixed (card titles are `h2`); NG0955 on opening suggestions (several pieces of evidence share one key),
+    fixed (`track $index`). Not failures: the names and results of the list measure 33px, and answer a touch
+    49px tall through the pseudo-element that was already there; a disabled picker's placeholder is exempt.
+  - Minor, fixed: the gap after the picker's prefix; the picker counts in digits; the letters sat low (-0.22em);
+    no previous and next on a single page; the chain's chosen chip is filled, not outlined; a narrow panel's
+    head is shorter.
+  - Left, with the reason: shortcuts and bulk actions (not in the pass); the whole sentence announced after an
+    edit (as designed in phase 4); a nested rule reading as a formula (the engine's text); "0 violations" beside
+    "no violations found" (two facts of one screen); the value field showing `15000` (the input is the raw
+    number). The reviewers' larger questions (findings first on the list, name after the conditions) are for
+    Kfir.
+  The snapshot is `.impeccable/critique/` in the worktree, untracked and not committed. After the polish:
+  330 unit tests, 188 mocked specs passed and 2 skipped by project.
+- 2026-11-11 phase 9, the gate on the real stack (`gates/phase-9.txt`, working tree on `3762765` plus the
+  polish). The rewritten gate specs passed on their first run on the real stack, 18 of 18 behind the dev server
+  (16 as before and two new: the picker of runs inside the list's test, and a new control filled from the
+  engine's suggestions for its choice). Then the script: `/check all --tests` green (`sql-check` 27 assertions,
+  `contracts-check` 5, the engine's ruff, pyright and 521 tests, the api's build, format and 370 tests with 3
+  live ones skipped by their own switch, the client's ngc, lint, e2e type check, 330 unit tests in 33 files and
+  build at 555 kB initial and 139 kB transfer, the print guard, 226 hook tests; `sql-init` skipped in a
+  worktree); `e2e/mocked` 188 passed and 2 skipped by project; the gate behind the dev server 18 of 18; the
+  api stopped by the process group of its listener, the build copied into its `wwwroot`, started again (the
+  page it serves names the build's main script); the gate on that hosted build 18 of 18.
+  One line of that file was wrong when the script ended, and is corrected in it: the before-and-after listing
+  of untagged controls did not run (the helper in the scratch folder was not executable: "Permission denied"),
+  so the script compared two empty files and printed "equal". The listing was then taken by hand around one
+  more gate run on the hosted build: 12 controls without a tag, 8 of them active, the same before and after,
+  byte for byte (`phase-9-list-before.txt`, `phase-9-list-after.txt`); the store went from 210 controls to 228.
+  The two gate runs inside the script have no listing. Four gate runs today on this branch left 72 archived
+  `e2e-` controls in the dev `dq`. Screenshots: `screenshots/phase-9/` (ignored by git).
+- 2026-11-11 phase 9, `/phase-review web`: one opus `reviewer` over `612b2b7..3b4013b` (98 files; 234k
+  tokens, about 10 minutes), said here and not waited for. Standards: 2 hard warnings, 1 judgment warning, 3
+  info. Plan: 2 warnings, 3 info. No critical finding. What happened to each:
+  - Warning, two `catch` blocks holding only a comment (the editor's suggestions, the rule of a stopped run):
+    fixed. The failure is a value now (`catchError` to an empty list, to null).
+  - Warning, the chain's contract test derived its expected pairs the way the code does: fixed. The pairs of
+    the sample organization are written out.
+  - Warning (judgment), the list's page did six things in one 57-line constructor, kept the last panel in a
+    closure, found rows by a test id and used row 0 for "no control": fixed. The address is a tested module
+    (`list.address.ts`), the constructor is six named steps, rows are found by the id of the control's name,
+    and "no control" is null.
+  - Warning (plan), a panel closed while a run, a save or the look-up of a control's newest run was on its way
+    opened again when the answer landed: fixed. A screen that was left does not navigate; it reports the change
+    and the list reads itself again, so the row is not stale either (two mocked specs, written first, red).
+  - Warning (plan), a control saved for the first time still asked for suggestions on a new choice (hidden by
+    the template): fixed, with a store spec.
+  - Info, `applyIdea` restarted the id source and its undo put the old one back, so an id could be given
+    twice in a session: fixed. The source only moves forward (`reserve`), and loading a definition and filling
+    from a suggestion share one step.
+  - Info, literal sizes in component styles (340px, 10px, 3px, 2px) and the panel's width written twice
+    (1120 and 1144): fixed. `--sheet-width`, `--sheet-peek`, `--size-aside` are tokens; the others use steps.
+  - Info, the list was read again when a panel opened and on every change of the picker: opening reads nothing
+    now. A change of the picker still reads the list (the address cannot tell it from a run): left.
+  - Info, three tests asserted less than their names said: the list's test now changes the tab; the ids test
+    checks that a new id is above every id of the session; the badge test looks again after 400ms.
+  - Info, no previous and next on a single page is not one of the ten items: kept. It came from the critique
+    and is in the design document.
+  After the fixes: 338 unit tests in 34 files, lint and both type checks clean; the mocked specs and the gate
+  on the hosted build ran again (the line below).
+- 2026-11-11 phase 9, after the review fixes (`gates/phase-9.txt`, last section): ngc, lint, the e2e type
+  check, 338 unit tests in 34 files, the build (556 kB initial, 139 kB transfer), the print guard, `e2e/mocked`
+  192 passed and 2 skipped by project; the api stopped, the new build copied into its `wwwroot`, started again
+  (the page it serves names the build's main script); the gate on that hosted build 18 of 18; the listing of
+  the 12 controls without a tag equal before and after, the store from 228 controls to 246. The sql, contracts,
+  engine and api checks were not repeated: no file of theirs changed since the run before. Secrets: the branch
+  diff and the gate files hold no token and no password value. The steps of `/ship` were done by hand, as for
+  the first PR (decision 51 holds: the folder stays in `dev/active/`). The stack is left running: stop it with
+  `pkill -f DataControls.Api` and `pkill -f "uvicorn app.main"`.
+- 2026-11-11, the last design round (phase 10), from Kfir's second read: seventeen items in four groups (all
+  tables, the results panel, the editor panel, the phone), "after this round only bugs", with his word for one
+  api and contract change and for one database reset at the end. Not doing, on his word: a findings summary
+  above the list, keyboard shortcuts, bulk actions. Built as two commits before the review: `feat(api): sort
+  the controls list` (`15658ca`: `sort` and `dir` on `GET /api/v1/controls`, `contracts/api.md`, ten api
+  tests) and `feat(web): the last design round`. Decisions 72 to 90.
+- 2026-11-11, the gate of phase 10 (`gates/phase-10.txt`): `/check all --tests` green (sql-check 27,
+  contracts-check 5, the engine's ruff, pyright and 521 tests, the api's build, format and 380 tests with 3
+  live ones skipped, the client's ngc, lint, e2e types, 365 unit tests in 37 files and build, the print guard,
+  the hook tests; `sql-init` skipped in a worktree). The gate specs passed on their first run on the real
+  stack, 18 of 18 behind the dev server and 18 of 18 on the build the api hosts, and the listing of controls
+  without a gate tag was equal before and after each (`phase-10-list-*.txt`). In that run two of the new
+  mocked specs failed, 203 passed: both measured a panel's box before its slide-in had ended (one read the
+  animations before the panel was in the page). No product defect: the specs now wait for the panel to come
+  to rest (`atRest` in `e2e/support/shots.ts`), and the mocked suite then passed, 205 with 5 skipped by
+  project on purpose. With the same change: three drifts the documenter reported (two unused tokens removed,
+  the bar's line height a token, a suggestion's name at the weight of a name). Screenshots at 390 and 1440:
+  `screenshots/phase-10/`.
+- 2026-11-11, the phase review of phase 10: two opus `reviewer` sub-agents, read-only, in parallel. **api**
+  (`15658ca`): no critical; five warnings, all fixed. (1) A root entity the glossary does not hold sorted last
+  ascending and first descending, outside the contract's rule: it now comes last both ways (one bound
+  `Contains` before the per-entity comparisons), the contract says so, and a test creates such a control.
+  (2) and (3) The label order called the engine through `GetAsync`, swallowed its failure without a log, and
+  could hold a list for the engine's timeout: the list now uses the glossary the api already holds, whatever
+  its age, and never asks the engine (`HeldEntityKeysByLabel`); with none held it follows the keys; the
+  contract says so and a test asserts the engine was not called. (4) `violations` evaluated the newest run
+  twice per control: one subquery now, with the lack of a count placed by a bound sentinel; its cost still
+  grows with a control's run history, and the index it would want is a `sql/` change, left out and named in
+  the PR's risks. (5) The newest-run selection stood three times: two now. Tests: the expected label order is
+  written out by hand instead of computed as the code computes it; the tie is by name before id (the later
+  name is created first); paging is over real sort keys; `label.plural` is read leniently, with a test of a
+  glossary without it. Left: no test of a newest run that is still running (the tests' runs are synchronous).
+  **web** (`b47d203`): one critical, four warnings, fixed. Critical: the editor kept the draft on the screen
+  before it took the draft that was asked back, and the one place lost it (close a changed draft, open a copy,
+  press restore): the asked draft is taken first, and the copy is then kept and offered back in its turn.
+  Warnings: a draft asked back at the address already open did not come back (no navigation happens): the
+  holder now carries the question as a signal the open editor hears. A panel closed over a save that then
+  failed lost the draft silently: it is held and offered back on that failure. A save answering after another
+  control took the screen tied that control to the wrong id and token: `save` keeps its turn. The toast of a
+  closed draft stands twelve seconds (its action is the only way back). Notes fixed: the archived state is
+  kept per control, so the chip does not blink between runs; the other tab's count is asked for unsorted;
+  `aria-controls` only while the list is open; the row's ring is drawn by the detail cells and closes at
+  their end; where a row leads is said with `aria-describedby` (read by every screen reader) and not
+  `aria-description`; the snapshot carries `advanced` and asks again for suggestions it came back without;
+  stale comments. Each fix has a test: four store tests, the holder's spec rewritten, three browser specs.
+  Left, on purpose: an untouched copy or suggestion that is closed at once still says "closed without saving"
+  (it is an unsaved control); beyond the twelve seconds there is no way back to a closed draft (a limitation
+  for dc-delivery); the two unit tests that assert the removed trace stays removed pass by construction and
+  stay as guards; the test ids and keys of the run overview keep the names `run-summary` and `breakdown`
+  (stable hooks of the specs and the gate); the stretched link over a table row is tested in Chromium only.
+- 2026-11-11, after the review fixes (`gates/phase-10.txt`, its last two sections): `contracts-check` 5, the
+  api's build with warnings as errors, format and 381 tests (3 live ones skipped), the client's ngc, lint, e2e
+  types, 368 unit tests in 37 files and build, the print guard; the gate on the build the api hosts, 18 of 18,
+  with the listing of controls without a gate tag equal before and after (`phase-10-list-before-last.txt`,
+  `phase-10-list-after-last.txt`). In that run one mocked spec failed in both projects, 209 passed: the sort
+  spec read the list's last request, which since the review fix is the unsorted count of the other tab. The
+  spec now reads the last page request and asserts the count request is unsorted; the mocked suite then
+  passed, 211 with 5 skipped by project on purpose. The sql, engine and hook checks were not repeated: no
+  file of theirs changed since the first run of the phase. Secrets: the branch diff holds no token and no
+  password value. Each gate run of the phase left 18 archived `e2e-` controls in the dev `dq` (three runs).
+- 2026-11-11, last of all, on Kfir's word for this round: the dev database was reset from the main tree
+  (`scripts/db-init.sh --reset`, main at `612b2b7`), after the push. This worktree's own engine and api were
+  stopped around it and started again; the database container was not stopped or recreated (it reports the
+  same uptime). `scripts/db-check.sh` then passed its 27 assertions. The store went from 300 controls (the
+  six examples of the first delivery, what the gate runs and earlier work left) to none, and the six examples
+  of `contracts/examples/` were posted through the api with their Hebrew names and descriptions: ids 2 to 7,
+  all active, none run (`gates/phase-10-reset.txt`). The page at `http://localhost:5000` shows the six, served
+  from the branch's last build, with no error in the console. Stop the stack with `pkill -f DataControls.Api`
+  and `pkill -f "uvicorn app.main"`. This entry, the reset's output and the last tick of the plan are not
+  committed: they are documents alone, and ride with the next code commit.
+- 2026-11-11, hot fixes from Kfir's third read (phase 11), same branch and PR, fast: no critique, one reviewer
+  at the end; his word for the api and contract change of item 4 and one database reset at the end. Seven
+  items: (1) the suggestions row only after the choice, with an entrance; (2) every suggestion replaces name,
+  description and conditions; (3) the results' search shows its whole placeholder; (4) every results head
+  sorts, through the api, by the field's glossary type and by the reasons; (5) no bracket on the screen in a
+  rule, groups as soft blocks, top groups on their own lines, the plain sentence for a screen reader; (6) the
+  letters as superscripts that take no room in the line; (7) the list's count in a bar fixed at the bottom.
+  Decisions 91 to 96.
+- 2026-11-11, the gate of phase 11 (`gates/phase-11.txt`): `/check all --tests` green (sql-check 27,
+  contracts-check 5, the engine's ruff, pyright and 521 tests, the api's build, format and 388 tests with 3
+  live ones skipped, the client's ngc, lint, e2e types, 378 unit tests in 37 files and build, the print guard,
+  the hook tests), the mocked specs 213 passed with 5 skipped on purpose. The gate failed 2 of 18 in each of
+  its two runs, the same test in both projects, at one step: the step this phase added reloaded the page at a
+  run's address, which by design opens the panel over the list's default view, and a later step asserts that
+  the list kept its search. A fault of the new step, not of the client: the reload is gone from it. The
+  listing of controls without a gate tag was equal before and after both runs.
+- 2026-11-11, the review of phase 11: one opus `reviewer`, read-only, over `929ff6f` and `0428a67`. One
+  critical, five warnings, five notes. **Critical**, fixed: the drawing took apart every bracket in a rule,
+  also one in a value the user typed or in a label, so "(03)" lost its brackets and a stray one swallowed the
+  rest of the sentence. Only the engine's connecting text is read now (parts with no role), and for the
+  glossary's own `groupOpen` and `groupClose`, not for a hard-coded pair; unit tests hold values "(03)", "x)",
+  "a(" and a label with brackets. **Warnings**, fixed: the read-aloud copy of a rule with blocks named no
+  condition (it does now, by its letter, and is left out of a selection); `CONVERT(float, ...)` would fail a
+  whole page on a stored value that is no number (now `TRY_CONVERT`, such a value sorts last, with a test);
+  `contracts/api.md` said the engine is not called and then named `ENGINE_UNAVAILABLE` (reworded, in the code's
+  comment too); the fixed bar reserved no room and stood under the toast (the page keeps the bar's height and
+  a phone's bottom inset under its content, and the toast stands over the bar); in the editor's bar a rule of
+  two groups needed three lines in the room of two (the joining word now leads the next line, so it needs
+  two). **Notes**: one name for the reasons column, `_reasons`, which no field key can be (fixed); the
+  contract says an enum and a boolean sort by the stored value (fixed); the superscript is set a little
+  higher and further out, clear of the first letter. Left: with no glossary readable and a sort in the
+  address, the records are asked for twice and the second answer is 503 (an engine that is down, and a link
+  that sorts); the row-order assertions of the mocked sort spec test the app against the mock's own order
+  (the real order is pinned by the api's tests and by the gate).
+- 2026-11-11, after the review fixes of phase 11 (`gates/phase-11.txt`, its last sections): `contracts-check`
+  5, the api's build, format and 389 tests (3 live ones skipped), the client's ngc, lint, e2e types, 381 unit
+  tests in 37 files and build, the print guard, the mocked specs 213 passed with 5 skipped on purpose; the gate
+  on the build the api hosts, 18 of 18, with the listing of controls without a gate tag equal before and after
+  (`phase-11-list-before-last.txt`, `phase-11-list-after-last.txt`). One style fix after that run (two lines
+  of a rule scrolled the editor's bar by the 2px between them), with the client's checks and the mocked specs
+  run again, green. Secrets: the diff holds no token and no password value.
+- 2026-11-11, last of all in phase 11, on Kfir's word for it: the dev database was reset from the main tree
+  (`scripts/db-init.sh --reset`, main at `612b2b7`), after the push. This worktree's engine and api were stopped
+  around it and started again; the database container was not stopped or recreated. `scripts/db-check.sh`
+  passed its 27 assertions. The store went from 56 controls to none, and the six examples were posted through
+  the api: ids 2 to 7, all active, none run (`gates/phase-11-reset.txt`). The api serves the branch's last
+  build at `http://localhost:5000`. This entry, the reset's output and the last tick of the plan are documents
+  alone and are not committed: they ride with the next code commit.
+- 2026-11-11, the rule in words (phase 12), from Kfir's fourth read, same branch and PR, fast, one reviewer;
+  his word for one database reset at the end. Six items: a colour per condition from a fixed set of tokens;
+  the rule as plain text with each condition's words underlined in its colour, no letters and no grounds;
+  groups as lines (top-level groups led by the joining word, an inner group one step in); everywhere a rule
+  is shown; the same colour on the letter in the builder, the filter and the reasons; the plain sentence
+  for a screen reader. Four notes arrived while it was built and are in it: an opened list of suggestions
+  stays open across choices, the colours at 50%, the sentence set as a normal sentence, the underlines
+  faded at their ends. Decisions 97 to 102.
+- 2026-11-11, the review of phase 12: one opus `reviewer`, read-only, over `54947e8`. One critical finding,
+  six warnings, two notes. (1, critical) the line under the words is the only tie between a clause and its
+  condition and at 50% it is faint, some pairs are close for a colour-blind reader, the set repeats after
+  eight: kept, it is Kfir's word; reported to him with the numbers (decision 103). (2) the colour rule
+  outranked the hollow letter of an unfinished row: fixed (`:not(.mark--open)`). (3) inside a group the
+  joining word stayed at the end of the line above, and a group that opens a group made a line of a joining
+  word alone: fixed, the word leads every group's line (decision 104). (4) the line's padding reached into
+  the line below and made the bar scroll: fixed, the line lies inside its own line of text (decision 105).
+  (5) tests that proved too little (the same variable compared with itself, a check skipped by an `if`, a
+  check that could not fail, expected colours computed by the code's own formula): fixed (decision 108).
+  (6) the row of suggestions said open and unavailable at once while it waited, could not be closed then,
+  and changed silently: fixed (decision 107). (7) a suggestion's read-aloud copy named conditions no letter
+  shows: fixed (decision 106). (8) the colour looked up from the template on every pass: fixed, one map per
+  set of marks (`tonesOf`). (9) leftovers, stale comments, a contrast figure of 9:1 that is 8.8:1 over the
+  surface: fixed, in `docs/design.md` too.
+- 2026-11-11, after the review fixes of phase 12 (`gates/phase-12.txt`, its last section): the client's type
+  checks, lint, 389 unit tests in 37 files, the build and the print guard green; `e2e/gate` 18 of 18 on the
+  build the api hosts, the listing of untagged controls equal before and after. `e2e/mocked`: 218 passed, 5
+  skipped by project, 1 failed: "a phone sorts the records from a select" pressed the select again while
+  the list of its first choice was closing, so nothing opened. The spec was wrong, not the client: it now
+  waits for the list to be gone, and its file passed three times over on both projects (18 of 18).
+- 2026-11-11, the flowing rule (phase 13), from Kfir's look at phase 12, same branch and PR, fast, no
+  reviewer named: the rule in words is one flowing sentence everywhere it is shown, with no forced line and
+  no step in; a condition and the joining word before it are one piece, so no line ends on a joining word
+  and a condition's words stay together; a nested group and a related-records clause are shown by the
+  underline alone, the joining words inside carrying a thin neutral line that the coloured lines run into;
+  the joining words of the top level carry none. Decisions 109 to 113. Gate (`gates/phase-13.txt`):
+  `/check all --tests` green (`sql-check` 27, `contracts-check` 5, the engine's ruff, pyright and 521 tests,
+  the api's build, format and 389 tests with 3 skipped by their switch, the client's type checks, lint, 390
+  unit tests in 37 files and build, the print guard, the hook tests); `e2e/mocked` 219 passed, 5 skipped by
+  project; `e2e/gate` 18 of 18 behind the dev server and 18 of 18 on the build the api hosts; the listing
+  of untagged controls equal before and after both runs.
+- 2026-11-11, last of all in phase 13, on Kfir's word for it: the dev database was reset from the main tree
+  (`scripts/db-init.sh --reset`, main at `612b2b7`), `db-check` 27 of 27, this worktree's engine and api
+  started again, and the six examples posted through the api (ids 2 to 7, none run yet). The store held 98
+  controls before it, the gate runs' archived `e2e-` ones and what was made by hand while reading (a copy
+  and one taken from a suggestion among the active ones); all of them went with the reset. The container
+  was not stopped. Record: `gates/phase-13-reset.txt`. The branch was pushed before it, at `3a49090`.
+- 2026-11-11, two notes from Kfir after the push of phase 13: "now the colors underline are override each
+  other" and the sparkle on the main page's suggestions button. The neutral line is under joining words and
+  the spaces beside them only, one weight, quieter; no line lies over a coloured one (decision 114). The
+  sparkle is on both buttons that open the suggestions panel, and the light bulb is removed (decision 115).
+  Checks (`gates/phase-13.txt`, its last section): the client's type checks, lint, 390 unit tests in 37
+  files, build and print guard green; `e2e/mocked` 221 passed, 5 skipped by project. No gate run on the real
+  stack and no reset (decision 116); the api hosts the new build, and the store holds the six examples.
+- 2026-11-11, one more note from Kfir: the lines under the joining words made the sentence ugly, "we want
+  only on the condition it self". The neutral line is removed altogether (decision 117): only a condition's
+  own words are underlined, and a group is not drawn in the sentence. Checks (`gates/phase-13.txt`, its
+  last section): the client's type checks, lint, 390 unit tests in 37 files, build and print guard green;
+  `e2e/mocked` 221 passed, 5 skipped by project. No gate run on the real stack (decision 116). The api hosts
+  the build; the commit is local, since his message has no word for a push (decision 118).

@@ -47,8 +47,8 @@ the user never meets a table name, a column name or a line of SQL on the way.
 
 ## Operating Context
 
-- Three screens and one dialog: the controls list (home), the control editor, the run results, and the suggestions
-  dialog. There is no dashboard and no other destination.
+- One page: the controls list (home), with the control editor, the run results and the suggestions opening in a
+  panel over it. There is no dashboard and no other destination.
 - Hebrew is the one language of the interface and the document direction is right to left. The texts stay keyed
   by language, so another language is added data, not a redesign. Dates and numbers use the Hebrew locale.
 - Every entity, field, relationship and operator label comes from the business glossary at run time. Nothing on
@@ -74,8 +74,10 @@ the user never meets a table name, a column name or a line of SQL on the way.
   definition, an edit conflict.
 - Not in v1: sign-in and roles, scheduled or background runs, export, a glossary editor, marking a violation as
   handled, notifications.
-- Vocabulary, fixed in Hebrew (the English word is this document's gloss): control (בקרה), violation (חריגה), run (הרצה), root entity (ישות ראשית),
-  business glossary (מילון המונחים), condition tree (עץ תנאים).
+- Vocabulary, fixed in Hebrew (the English word is this document's gloss): control (בקרה), violation (חריגה), run (הרצה),
+  business glossary (מילון המונחים), condition tree (עץ תנאים). The root entity has no word of its own in the
+  interface since 2026-11-11: the editor asks what to check (מה רוצים לבדוק?) and the list says what is checked
+  (מה נבדק); the word "ישות" is not shown.
 
 ## Brand Commitments
 

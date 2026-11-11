@@ -1,15 +1,16 @@
 import { AcceptAnswer, AcceptBody, SuggestionsAnswer } from '../../src/app/core/api/api.types';
 import { expect, test } from '../support/gate';
+import { t } from '../support/i18n';
 import { shot } from '../support/shots';
 
 /**
- * The suggestions dialog on the real stack. The drafts are whatever the engine proposes over the data: the
+ * The suggestions panel on the real stack. The drafts are whatever the engine proposes over the data: the
  * test asserts what that answer holds and no fixed number. It then creates the first draft: the only run of
  * "create selected" against the real api.
  */
-test('the dialog shows the drafts the engine proposes, and creates one as a control', async ({ page, gate }, testInfo) => {
+test('the panel shows the drafts the engine proposes, and creates one as a control', async ({ page, gate }, testInfo) => {
   await page.goto('/');
-  await expect(page.getByTestId('page-meta')).toBeVisible();
+  await expect(page.getByTestId('tab-active').getByTestId('tab-count')).toBeVisible();
 
   const suggested = page.waitForResponse(
     (response) => response.url().endsWith('/api/v1/suggestions') && response.request().method() === 'POST',
@@ -24,12 +25,12 @@ test('the dialog shows the drafts the engine proposes, and creates one as a cont
   for (const [index, item] of items.entries()) {
     const draft = drafts.nth(index);
     await expect(draft.getByTestId('suggestion-name')).toHaveText(item.name);
-    await expect(draft.getByTestId('suggestion-sentence').getByTestId('mark').first()).toBeVisible();
+    await expect(draft.getByTestId('suggestion-sentence').locator('[data-testid="clause"][data-tone="1"]').first()).toBeVisible();
     await expect(draft.getByRole('checkbox')).not.toBeChecked();
   }
   await shot(page, testInfo, 'gate-suggestions');
 
-  // the dialog has no rename, and nothing may be created under a bare name the loaded examples could
+  // the panel has no rename, and nothing may be created under a bare name the loaded examples could
   // share: the tag joins the name on its way out, before the request reaches the api
   await page.route('**/api/v1/suggestions/accept', async (route) => {
     const body = route.request().postDataJSON() as AcceptBody;
@@ -50,5 +51,44 @@ test('the dialog shows the drafts the engine proposes, and creates one as a cont
   // opened by the id the api gave it, never by its name
   await page.goto(`/controls/${created.id}`);
   await expect(page.getByTestId('control-name')).toHaveValue(created.name);
+  await expect(page.getByTestId('sentence')).toHaveAttribute('data-stale', 'false');
+});
+
+/**
+ * A new control on the real stack: once it is chosen what to check, the engine is asked what it would
+ * suggest about that choice, and one of its answers fills the conditions. Nothing is saved.
+ */
+test('a new control is offered the engine\'s suggestions for its choice, and one fills its conditions', async ({ page }) => {
+  await page.goto('/controls/new');
+  const cards = page.getByTestId('root-entity');
+  await expect(cards.first()).toBeVisible();
+
+  const suggested = page.waitForResponse(
+    (response) => response.url().endsWith('/api/v1/suggestions') && response.request().method() === 'POST',
+  );
+  await cards.first().click();
+  const response = await suggested;
+  const asked = response.request().postDataJSON() as { rootEntity: string; max: number };
+  const { items } = (await response.json()) as SuggestionsAnswer;
+
+  // the question names the choice and asks for three at most; the answer is the engine's own
+  expect(asked.rootEntity).toBe(await cards.first().getAttribute('data-key'));
+  expect(asked.max).toBe(3);
+  expect(items.length).toBeLessThanOrEqual(3);
+  // the answer stands behind one row: it says how many there are, and opens them when it is pressed
+  const ideas = page.getByTestId('idea');
+  await expect(ideas).toHaveCount(0);
+  if (items.length === 0) {
+    await expect(page.getByTestId('ideas-label')).toHaveText(t('editor.ideas.none'));
+  }
+  test.skip(items.length === 0, 'the engine proposes nothing for the first choice over this data');
+  await expect(page.getByTestId('ideas-count')).toHaveText(String(items.length));
+  await page.getByTestId('ideas-toggle').click();
+  await expect(ideas).toHaveCount(items.length);
+
+  await expect(ideas.first()).toContainText(items[0].name);
+  await ideas.first().click();
+  await expect(page.getByTestId('control-name')).toHaveValue(items[0].name);
+  // the engine reads the filled conditions back as a sentence
   await expect(page.getByTestId('sentence')).toHaveAttribute('data-stale', 'false');
 });

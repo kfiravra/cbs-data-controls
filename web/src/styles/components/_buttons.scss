@@ -1,4 +1,4 @@
-// One filled action per view; every other action is tonal or a text button.
+// One filled action per view; every other action is a white button with a line round it, or a text button.
 //
 // Two ways of being unavailable. `disabled` is for a button that cannot be used as the screen stands (nothing
 // is ticked, a limit is reached). `aria-disabled="true"` is for a button made unavailable by its own press
@@ -15,7 +15,7 @@
   border: 1px solid transparent;
   border-radius: var(--radius-sm);
   font-size: var(--text-body);
-  font-weight: 500;
+  font-weight: var(--weight-medium);
   line-height: 1;
   white-space: nowrap;
   text-decoration: none;
@@ -57,12 +57,15 @@
   }
 }
 
-.btn--tonal {
-  background: var(--color-tonal);
+// the second button: the card's own white with a clear edge, never grey on grey
+.btn--secondary {
+  border-color: var(--color-line-strong);
+  background: var(--color-card);
   color: var(--color-ink);
 
   &:hover {
-    background: var(--color-tonal-hover);
+    border-color: var(--color-control-line);
+    background: var(--color-ground);
   }
 }
 
@@ -87,26 +90,29 @@
   font-size: var(--text-small);
 }
 
-.btn--on-action {
-  background: var(--color-ground);
-  color: var(--color-ink);
+// on the inverse ground (the bar of the rule in words): the main action is the light, the second a clear edge
+.btn--on-inverse {
+  background: var(--color-on-inverse);
+  color: var(--color-inverse);
 
   &:hover {
-    background: var(--color-on-action);
+    background: var(--color-card);
   }
 }
 
-.btn--on-action-tonal {
-  background: var(--color-on-action-tonal);
-  color: var(--color-on-action);
+.btn--on-inverse-quiet {
+  border-color: var(--color-on-inverse-line);
+  background: none;
+  color: var(--color-on-inverse);
 
   &:hover {
-    background: var(--color-on-action-line);
+    background: var(--color-on-inverse-tonal);
   }
 }
 
 .btn[disabled],
 .btn[aria-disabled='true'] {
+  border-color: transparent;
   background: var(--color-tonal);
   color: var(--color-muted);
   cursor: not-allowed;
@@ -146,12 +152,14 @@
   }
 }
 
-.icon-btn--tonal {
-  background: var(--color-tonal);
+.icon-btn--boxed {
+  border: 1px solid var(--color-line-strong);
+  background: var(--color-card);
   color: var(--color-ink);
 
   &:hover {
-    background: var(--color-tonal-hover);
+    border-color: var(--color-control-line);
+    background: var(--color-ground);
   }
 }
 
@@ -173,7 +181,7 @@
 
 .link {
   color: var(--color-action);
-  font-weight: 500;
+  font-weight: var(--weight-medium);
   text-decoration: underline;
   text-decoration-thickness: 1px;
   text-underline-offset: 4px;

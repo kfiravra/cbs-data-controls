@@ -1,5 +1,6 @@
 import {
   STORED,
+  SUGGEST,
   VALIDATE,
   control,
   editorHarness,
@@ -9,7 +10,7 @@ import {
 } from '../../../testing/editor-store';
 import { SYNTHETIC_GLOSSARY } from '../../../testing/synthetic-glossary';
 import { DraftCondition, DraftGroup } from '../../core/definition/draft';
-import { VALIDATE_DEBOUNCE_MS } from './editor.store';
+import { VALIDATE_DEBOUNCE_MS } from './editor.validation';
 
 describe('EditorStore', () => {
   let h: ReturnType<typeof editorHarness>;
@@ -31,11 +32,16 @@ describe('EditorStore', () => {
   afterEach(() => h.finish());
 
   describe('opening', () => {
-    it('starts a new control on the first root entity, with nothing to lose yet', async () => {
+    it('starts a new control with nothing chosen for the user, and nothing to lose yet', async () => {
       await open({ id: null });
 
       expect(store.loadState()).toBe('ready');
-      expect(store.rootEntity()).toBe(SYNTHETIC_GLOSSARY.entities.find((entity) => entity.rootable)!.key);
+      expect(store.rootEntity()).toBeNull();
+      expect(store.choices()?.map((entity) => entity.key)).toEqual(
+        SYNTHETIC_GLOSSARY.entities.filter((entity) => entity.rootable).map((entity) => entity.key),
+      );
+      expect(store.chain()?.entities.some((entry) => entry.selected)).toBe(false);
+      expect(store.view()).toBeNull();
       expect(store.dirty()).toBe(false);
     });
 
@@ -172,12 +178,27 @@ describe('EditorStore', () => {
   });
 
   describe('saving', () => {
-    it('sends nothing and shows what is missing when a detail or a row is unfinished', async () => {
+    it('sends nothing and says that nothing was chosen when a new control is saved before its first choice', async () => {
       await open({ id: null });
+      store.setName('a name');
 
       const outcome = await store.save();
 
       expect(outcome).toEqual({ kind: 'invalid' });
+      expect(store.rootIssue()).toBe(true);
+      http.expectNone('/api/v1/controls');
+
+      await h.choose();
+      expect(store.rootIssue()).toBe(false);
+    });
+
+    it('sends nothing and shows what is missing when a detail or a row is unfinished', async () => {
+      await h.openNew();
+
+      const outcome = await store.save();
+
+      expect(outcome).toEqual({ kind: 'invalid' });
+      expect(store.rootIssue()).toBe(false);
       expect(store.nameIssue()).toBe('required');
       expect(store.messages().get(firstRow().id)).toEqual([
         { key: 'editor.issues.missingField', params: { max: SYNTHETIC_GLOSSARY.limits.maxListValues }, input: 'left', index: undefined },
@@ -269,7 +290,7 @@ describe('EditorStore', () => {
       ]);
       expect(store.treeErrors().map((error) => error.code)).toEqual(['TOO_DEEP']);
       expect(store.focus()).toEqual({ node: 'c1', input: 'value' });
-      expect([...store.openNodes()].sort()).toEqual(['c1', 'c2']);
+      expect([...store.messages().keys()].sort()).toEqual(['c1', 'c2']);
     });
 
     it('drops what the server said about a row when that row is edited, and keeps it for the others', async () => {
@@ -401,7 +422,7 @@ describe('EditorStore', () => {
     });
   });
 
-  describe('the root entity and the archive', () => {
+  describe('what the control checks, and the ways back', () => {
     it('starts the conditions over for another root entity, and gives a way back', async () => {
       await open({ id: 7 }, control());
       answerValidate([]);
@@ -490,16 +511,15 @@ describe('EditorStore', () => {
       expect(store.draft().children).toHaveLength(before.children.length - 1);
     });
 
-    it('archives the stored control', async () => {
-      await open({ id: 7 }, control());
-      answerValidate([]);
+    it('gives no way back from a first choice: it replaced nothing', async () => {
+      await open({ id: null });
 
-      const archiving = store.archive();
-      const request = await next('/api/v1/controls/7');
-      expect(request.request.method).toBe('DELETE');
-      request.flush(null, { status: 204, statusText: 'No Content' });
+      store.chooseRoot('customer');
+      (await next(SUGGEST)).flush({ items: [] });
 
-      expect(await archiving).toBe(true);
+      expect(store.rootEntity()).toBe('customer');
+      expect(store.draft().children).toHaveLength(1);
+      expect(store.dirty()).toBe(true);
     });
   });
 });

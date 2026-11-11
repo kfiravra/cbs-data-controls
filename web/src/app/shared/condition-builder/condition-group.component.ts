@@ -53,7 +53,8 @@ export class ConditionGroupComponent {
   readonly root = input(false);
   readonly bare = input(false);
   readonly edit = output<DraftEdit>();
-  readonly trace = output<string | null>();
+  /** The root group's "advanced" action was pressed. */
+  readonly advancedChange = output<boolean>();
 
   /** The word between two neighbours: the glossary's own, so it is the word the sentence uses. */
   protected readonly joiner = computed(() =>
@@ -67,6 +68,9 @@ export class ConditionGroupComponent {
     const scope = this.scope();
     return scope !== undefined && relatedOptions(this.view().glossary, scope).length > 0;
   });
+
+  /** The group holds more than conditions: a group, or a condition on related records. */
+  protected readonly structured = computed(() => this.group().children.some((child) => child.type !== 'condition'));
 
   protected readonly nodeName = nodeName;
 

@@ -9,7 +9,7 @@ import { IconComponent } from '../icon/icon.component';
 
 /**
  * The foot of a paged table: the range in words (a word, not a dash, so its two ends cannot swap sides in
- * right-to-left text), the page size, and previous and next.
+ * right-to-left text), the page size, and previous and next, which are drawn when there is more than one page.
  */
 @Component({
   selector: 'app-table-foot',
@@ -33,28 +33,31 @@ import { IconComponent } from '../icon/icon.component';
             </mat-select>
           </mat-form-field>
         }
-        <button
-          class="icon-btn"
-          type="button"
-          data-testid="page-previous"
-          [attr.aria-label]="'common.previousPage' | translate"
-          [matTooltip]="'common.previousPage' | translate"
-          [attr.aria-disabled]="page() <= 1 ? 'true' : null"
-          (click)="go(page() - 1)"
-        >
-          <app-icon name="chevron_left" [mirrored]="true" />
-        </button>
-        <button
-          class="icon-btn"
-          type="button"
-          data-testid="page-next"
-          [attr.aria-label]="'common.nextPage' | translate"
-          [matTooltip]="'common.nextPage' | translate"
-          [attr.aria-disabled]="page() >= lastPage() ? 'true' : null"
-          (click)="go(page() + 1)"
-        >
-          <app-icon name="chevron_right" [mirrored]="true" />
-        </button>
+        <!-- with one page there is nowhere to go: the two buttons are not drawn -->
+        @if (lastPage() > 1) {
+          <button
+            class="icon-btn"
+            type="button"
+            data-testid="page-previous"
+            [attr.aria-label]="'common.previousPage' | translate"
+            [matTooltip]="'common.previousPage' | translate"
+            [attr.aria-disabled]="page() <= 1 ? 'true' : null"
+            (click)="go(page() - 1)"
+          >
+            <app-icon name="chevron_left" [mirrored]="true" />
+          </button>
+          <button
+            class="icon-btn"
+            type="button"
+            data-testid="page-next"
+            [attr.aria-label]="'common.nextPage' | translate"
+            [matTooltip]="'common.nextPage' | translate"
+            [attr.aria-disabled]="page() >= lastPage() ? 'true' : null"
+            (click)="go(page() + 1)"
+          >
+            <app-icon name="chevron_right" [mirrored]="true" />
+          </button>
+        }
       </div>
     </div>
   `,

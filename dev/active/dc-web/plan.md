@@ -380,6 +380,134 @@ Verify: `/check all --tests` · `cd web && npx playwright test e2e/mocked` · th
 Review: `/phase-review web`
 Commit: `fix(web): design critique and polish`
 
+### Phase 9: UX pass (Kfir's first read of the running app, 2026-11-11)
+Branch `feat/web-ux`, cut from `origin/main` at `612b2b7` (PR #4 merged). Kfir's ten items and his word on the
+look are in `notes.md` (Log, 2026-11-11, "the UX pass"); the layout brief is Design R. No `contracts/`, api or
+engine change. Three commits, one per part and one for the review (notes, decision 53).
+
+Part 1, structure (`/impeccable shape` first: Design R is its brief):
+- [x] One page: the list is the parent route; the editor and the results open in a wide panel over it (full
+      screen below 640), closed by X and Esc with the focus back on the row. No back link. The addresses stay
+      (`/`, `/controls/:id`, `/runs/:id`); one is added for a control with no run (`/controls/:id/runs`).
+- [x] List: the name opens the last run's results (a control that never ran opens its state with a run button);
+      edit stays on the pencil; two tabs with counts, active and archive, in place of the state select; the
+      archive action on the row with the confirm text kept.
+- [x] Results panel: a picker of the control's runs (`GET /controls/{id}/runs`); the condition letters are
+      static badges, with no hover effect; the filter stays a click in the breakdown.
+- [x] Suggestions: a wide panel of cards (name, the rule in words, the evidence), a refresh button and one line
+      that says the suggestions are computed from the current data.
+- [x] Editor panel: "what to check" as a plain question with one card per glossary entity and a small chain of
+      how they connect (the word "ישות" leaves `he.json`); up to three suggestions for the choice
+      (`POST /suggestions` with `rootEntity`), one click fills the conditions; name and description at a fixed
+      width, the description two rows; the rule in words as a bar at the foot of the panel beside save, of a
+      fixed height.
+- [x] Unit specs and the mocked specs follow the new structure; `/check --tests` and `e2e/mocked` green.
+      Commit: `feat(web): one page, with the editor and the results in a panel`
+
+Part 2, look ("this design looks not 2026, quite boring"). Changed by Kfir on 2026-11-11 while part 1 was
+being built: no three directions and no stop; one direction, and straight on to part 3.
+- [x] One visual direction dealt with the `design-taste-frontend` skill and applied as the only theme; why it
+      was chosen is in `notes.md` (decisions 69 to 71).
+
+Part 3:
+- [x] `/impeccable critique` and `/impeccable polish`, once each; `docs/design.md` in line with what is built.
+- [x] The mocked specs and the gate specs updated; the gate on the real stack (dev server and hosted build);
+      `/check all --tests`; output in `gates/phase-9.txt`, screenshots in `screenshots/phase-9/`.
+- [x] `/phase-review web`, one `fix(web): review fixes` commit, the Log lines.
+- [x] Push and the PR, on Kfir's word of 2026-11-11 for this pass. No merge. The stack is left running.
+
+Verify: `/check all --tests` · `cd web && npx playwright test e2e/mocked` · the gate command of Design O
+Review: `/phase-review web`
+Commit: `feat(web): one page, with the editor and the results in a panel` · `feat(web): the new look` ·
+`fix(web): design critique and polish` · `fix(web): review fixes`
+
+### Phase 10: last design round (Kfir's second read, 2026-11-11)
+Continues on `feat/web-ux`, into the same PR. After this round only bugs. Kfir's seventeen items are in
+`notes.md` (Log, "the last design round"). Two exceptions to the rules have his word: one api and contract
+change (the sort of the controls list) and one database reset, last of all. Not doing: a findings summary
+above the list, keyboard shortcuts, bulk actions.
+
+The api (item 3):
+- [x] `GET /api/v1/controls` takes `sort` (`name`, `rootEntity`, `lastRun`, `violations`) and `dir`; a control
+      that never ran sorts last. `contracts/api.md` and the api's tests with it.
+      Commit: `feat(api): sort the controls list`
+
+All tables (items 1 to 6):
+- [x] One table design for the active list, the archive and the results: a row is a bubble of three parts
+      (details, run, actions) over a real table; a click anywhere on the details opens the results.
+- [x] Every header the server can sort sorts on a click, ascending then descending.
+- [x] One colour language: violations red, clean green, a stopped run amber, archive muted grey.
+- [x] The archive behaves as the active list does, less run and edit.
+- [x] No layout shift when a scrollbar appears; thin, half transparent scrollbars with no arrows.
+
+Results panel (items 7 to 11):
+- [x] The rule in words on a tinted ground at the top, the letters small at the start corner of their condition.
+- [x] One block for the run's information and the filter by condition; the table from edge to edge under it;
+      the pager and the counts sticky at the foot.
+- [x] Typography across the app (`/impeccable typeset`): sizes, weights, line height.
+
+Editor panel (items 12 to 16):
+- [x] Closing asks nothing: the panel closes at once and a toast gives the draft back.
+- [x] The suggestions for a new control are one collapsed row; nothing moves when they load.
+- [x] The conditions are in the first view; simple by default (a flat list and one switch), groups and related
+      records behind "advanced"; no trace between a row and its clause.
+
+Phone and the finish (item 17):
+- [x] 390: rows as cards, full-screen panels, the sticky bars in reach, no sideways scroll.
+- [x] Mocked and gate specs; the gate on the real stack; `/check all --tests`; screenshots at 390 and 1440;
+      `/impeccable polish`; `docs/design.md` in line. Commit: `feat(web): the last design round`
+- [x] `/phase-review`, one review-fix commit, the push to the PR on Kfir's word.
+- [x] Last of all: the dev database reset from the main tree, the six examples posted again, the stack left
+      running.
+
+Verify: `/check all --tests` · `cd web && npx playwright test e2e/mocked` · the gate command of Design O
+Review: `/phase-review api web`
+
+### Phase 11: hot fixes (Kfir's third read, 2026-11-11)
+Same branch, same PR. Fast: no critique runs, one reviewer at the end. His word covers the api and contract
+change of item 4 and one database reset at the very end. The seven items are in `notes.md` (Log).
+
+- [x] Item 4, the api: `GET /api/v1/runs/{id}/results` sorts by any identifying field of the record, by its
+      glossary type, and by the reasons (`sort=field` with `field`, `sort=reasons`); `contracts/api.md` and
+      the api's tests. Commit: `feat(api): sort a run's results by a field and by the reasons`
+- [x] Item 4, the client: every head of the results table sorts.
+- [x] Items 5 and 6: the rule in words with no bracket on the screen (a nested group as a soft block, top
+      groups on lines of their own), and the letters as superscripts that take no room in the line.
+- [x] Items 1, 2, 3 and 7: the suggestions row after the choice, with an entrance; every suggestion replaces
+      name, description and conditions; the results' search shows its whole placeholder; the list's count in
+      a bar fixed at the bottom of the window.
+- [x] Specs; the gate on the real stack; `/check all --tests`; one reviewer; the push.
+- [x] Last of all: the database reset from the main tree and the six examples.
+
+### Phase 12: the rule in words (Kfir's fourth read, 2026-11-11)
+Same branch, same PR, fast, one reviewer. His word covers one database reset at the very end.
+
+- [x] A colour per condition from a fixed set of tokens; the rule in words as plain text, each condition's
+      words underlined in its colour, no letters and no grounds; groups as lines; everywhere a rule is shown.
+- [x] The same colour on the letter in the builder rows, the filter chips and beside each reason.
+- [x] The plain sentence, each condition named, for a screen reader.
+- [x] Sent while it was built: the suggestions list stays open across choices; the colours at 50%; the
+      sentence set as a normal sentence; the underlines faded at their ends.
+- [x] Specs; the gate on the real stack; `/check all --tests`; one reviewer (`gates/phase-12.txt`); the
+      review fixes are `00f8600`. The push and the reset moved to phase 13, which arrived before them.
+
+### Phase 13: the flowing rule (Kfir's look at phase 12, 2026-11-11)
+Same branch, same PR, fast, no reviewer named. His word covers one database reset at the very end.
+
+- [x] One flowing sentence everywhere a rule is shown: no forced line, no step in; no line ends on a joining
+      word; a condition's words stay together while they fit.
+- [x] A nested group and a related-records clause shown by the underline alone: the thread under the joining
+      words inside it, none at the top level.
+- [x] The rest as it was: a colour per condition, no letters, no brackets, no grounds.
+- [x] Specs; `/check all --tests`; the gate on the real stack (`gates/phase-13.txt`); the push.
+- [x] Last of all: the database reset from the main tree and the six examples (`gates/phase-13-reset.txt`).
+- [x] Sent after the push: the neutral line lies over no coloured line (under joining words and spaces only,
+      one weight); the sparkle on the main page's suggestions button.
+- [x] Sent after that push: no line under a joining word, only under a condition's own words (decision
+      117). The client's checks and the mocked specs; the commit is local until he says push.
+- [x] The client's checks and the mocked specs for those two; the push. No gate run on the real stack and no
+      reset: neither has his word for this change (decision 116).
+
 ### Gate
 Status, 2026-11-11: `gates/final.txt` holds `/check all --tests` (the engine and the api among its parts now),
 the mocked specs and the gate specs on the real stack, behind the dev server and on the build the api hosts, on
@@ -808,6 +936,50 @@ five tasks.
     claude.ai chat is logged as relayed by him: what it found and what changed.
   - A review that found nothing is logged as that, with its range; one that did not run, as not run, with the
     reason. No verdict stands in for the findings, and no line says what Kfir read or approved unless he said so.
+
+### R. One page (the UX pass, phase 9; the brief of `/impeccable shape`)
+
+Kfir said "no questions", so the shape interview was not held: the brief below is built from his ten items, and
+each reading of them that he did not spell out is a numbered decision in `notes.md` (53 on).
+
+- **Job.** The same business user, at a desk. The list is the one place of the product; a control is opened,
+  read and changed without leaving it. Mode: Operate.
+- **Topology.** `ControlsListPage` is the parent route (`''`) with three children: `controls/:id` (editor),
+  `runs/:id` (results), `controls/:controlId/runs` (the results panel of a control: its newest run, or its
+  never-run state). The list holds the outlet inside a sheet: `role="dialog"`, modal, at the inline end, as
+  wide as `min(1120px, 100% - clamp(48px, 22vw, 320px))`, the full window below 640. The list behind it is
+  `inert` under a light scrim and keeps its search, tab and page in memory while a panel address is shown,
+  because the panel's own query (`page`, `search`) would otherwise be read as the list's. A direct link to a
+  panel opens it over the list's default view.
+- **Closing.** The X of the sheet, Esc (after an open select or dialog took its own Esc) and a click on the
+  scrim navigate to `/` with the list's held query; a changed draft still asks (decision 38). The focus goes to
+  the element of the list that opened the panel, else to the row of the panel's control, else to the list's
+  title. The list is read again when a panel closes and when the panel's address changes (a save, a run), not
+  when one opens; and when a save or a run lands after its panel was closed, which then stays closed.
+- **Sheet anatomy.** Head (title, one meta line or the run picker, the actions; the X stands at its end),
+  body (scrolls), foot (the editor's bar). Layout inside answers to the sheet's width (container queries), not
+  the window's.
+- **List.** Tabs `פעילות` and `ארכיון` with counts that follow the search and the filter; the head keeps the
+  two actions and loses its count line. The filter `ישות ראשית` becomes `מה נבדק`. Row actions: run, edit,
+  duplicate, archive (active rows); duplicate alone (archived rows). The name is a link to
+  `/runs/<last run>` or `/controls/<id>/runs`.
+- **Results panel.** Head: the control's name; the picker (a select of the 50 newest runs: date, time, result)
+  when the control has more than one run, else the meta line; edit and run again. Marks are static badges in
+  the sentence, the breakdown and the reasons; the chosen breakdown row carries the filter. Never run: the
+  name, the rule in words (from `POST /controls/validate`), the state and a run button.
+- **Editor panel.** Body: name and description (40rem at most, the description two rows, not resizable); the
+  question `מה רוצים לבדוק?` with one card per rootable entity (plural label and the glossary's description),
+  nothing chosen in a new control; under it the chain (each entity, and between two neighbours
+  `בכל <one> יש <many>` from the relationship's cardinality) and the sentence of what the control returns;
+  for a new blank control, up to three suggestions for the choice (name, the rule in words, the first evidence),
+  shown only when there are any; then the conditions. Foot: the rule in words (two lines high, scrolling inside
+  when longer), one reserved status line, save and run, save.
+- **Suggestions.** The same sheet through `MatDialog`: cards in two columns from 900px of sheet width, each with
+  its checkbox, name, sentence, rationale, evidence and "open in the editor"; a refresh button in the head and
+  the line about the current data; the foot keeps the create button.
+- **Untouched.** The condition builder, the validate loop, the save and its errors, the run states, the texts
+  of errors, the api layer's types, the leave prompt.
+- **Anti-goals.** No dashboard, no second navigation, no state kept in the browser's storage, no renderer.
 
 ## Risks
 

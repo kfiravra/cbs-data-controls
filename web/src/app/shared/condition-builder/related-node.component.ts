@@ -6,6 +6,7 @@ import { MatTooltip } from '@angular/material/tooltip';
 import { TranslatePipe } from '@ngx-translate/core';
 
 import { DraftRelated } from '../../core/definition/draft';
+import { toneOf } from '../../core/definition/marks';
 import { DraftEdit } from '../../core/definition/draft.edit';
 import { findRelationship, relatedOptions } from '../../core/glossary/glossary.lookups';
 import { LanguageService } from '../../core/i18n/language.service';
@@ -57,18 +58,15 @@ export class RelatedNodeComponent {
   readonly scope = input<string>();
   readonly view = input.required<BuilderView>();
   readonly edit = output<DraftEdit>();
-  readonly trace = output<string | null>();
 
   protected readonly mark = computed(() => this.view().marks.get(this.node().id) ?? '');
+  protected readonly tone = computed(() => toneOf(this.view().marks, this.node().id));
   protected readonly messages = computed(() => this.view().messages.get(this.node().id) ?? []);
   protected readonly invalid = computed(() => this.messages().some((message) => message.input === 'relationship'));
 
   protected readonly markState = computed<MarkState>(() => {
     const id = this.node().id;
-    if (this.view().check.issues.has(id) || this.messages().length > 0) {
-      return 'open';
-    }
-    return this.view().traced === id ? 'traced' : 'resting';
+    return this.view().check.issues.has(id) || this.messages().length > 0 ? 'open' : 'resting';
   });
 
   protected readonly options = computed(() => {

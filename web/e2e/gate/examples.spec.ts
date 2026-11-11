@@ -6,6 +6,7 @@ import { BuilderDriver } from '../support/builder-driver';
 import { controlIdOf, expect, test } from '../support/gate';
 import { t } from '../support/i18n';
 import { shot } from '../support/shots';
+import { ruleTones, tonesOf } from '../support/rule';
 
 const letters = t('common.markLetters').split(' ');
 const lang = glossary.defaultLanguage;
@@ -33,8 +34,9 @@ async function expectResults(page: Page, example: Example): Promise<void> {
 }
 
 /**
- * The gate of the client: each of the six examples is built in the editor from glossary terms, by one
- * driver that knows no example, saved, run on the real engine, and read back record by record. A run from
+ * The gate of the client: each of the six examples is built in the editor's panel from glossary terms, by
+ * one driver that knows no example, saved, run on the real engine, and read back record by record in the
+ * results panel. A run from
  * the interface uses today's date; the expected records hold for every run date from 2026-11-01 to
  * 2027-12-31, so no run date is sent.
  */
@@ -43,18 +45,19 @@ test.describe('the six examples on the real stack', () => {
     test(`example ${number} is built in the editor, saved, run and read`, async ({ page, gate }, testInfo) => {
       const example = exampleNumber(number);
       await page.goto('/controls/new');
-      await expect(page.getByTestId('condition-row')).toHaveCount(1);
+      // a new control asks what to check before it has any condition: the driver answers first
+      await expect(page.getByTestId('root-entity').first()).toBeVisible();
+      await expect(page.getByTestId('condition-builder')).toHaveCount(0);
 
       await page.getByTestId('control-name').fill(gate.nameOf(example));
       await page.getByTestId('control-description').fill(example.description[lang]);
       await new BuilderDriver(page).build(example.definition);
 
-      // the engine reads the control back: one mark per condition, and nothing left unfinished
+      // the engine reads the control back: one colour per condition, in their order, and nothing left unfinished
       const sentence = page.getByTestId('sentence');
       await expect(sentence).toHaveAttribute('data-stale', 'false');
-      await expect(sentence.getByTestId('mark')).toHaveText(
-        letters.slice(0, markedIds(example.definition.where).length),
-      );
+      await expect.poll(() => ruleTones(sentence)).toEqual(tonesOf(markedIds(example.definition.where).length));
+      await expect(sentence.getByTestId('mark')).toHaveCount(0);
       await expect(page.getByTestId('sentence-status')).toHaveCount(0);
       if (number === 4) {
         await shot(page, testInfo, 'gate-editor');
@@ -66,7 +69,7 @@ test.describe('the six examples on the real stack', () => {
 
       await page.getByTestId('save-run').click();
       await expect(page).toHaveURL(/\/runs\/\d+$/);
-      await expect(page.getByTestId('page-title')).toHaveText(gate.nameOf(example));
+      await expect(page.getByTestId('panel-title')).toHaveText(gate.nameOf(example));
       await expectResults(page, example);
       if (number === 4) {
         // the toast of the save rides along to this screen and would stand over the records in the shot; it

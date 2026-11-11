@@ -1,46 +1,88 @@
-// Every condition carries one mark, a letter in document order. The same mark stands on its row in the
-// builder, on its clause in the sentence, on its line in the breakdown and on each reason it explains.
+// Every condition carries one mark, a letter in document order, and one colour of the fixed set, in the same
+// order. The letter stands on its row in the builder, on its chip in the count by condition and beside each
+// reason it explains, on a ground of the condition's colour; in the rule in words there is no letter, and
+// the condition's words are underlined in that colour. A mark is a badge: it names its condition and
+// answers to nothing.
+
+// the place of a colour in the set, as the attribute says it (`toneOf` in core/definition/marks.ts)
+@for $place from 1 through 8 {
+  [data-tone='#{$place}'] {
+    --tone: var(--color-tone-#{$place});
+  }
+}
 
 .mark {
   display: inline-grid;
   place-items: center;
   flex: none;
-  vertical-align: -0.28em;
+  vertical-align: -0.18em;
   min-inline-size: var(--size-mark);
   block-size: var(--size-mark);
-  padding-inline: 4px;
-  border-radius: var(--radius-sm);
-  background: var(--color-action-tint);
-  color: var(--color-action);
-  font-size: var(--text-label);
-  font-weight: 600;
+  padding-inline: 3px;
+  border-radius: var(--radius-chip);
+  background: var(--color-tonal);
+  color: var(--color-ink);
+  font-size: var(--text-mark);
+  font-weight: var(--weight-strong);
   line-height: 1;
   font-style: normal;
-  transition:
-    background-color var(--duration-out) var(--ease-out),
-    color var(--duration-out) var(--ease-out);
 }
 
-.mark--active,
-.mark--traced {
-  background: var(--color-action);
-  color: var(--color-on-action);
+// an unfinished row's letter stays hollow (`.mark--open`, below): the colour is the ground of a letter that
+// names a whole condition
+.mark[data-tone]:not(.mark--open) {
+  background: var(--tone);
 }
 
-// the trace: a condition in focus (its row, its clause or its meter) fills its mark wherever it stands
-.mark--traced {
-  transition-duration: var(--duration-in);
+// The rule in words is plain text: no letter in it and no ground under any word. It is one flowing sentence
+// that wraps as text does: no line is forced and nothing is set in. Only the words of a condition are
+// underlined, in the condition's colour: a joining word carries no line, and a group has no bracket, no
+// tint and no line of its own.
+// The line is drawn, not a text decoration: it fades out towards both of its ends (over one em, or a
+// quarter of a short stretch), and where a condition's words run on to the next line each stretch has its
+// own line with its own two faded ends. It lies under the words; the words themselves stand on no ground.
+// The line takes no room of its own: it is placed from the foot of the words' own box (in this family the
+// box is as tall as a body line), so it starts just under the descenders, a fifth of an em under the
+// baseline, and ends inside its own line of text. It never reaches into the line below and never adds to
+// the height of what holds the rule.
+.clause[data-tone] {
+  --fade: min(1em, 25%);
+
+  background-image: linear-gradient(
+    90deg,
+    transparent,
+    var(--tone) var(--fade),
+    var(--tone) calc(100% - var(--fade)),
+    transparent
+  );
+  background-repeat: no-repeat;
+  background-position: 0 calc(100% - 0.05em);
+  background-size: 100% 0.2em;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
 }
 
-// the settle: when a condition changes, its mark in the sentence fills at once and eases back
-.mark--changed {
-  animation: mark-settle var(--duration-settle) var(--ease-out) both;
+// A condition with the joining word before it is one piece of the sentence: whole while it fits on a line,
+// broken inside only when it is longer than the line. So no line ends on a joining word, and a condition's
+// words stay together. Between two pieces stands the engine's own space, where the line may be broken.
+.rule-unit {
+  display: inline-block;
+  max-inline-size: 100%;
 }
 
-@keyframes mark-settle {
+// the copy of a rule that is read aloud is not also taken when the rule is selected and copied
+.plain-copy {
+  user-select: none;
+}
+
+// the settle: when a condition changes, the line under its words is heavy at once and eases back
+.clause--changed {
+  animation: clause-settle var(--duration-settle) var(--ease-out) both;
+}
+
+@keyframes clause-settle {
   from {
-    background: var(--color-action);
-    color: var(--color-on-action);
+    background-size: 100% 0.5em;
   }
 }
 
@@ -56,133 +98,160 @@
   display: inline-block;
   max-inline-size: 100%;
   padding: 1px 6px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-chip);
   background: var(--color-action-tint);
-  font-weight: 500;
+  font-weight: var(--weight-medium);
   font-variant-numeric: tabular-nums;
   // its own box now: a line of 1.35 and the padding stay inside the line of the text around it
-  line-height: 1.35;
+  line-height: var(--leading-title);
   overflow-wrap: anywhere;
 }
 
-// the rule sentence, plain: on Ground, for reading
+// the rule in words, for reading. It is set as a sentence is: the body's size, weight and line height,
+// nothing of its own; the lines under its words fit inside those lines.
 .sentence {
-  font-size: var(--text-title);
-  line-height: 1.75;
-  max-inline-size: 70ch;
+  font-size: var(--text-body);
+  font-weight: var(--weight-regular);
+  line-height: var(--leading-body);
+  max-inline-size: 75ch;
   text-wrap: pretty;
 }
 
-.sentence--body {
-  font-size: var(--text-body);
-  line-height: 1.7;
-}
-
-.clause {
-  border-radius: var(--radius-xs);
-}
-
-// the rule sentence as a field: the control in words, in the editor
-.sentence-field {
+// The control in words, in the editor: the bar at the foot of the panel, on the inverse ground. Its height
+// never changes: the sentence has the room of two lines and scrolls inside it when it is longer, and the
+// status line keeps its room while it is empty.
+.rulebar {
   display: grid;
-  gap: var(--space-4);
-  padding: var(--space-5);
-  border-radius: var(--radius-lg);
-  background: var(--color-action);
-  color: var(--color-on-action);
+  gap: var(--space-3);
+  padding: var(--space-4) var(--sheet-pad);
+  background: var(--color-inverse);
+  color: var(--color-on-inverse);
 
   :focus-visible {
-    outline-color: var(--color-on-action);
+    outline-color: var(--color-on-inverse);
   }
 
   .sentence {
-    font-size: var(--text-sentence);
-    font-weight: 500;
-    line-height: 1.7;
-  }
-
-  .mark {
-    background: var(--color-on-action-tonal);
-    color: var(--color-on-action);
-  }
-
-  .mark--open {
-    background: none;
-    box-shadow: inset 0 0 0 1px currentColor;
-    color: var(--color-on-action);
-  }
-
-  .mark--traced {
-    background: var(--color-on-action);
-    color: var(--color-action);
-  }
-
-  .mark--changed {
-    animation-name: mark-settle-on-action;
-  }
-
-  .btn--text {
-    color: var(--color-on-action);
-    justify-self: center;
+    max-inline-size: none;
+    font-size: var(--text-small);
   }
 
   .btn[disabled],
   .btn[aria-disabled='true'] {
-    background: var(--color-on-action-tonal);
-    color: var(--color-on-action);
+    border-color: transparent;
+    background: var(--color-on-inverse-tonal);
+    color: var(--color-on-inverse);
   }
 
   // the last valid sentence, kept while the draft is unfinished or invalid
   .sentence--stale {
-    color: var(--color-on-action-stale);
+    color: var(--color-on-inverse-muted);
     transition: color var(--duration-in) var(--ease-out);
   }
 }
 
-@keyframes mark-settle-on-action {
-  from {
-    background: var(--color-on-action);
-    color: var(--color-action);
+.rulebar__text {
+  display: grid;
+  gap: var(--space-1);
+  min-inline-size: 0;
+}
+
+// below a wide panel the title is heard and not seen: the bar keeps to what is read and what is pressed
+.rulebar__title {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  font-size: var(--text-label);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-title);
+  color: var(--color-on-inverse-muted);
+}
+
+.rulebar__sentence {
+  --scroll-thumb: var(--color-scroll-on-inverse);
+
+  block-size: calc(2 * var(--leading-body) * var(--text-small));
+  overflow-y: auto;
+}
+
+.rulebar__hint {
+  font-size: var(--text-small);
+  line-height: var(--leading-read);
+}
+
+// two lines of room on a narrow panel, one on a wide one; what does not fit is cut, and the same words
+// stand in full under the condition they are about
+.rulebar__status {
+  block-size: calc(2 * var(--leading-body) * var(--text-label));
+  overflow: hidden;
+  font-size: var(--text-label);
+  line-height: var(--leading-body);
+
+  p {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-2);
   }
-}
-
-.sentence-field__title {
-  font-size: var(--text-small);
-  font-weight: 500;
-  line-height: 1.4;
-}
-
-.sentence-field__hint {
-  font-size: var(--text-body);
-  font-weight: 400;
-  line-height: 1.55;
-}
-
-.sentence-field__status {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-2);
-  padding-block-start: var(--space-4);
-  border-block-start: 1px solid var(--color-on-action-line);
-  font-size: var(--text-small);
-  line-height: 1.5;
 
   .icon {
     margin-block-start: 1px;
   }
 }
 
-.sentence-field__actions {
-  display: grid;
+.rulebar__actions {
+  display: flex;
   gap: var(--space-3);
+
+  > .btn {
+    flex: 1 1 0;
+  }
 }
 
-@media (min-width: 640px) {
-  .sentence-field__actions {
-    grid-template-columns: 1fr 1fr;
+@container sheet (min-width: 720px) {
+  .rulebar {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--space-5);
+  }
 
-    > .btn--text {
-      grid-column: 1 / -1;
+  .rulebar .sentence,
+  .rulebar__hint {
+    font-size: var(--text-body);
+  }
+
+  .rulebar__title {
+    position: static;
+    inline-size: auto;
+    block-size: auto;
+    overflow: visible;
+    clip-path: none;
+  }
+
+  .rulebar__sentence {
+    block-size: calc(2 * var(--leading-body) * var(--text-body));
+  }
+
+  .rulebar__status {
+    block-size: calc(var(--leading-body) * var(--text-small));
+    font-size: var(--text-small);
+
+    p {
+      display: block;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
     }
+
+    .icon {
+      margin-inline-end: var(--space-2);
+      vertical-align: -3px;
+    }
+  }
+
+  .rulebar__actions > .btn {
+    flex: none;
   }
 }

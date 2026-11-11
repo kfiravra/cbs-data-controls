@@ -1,28 +1,42 @@
 import { DestroyRef, Injectable, computed, inject, signal } from '@angular/core';
-import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
-import { catchError, firstValueFrom, map, of, switchMap, timer } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { firstValueFrom } from 'rxjs';
 
 import { ApiError, toApiError } from '../../core/api/api-error';
-import { Control } from '../../core/api/api.types';
+import { Control, SuggestionItem } from '../../core/api/api.types';
 import { ControlsApi } from '../../core/api/controls.api';
 import { RunsApi } from '../../core/api/runs.api';
+import { SuggestionsApi } from '../../core/api/suggestions.api';
 import { Definition } from '../../core/definition/definition.types';
 import { DraftGroup, IdSource, fromDefinition, highestId, toDefinition } from '../../core/definition/draft';
 import { DraftCheck, checkDraft } from '../../core/definition/draft.check';
 import { DraftEdit, FocusTarget, applyEdit, newDraft } from '../../core/definition/draft.edit';
-import { orderedNodeIds } from '../../core/definition/marks';
 import { MarksService } from '../../core/definition/marks.service';
-import { mapFor, rootEntities } from '../../core/glossary/glossary.lookups';
+import { chainFor, rootEntities } from '../../core/glossary/glossary.lookups';
 import { GlossaryService } from '../../core/glossary/glossary.service';
 import { LanguageService } from '../../core/i18n/language.service';
 import { changedNodes } from '../../core/text/text-parts';
 import { BuilderView, RowMessage } from '../../shared/condition-builder/builder-view';
-import { LocatedError, errorMessage, issueMessage, locateErrors, statusOf } from './editor.messages';
+import { EditorIdeas } from './editor.ideas';
+import { validations } from './editor.validation';
+import {
+  LocatedError,
+  descriptionIssueOf,
+  errorMessage,
+  firstOpenInput,
+  issueMessage,
+  locateErrors,
+  nameIssueOf,
+  sameHeld,
+  standingErrors,
+  statusOf,
+} from './editor.messages';
 import {
   DetailIssue,
+  EditorSnapshot,
   EditorTarget,
   LoadState,
-  Question,
+  Removal,
   SaveOutcome,
   SaveState,
   Sent,
@@ -31,26 +45,16 @@ import {
   Validation,
 } from './editor.types';
 
-/** The sentence asks the engine this long after the last edit. */
-export const VALIDATE_DEBOUNCE_MS = 400;
-/** How long the marks of a rewritten clause stay flagged for the settle (its duration, and a little). */
+/** How long a rewritten clause stays flagged for the settle (its duration, and a little). */
 const SETTLE_MS = 700;
-const NAME_MAX = 200;
-const DESCRIPTION_MAX = 1000;
 
 const NO_MESSAGES: ReadonlyMap<string, readonly RowMessage[]> = new Map();
 
-/** What a removal took away, and the way back. */
-export interface Removal {
-  /** The mark of the condition that was removed; undefined for a group, which goes with its conditions. */
-  readonly mark?: string;
-  readonly undo: () => void;
-}
-
 /**
- * The state of the control editor, provided by its page: the loaded control and its token, the details, the
- * root entity and the draft tree, what the client's check and the server say about them, the engine's
- * sentence, and the save. The store talks to the api; the page navigates and shows toasts and dialogs.
+ * The state of the control editor, provided by its page: the loaded control and its token, the details,
+ * what the control checks (its root entity) and the draft tree, what the client's check and the server say
+ * about them, the engine's sentence, the suggestions a new control may start from, and the save. The store
+ * talks to the api; the page navigates and shows toasts.
  */
 @Injectable()
 export class EditorStore {
@@ -66,7 +70,10 @@ export class EditorStore {
    * a 422 then means the stored definition is outdated. An engine that does not answer leaves it set.
    */
   private awaitingFirstSentence = false;
-  /** Counts the calls of `open`: an older one that lands after a newer one changes nothing. */
+  /**
+   * Counts the times a control took the screen (`open`, `restore`): an older one that lands after a newer
+   * one changes nothing, and neither does a save that was sent for the control before.
+   */
   private turn = 0;
   private settleTimer: ReturnType<typeof setTimeout> | undefined;
 
@@ -80,17 +87,26 @@ export class EditorStore {
   readonly rootEntity = signal<string | null>(null);
   readonly draft = signal<DraftGroup>(newDraft(this.ids));
   readonly dirty = signal(false);
-
-  readonly traced = signal<string | null>(null);
+  /**
+   * The control starts from nothing (not a stored one, a copy or a suggestion): it is the one that is offered
+   * suggestions for what it checks.
+   */
+  readonly fromNothing = signal(false);
+  /** The user asked for the builder's advanced actions: groups, and conditions on related records. */
+  readonly advanced = signal(false);
   /** Where the keyboard focus goes after the last edit. */
   readonly focus = signal<FocusTarget | null>(null);
   /** Set once the user asked to save an unfinished draft: errors show on save, not while typing. */
   readonly showErrors = signal(false);
   readonly nameIssue = signal<DetailIssue | null>(null);
   readonly descriptionIssue = signal<DetailIssue | null>(null);
+  /** A save was asked for before it was chosen what the control checks. */
+  readonly rootIssue = signal(false);
+  /** What the engine would check about the choice; empty for a control that did not start from nothing. */
+  readonly ideas = new EditorIdeas(inject(SuggestionsApi));
 
   readonly saveState = signal<SaveState>('idle');
-  /** A failed load, save, run or archive. */
+  /** A failed load, save or run. */
   readonly failure = signal<ApiError | null>(null);
   /** An engine that does not answer the sentence; gone as soon as a sentence comes back. */
   readonly sentenceFailure = signal<ApiError | null>(null);
@@ -99,7 +115,7 @@ export class EditorStore {
   readonly outdated = signal(false);
 
   readonly sentence = signal<Sentence>({ parts: null, stale: false });
-  /** The nodes whose clause the last answer rewrote: their marks play the settle once. */
+  /** The nodes whose clause the last answer rewrote: the line under their words plays the settle once. */
   readonly settling = signal<ReadonlySet<string>>(new Set());
 
   private readonly serverErrors = signal<readonly LocatedError[]>([]);
@@ -148,16 +164,6 @@ export class EditorStore {
       .map((entry) => entry.error),
   );
 
-  /** The nodes whose mark is open: unfinished, or refused by the server. */
-  readonly openNodes = computed<ReadonlySet<string>>(
-    () =>
-      new Set([
-        ...(this.check()?.issues.keys() ?? []),
-        ...this.messages().keys(),
-        ...this.liveErrors().flatMap((entry) => entry.location.nodeId ?? []),
-      ]),
-  );
-
   readonly status = computed<StatusLine | null>(() => {
     const check = this.check();
     return check
@@ -169,18 +175,34 @@ export class EditorStore {
     const glossary = this.glossary();
     const check = this.check();
     return glossary && check
-      ? { glossary, check, marks: this.marks(), messages: this.messages(), traced: this.traced() }
+      ? {
+          glossary,
+          check,
+          marks: this.marks(),
+          messages: this.messages(),
+          // a draft that holds a group or related records is shown in full, whatever was asked for
+          advanced: this.advanced() || this.draft().children.some((child) => child.type !== 'condition'),
+        }
       : null;
   });
 
-  readonly map = computed(() => {
+  /** What a control may check: the entities the glossary allows as a root. Null until the glossary is read. */
+  readonly choices = computed(() => {
     const glossary = this.glossary();
-    const rootEntity = this.rootEntity();
-    return glossary && rootEntity ? mapFor(glossary, rootEntity) : null;
+    return glossary ? rootEntities(glossary) : null;
+  });
+
+  /** How those entities connect, with the chosen one marked. */
+  readonly chain = computed(() => {
+    const glossary = this.glossary();
+    return glossary ? chainFor(glossary, this.rootEntity()) : null;
   });
 
   constructor() {
-    this.watchSentence();
+    // the validate loop: what the engine says about the draft, as the sentence and as errors on its rows
+    validations(this.definition, this.validateAgain, this.controlsApi)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((validation) => this.onValidation(validation));
     this.destroyRef.onDestroy(() => clearTimeout(this.settleTimer));
   }
 
@@ -196,7 +218,7 @@ export class EditorStore {
     }
     const turn = ++this.turn;
     this.reset();
-    const glossary = await this.glossaryService.load();
+    await this.glossaryService.load();
     try {
       const stored = target.id ?? target.from ?? null;
       const control = stored !== null ? await firstValueFrom(this.controlsApi.get(stored)) : null;
@@ -211,7 +233,8 @@ export class EditorStore {
       } else if (target.draft) {
         this.startFrom(target.draft.name, target.draft.description, target.draft.definition);
       } else {
-        this.rootEntity.set((glossary ? rootEntities(glossary)[0] : undefined)?.key ?? null);
+        // a control from nothing: what it checks is the user's first choice, and nothing is chosen for them
+        this.fromNothing.set(true);
       }
       this.loadState.set('ready');
     } catch (error) {
@@ -222,6 +245,43 @@ export class EditorStore {
       this.loadState.set(failure.status === 404 ? 'notFound' : 'failed');
       this.failure.set(failure.status === 404 ? null : failure);
     }
+  }
+
+  /**
+   * What the screen holds, to bring back a draft that was closed without a save: the details, the choice,
+   * the tree with the source of its ids, and the stored control it edits (with its token).
+   */
+  snapshot(): EditorSnapshot {
+    return { ...this.held(), control: this.control(), ids: this.ids, fromNothing: this.fromNothing(), advanced: this.advanced(), ideas: this.ideas.items() };
+  }
+
+  /** The details, the choice and the tree as they are on the screen now. */
+  private held(): Sent {
+    return { name: this.name(), description: this.description(), draft: this.draft(), rootEntity: this.rootEntity() };
+  }
+
+  /**
+   * Brings a closed draft back as it was, unsaved. Nothing is read from the server but the glossary: a
+   * control that was saved by someone else meanwhile is told so by its token, at the save.
+   */
+  async restore(snapshot: EditorSnapshot): Promise<void> {
+    const turn = ++this.turn;
+    this.reset();
+    await this.glossaryService.load();
+    if (turn !== this.turn) {
+      return;
+    }
+    this.ids = snapshot.ids;
+    this.control.set(snapshot.control);
+    this.name.set(snapshot.name);
+    this.description.set(snapshot.description);
+    this.rootEntity.set(snapshot.rootEntity);
+    this.draft.set(snapshot.draft);
+    this.fromNothing.set(snapshot.fromNothing);
+    this.advanced.set(snapshot.advanced);
+    this.ideas.resume(snapshot.ideas, snapshot.fromNothing ? snapshot.rootEntity : null);
+    this.dirty.set(true);
+    this.loadState.set('ready');
   }
 
   /** Reads the stored control again and replaces what the screen holds: the way out of a conflict. */
@@ -235,6 +295,10 @@ export class EditorStore {
   private reset(): void {
     this.ids = new IdSource();
     this.awaitingFirstSentence = false;
+    this.fromNothing.set(false);
+    this.advanced.set(false);
+    this.ideas.set();
+    this.rootIssue.set(false);
     this.loadState.set('loading');
     this.control.set(null);
     this.name.set('');
@@ -273,9 +337,14 @@ export class EditorStore {
   }
 
   private load(definition: Definition): void {
-    this.ids = new IdSource(highestId(definition.where));
     this.rootEntity.set(definition.rootEntity);
-    this.draft.set(fromDefinition(definition, this.ids));
+    this.draft.set(this.draftOf(definition));
+  }
+
+  /** A definition as a draft: its nodes keep their ids, and no id given after it repeats one of them. */
+  private draftOf(definition: Definition): DraftGroup {
+    this.ids.reserve(highestId(definition.where));
+    return fromDefinition(definition, this.ids);
   }
 
   // ---------------------------------------------------------------- editing
@@ -293,22 +362,30 @@ export class EditorStore {
   }
 
   /**
-   * The conditions of one entity mean nothing for another: a new root entity starts the tree over. Returns
-   * a way back to what was there, for the toast's undo.
+   * Chooses what the control checks. The conditions of one entity mean nothing for another: another choice
+   * starts the tree over, and the answer is a way back to what was there, for the toast's undo. A first
+   * choice replaces nothing and answers null.
    */
   chooseRoot(key: string): (() => void) | null {
-    const previous = { rootEntity: this.rootEntity(), draft: this.draft() };
+    const previous = { rootEntity: this.rootEntity(), draft: this.draft(), ideas: this.ideas.items() };
     if (key === previous.rootEntity) {
       return null;
     }
     const fresh = newDraft(this.ids);
     this.rootEntity.set(key);
+    this.rootIssue.set(false);
     this.draft.set(fresh);
     this.serverErrors.set([]);
     this.liveErrors.set([]);
     this.awaitingFirstSentence = false;
     this.focus.set(null);
     this.dirty.set(true);
+    if (this.fromNothing()) {
+      void this.ideas.read(key);
+    }
+    if (previous.rootEntity === null) {
+      return null;
+    }
     return () => {
       // the way back is from the empty tree the change left: one that was built on, or replaced, stays
       if (this.draft() !== fresh) {
@@ -316,6 +393,36 @@ export class EditorStore {
       }
       this.rootEntity.set(previous.rootEntity);
       this.draft.set(previous.draft);
+      this.ideas.set(previous.ideas);
+    };
+  }
+
+  /**
+   * Takes a suggestion: its name, its description and its conditions replace what was there, also what
+   * another suggestion or the user put there. Answers a way back to what was there, for the toast's undo.
+   */
+  applyIdea(idea: SuggestionItem): () => void {
+    const before = { draft: this.draft(), name: this.name(), description: this.description() };
+    const filled = this.draftOf(idea.definition);
+    this.draft.set(filled);
+    this.setName(idea.name);
+    this.setDescription(idea.description);
+    this.serverErrors.set([]);
+    this.liveErrors.set([]);
+    this.focus.set(null);
+    this.dirty.set(true);
+    return () => {
+      // the way back is from the conditions the suggestion gave: once they were edited, they stay
+      if (this.draft() !== filled) {
+        return;
+      }
+      this.draft.set(before.draft);
+      if (this.name() === idea.name) {
+        this.name.set(before.name);
+      }
+      if (this.description() === idea.description) {
+        this.description.set(before.description);
+      }
     };
   }
 
@@ -339,12 +446,9 @@ export class EditorStore {
     }
     this.awaitingFirstSentence = false;
     // what the server said about a row stands until the row is edited or is gone
-    const present = new Set(orderedNodeIds(result.draft));
-    const edited = 'id' in edit ? edit.id : null;
-    const stands = ({ location }: LocatedError) =>
-      location.nodeId === undefined || (present.has(location.nodeId) && location.nodeId !== edited);
-    this.serverErrors.update((errors) => errors.filter(stands));
-    this.liveErrors.update((errors) => errors.filter(stands));
+    const stands = standingErrors(result.draft, 'id' in edit ? edit.id : null);
+    this.serverErrors.update(stands);
+    this.liveErrors.update(stands);
     if (edit.kind !== 'remove' || result.draft === before.draft) {
       return null;
     }
@@ -371,39 +475,6 @@ export class EditorStore {
   revalidate(): void {
     this.sentenceFailure.set(null);
     this.validateAgain.update((count) => count + 1);
-  }
-
-  /**
-   * The validate loop. An unfinished draft sends nothing and dims the sentence at once. A complete one
-   * asks the engine 400ms after the last edit; the next edit cancels the wait and the request, so an older
-   * answer never replaces a newer one. While a complete draft waits for its answer the sentence is not
-   * dimmed, so typing does not make it flicker.
-   */
-  private watchSentence(): void {
-    // one question per definition and per "ask again": an edit that leaves the rule as it was asks nothing
-    const asked = computed<Question | null>(
-      () => {
-        const definition = this.definition();
-        return definition ? { definition, text: JSON.stringify(definition), again: this.validateAgain() } : null;
-      },
-      { equal: (a, b) => a?.text === b?.text && a?.again === b?.again },
-    );
-    toObservable(asked)
-      .pipe(
-        switchMap((question) => {
-          if (question === null) {
-            return of<Validation>({ kind: 'incomplete' });
-          }
-          const { definition } = question;
-          return timer(VALIDATE_DEBOUNCE_MS).pipe(
-            switchMap(() => this.controlsApi.validate(definition)),
-            map((answer): Validation => ({ kind: 'valid', parts: answer.sentenceParts })),
-            catchError((error: unknown) => of<Validation>({ kind: 'failed', error: toApiError(error), definition })),
-          );
-        }),
-        takeUntilDestroyed(this.destroyRef),
-      )
-      .subscribe((validation) => this.onValidation(validation));
   }
 
   private onValidation(validation: Validation): void {
@@ -447,9 +518,13 @@ export class EditorStore {
 
   // ---------------------------------------------------------------- saving
 
-  /** Saves the control, and with `run` runs it. Nothing is sent while a detail or a row is unfinished. */
+  /**
+   * Saves the control, and with `run` runs it. Nothing is sent while a detail or a row is unfinished, or
+   * before it was chosen what the control checks.
+   */
   async save(run = false): Promise<SaveOutcome> {
     const definition = this.definition();
+    this.rootIssue.set(this.rootEntity() === null);
     if (!this.checkDetails() || !definition) {
       this.showErrors.set(true);
       this.focusFirstIssue();
@@ -459,7 +534,8 @@ export class EditorStore {
       return { kind: 'failed' };
     }
     const before = this.control();
-    const sent: Sent = { name: this.name(), description: this.description(), draft: this.draft(), rootEntity: this.rootEntity() };
+    const sent = this.held();
+    const turn = this.turn;
     const body = { name: sent.name.trim(), description: sent.description.trim() || null, definition };
     this.saveState.set('saving');
     this.failure.set(null);
@@ -470,59 +546,45 @@ export class EditorStore {
             this.controlsApi.update(before.id, { ...body, concurrencyToken: before.concurrencyToken }),
           )
         : await firstValueFrom(this.controlsApi.create(body));
-      this.onSaved(saved, sent);
+      if (turn === this.turn) {
+        // another control may have taken the screen meanwhile: what was saved is not that control's
+        this.onSaved(saved, sent);
+      }
       if (!run) {
         return { kind: 'saved', control: saved, created: !before, newVersion: !!before && saved.version !== before.version };
       }
       this.saveState.set('running');
       return { kind: 'ran', control: saved, run: await firstValueFrom(this.runsApi.start(saved.id)) };
     } catch (error) {
-      this.onSaveFailed(toApiError(error), definition);
+      if (turn === this.turn) {
+        this.onSaveFailed(toApiError(error), definition);
+      }
       return { kind: 'failed' };
     } finally {
       this.saveState.set('idle');
     }
   }
 
-  /** Archives the control; true when it left the list. */
-  async archive(): Promise<boolean> {
-    const control = this.control();
-    if (!control) {
-      return false;
-    }
-    try {
-      await firstValueFrom(this.controlsApi.archive(control.id));
-      this.dirty.set(false);
-      return true;
-    } catch (error) {
-      this.failure.set(toApiError(error));
-      return false;
-    }
-  }
-
   private checkDetails(): boolean {
-    const name = this.name().trim();
-    this.nameIssue.set(name === '' ? 'required' : name.length > NAME_MAX ? 'tooLong' : null);
-    this.descriptionIssue.set(this.description().trim().length > DESCRIPTION_MAX ? 'tooLong' : null);
+    this.nameIssue.set(nameIssueOf(this.name()));
+    this.descriptionIssue.set(descriptionIssueOf(this.description()));
     return this.nameIssue() === null && this.descriptionIssue() === null;
   }
 
   private focusFirstIssue(): void {
-    const check = this.check();
-    const first = check ? orderedNodeIds(this.draft()).find((id) => check.issues.has(id)) : undefined;
-    if (this.nameIssue() === null && this.descriptionIssue() === null && first !== undefined) {
-      this.focus.set({ node: first, input: check!.issues.get(first)![0].input });
+    const first = firstOpenInput(this.check(), this.draft());
+    if (this.nameIssue() === null && this.descriptionIssue() === null && first) {
+      this.focus.set(first);
     }
   }
 
   private onSaved(saved: Control, sent: Sent): void {
     this.control.set(saved);
+    // it no longer starts from nothing: the suggestions were for a control that did
+    this.fromNothing.set(false);
+    this.ideas.set();
     // what was edited while the request was on its way is still unsaved, and stays as typed
-    const untouched =
-      this.name() === sent.name &&
-      this.description() === sent.description &&
-      this.draft() === sent.draft &&
-      this.rootEntity() === sent.rootEntity;
+    const untouched = sameHeld(this.held(), sent);
     if (untouched) {
       this.name.set(saved.name);
       this.description.set(saved.description ?? '');

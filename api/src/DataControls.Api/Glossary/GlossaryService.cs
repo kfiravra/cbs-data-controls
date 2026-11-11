@@ -9,6 +9,8 @@ public sealed class GlossaryService(
     RequestContextAccessor requests,
     ILogger<GlossaryService> logger)
 {
+    private const string TextType = "text";
+
     /// <summary>
     /// The glossary: the cached copy while it is fresh, else the engine's. When the engine fails, the held
     /// copy is served stale; with no copy the failure goes to the caller. Either way the engine is not
@@ -69,6 +71,33 @@ public sealed class GlossaryService(
         cache.DropUnless(reportedVersion);
         return (await GetAsync(cancellationToken)).IdentifyingFields.GetValueOrDefault(entity);
     }
+
+    /// <summary>
+    /// The glossary type of one of an entity's identifying fields, or null when the glossary does not list
+    /// the field among them: the check a caller makes before it sorts by a field a request named.
+    /// </summary>
+    public async Task<string?> IdentifyingFieldTypeAsync(string entity, string field, CancellationToken cancellationToken)
+    {
+        var glossary = await GetAsync(cancellationToken);
+        return glossary.IdentifyingFields.GetValueOrDefault(entity)?.Contains(field) == true
+            ? glossary.FieldTypes.GetValueOrDefault(entity)?.GetValueOrDefault(field) ?? TextType
+            : null;
+    }
+
+    /// <summary>
+    /// The entity keys of the glossary the api holds, in the order of their plural labels in
+    /// <paramref name="language"/>: for a list that is sorted by what the user reads and not by the key.
+    /// The held copy is used whatever its age and the engine is never asked, so a list does not wait on the
+    /// engine; null when no copy is held yet, and the caller then has only the keys to sort by.
+    /// </summary>
+    public IReadOnlyList<string>? HeldEntityKeysByLabel(string language) =>
+        cache.Held is not { } held
+            ? null
+            : [.. held.EntityLabels
+                // every label of a valid glossary has every language; a key stands in for one that does not
+                .OrderBy(entity => entity.Value.GetValueOrDefault(language, entity.Key), StringComparer.OrdinalIgnoreCase)
+                .ThenBy(entity => entity.Key, StringComparer.Ordinal)
+                .Select(entity => entity.Key)];
 
     /// <summary>The fresh copy, or the held one while a failed refresh is too recent to repeat.</summary>
     private EngineGlossary? Usable() => cache.Fresh ?? (cache.RecentFailure is null ? null : cache.Held);

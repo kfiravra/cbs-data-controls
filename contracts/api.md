@@ -415,7 +415,7 @@ Errors: 404 `DEBUG_DISABLED`; 422 `DEFINITION_INVALID`.
 |---|---|---|---|
 | `GET /api/v1/health` | none | 200 `{ status, database, engine, version }` | none: always 200 |
 | `GET /api/v1/glossary` | none | 200 the engine's public glossary | 503 `ENGINE_UNAVAILABLE` |
-| `GET /api/v1/controls` | query `search`, `rootEntity`, `active`, `page`, `pageSize` | 200 `Page<ControlSummary>` | 503 `DATABASE_UNAVAILABLE` |
+| `GET /api/v1/controls` | query `search`, `rootEntity`, `active`, `sort`, `dir`, `page`, `pageSize` | 200 `Page<ControlSummary>` | 503 `DATABASE_UNAVAILABLE` |
 | `POST /api/v1/controls` | `{ name, description?, definition }` | 201 `Control` | 422 `DEFINITION_INVALID`, 503 `ENGINE_UNAVAILABLE`, 503 `DATABASE_UNAVAILABLE` |
 | `GET /api/v1/controls/{id}` | none | 200 `Control` | 404 `CONTROL_NOT_FOUND`, 503 `DATABASE_UNAVAILABLE` |
 | `PUT /api/v1/controls/{id}` | `{ name, description?, definition, concurrencyToken }` | 200 `Control` | 404 `CONTROL_NOT_FOUND`, 409 `CONTROL_ARCHIVED`, 409 `CONCURRENCY_CONFLICT`, 422 `DEFINITION_INVALID`, 503 `ENGINE_UNAVAILABLE`, 503 `DATABASE_UNAVAILABLE` |
@@ -426,7 +426,7 @@ Errors: 404 `DEBUG_DISABLED`; 422 `DEFINITION_INVALID`.
 | `POST /api/v1/controls/{id}/runs` | `{ runDate? }` or no body | 201 `Run`, also when the run failed | 404 `CONTROL_NOT_FOUND`, 409 `CONTROL_ARCHIVED`, 503 `DATABASE_UNAVAILABLE` |
 | `GET /api/v1/controls/{id}/runs` | query `page`, `pageSize` | 200 `Page<Run>` | 404 `CONTROL_NOT_FOUND`, 503 `DATABASE_UNAVAILABLE` |
 | `GET /api/v1/runs/{id}` | none | 200 `Run` | 404 `RUN_NOT_FOUND`, 503 `DATABASE_UNAVAILABLE` |
-| `GET /api/v1/runs/{id}/results` | query `page`, `pageSize`, `search`, `condition`, `sort`, `dir` | 200 `Page<ResultItem>` | 404 `RUN_NOT_FOUND`, 503 `DATABASE_UNAVAILABLE` |
+| `GET /api/v1/runs/{id}/results` | query `page`, `pageSize`, `search`, `condition`, `sort`, `field`, `dir` | 200 `Page<ResultItem>` | 404 `RUN_NOT_FOUND`, 503 `DATABASE_UNAVAILABLE`, 503 `ENGINE_UNAVAILABLE` |
 | `POST /api/v1/suggestions` | `{ rootEntity?, max? }` or no body | 200 the engine's `/suggest` body | 503 `ENGINE_UNAVAILABLE`, 503 `DATABASE_UNAVAILABLE`, 504 `QUERY_TIMEOUT` |
 | `POST /api/v1/suggestions/accept` | `{ items: [{ name, description?, definition }] }` | 201 `{ items: Control[] }` | 422 `DEFINITION_INVALID`, 503 `ENGINE_UNAVAILABLE`, 503 `DATABASE_UNAVAILABLE` |
 
@@ -469,9 +469,17 @@ copy and the engine does not answer.
 | `search?` | string | the name contains it; case-insensitive, `%` and `_` taken literally |
 | `rootEntity?` | string | the root entity key, exact |
 | `active?` | string | `true` (default): active controls; `false`: archived ones; `all`: both. Any other value is 400 `MALFORMED` |
+| `sort?` | string | `name` (default); `rootEntity`: the plural label of the root entity in the request's language; `lastRun`: the start of the control's newest run; `violations`: the `totalCount` of the newest run |
+| `dir?` | string | `asc` (default) or `desc`, applied to the sort key |
 | `page?`, `pageSize?` | integer | `Page<T>` |
 
-200 `Page<ControlSummary>`, ordered by name, then id.
+A `sort` or `dir` outside its words is 400 `MALFORMED`. 200 `Page<ControlSummary>`. Controls that are equal in the
+sort key stand by name, then id, ascending in both directions. What a key cannot place comes last in both
+directions: under `lastRun` a control that never ran; under `violations` a control whose newest run has no count
+(it failed, timed out or is running) and, after it, a control that never ran; under `rootEntity` a root entity
+the glossary does not hold. `rootEntity` follows the labels of the glossary the api holds, compared without
+regard to case; the engine is not called for a list, and while the api holds no glossary the list follows the
+keys.
 
 ### `POST /api/v1/controls`
 
@@ -547,18 +555,31 @@ response.
 
 ### `GET /api/v1/runs/{id}/results`
 
-Served from the run's stored snapshot; the engine is not called. A run with no stored rows gives an empty page.
+Served from the run's stored snapshot. The engine is not called for a page, a search or a filter; `sort=field`
+needs the glossary, and asks the engine for it only when the api holds none. A run with no stored rows gives an
+empty page.
 
 | Query parameter | Type | Notes |
 |---|---|---|
 | `search?` | string | a substring of the violation's `display_text` (`Violation`) or of its `reasonText`; case-insensitive, with `%`, `_` and `[` taken literally. It is trimmed first, and an empty one filters nothing |
 | `condition?` | string | a node id: keeps the violations whose `matched` holds it |
-| `sort?` | string | `key` (default): the engine's order, `seq`; `display`: `display_text`, then `seq` |
-| `dir?` | string | `asc` (default) or `desc`, applied to both sort keys |
+| `sort?` | string | `key` (default): the engine's order, `seq`; `display`: `display_text`, then `seq`; `field`: the value of the identifying field that `field` names; `reasons`: the number of reasons, then `reasonText` |
+| `field?` | string | with `sort=field`: the key of one of the identifying fields of the run's root entity. Read with `sort=field` only |
+| `dir?` | string | `asc` (default) or `desc`. Under `key` and `display` it applies to both sort keys; under `field` and `reasons` it applies to the sort key, and violations that are equal in it stand by `seq`, ascending |
 | `page?`, `pageSize?` | integer | `Page<T>` |
 
 A `sort` or `dir` outside its words is 400 `MALFORMED`. 200 `Page<ResultItem>`; `total` counts the violations that
 pass `search` and `condition`. 404 `RUN_NOT_FOUND`.
+
+`sort=field` orders by the field's glossary type: a `number` by its value, anything else as text (a `date` is
+written year first, so its text orders by date; an `enum` and a `boolean` order by the stored value, not by its
+label). A violation that has no value in the field, or whose stored value is not a number in a `number` field,
+comes last in both directions. The api checks `field` against the glossary before it reads anything by it: `sort=field` without a
+`field` is 400 `REQUIRED` on `field`; a key that is not one of the identifying fields of the run's root entity is
+400 `MALFORMED` on `field`, answered after the 404 of a run that does not exist. The value is read from the
+stored `display` by a path that is bound like any other value: no part of the request is written into a
+statement. 503 `ENGINE_UNAVAILABLE` only with `sort=field`, when the api holds no glossary and the engine does
+not answer.
 
 ### `POST /api/v1/suggestions`
 

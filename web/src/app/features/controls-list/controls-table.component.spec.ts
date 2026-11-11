@@ -52,38 +52,38 @@ describe('ControlsTableComponent', () => {
   });
 
   describe('the result of the last run', () => {
-    it('is a dash, said in words to assistive technology, for a control that never ran', async () => {
+    const chip = (row: HTMLElement) => cell(row, 'status-chip')!;
+
+    it('says a control never ran in the grey of what has no result, with a dash where its run would be dated', async () => {
       await draw([control(1, null)]);
 
-      expect(cell(rows()[0], 'last-run')!.textContent?.trim()).toBe(t('list.neverRun'));
+      expect(cell(rows()[0], 'last-run')!.textContent?.trim()).toBe(t('common.none'));
       expect(cell(rows()[0], 'result')!.getAttribute('data-result')).toBe('never');
-      expect(cell(rows()[0], 'result')!.querySelector('.sr-only')!.textContent).toBe(t('list.result.never'));
+      expect(chip(rows()[0]).textContent?.trim()).toBe(t('list.neverRun'));
+      expect(chip(rows()[0]).className).toBe('status-chip');
     });
 
-    it('is the count as a link to that run when the run found violations', async () => {
+    it('is the count, in the red of violations, when the run found some', async () => {
       await draw([control(1, ran('succeeded', 3))]);
 
-      const link = cell(rows()[0], 'result')!.querySelector('a')!;
-      expect(link.textContent?.trim()).toBe(t('results.violations.other', { count: 3 }));
-      expect(link.getAttribute('href')).toBe('/runs/40');
+      expect(chip(rows()[0]).textContent?.trim()).toBe(t('results.violations.other', { count: 3 }));
+      expect(chip(rows()[0]).classList).toContain('status-chip--violations');
     });
 
-    it('says no violations, as a success and a link to that run, when the run found none', async () => {
+    it('says no violations, in the green of a clean run, when the run found none', async () => {
       await draw([control(1, ran('succeeded', 0))]);
 
-      const result = cell(rows()[0], 'result')!;
-      expect(result.getAttribute('data-result')).toBe('none');
-      expect(result.textContent?.trim()).toBe(t('list.result.none'));
-      expect(result.querySelector('a')!.getAttribute('href')).toBe('/runs/40');
+      expect(cell(rows()[0], 'result')!.getAttribute('data-result')).toBe('none');
+      expect(chip(rows()[0]).textContent?.trim()).toBe(t('list.result.none'));
+      expect(chip(rows()[0]).classList).toContain('status-chip--clean');
     });
 
-    it('says the run stopped, with a link to it, for a failed and for a timed-out run', async () => {
+    it('says the run stopped, in amber, for a failed and for a timed-out run', async () => {
       await draw([control(1, ran('failed', null)), control(2, ran('timed_out', null))]);
 
       for (const row of rows()) {
-        const link = cell(row, 'result')!.querySelector('a')!;
-        expect(link.textContent?.trim()).toBe(t('list.result.stopped'));
-        expect(link.getAttribute('href')).toBe('/runs/40');
+        expect(chip(row).textContent?.trim()).toBe(t('list.result.stopped'));
+        expect(chip(row).classList).toContain('status-chip--stopped');
       }
     });
 
@@ -93,6 +93,17 @@ describe('ControlsTableComponent', () => {
       expect(cell(rows()[0], 'result')!.textContent?.trim()).toBe(t('list.result.running'));
     });
 
+    it('keeps the words and drops the colour for an archived control, whatever its run found', async () => {
+      const archived = { isActive: false };
+      await draw([control(1, ran('succeeded', 3), archived), control(2, ran('succeeded', 0), archived)], { archived: true });
+
+      expect(rows().map((row) => chip(row).textContent?.trim())).toEqual([
+        t('results.violations.other', { count: 3 }),
+        t('list.result.none'),
+      ]);
+      expect(rows().map((row) => chip(row).className)).toEqual(['status-chip', 'status-chip']);
+    });
+
     it('writes the day of an earlier run as a date', async () => {
       await draw([control(1, ran('succeeded', 3))]);
 
@@ -100,16 +111,73 @@ describe('ControlsTableComponent', () => {
     });
   });
 
-  it('links the name to the editor and labels the root entity from the glossary', async () => {
-    await draw([control(7, null)]);
+  describe('the head', () => {
+    const heads = () => [...host().querySelectorAll<HTMLElement>('thead th')];
+    const buttons = () => [...host().querySelectorAll<HTMLButtonElement>('[data-testid="sort-header"]')];
+
+    it('names every column of the details on a button that asks to sort by it', async () => {
+      const asked: string[] = [];
+      fixture.componentInstance.sortChange.subscribe((column) => asked.push(column));
+      await draw([control(1, null)]);
+
+      expect(buttons().map((button) => button.textContent?.trim())).toEqual(
+        ['control', 'checked', 'lastRun', 'result'].map((column) => t(`list.columns.${column}`)),
+      );
+      buttons().forEach((button) => button.click());
+
+      expect(asked).toEqual(['name', 'rootEntity', 'lastRun', 'violations']);
+    });
+
+    it('says which column the list is sorted by, and which way, on its header cell', async () => {
+      await draw([control(1, null)], { sort: 'lastRun', dir: 'desc' });
+
+      expect(heads().map((head) => head.getAttribute('aria-sort'))).toEqual(['none', 'none', 'descending', 'none', null, null]);
+      expect(buttons().map((button) => button.getAttribute('data-sort'))).toEqual([null, null, 'desc', null]);
+    });
+
+    it('has no column for a run button in the archive', async () => {
+      await draw([control(1, null, { isActive: false })], { archived: true });
+
+      expect(heads()).toHaveLength(5);
+      expect(rows()[0].querySelector('.cell-run')).toBeNull();
+    });
+  });
+
+  it('links the name to the results of the last run, and the pencil to the editor', async () => {
+    await draw([control(7, ran('succeeded', 3))]);
 
     const name = cell(rows()[0], 'control-link')!;
-    expect(name.getAttribute('href')).toBe('/controls/7');
+    expect(name.getAttribute('href')).toBe('/runs/40');
     expect(name.querySelector('bdi')!.textContent).toBe('control 7');
+    expect(cell(rows()[0], 'edit')!.getAttribute('href')).toBe('/controls/7');
+  });
+
+  it('has one link in the details of a row, and says where it leads: the whole of the details is that link', async () => {
+    await draw([control(7, ran('succeeded', 3)), control(8, null)]);
+
+    for (const row of rows()) {
+      const details = [...row.querySelectorAll('td:not(.cell-run, .cell-actions)')];
+      expect(details.flatMap((part) => [...part.querySelectorAll('a, button')])).toEqual([cell(row, 'control-link')]);
+    }
+    const described = rows().map(
+      (row) => host().querySelector(`#${cell(row, 'control-link')!.getAttribute('aria-describedby')}`)!.textContent,
+    );
+    expect(described).toEqual([t('list.actions.openResults'), t('list.actions.openControl')]);
+  });
+
+  it('links the name of a control that never ran to the control\'s own results, where it can be run', async () => {
+    await draw([control(7, null)]);
+
+    expect(cell(rows()[0], 'control-link')!.getAttribute('href')).toBe('/controls/7/runs');
+  });
+
+  it('labels what the control checks from the glossary', async () => {
+    await draw([control(7, null)]);
+
     expect(rows()[0].textContent).toContain(SYNTHETIC_GLOSSARY.entities[0].label.plural['he']);
   });
 
-  it('shows a dash for the root entity when the glossary could not be read', async () => {
+  it('shows a dash for what the control checks when the glossary could not be read', async () => {
     await draw([control(7, null)], { glossary: null });
 
     expect(rows()[0].querySelectorAll('td')[1].textContent?.trim()).toBe(t('common.none'));
@@ -136,23 +204,37 @@ describe('ControlsTableComponent', () => {
     expect(second.textContent?.trim()).toBe(t('list.actions.running'));
   });
 
-  it('describes the run button and the result of a row by the name of its control', async () => {
+  it('describes the run button of a row by the name of its control', async () => {
     await draw([control(1, ran('succeeded', 3)), control(2, ran('succeeded', 0))]);
 
     for (const row of rows()) {
       const name = cell(row, 'control-link')!;
       expect(name.id).toMatch(/^control-\d+$/);
       expect(cell(row, 'run')!.getAttribute('aria-describedby')).toBe(name.id);
-      expect(cell(row, 'result')!.querySelector('a')!.getAttribute('aria-describedby')).toBe(name.id);
     }
   });
 
-  it('offers only duplicate for an archived control, and marks it', async () => {
-    await draw([control(1, null, { isActive: false })]);
+  it('asks to archive the control of the row whose archive button is pressed, and names the button by the control', async () => {
+    const asked: number[] = [];
+    fixture.componentInstance.archive.subscribe((control) => asked.push(control.id));
+    await draw([control(1, null), control(2, null)]);
 
-    expect(cell(rows()[0], 'archived-chip')!.textContent).toBe(t('list.archived'));
+    const button = cell(rows()[1], 'archive')!;
+    button.click();
+
+    expect(asked).toEqual([2]);
+    expect(button.getAttribute('aria-label')).toBe(t('list.actions.archiveNamed', { name: 'control 2' }));
+  });
+
+  it('offers only duplicate for an archived control: it cannot be run, edited or archived again', async () => {
+    await draw([control(1, ran('succeeded', 3), { isActive: false })], { archived: true });
+
+    // the row still opens the results of its last run
+    expect(cell(rows()[0], 'control-link')!.getAttribute('href')).toBe('/runs/40');
+
     expect(cell(rows()[0], 'run')).toBeNull();
     expect(cell(rows()[0], 'edit')).toBeNull();
+    expect(cell(rows()[0], 'archive')).toBeNull();
     expect(cell(rows()[0], 'duplicate')!.getAttribute('href')).toBe('/controls/new?from=1');
   });
 

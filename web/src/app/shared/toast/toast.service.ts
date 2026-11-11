@@ -31,14 +31,17 @@ export class ToastService {
     this.open(this.counted.text(baseKey, count));
   }
 
-  show(messageKey: string, params: Record<string, unknown> = {}, action?: ToastAction): ToastRef {
-    return this.open(this.translate.instant(messageKey, params) as string, action);
+  /** `duration` is for a toast whose action is the only way back to something: it has to be reached in time. */
+  show(messageKey: string, params: Record<string, unknown> = {}, action?: ToastAction, duration = TOAST_MS): ToastRef {
+    return this.open(this.translate.instant(messageKey, params) as string, action, duration);
   }
 
-  private open(message: string, action?: ToastAction): ToastRef {
+  private open(message: string, action?: ToastAction, duration = TOAST_MS): ToastRef {
     const label: string | undefined = action ? this.translate.instant(action.labelKey) : undefined;
     const ref = this.snackBar.open(message, label, {
-      duration: TOAST_MS,
+      duration,
+      // styled as the toast of this product (`_states.scss`): it stands over the bar at the bottom of the window
+      panelClass: 'app-toast',
       // without the direction Material reads 'start' as the left edge
       direction: this.language.dir,
       horizontalPosition: 'start',

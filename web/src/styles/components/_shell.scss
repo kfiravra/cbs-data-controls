@@ -1,12 +1,10 @@
-// The frame of every screen: the bar, the page container, the page head.
+// The frame: the bar, the page container, the page head, the tabs of the list, and the panel that opens
+// over the list.
 
+// the bar: a card across the window with one line under it, and the name as the mark
 .appbar {
-  background: var(--color-bar);
-  color: var(--color-on-bar);
-
-  :focus-visible {
-    outline-color: var(--color-on-bar);
-  }
+  border-block-end: 1px solid var(--color-line);
+  background: var(--color-card);
 }
 
 .appbar__in {
@@ -19,35 +17,37 @@
   block-size: var(--size-bar);
 }
 
+// the mark is the name, set as a wordmark: no symbol stands beside it
 .brand {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-3);
   min-block-size: var(--size-control);
   text-decoration: none;
   font-size: var(--text-title);
-  font-weight: 500;
+  font-weight: var(--weight-strong);
+  line-height: 1;
 }
 
-// three records and the one that differs
-.brand__mark {
-  inline-size: 22px;
-  block-size: 22px;
-  flex: none;
-  fill: currentColor;
-}
-
+// The room under the page's content is the height of the bar that is fixed at the bottom of the window (a
+// control and its two paddings), the room a phone keeps at its own bottom edge, and a step of air: the last
+// row and its actions never stand under the bar.
 .page {
   display: block;
   max-inline-size: calc(var(--container) + 2 * var(--gutter));
   margin-inline: auto;
-  padding: var(--space-5) var(--gutter) var(--space-8);
+  padding: var(--space-5) var(--gutter)
+    calc(var(--size-control) + 2 * var(--space-2) + env(safe-area-inset-bottom, 0px) + var(--space-5));
 }
 
 .page-head {
   display: grid;
   gap: var(--space-4);
   margin-block-end: var(--space-5);
+}
+
+// a title never takes a ring from the script that moves the focus to it
+.page-head h1:focus {
+  outline: none;
 }
 
 .page-head__text {
@@ -68,25 +68,6 @@
   // a text button keeps its own width and stands at the start edge: stretched, its label floats mid-row
   > .btn--text {
     flex: 0 0 auto;
-  }
-}
-
-.back {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  justify-self: start;
-  min-block-size: var(--size-control);
-  margin-block: calc(-1 * var(--space-3)) calc(-1 * var(--space-2));
-  font-size: var(--text-small);
-  font-weight: 500;
-  color: var(--color-muted);
-  text-decoration: none;
-  transition: color var(--duration-out) var(--ease-out);
-
-  &:hover {
-    color: var(--color-ink);
-    transition-duration: var(--duration-in);
   }
 }
 
@@ -132,5 +113,267 @@
 
   .section {
     margin-block-start: var(--space-7);
+  }
+}
+
+// The two tabs of the list, as one segmented track: the chosen tab is filled with Ink (ink selects), and
+// each says how many controls it holds. Beside them, at the end edge, the search and the filter.
+.list-bar {
+  display: grid;
+  gap: var(--space-3);
+  margin-block-end: var(--space-4);
+}
+
+.tabs {
+  display: inline-grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-block-size: var(--size-control-sm);
+  padding: 0 var(--space-4);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  font-size: var(--text-small);
+  font-weight: var(--weight-medium);
+  color: var(--color-muted);
+  white-space: nowrap;
+  transition:
+    background-color var(--duration-out) var(--ease-out),
+    color var(--duration-out) var(--ease-out);
+
+  &:hover {
+    color: var(--color-ink);
+    transition-duration: var(--duration-in);
+  }
+
+  &[aria-selected='true'] {
+    background: var(--color-inverse);
+    color: var(--color-on-inverse);
+  }
+}
+
+.tab__count {
+  display: inline-grid;
+  place-items: center;
+  min-inline-size: 22px;
+  block-size: 20px;
+  padding-inline: 6px;
+  border-radius: var(--radius-chip);
+  background: var(--color-tonal);
+  font-size: var(--text-label);
+  line-height: 1;
+}
+
+// on the track the count of a resting tab stands on the card's white: Muted on a grey chip falls under 4.5:1
+.tab:not([aria-selected='true']) .tab__count {
+  background: var(--color-card);
+}
+
+.tab[aria-selected='true'] .tab__count {
+  background: var(--color-on-inverse-tonal);
+}
+
+@media (min-width: 900px) {
+  .list-bar {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: var(--space-4);
+  }
+}
+
+// The panel: a control or a run, over the list. It stands at the inline end, as tall as the window, and the
+// list stays in view beside it; below 640 it is the whole window. What is inside answers to the panel's own
+// width (`@container sheet`), not to the window's.
+.sheet-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  justify-content: flex-end;
+  padding: var(--sheet-inset);
+}
+
+.sheet-scrim {
+  position: absolute;
+  inset: 0;
+  background: var(--color-scrim);
+  animation: scrim-in var(--duration-panel) var(--ease-out);
+}
+
+.sheet,
+.app-sheet {
+  --sheet-pad: var(--space-4);
+  --sheet-radius: 0px;
+
+  container: sheet / inline-size;
+}
+
+// a card that floats over the list, with a little room around it; the whole window on a phone
+.sheet {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  inline-size: 100%;
+  block-size: 100%;
+  overflow: hidden;
+  border-radius: var(--sheet-radius);
+  background: var(--color-card);
+  box-shadow: var(--shadow-overlay);
+  animation: sheet-in var(--duration-panel) var(--ease-out);
+
+  // the keyboard starts from the panel itself: a container shows no ring
+  &:focus {
+    outline: none;
+  }
+}
+
+@keyframes sheet-in {
+  from {
+    opacity: 0;
+    transform: translateX(calc(var(--inline-end) * var(--space-6)));
+  }
+}
+
+@keyframes scrim-in {
+  from {
+    opacity: 0;
+  }
+}
+
+// the screen in the panel: a head and a foot that stay, and a body that scrolls between them
+.sheet__screen {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-block-size: 0;
+}
+
+.sheet__head {
+  // the room of the close button, which stands over the head's end
+  --close-room: calc(var(--space-3) + var(--size-control) + var(--space-2));
+
+  flex: none;
+  padding: var(--space-5) var(--sheet-pad) var(--space-4);
+  border-block-end: 1px solid var(--color-line);
+
+  .page-head {
+    margin-block-end: 0;
+  }
+
+  // on a narrow panel only the title's line gives way to the close button: the actions under it are a row
+  // of their own and take the panel's whole width
+  .page-head__text {
+    padding-inline-end: calc(var(--close-room) - var(--sheet-pad));
+  }
+
+  .page-head__actions {
+    flex-wrap: nowrap;
+  }
+
+  // a narrow panel keeps its head short: it stays while the body scrolls
+  .page-head {
+    gap: var(--space-3);
+  }
+}
+
+.sheet__body {
+  flex: 1 1 auto;
+  min-block-size: 0;
+  padding: var(--space-5) var(--sheet-pad) var(--space-7);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+// a body that holds rows: on the page's ground, so a row is the same white bubble it is in the list
+.sheet__body--ground {
+  background: var(--color-ground);
+}
+
+// what takes the focus in the body is scrolled clear of its edges: the reason under an invalid row stays in
+// view above the foot
+.sheet__body :is(input, textarea, select, button, a, mat-select, [tabindex]) {
+  scroll-margin-block: var(--space-8);
+}
+
+.sheet__foot {
+  flex: none;
+}
+
+// a foot of buttons: at the end edge, the main one last
+.sheet__foot--actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--sheet-pad);
+  border-block-start: 1px solid var(--color-line);
+}
+
+// a foot of a table: how many rows are shown, and the pager, always in view under the rows
+.sheet__foot--table {
+  padding: var(--space-2) var(--sheet-pad);
+  padding-block-end: max(var(--space-2), env(safe-area-inset-bottom));
+  border-block-start: 1px solid var(--color-line);
+}
+
+.sheet__close {
+  position: absolute;
+  inset-block-start: var(--space-4);
+  inset-inline-end: var(--space-3);
+  z-index: 1;
+}
+
+// the picker of a control's runs, with what the head says beside it
+.run-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+}
+
+.run-pick {
+  inline-size: min(100%, 23rem);
+
+  .field__prefix {
+    margin-inline-end: var(--space-1);
+  }
+}
+
+@media (min-width: 640px) {
+  .sheet {
+    inline-size: min(var(--sheet-width), 100% - var(--sheet-peek));
+  }
+
+  // the room of the body's scrollbar is always kept, as the page's is: a body that grows past the panel (a
+  // first choice in a new control, one more condition) does not move sideways when the bar appears
+  .sheet__body {
+    scrollbar-gutter: stable;
+  }
+
+  // the actions stand at the end of the title's row: the whole head gives way to the close button
+  .sheet__head {
+    padding-inline-end: var(--close-room);
+
+    .page-head__text {
+      padding-inline-end: 0;
+    }
+  }
+
+  .sheet,
+  .app-sheet {
+    --sheet-pad: var(--space-6);
+    --sheet-radius: var(--radius-lg);
   }
 }

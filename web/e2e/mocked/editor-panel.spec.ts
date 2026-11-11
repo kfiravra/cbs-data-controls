@@ -1,0 +1,329 @@
+import { glossary, label } from '../fixtures/glossary';
+import { engine } from '../fixtures/runs';
+import { openStored, row, sentence, stored, ui } from '../support/editor-screen';
+import { t } from '../support/i18n';
+import { expect, test } from '../support/mocked';
+import { problem } from '../support/routes';
+import { atRest, sheetInset, shot } from '../support/shots';
+import { ruleTones, tonesOf } from '../support/rule';
+
+test.describe('control editor: what to check, suggestions for it, and the bar', () => {
+  test('a new control asks what to check: a card for each thing of the glossary, nothing chosen, and how they connect', async ({ page }, testInfo) => {
+    const rootable = glossary.entities.filter((entity) => entity.rootable);
+    await page.goto('/controls/new');
+    const cards = page.getByTestId('root-entity');
+
+    await expect(page.getByRole('radiogroup', { name: t('editor.what.title'), exact: true })).toBeVisible();
+    await expect(cards).toHaveCount(rootable.length);
+    for (const [index, entity] of rootable.entries()) {
+      await expect(cards.nth(index)).toContainText(label(entity.label.plural));
+      await expect(cards.nth(index)).toContainText(label(entity.description));
+      await expect(cards.nth(index)).toHaveAttribute('aria-checked', 'false');
+    }
+    // the chain is a picture to read: every thing in it, a line of words between two that connect, no control
+    const chain = page.getByTestId('entity-chain');
+    await expect(chain.getByTestId('chain-node')).toHaveText(rootable.map((entity) => label(entity.label.plural)));
+    await expect(chain.getByTestId('chain-link').first()).not.toBeEmpty();
+    await expect(chain.locator('button, a, [tabindex], [role="radio"]')).toHaveCount(0);
+    await expect(page.getByTestId('condition-builder')).toHaveCount(0);
+    await shot(page, testInfo, 'editor-what');
+
+    await cards.nth(1).click();
+    await expect(cards.nth(1)).toHaveAttribute('aria-checked', 'true');
+    await expect(chain.locator('.is-chosen')).toHaveText(label(rootable[1].label.plural));
+    await expect(page.getByTestId('root-summary')).toContainText(t('editor.what.returns', { entity: label(rootable[1].label.plural) }));
+    await expect(page.getByTestId('condition-row')).toHaveCount(1);
+  });
+
+  test('a save before it is chosen what to check asks for the choice and sends nothing', async ({ page, api }) => {
+    await page.goto('/controls/new');
+    await page.getByTestId('control-name').fill('a name');
+
+    await page.getByTestId('save').click();
+
+    await expect(page.getByTestId('what-error')).toHaveText(t('editor.what.required'));
+    await expect(page.getByTestId('root-entity').first()).toBeFocused();
+    expect(api.callsTo('POST /controls')).toHaveLength(0);
+
+    // the arrows move between the cards and choose nothing; Space chooses the card the focus is on
+    await page.keyboard.press('ArrowLeft');
+    await expect(page.getByTestId('root-entity').nth(1)).toBeFocused();
+    await expect(page.getByTestId('root-entity').and(page.locator('[aria-checked="true"]'))).toHaveCount(0);
+    await page.keyboard.press('Space');
+    await expect(page.getByTestId('root-entity').nth(1)).toHaveAttribute('aria-checked', 'true');
+    await expect(page.getByTestId('what-error')).toHaveCount(0);
+  });
+
+  test('passing over the cards with the arrows leaves a stored control\'s conditions as they are', async ({ page, api }) => {
+    const control = stored(api);
+    await openStored(page, control);
+    const count = control.definition.where.children.length;
+
+    await page.getByTestId('root-entity').and(page.locator('[aria-checked="true"]')).focus();
+    await page.keyboard.press('ArrowLeft');
+    await page.keyboard.press('ArrowLeft');
+    await page.keyboard.press('ArrowRight');
+
+    await expect(page.getByTestId('condition-row')).toHaveCount(count);
+    await expect(page.getByRole('button', { name: t('editor.toast.restore'), exact: true })).toHaveCount(0);
+    await expect(page.getByTestId('root-entity').and(page.locator('[aria-checked="true"]'))).toHaveCount(1);
+  });
+
+  test('a new control is offered up to three suggestions behind one row that comes in with its choice, and one click fills the conditions', async ({ page, api }, testInfo) => {
+    const entity = glossary.entities.find((candidate) => candidate.key === api.suggestions[0].definition.rootEntity)!;
+    const offered = api.suggestions.filter((item) => item.definition.rootEntity === entity.key).slice(0, 3);
+    api.delay('POST /suggestions', 600);
+    await page.goto('/controls/new');
+    const toggle = page.getByTestId('ideas-toggle');
+    const ideas = page.getByTestId('idea');
+
+    // nothing is offered before it is chosen what to check: the row is not there
+    await expect(page.getByTestId('root-entity').first()).toBeVisible();
+    await expect(page.getByTestId('ideas')).toHaveCount(0);
+
+    await page.getByRole('radio', { name: label(entity.label.plural) }).click();
+
+    // the row comes in with the choice, with a short entrance, and says that the suggestions are computed
+    await expect(page.getByTestId('ideas-label')).toHaveText(t('editor.ideas.loading'));
+    expect(await page.getByTestId('ideas').evaluate((row) => getComputedStyle(row).animationName)).toBe('ideas-in');
+    await atRest(page);
+    const computing = (await page.getByTestId('ideas').boundingBox())!;
+    const builderAt = (await page.getByTestId('condition-builder').boundingBox())!.y;
+    // when they arrive the row only changes its words: nothing moves
+    await expect(page.getByTestId('ideas-count')).toHaveText(String(offered.length));
+    await expect(page.getByTestId('ideas-label')).toHaveText(t('editor.ideas.title'));
+    expect(await page.getByTestId('ideas').boundingBox()).toEqual(computing);
+    expect((await page.getByTestId('condition-builder').boundingBox())!.y).toBe(builderAt);
+    // collapsed until it is pressed, and its words name no machine
+    await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    await expect(ideas).toHaveCount(0);
+    expect(await toggle.innerText()).not.toMatch(/\bAI\b/i);
+    expect(offered.length).toBeGreaterThan(1);
+    expect(offered.length).toBeLessThanOrEqual(3);
+    expect(api.callsTo('POST /suggestions').at(-1)!.body).toEqual({ rootEntity: entity.key, max: 3 });
+
+    await toggle.click();
+
+    await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    await expect(ideas).toHaveCount(offered.length);
+    await expect(page.getByTestId('ideas')).toContainText(t('editor.ideas.hint'));
+    await expect(ideas.first()).toContainText(offered[0].name);
+    await expect(ideas.first()).toContainText(offered[0].evidence[0].text);
+    await shot(page, testInfo, 'editor-ideas');
+
+    await ideas.first().click();
+
+    // the choice is made: the options close, and the conditions are the suggestion's
+    await expect(ideas).toHaveCount(0);
+    await expect(page.getByTestId('control-name')).toHaveValue(offered[0].name);
+    await expect(sentence(page)).toHaveAttribute('data-stale', 'false');
+    await expect(sentence(page)).toContainText(engine.sentenceOf(offered[0].definition).conditions[0].sentence.split(' ').slice(1).join(' '));
+    expect(api.callsTo('POST /controls')).toHaveLength(0);
+
+    // another suggestion replaces the first one whole: its name, its description and its conditions
+    await toggle.click();
+    await ideas.nth(1).click();
+    await expect(page.getByTestId('control-name')).toHaveValue(offered[1].name);
+    await expect(page.getByTestId('control-description')).toHaveValue(offered[1].description);
+    await expect(sentence(page)).toContainText(engine.sentenceOf(offered[1].definition).conditions[0].sentence.split(' ').slice(1).join(' '));
+
+    // one press is not final: the toast gives back what was there before it
+    await page.getByRole('button', { name: t('editor.toast.restore'), exact: true }).click();
+    await expect(page.getByTestId('control-name')).toHaveValue(offered[0].name);
+    await expect(page.getByTestId('control-description')).toHaveValue(offered[0].description);
+  });
+
+  test('an opened list of suggestions stays open when what to check is changed, and closes when one is taken', async ({ page, api }) => {
+    const withIdeas = glossary.entities.find((candidate) => candidate.key === api.suggestions[0].definition.rootEntity)!;
+    const other = glossary.entities.find((candidate) => candidate.rootable && candidate.key !== withIdeas.key)!;
+    const offered = (entity: typeof withIdeas) => api.suggestions.filter((item) => item.definition.rootEntity === entity.key).slice(0, 3);
+    const choose = (entity: typeof withIdeas) => page.getByRole('radio', { name: label(entity.label.plural) }).click();
+    const ideas = page.getByTestId('idea');
+    await page.goto('/controls/new');
+
+    await choose(withIdeas);
+    await page.getByTestId('ideas-toggle').click();
+    await expect(ideas).toHaveCount(offered(withIdeas).length);
+
+    // another choice: the list was opened and stays so, now for the new choice (or with nothing, if it has none)
+    await choose(other);
+    await expect(page.getByTestId('root-entity').and(page.locator('[aria-checked="true"]'))).toHaveAttribute('data-key', other.key);
+    await expect(ideas).toHaveCount(offered(other).length);
+    if (offered(other).length > 0) {
+      await expect(page.getByTestId('ideas-toggle')).toHaveAttribute('aria-expanded', 'true');
+    }
+
+    // back again: open without another press
+    await choose(withIdeas);
+    await expect(ideas).toHaveCount(offered(withIdeas).length);
+    await expect(page.getByTestId('ideas-toggle')).toHaveAttribute('aria-expanded', 'true');
+    await expect(ideas.first()).toContainText(offered(withIdeas)[0].name);
+
+    // taking one into the form is what closes it
+    await ideas.first().click();
+    await expect(ideas).toHaveCount(0);
+    await expect(page.getByTestId('ideas-toggle')).toHaveAttribute('aria-expanded', 'false');
+    await expect(page.getByTestId('control-name')).toHaveValue(offered(withIdeas)[0].name);
+  });
+
+  test('an open list of suggestions closes on a press also while new ones are on their way, and the row says its state aloud', async ({ page, api }) => {
+    const withIdeas = glossary.entities.find((candidate) => candidate.key === api.suggestions[0].definition.rootEntity)!;
+    const other = glossary.entities.find((candidate) => candidate.rootable && candidate.key !== withIdeas.key)!;
+    const choose = (entity: typeof withIdeas) => page.getByRole('radio', { name: label(entity.label.plural) }).click();
+    const toggle = page.getByTestId('ideas-toggle');
+    const status = page.getByTestId('ideas-status');
+    await page.goto('/controls/new');
+
+    await choose(withIdeas);
+    await toggle.click();
+    await expect(page.getByTestId('idea').first()).toBeVisible();
+    // the row changes its words in place; the same words are a status, so the change is said
+    await expect(status).toHaveAttribute('role', 'status');
+    await expect(status).toHaveText(t('editor.ideas.title'));
+
+    api.delay('POST /suggestions', 1500);
+    await choose(other);
+    await expect(page.getByTestId('ideas-pending')).toBeVisible();
+    await expect(status).toHaveText(t('editor.ideas.loading'));
+    // open and waiting: it says it is open, it is not unavailable, and a press closes it
+    await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    await expect(toggle).not.toHaveAttribute('aria-disabled', 'true');
+    await toggle.click();
+    await expect(page.getByTestId('ideas-pending')).toHaveCount(0);
+    await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  test('under reduced motion the row of suggestions is there with the choice, without an entrance', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto('/controls/new');
+    await page.getByTestId('root-entity').first().click();
+
+    await expect(page.getByTestId('ideas')).toBeVisible();
+    expect(await page.getByTestId('ideas').evaluate((row) => getComputedStyle(row).animationName)).toBe('none');
+  });
+
+  test('the row says that there are no suggestions when there are none, and a stored control has no such row', async ({ page, api }) => {
+    api.suggestions = [];
+    await page.goto('/controls/new');
+    await page.getByTestId('root-entity').first().click();
+    await expect(page.getByTestId('condition-row')).toHaveCount(1);
+    await expect(page.getByTestId('ideas-label')).toHaveText(t('editor.ideas.none'));
+    await expect(page.getByTestId('ideas-toggle')).toHaveAttribute('aria-disabled', 'true');
+    // a row with nothing to offer opens nothing (it says it is unavailable, so the press is forced)
+    await page.getByTestId('ideas-toggle').click({ force: true });
+    await expect(page.getByTestId('idea')).toHaveCount(0);
+
+    // an engine that does not answer is no failure of the editor
+    api.fail('POST /suggestions', problem(503, 'ENGINE_UNAVAILABLE'));
+    await page.getByTestId('root-entity').nth(1).click();
+    await expect(page.getByTestId('root-entity').nth(1)).toHaveAttribute('aria-checked', 'true');
+    await expect(page.getByTestId('ideas-label')).toHaveText(t('editor.ideas.none'));
+    await expect(ui(page).getByTestId('error-banner')).toHaveCount(0);
+
+    page.once('dialog', (dialog) => void dialog.accept());
+    await openStored(page, stored(api));
+    await expect(page.getByTestId('ideas')).toHaveCount(0);
+  });
+
+  test('the conditions are in the first view: their place waits for the choice, and after it the first row needs no scrolling', async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== 'desktop', 'the first view of a desk: a phone scrolls a form by its nature');
+    await page.goto('/controls/new');
+    const body = ui(page).getByTestId('panel-body');
+
+    // before a choice the builder's place is held and says what it waits for, in view
+    await expect(page.getByTestId('builder-waiting')).toHaveText(t('editor.conditions.waiting'));
+    await expect(page.getByTestId('builder-waiting')).toBeInViewport({ ratio: 1 });
+
+    await page.getByTestId('root-entity').first().click();
+
+    // the switch, the first condition and the way to add one: all in view above the bar, and nothing scrolled
+    const builder = page.getByTestId('condition-builder');
+    await expect(builder.getByTestId('group-op')).toBeInViewport({ ratio: 1 });
+    await expect(row(page, 0)).toBeInViewport({ ratio: 1 });
+    await expect(builder.locator('[data-adder="condition"]')).toBeInViewport({ ratio: 1 });
+    expect(await body.evaluate((element) => element.scrollTop)).toBe(0);
+    const bar = (await page.getByTestId('sentence-field').boundingBox())!;
+    const first = (await row(page, 0).boundingBox())!;
+    expect(first.y + first.height).toBeLessThanOrEqual(bar.y);
+  });
+
+  test('a body that grows past the panel does not move sideways when its scrollbar appears', async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== 'desktop', 'a phone lays its scrollbar over the page: there is no room to keep');
+    await page.goto('/controls/new');
+    const body = ui(page).getByTestId('panel-body');
+    const name = page.getByTestId('control-name');
+    // once the panel is there and has come to rest: it slides in
+    await expect(name).toBeVisible();
+    await atRest(page);
+    const before = (await name.boundingBox())!;
+    expect(await body.evaluate((element) => getComputedStyle(element).scrollbarGutter)).toBe('stable');
+
+    await page.getByTestId('root-entity').first().click();
+    await expect(row(page, 0)).toBeVisible();
+    for (let added = 0; added < 4; added++) {
+      await page.locator('[data-adder="condition"]').click();
+    }
+
+    expect(await body.evaluate((element) => element.scrollHeight > element.clientHeight)).toBe(true);
+    await body.evaluate((element) => element.scrollTo(0, 0));
+    const after = (await name.boundingBox())!;
+    expect({ x: Math.round(after.x), width: Math.round(after.width) }).toEqual({
+      x: Math.round(before.x),
+      width: Math.round(before.width),
+    });
+  });
+
+  test('the name and the description keep a width that is easy to read, and the description is two rows', async ({ page, api }, testInfo) => {
+    await openStored(page, stored(api));
+    const name = (await page.getByTestId('control-name').boundingBox())!;
+    const description = page.getByTestId('control-description');
+    const box = (await description.boundingBox())!;
+
+    if (testInfo.project.name === 'desktop') {
+      // side by side, and neither as wide as the panel: the name a short line, the description about seventy characters
+      expect(Math.round(name.y)).toBe(Math.round(box.y));
+      expect(name.width).toBeLessThanOrEqual(352);
+      expect(name.width).toBeGreaterThan(240);
+      expect(box.width).toBeLessThanOrEqual(640);
+      expect(box.width).toBeGreaterThan(400);
+    } else {
+      // one under the other on a phone, each as wide as the panel lets it
+      expect(Math.round(name.width)).toBe(Math.round(box.width));
+      expect(box.y).toBeGreaterThan(name.y + name.height);
+    }
+    await expect(description).toHaveAttribute('rows', '2');
+    expect(await description.evaluate((area) => getComputedStyle(area).resize)).toBe('none');
+    // more text does not make the field taller: it scrolls inside its two rows
+    await description.fill(Array.from({ length: 12 }, (_, line) => `line ${line}`).join('\n'));
+    expect(Math.round((await description.boundingBox())!.height)).toBe(Math.round(box.height));
+  });
+
+  test('the rule in words stays in view at the foot of the panel, beside the save, and the bar never changes its height', async ({ page, api }, testInfo) => {
+    const control = stored(api);
+    await openStored(page, control);
+    const bar = page.getByTestId('sentence-field');
+    await expect(sentence(page)).toHaveAttribute('data-stale', 'false');
+    const before = (await bar.boundingBox())!;
+    const viewport = page.viewportSize()!;
+
+    // at the foot of the panel, whole, with the two buttons in it
+    expect(Math.round(before.y + before.height)).toBe(viewport.height - (await sheetInset(page)));
+    await expect(bar.getByTestId('save')).toBeInViewport();
+    await expect(bar.getByTestId('save-run')).toBeInViewport();
+
+    // the body scrolls under it, to its end and back
+    await ui(page).getByTestId('panel-body').evaluate((body) => body.scrollTo(0, body.scrollHeight));
+    await expect(sentence(page)).toBeInViewport();
+    expect(await bar.boundingBox()).toEqual(before);
+
+    // a status line arriving, a sentence dimmed, a row removed: the bar stays as it is
+    await row(page, 1).getByTestId('value-single').fill('');
+    await expect(page.getByTestId('sentence-status')).toBeVisible();
+    expect(await bar.boundingBox()).toEqual(before);
+    await shot(page, testInfo, 'editor-bar-status');
+    await row(page, 1).getByTestId('remove-row').click();
+    await expect.poll(() => ruleTones(sentence(page))).toEqual(tonesOf(1));
+    await expect(page.getByTestId('sentence-status')).toHaveCount(0);
+    expect(await bar.boundingBox()).toEqual(before);
+  });
+});

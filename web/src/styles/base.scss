@@ -8,14 +8,70 @@
 
 html {
   -webkit-text-size-adjust: 100%;
-  scrollbar-color: var(--color-control-line) transparent;
+}
+
+// The room of the page's scrollbar is always kept: a list that grows past the window (another tab, one more
+// row) does not move sideways when the bar appears. From 640 only: below it the layout is a phone's, whose
+// scrollbar lies over the page and takes no room to keep.
+@media (min-width: 640px) {
+  html {
+    scrollbar-gutter: stable;
+  }
+}
+
+// Scrollbars: thin, half transparent, with no arrows, on a track that is not drawn. Chromium and Safari
+// take the pseudo-elements; a browser without them takes the two standard properties (which, where both
+// are known, would switch the pseudo-elements off: hence the test).
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-button {
+  display: none;
+}
+
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: var(--scroll-thumb, var(--color-scroll));
+  background-clip: content-box;
+}
+
+@supports not selector(::-webkit-scrollbar) {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scroll-thumb, var(--color-scroll)) transparent;
+  }
+}
+
+// the inline end as a sign, for the one thing a logical property cannot say: which way a panel slides in
+:root {
+  --inline-end: 1;
+}
+
+[dir='rtl'] {
+  --inline-end: -1;
+}
+
+// The bar's white and the line under it are also painted on the canvas itself: the room kept for the
+// scrollbar is the canvas's, and the bar would otherwise end a scrollbar's width before the window's edge.
+html {
+  background:
+    linear-gradient(var(--color-line), var(--color-line)) 0 var(--size-bar) / 100% 1px no-repeat,
+    linear-gradient(var(--color-card), var(--color-card)) 0 0 / 100% var(--size-bar) no-repeat,
+    var(--color-ground);
 }
 
 body {
   margin: 0;
-  background: var(--color-ground);
   color: var(--color-ink);
-  font: 400 var(--text-body) / 1.55 var(--font-sans);
+  font: var(--weight-regular) var(--text-body) / var(--leading-body) var(--font-sans);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   caret-color: var(--color-action);
@@ -101,29 +157,29 @@ button {
   color: var(--color-muted);
 }
 
-// type roles
+// type roles: the only places that set a size, and each sets its weight and its line height with it
 .t-page {
   font-size: var(--text-page);
-  font-weight: 500;
-  line-height: 1.25;
+  font-weight: var(--weight-strong);
+  line-height: var(--leading-tight);
   text-wrap: balance;
 }
 
 .t-title {
   font-size: var(--text-title);
-  font-weight: 500;
-  line-height: 1.35;
+  font-weight: var(--weight-strong);
+  line-height: var(--leading-title);
 }
 
 .t-small {
   font-size: var(--text-small);
-  line-height: 1.5;
+  line-height: var(--leading-body);
 }
 
 .t-label {
   font-size: var(--text-label);
-  font-weight: 500;
-  line-height: 1.4;
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-title);
 }
 
 // icons: drawn in the colour of the text beside them

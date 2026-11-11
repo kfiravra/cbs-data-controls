@@ -1,95 +1,89 @@
 @if (notFound()) {
-  <app-not-found />
-} @else {
-  <!-- a stored control has a meta line and, unless archived, the archive action: both hold their place while
-       it is read, so the form under the head does not move when they arrive -->
-  <app-page-head [title]="title() | translate" [meta]="meta()" [metaPending]="opening()" [back]="true">
-    @if (opening() || (store.control() && !store.archived())) {
-      <button
-        class="btn btn--text"
-        type="button"
-        data-testid="archive"
-        [disabled]="busy() || !store.control()"
-        (click)="archive()"
-      >
-        <app-icon name="archive" />{{ 'editor.archive.action' | translate }}
-      </button>
-    }
-  </app-page-head>
-
-  <div class="stack page-banners">
-    @if (store.glossaryError(); as error) {
-      <app-error-banner data-source="glossary" [error]="error" (retry)="reopen()" />
-    }
-    @if (store.failure(); as error) {
-      <!-- a failed read is tried again here; a failed save, run or archive is tried again with its own button -->
-      <app-error-banner
-        data-source="action"
-        [error]="error"
-        [retryable]="store.loadState() === 'failed'"
-        (retry)="reopen()"
-      />
-    } @else if (store.sentenceFailure(); as error) {
-      <app-error-banner data-source="sentence" [error]="error" (retry)="store.revalidate()" />
-    }
-    @if (store.archived()) {
-      <app-banner
-        tone="warning"
-        icon="archive"
-        data-testid="archived-banner"
-        [title]="'errors.CONTROL_ARCHIVED.title' | translate"
-        [body]="'errors.CONTROL_ARCHIVED.body' | translate"
-        [actionLabel]="'editor.actions.duplicate' | translate"
-        (action)="duplicate()"
-      />
-    }
-    @if (store.conflict()) {
-      <app-banner
-        tone="warning"
-        icon="sync_problem"
-        data-testid="conflict-banner"
-        [urgent]="true"
-        [title]="'errors.CONCURRENCY_CONFLICT.title' | translate"
-        [body]="'errors.CONCURRENCY_CONFLICT.body' | translate"
-        [actionLabel]="'editor.actions.loadCurrent' | translate"
-        (action)="store.reload()"
-      />
-    }
-    @if (store.outdated()) {
-      <app-banner
-        tone="warning"
-        icon="link_off"
-        data-testid="outdated-banner"
-        [title]="'errors.CONTROL_DEFINITION_OUTDATED.title' | translate"
-        [body]="'errors.CONTROL_DEFINITION_OUTDATED.body' | translate"
-      />
-    }
-    @if (treeErrors(); as text) {
-      <app-banner
-        tone="danger"
-        data-testid="tree-errors"
-        [urgent]="true"
-        [title]="'errors.DEFINITION_INVALID.title' | translate"
-        [body]="text"
-      />
-    }
+  <div class="sheet__body">
+    <app-not-found />
   </div>
+} @else {
+  <!-- a stored control has a meta line: it holds its place while the control is read, so the form under the
+       head does not move when it arrives -->
+  <header class="sheet__head">
+    <app-page-head titleId="panel-title" [title]="title() | translate" [meta]="meta()" [metaPending]="opening()" />
+  </header>
 
-  @if (store.archived()) {
-    <section class="stack" data-testid="archived-view">
-      <h2 class="t-title"><bdi>{{ store.name() }}</bdi></h2>
-      @if (store.description(); as description) {
-        <p class="muted"><bdi>{{ description }}</bdi></p>
+  <div class="sheet__body" data-testid="panel-body">
+    <div class="stack page-banners">
+      @if (store.glossaryError(); as error) {
+        <app-error-banner data-source="glossary" [error]="error" (retry)="reopen()" />
       }
-      @if (store.sentence().parts; as parts) {
-        <p class="sentence"><app-text-parts [parts]="parts" [marks]="store.marks()" /></p>
+      @if (store.failure(); as error) {
+        <!-- a failed read is tried again here; a failed save or run is tried again with its own button -->
+        <app-error-banner
+          data-source="action"
+          [error]="error"
+          [retryable]="store.loadState() === 'failed'"
+          (retry)="reopen()"
+        />
+      } @else if (store.sentenceFailure(); as error) {
+        <app-error-banner data-source="sentence" [error]="error" (retry)="store.revalidate()" />
       }
-    </section>
-  } @else {
-    <div class="editor">
-      <div class="editor__main">
-        <section aria-labelledby="s-details">
-          <h2 class="t-title" id="s-details">{{ 'editor.details.title' | translate }}</h2>
+      @if (store.archived()) {
+        <app-banner
+          tone="warning"
+          icon="archive"
+          data-testid="archived-banner"
+          [title]="'errors.CONTROL_ARCHIVED.title' | translate"
+          [body]="'errors.CONTROL_ARCHIVED.body' | translate"
+          [actionLabel]="'editor.actions.duplicate' | translate"
+          (action)="duplicate()"
+        />
+      }
+      @if (store.conflict()) {
+        <app-banner
+          tone="warning"
+          icon="sync_problem"
+          data-testid="conflict-banner"
+          [urgent]="true"
+          [title]="'errors.CONCURRENCY_CONFLICT.title' | translate"
+          [body]="'errors.CONCURRENCY_CONFLICT.body' | translate"
+          [actionLabel]="'editor.actions.loadCurrent' | translate"
+          (action)="store.reload()"
+        />
+      }
+      @if (store.outdated()) {
+        <app-banner
+          tone="warning"
+          icon="link_off"
+          data-testid="outdated-banner"
+          [title]="'errors.CONTROL_DEFINITION_OUTDATED.title' | translate"
+          [body]="'errors.CONTROL_DEFINITION_OUTDATED.body' | translate"
+        />
+      }
+      @if (treeErrors(); as text) {
+        <app-banner
+          tone="danger"
+          data-testid="tree-errors"
+          [urgent]="true"
+          [title]="'errors.DEFINITION_INVALID.title' | translate"
+          [body]="text"
+        />
+      }
+    </div>
+
+    @if (store.archived()) {
+      <section class="stack" data-testid="archived-view">
+        <h2 class="t-title"><bdi>{{ store.name() }}</bdi></h2>
+        @if (store.description(); as description) {
+          <p class="muted"><bdi>{{ description }}</bdi></p>
+        }
+        @if (store.sentence().parts; as parts) {
+          <p class="sentence"><app-text-parts [parts]="parts" [marks]="store.marks()" /></p>
+        }
+      </section>
+    } @else {
+      <div class="editor">
+        <!-- the two fields name themselves: the section's title is heard and not seen, and the room it took
+             brings the conditions into the first view -->
+        <section class="editor__details" aria-labelledby="s-details">
+          <h2 class="sr-only" id="s-details">{{ 'editor.details.title' | translate }}</h2>
           <div class="field">
             <label class="field__label" for="control-name">{{ 'editor.details.name.label' | translate }}</label>
             <mat-form-field appearance="outline" subscriptSizing="dynamic" [class.field--invalid]="!!store.nameIssue()">
@@ -126,6 +120,7 @@
                 #descriptionInput
                 matInput
                 id="control-description"
+                class="two-rows"
                 rows="2"
                 data-testid="control-description"
                 [appInvalid]="!!store.descriptionIssue()"
@@ -143,91 +138,169 @@
           </div>
         </section>
 
-        <section aria-labelledby="s-root">
+        <!-- what the control checks: a question in the user's words, answered by one of the glossary's cards -->
+        <section aria-labelledby="s-what">
           <div class="section__head">
-            <h2 class="t-title" id="s-root">{{ 'editor.root.title' | translate }}</h2>
-            <p class="muted t-small">{{ 'editor.root.hint' | translate }}</p>
+            <h2 class="t-title" id="s-what">{{ 'editor.what.title' | translate }}</h2>
+            <p class="muted t-small">{{ 'editor.what.hint' | translate }}</p>
           </div>
-          @if (store.map(); as map) {
-            <app-relationship-map [map]="map" labelledBy="s-root" (choose)="chooseRoot($event)" />
-            @if (rootSummary(); as summary) {
-              <p class="t-small" data-testid="root-summary">
-                {{ 'editor.root.returns' | translate: { entity: summary.entity } }}
-                @if (summary.also) {
-                  {{ 'editor.root.also' | translate: { list: summary.also } }}
+          @if (store.choices(); as choices) {
+            <div class="editor__what">
+              <app-entity-cards
+                labelledBy="s-what"
+                [entities]="choices"
+                [chosen]="store.rootEntity()"
+                [invalid]="store.rootIssue()"
+                [describedBy]="store.rootIssue() ? 'what-error' : null"
+                (choose)="chooseRoot($event)"
+              />
+              @if (store.rootIssue()) {
+                <p class="field__error" id="what-error" role="alert" data-testid="what-error">
+                  <app-icon name="error" size="sm" />{{ 'editor.what.required' | translate }}
+                </p>
+              }
+              <!-- one line: how the choices connect, and what this choice returns -->
+              <div class="editor__reach">
+                @if (store.chain(); as chain) {
+                  <app-entity-chain [chain]="chain" />
                 }
-              </p>
-            }
+                @if (rootSummary(); as summary) {
+                  <p class="t-small muted" data-testid="root-summary">
+                    {{ 'editor.what.returns' | translate: { entity: summary.entity } }}
+                    @if (summary.also) {
+                      {{ 'editor.what.also' | translate: { list: summary.also } }}
+                    }
+                  </p>
+                }
+              </div>
+
+              <!-- A control that starts from nothing is offered what the engine would check about its
+                   choice, behind one row. The row comes in with the choice (the conditions come in with it,
+                   so it moves nothing that was read), and then only changes its words when the offer
+                   arrives; nothing opens until it is pressed -->
+              @if (store.fromNothing() && store.rootEntity()) {
+                <div class="ideas" data-testid="ideas" [attr.aria-busy]="store.ideas.loading()">
+                  <button
+                    class="ideas__row"
+                    type="button"
+                    data-testid="ideas-toggle"
+                    [attr.aria-controls]="ideasShown() ? 'ideas-list' : null"
+                    [attr.aria-expanded]="ideasShown()"
+                    [attr.aria-disabled]="!ideasShown() && store.ideas.items().length === 0 ? 'true' : null"
+                    (click)="toggleIdeas()"
+                  >
+                    <app-icon name="sparkle" />
+                    <span class="ideas__label" data-testid="ideas-label">{{ ideasLabel() | translate }}</span>
+                    @if (store.ideas.items().length; as count) {
+                      <span class="ideas__count num" data-testid="ideas-count">{{ count }}</span>
+                      <app-icon class="ideas__chevron" name="expand_more" />
+                    }
+                  </button>
+                  <!-- the row's words change in place when the offer arrives; this says the change aloud -->
+                  <span class="sr-only" role="status" data-testid="ideas-status">{{ ideasLabel() | translate }}</span>
+                  <!-- once opened the list stays open while the choice of what to check changes (a bar holds
+                       its place while the new suggestions are computed); it closes when one is taken -->
+                  @if (ideasShown()) {
+                    <div class="ideas__list" id="ideas-list">
+                      <p class="muted t-small">{{ 'editor.ideas.hint' | translate }}</p>
+                      @if (store.ideas.loading()) {
+                        <div class="idea idea--pending" aria-hidden="true" data-testid="ideas-pending">
+                          <app-skeleton width="44%" />
+                          <app-skeleton width="78%" />
+                        </div>
+                      }
+                      @for (idea of store.ideas.items(); track $index) {
+                        <button class="idea" type="button" data-testid="idea" (click)="applyIdea(idea)">
+                          <span class="idea__name"><bdi>{{ idea.name }}</bdi></span>
+                          <span class="idea__rule">
+                            <app-text-parts [parts]="idea.sentenceParts" [marks]="ideaMarks()[$index]" [named]="false" />
+                          </span>
+                          @if (idea.evidence[0]; as evidence) {
+                            <span class="chip num">{{ evidence.text }}</span>
+                          }
+                        </button>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+            </div>
           } @else {
             <app-skeleton width="60%" />
           }
         </section>
 
+        <!-- the conditions are always in the first view: before a choice their place says what they wait for -->
         <section aria-labelledby="s-conditions">
           <div class="section__head">
             <h2 class="t-title" id="s-conditions">{{ 'editor.conditions.title' | translate }}</h2>
             <p class="muted t-small">{{ 'editor.conditions.hint' | translate }}</p>
           </div>
-          @if (store.view(); as view) {
-            <app-condition-builder
-              [draft]="store.draft()"
-              [rootEntity]="store.rootEntity()!"
-              [view]="view"
-              [focus]="store.focus()"
-              (edit)="edit($event)"
-              (trace)="store.traced.set($event)"
-            />
+          @if (store.rootEntity(); as rootEntity) {
+            @if (store.view(); as view) {
+              <app-condition-builder
+                [draft]="store.draft()"
+                [rootEntity]="rootEntity"
+                [view]="view"
+                [focus]="store.focus()"
+                (edit)="edit($event)"
+                (advancedChange)="store.advanced.set($event)"
+              />
+            } @else {
+              <div class="builder" aria-hidden="true">
+                <app-skeleton width="70%" />
+                <app-skeleton width="52%" />
+              </div>
+            }
           } @else {
-            <div class="builder" aria-hidden="true">
-              <app-skeleton width="70%" />
-              <app-skeleton width="52%" />
+            <div class="builder builder--waiting" data-testid="builder-waiting">
+              <p class="muted t-small">{{ 'editor.conditions.waiting' | translate }}</p>
             </div>
           }
         </section>
       </div>
+    }
+  </div>
 
-      <aside class="editor__side" aria-labelledby="sentence-title">
-        <app-sentence-field
-          [parts]="store.sentence().parts"
-          [stale]="store.sentence().stale"
-          [marks]="store.marks()"
-          [traced]="store.traced()"
-          [open]="store.openNodes()"
-          [changed]="store.settling()"
-          [hintKey]="sentenceHint()"
-          [status]="status()"
-          (trace)="store.traced.set($event)"
+  @if (!store.archived()) {
+    <!-- the control in words stays in view, beside the save: the body scrolls over it -->
+    <footer class="sheet__foot" role="group" aria-labelledby="sentence-title">
+      <app-sentence-field
+        [parts]="store.sentence().parts"
+        [stale]="store.sentence().stale"
+        [marks]="store.marks()"
+        [changed]="store.settling()"
+        [hintKey]="sentenceHint()"
+        [status]="status()"
+      >
+        <!-- aria-disabled while a save is on its way: the pressed button keeps the focus (see _buttons.scss) -->
+        <button
+          class="btn btn--on-inverse-quiet"
+          type="button"
+          data-testid="save"
+          [attr.aria-disabled]="busy() ? 'true' : null"
+          (click)="save(false)"
         >
-          <!-- aria-disabled while a save is on its way: the pressed button keeps the focus (see _buttons.scss) -->
-          <button
-            class="btn btn--on-action"
-            type="button"
-            data-testid="save-run"
-            [attr.aria-disabled]="busy() ? 'true' : null"
-            (click)="save(true)"
-          >
-            @if (store.saveState() === 'running') {
-              <span class="spinner" aria-hidden="true"></span>{{ 'editor.actions.running' | translate }}
-            } @else {
-              {{ 'editor.actions.saveAndRun' | translate }}
-            }
-          </button>
-          <button
-            class="btn btn--on-action-tonal"
-            type="button"
-            data-testid="save"
-            [attr.aria-disabled]="busy() ? 'true' : null"
-            (click)="save(false)"
-          >
-            @if (store.saveState() === 'saving') {
-              <span class="spinner" aria-hidden="true"></span>{{ 'editor.actions.saving' | translate }}
-            } @else {
-              {{ 'editor.actions.save' | translate }}
-            }
-          </button>
-          <a class="btn btn--text btn--sm" routerLink="/" data-testid="cancel">{{ 'editor.actions.cancel' | translate }}</a>
-        </app-sentence-field>
-      </aside>
-    </div>
+          @if (store.saveState() === 'saving') {
+            <span class="spinner" aria-hidden="true"></span>{{ 'editor.actions.saving' | translate }}
+          } @else {
+            {{ 'editor.actions.save' | translate }}
+          }
+        </button>
+        <button
+          class="btn btn--on-inverse"
+          type="button"
+          data-testid="save-run"
+          [attr.aria-disabled]="busy() ? 'true' : null"
+          (click)="save(true)"
+        >
+          @if (store.saveState() === 'running') {
+            <span class="spinner" aria-hidden="true"></span>{{ 'editor.actions.running' | translate }}
+          } @else {
+            {{ 'editor.actions.saveAndRun' | translate }}
+          }
+        </button>
+      </app-sentence-field>
+    </footer>
   }
 }

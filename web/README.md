@@ -1,8 +1,27 @@
 # web
 
-The Angular client of Data Controls: the controls list, the control editor, the run results and the
-suggestions dialog, in Hebrew, right to left. It talks to one address, the application api under `/api/v1`, and
-draws what comes back: the rule sentence, the reasons and the suggestion texts arrive rendered by the engine.
+The Angular client of Data Controls, in Hebrew, right to left. It is one page: the list of controls, with the
+control editor, the run results and the suggestions opening in a panel over it. It talks to one address, the
+application api under `/api/v1`, and draws what comes back: the rule sentence, the reasons and the suggestion
+texts arrive rendered by the engine.
+
+The list is the parent route and holds the panel; the addresses are `/` (the list), `/controls/<id>` (the
+editor, `new` for a control not saved yet), `/runs/<id>` (the results of a run) and `/controls/<id>/runs` (a
+control's results by the control: its newest run, or its state before a first run). The panel's X, Esc and a
+click beside it lead back to `/` with the list's search, tab, order and page as they were. The panel closes
+at once, also over a changed draft: a toast then offers the draft back.
+
+Every table is one design: a head of column names and a bubble per row (a card per row below 640px). A row of
+the list has three parts: its details, which open the results of its last run wherever they are clicked, its
+run button and its actions. A column's name sorts by it, ascending and then descending; the order of the list
+is the server's (`sort` and `dir` in the address and in `GET /api/v1/controls`), and so is the order of a run's
+records, by any identifying field or by the reasons (`sort=field` with `field`, `sort=reasons`). A rule in
+words is plain text: each condition's words are underlined in that condition's colour (a fixed set of eight,
+in the order of the rule), which is also the ground of its letter in the builder, on the filter chips and
+beside each reason. It is one flowing sentence in which only the conditions are underlined: a joining word
+carries no line, and a group has no bracket, no tint and no line of its own. A reason keeps its text as
+the engine wrote it. A status has one colour
+everywhere: violations red, a clean run green, a run that stopped amber, never ran and archived grey.
 Design: [docs/design.md](../docs/design.md); payloads: [contracts/api.md](../contracts/api.md); errors:
 [contracts/errors.md](../contracts/errors.md).
 
@@ -57,16 +76,19 @@ E2E_BASE_URL=http://localhost:5000 npm run e2e:gate # the build the api hosts; n
 
 One worker, both projects, about two minutes. The gate builds each of the six examples of `contracts/examples/` in the editor from
 glossary terms, saves it, runs it on the engine and reads the violating records back one by one; it then works a
-control of its own through the list (search, run, filter, duplicate, archive) and creates one control from the
-suggestions dialog.
+control of its own through the one page (search, open, run, filter, the picker of its runs, duplicate, archive
+from the row), sorts the list by violations and checks that the page shows the api's order, creates one
+control from the suggestions panel, and fills a new control from the engine's suggestions for its choice
+without saving it.
 
 - **Needs.** `GET /api/v1/health` at the base URL answering `database: ok` and `engine: ok`; the gate checks
   this first and stops with a message that names the failing part when it does not hold. The organization data must be the seed of
   `sql/` (the expected records are the planted rows of `sql/README.md`). The expected records hold for every run
   date from 2026-11-01 to 2027-12-31.
-- **May run on any list.** A gate test touches only controls it created. It never counts, orders or pages the
-  list as a whole, so a list that already holds the six examples under their real names, or what an earlier
-  gate run left, does not change the outcome.
+- **May run on any list.** A gate test touches only controls it created. It never counts or pages the list as
+  a whole, and where it sorts the whole list it asserts only that the page shows the order the api gives and
+  that the order is the contract's. A list that already holds the six examples under their real names, or
+  what an earlier gate run left, does not change the outcome.
 - **Leaves.** Every control a test creates carries a tag in its name, `e2e-` and six characters, and is
   archived when the test ends, also when it failed. Archived controls and their runs stay in the `dq` schema:
   after one gate run there are 18 more archived controls with `e2e-` in their names (9 per project) and none
@@ -74,11 +96,13 @@ suggestions dialog.
 
 ### Screenshots
 
-`e2e/support/shots.ts` saves full-page PNGs to `e2e/screenshots/<project>/<name>.png` (git-ignored). There are
-no `toHaveScreenshot` baselines: they are per-OS and font-sensitive.
+`e2e/support/shots.ts` saves PNGs to `e2e/screenshots/<project>/<name>.png` (git-ignored): the whole page when
+the list stands alone, the window when a panel is open over it. There are no `toHaveScreenshot` baselines: they
+are per-OS and font-sensitive.
 
-The gate leaves four names in each project: `gate-list`, `gate-editor`, `gate-results`, `gate-suggestions`. The
-five images the top-level README uses are the four in `e2e/screenshots/desktop/` and
+The gate leaves five names in each project: `gate-list`, `gate-editor`, `gate-results`, `gate-panel` (the
+results of an earlier run, chosen in the picker) and `gate-suggestions`. The five images the top-level README
+uses are `gate-list`, `gate-editor`, `gate-results` and `gate-suggestions` in `e2e/screenshots/desktop/` and
 `e2e/screenshots/mobile/gate-results.png`. The editor and results shots are of example 4 and show the test's tag
 in the control's name. `gate-list` is the list as the run found it, before the test creates anything: on a
 system loaded with the six examples it shows them, never run.
@@ -88,9 +112,11 @@ system loaded with the six examples it shows them, never run.
 ```
 src/app/core/       api (types mirroring contracts/api.md, services), http (interceptors), glossary,
                     definition (the draft tree, its checks and edits), i18n, text, icons
-src/app/shared/     components with inputs and outputs only: the condition builder, the sentence field, the
-                    results table, the pickers, the dialog, the states
-src/app/features/   control-editor, run-results, controls-list, suggestions: a page and a store each
+src/app/shared/     components with inputs and outputs only: the condition builder, the entity cards and
+                    chain, the sentence bar, the run overview, the results table, the sort header, the
+                    pickers, the dialog, the states
+src/app/features/   controls-list (the page, and the panel that holds the routed screens), control-editor,
+                    run-results, suggestions: a page and a store each
 src/styles/         tokens.scss (the design tokens), the Material theme, one partial per native component
 src/assets/i18n/    he.json: every text of the interface
 e2e/                fixtures, support (the in-memory api, the builder driver, the gate fixture), mocked, gate

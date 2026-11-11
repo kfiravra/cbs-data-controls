@@ -1,80 +1,71 @@
-<div class="table-bleed">
-  <table class="table table--records" data-testid="results-table" [attr.aria-busy]="loading()">
-    <thead>
-      <tr>
-        @for (column of columns(); track column.key; let first = $first) {
-          <!-- the sort button is not rendered below 640px (the toolbar's select sorts there), so the header
-               carries its name itself and is still read with its column -->
-          <th
-            scope="col"
-            class="col-id"
-            [attr.aria-sort]="first ? ariaSort() : null"
-            [attr.aria-label]="first ? column.label : null"
-          >
-            @if (first) {
-              <button class="th-sort" type="button" data-testid="sort-display" (click)="cycleSort()">
-                {{ column.label }}<app-icon size="sm" [name]="sortIcon()" />
-              </button>
-            } @else {
-              {{ column.label }}
-            }
-          </th>
-        }
-        <th scope="col">{{ 'results.table.reasons' | translate }}</th>
-      </tr>
-    </thead>
-    <tbody>
-      @if (loading()) {
-        @for (skeleton of skeletons; track $index) {
-          <tr aria-hidden="true" data-testid="skeleton-row">
-            @for (column of columns(); track column.key; let first = $first) {
-              <td [class.cell-title]="first" [class.cell-meta]="!first">
-                <app-skeleton [width]="first ? skeleton.name : 'calc(var(--space-7))'" />
-              </td>
-            }
-            <td class="cell-full"><app-skeleton [width]="skeleton.reasons" /></td>
-          </tr>
-        }
-      } @else {
-        @for (row of rows(); track row.seq) {
-          <tr data-testid="result-row" [attr.data-key]="row.key">
-            @for (column of columns(); track column.key; let first = $first) {
-              <td [class.cell-title]="first" [class.cell-meta]="!first && isNumber(column)" [class.num]="isNumber(column)">
-                <bdi>{{ value(row, column) }}</bdi>
-              </td>
-            }
-            <td class="cell-full">
-              <div class="reasons">
-                @for (reason of row.reasons; track reason.conditionId) {
-                  <p
-                    class="reason"
-                    [class.reason--unmarked]="!marks().has(reason.conditionId)"
-                    data-testid="reason"
-                    [attr.data-node]="reason.conditionId"
-                    (pointerenter)="trace.emit(reason.conditionId)"
-                    (pointerleave)="trace.emit(null)"
-                  >
-                    @if (marks().get(reason.conditionId); as mark) {
-                      <app-mark
-                        [label]="mark"
-                        [state]="
-                          active() === reason.conditionId
-                            ? 'active'
-                            : traced() === reason.conditionId
-                              ? 'traced'
-                              : 'resting'
-                        "
-                        [name]="'common.condition' | translate: { mark }"
-                      />
-                    }
-                    <span><app-text-parts [parts]="reason.textParts" [markValues]="true" /></span>
-                  </p>
-                }
-              </div>
-            </td>
-          </tr>
-        }
+<table class="table table--records" data-testid="results-table" [attr.aria-busy]="loading()">
+  <thead>
+    <tr>
+      @for (column of columns(); track column.key) {
+        <!-- the sort button is not rendered below 640px (the toolbar's select sorts there), so the header
+             carries its name itself and is still read with its column -->
+        <th scope="col" class="col-id" [attr.aria-sort]="ariaSort(sortedBy(column.key))" [attr.aria-label]="column.label">
+          <app-sort-header
+            [attr.data-column]="column.key"
+            [label]="column.label"
+            [sorted]="sortedBy(column.key)"
+            (sort)="cycleSort(column.key)"
+          />
+        </th>
       }
-    </tbody>
-  </table>
-</div>
+      <th
+        scope="col"
+        [attr.aria-sort]="ariaSort(sortedBy(reasons))"
+        [attr.aria-label]="'results.table.reasons' | translate"
+      >
+        <app-sort-header
+          [attr.data-column]="reasons"
+          [label]="'results.table.reasons' | translate"
+          [sorted]="sortedBy(reasons)"
+          (sort)="cycleSort(reasons)"
+        />
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    @if (loading()) {
+      @for (skeleton of skeletons; track $index) {
+        <tr aria-hidden="true" data-testid="skeleton-row">
+          @for (column of columns(); track column.key; let first = $first) {
+            <td [class.cell-title]="first" [class.cell-meta]="!first">
+              <app-skeleton [width]="first ? skeleton.name : 'calc(var(--space-7))'" />
+            </td>
+          }
+          <td class="cell-full"><app-skeleton [width]="skeleton.reasons" /></td>
+        </tr>
+      }
+    } @else {
+      @for (row of rows(); track row.seq) {
+        <tr data-testid="result-row" [attr.data-key]="row.key">
+          @for (column of columns(); track column.key; let first = $first) {
+            <td [class.cell-title]="first" [class.cell-meta]="!first && isNumber(column)" [class.num]="isNumber(column)">
+              <bdi>{{ value(row, column) }}</bdi>
+            </td>
+          }
+          <td class="cell-full">
+            <div class="reasons">
+              @for (reason of row.reasons; track reason.conditionId) {
+                <p
+                  class="reason"
+                  [class.reason--unmarked]="!marks().has(reason.conditionId)"
+                  data-testid="reason"
+                  [attr.data-node]="reason.conditionId"
+                >
+                  @if (marks().get(reason.conditionId); as mark) {
+                    <app-mark [label]="mark" [tone]="tones().get(reason.conditionId) ?? null" [name]="'common.condition' | translate: { mark }" />
+                  }
+                  <span><app-text-parts [parts]="reason.textParts" [markValues]="true" /></span>
+                </p>
+              }
+            </div>
+          </td>
+        </tr>
+      }
+    }
+  </tbody>
+</table>

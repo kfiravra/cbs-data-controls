@@ -7,7 +7,7 @@ import { ControlSummary, Page } from '../../core/api/api.types';
 import { problemInterceptor } from '../../core/http/problem.interceptor';
 import { LIST_PAGE_SIZE, ListStore, ListView } from './list.store';
 
-const VIEW: ListView = { search: '', entity: null, state: 'active', page: 1 };
+const VIEW: ListView = { search: '', entity: null, state: 'active', sort: 'name', dir: 'asc', page: 1 };
 
 function summary(id: number): ControlSummary {
   return {
@@ -34,9 +34,9 @@ describe('ListStore', () => {
   let http: HttpTestingController;
   let store: ListStore;
 
-  async function next(url: string): Promise<TestRequest> {
+  async function next(url: string, where: (request: TestRequest['request']) => boolean = () => true): Promise<TestRequest> {
     for (let turn = 0; turn < 50; turn++) {
-      const [found] = http.match((request) => request.url === url);
+      const [found] = http.match((request) => request.url === url && where(request));
       if (found) {
         return found;
       }
@@ -45,10 +45,17 @@ describe('ListStore', () => {
     throw new Error(`no request to ${url}`);
   }
 
-  async function shown(view: ListView, page: Page<ControlSummary>): Promise<TestRequest> {
+  /** The question for the page of the view: the one that asks for a whole page. */
+  const nextPage = () => next('/api/v1/controls', (request) => request.params.get('pageSize') === String(LIST_PAGE_SIZE));
+  /** The question beside it, for the count of the other tab: one control of it, for its total. */
+  const nextCount = () => next('/api/v1/controls', (request) => request.params.get('pageSize') === '1');
+
+  /** Shows a view and answers its two questions; answers with the page's request. */
+  async function shown(view: ListView, page: Page<ControlSummary>, other = 0): Promise<TestRequest> {
     store.show(view);
-    const request = await next('/api/v1/controls');
+    const request = await nextPage();
     request.flush(page);
+    (await nextCount()).flush({ items: [], total: other, page: 1, pageSize: 1 });
     return request;
   }
 
@@ -69,87 +76,119 @@ describe('ListStore', () => {
     const request = await shown(VIEW, pageOf(1, 2));
 
     const sent = Object.fromEntries(request.request.params.keys().map((key) => [key, request.request.params.get(key)]));
-    expect(sent).toEqual({ active: 'true', page: '1', pageSize: String(LIST_PAGE_SIZE) });
+    expect(sent).toEqual({ active: 'true', sort: 'name', dir: 'asc', page: '1', pageSize: String(LIST_PAGE_SIZE) });
     expect(store.page()?.items.map((item) => item.id)).toEqual([1, 2]);
     expect(store.loading()).toBe(false);
   });
 
-  it('asks with the search, the root entity, the state and the page of the view', async () => {
-    const request = await shown({ search: 'pay', entity: 'customer', state: 'archived', page: 3 }, pageOf());
+  it('asks with the search, the root entity, the state, the order and the page of the view', async () => {
+    const view: ListView = { search: 'pay', entity: 'customer', state: 'archived', sort: 'violations', dir: 'desc', page: 3 };
+    const request = await shown(view, pageOf());
 
     const sent = Object.fromEntries(request.request.params.keys().map((key) => [key, request.request.params.get(key)]));
-    expect(sent).toEqual({ search: 'pay', rootEntity: 'customer', active: 'false', page: '3', pageSize: String(LIST_PAGE_SIZE) });
-  });
-
-  it('asks for archived and active controls together when the view is of all', async () => {
-    const request = await shown({ ...VIEW, state: 'all' }, pageOf());
-
-    expect(request.request.params.get('active')).toBe('all');
+    expect(sent).toEqual({
+      search: 'pay',
+      rootEntity: 'customer',
+      active: 'false',
+      sort: 'violations',
+      dir: 'desc',
+      page: '3',
+      pageSize: String(LIST_PAGE_SIZE),
+    });
   });
 
   it('lets the page of a newer question stand when an older one was still on its way', async () => {
     store.show({ ...VIEW, search: 'a' });
-    const older = await next('/api/v1/controls');
+    const older = await nextPage();
+    const olderCount = await nextCount();
     store.show({ ...VIEW, search: 'ab' });
 
     expect(older.cancelled).toBe(true);
-    (await next('/api/v1/controls')).flush(pageOf(5));
+    expect(olderCount.cancelled).toBe(true);
+    (await nextPage()).flush(pageOf(5));
+    (await nextCount()).flush(pageOf());
     expect(store.page()?.items.map((item) => item.id)).toEqual([5]);
   });
 
   it('keeps the failure and stops waiting when the list cannot be read, and reads it again on reload', async () => {
     await shown(VIEW, pageOf(1, 2));
     store.show({ ...VIEW, search: 'pay' });
-    (await next('/api/v1/controls')).error(new ProgressEvent('error'));
+    (await nextPage()).error(new ProgressEvent('error'));
+    (await nextCount()).flush(pageOf());
     expect(store.failure()?.code).toBe('NETWORK_ERROR');
     expect(store.loading()).toBe(false);
-    // the rows of the question before would stand under the new search
+    // the rows of the question before would stand under the new search, and so would its counts
     expect(store.page()).toBeNull();
+    expect(store.counts()).toEqual({ active: null, archived: null });
 
     store.reload();
-    (await next('/api/v1/controls')).flush(pageOf(1));
+    (await nextPage()).flush(pageOf(1));
+    (await nextCount()).flush(pageOf());
 
     expect(store.failure()).toBeNull();
     expect(store.page()?.total).toBe(1);
   });
 
-  describe('an empty list', () => {
-    const answerAll = async (total: number) => {
-      const request = await next('/api/v1/controls');
-      expect(request.request.params.get('active')).toBe('all');
-      expect(request.request.params.get('pageSize')).toBe('1');
-      request.flush({ items: [], total, page: 1, pageSize: 1 });
-      await Promise.resolve();
-      await Promise.resolve();
-    };
+  describe('the counts of the two tabs', () => {
+    it('are the total of the page that is shown and, asked beside it, the total of the other tab', async () => {
+      store.show({ ...VIEW, search: 'pay', entity: 'customer', page: 2 });
+      (await nextPage()).flush(pageOf(1, 2, 3));
+      const count = await nextCount();
 
-    it('is a first use when no control exists at all, archived ones included', async () => {
-      await shown(VIEW, pageOf());
-      await answerAll(0);
+      // the same search and filter, the other state, and one control only: its total is what is wanted
+      const sent = Object.fromEntries(count.request.params.keys().map((key) => [key, count.request.params.get(key)]));
+      // it is asked for in no order: the total is the same however the one control is chosen
+      expect(sent).toEqual({ search: 'pay', rootEntity: 'customer', active: 'false', page: '1', pageSize: '1' });
+      count.flush({ items: [summary(9)], total: 148, page: 1, pageSize: 1 });
 
-      expect(store.anyControl()).toBe(false);
+      expect(store.counts()).toEqual({ active: 3, archived: 148 });
     });
 
-    it('is a list whose controls are all archived when some control exists', async () => {
-      await shown(VIEW, pageOf());
-      await answerAll(4);
+    it('are the other way round when the archive is the tab that is shown', async () => {
+      await shown({ ...VIEW, state: 'archived' }, pageOf(4, 5), 6);
 
-      expect(store.anyControl()).toBe(true);
+      expect(store.counts()).toEqual({ active: 6, archived: 2 });
     });
 
-    it('needs no second question when the view already holds archived and active controls', async () => {
-      await shown({ ...VIEW, state: 'all' }, pageOf());
+    it('leave the other tab unknown, and the list as it is, when that count cannot be read', async () => {
+      store.show(VIEW);
+      (await nextPage()).flush(pageOf(1));
+      (await nextCount()).error(new ProgressEvent('error'));
 
-      expect(store.anyControl()).toBe(false);
+      expect(store.counts()).toEqual({ active: 1, archived: null });
+      expect(store.failure()).toBeNull();
+      expect(store.page()?.total).toBe(1);
+    });
+  });
+
+  describe('archiving from a row', () => {
+    it('archives the control and reads the list again, so the control leaves its tab', async () => {
+      await shown(VIEW, pageOf(1, 2), 0);
+
+      const archiving = store.archive(store.page()!.items[0]);
+      const request = await next('/api/v1/controls/1');
+      expect(request.request.method).toBe('DELETE');
+      request.flush(null, { status: 204, statusText: 'No Content' });
+
+      expect(await archiving).toBe(true);
+      (await nextPage()).flush(pageOf(2));
+      (await nextCount()).flush({ items: [summary(1)], total: 1, page: 1, pageSize: 1 });
+      expect(store.page()?.items.map((item) => item.id)).toEqual([2]);
+      expect(store.counts()).toEqual({ active: 1, archived: 1 });
     });
 
-    it('is not asked about when a search or a filter narrows the list, or when the list has rows', async () => {
-      await shown({ ...VIEW, search: 'pay' }, pageOf());
-      await shown({ ...VIEW, entity: 'customer' }, pageOf());
-      await shown({ ...VIEW, state: 'archived' }, pageOf());
+    it('keeps the failure and the list as it is when the control cannot be archived', async () => {
       await shown(VIEW, pageOf(1));
 
-      expect(store.anyControl()).toBeNull();
+      const archiving = store.archive(store.page()!.items[0]);
+      (await next('/api/v1/controls/1')).flush(
+        { type: 'about:blank', title: 'DATABASE_UNAVAILABLE', status: 503, code: 'DATABASE_UNAVAILABLE', params: {}, correlationId: 'x' },
+        { status: 503, statusText: 'Unavailable' },
+      );
+
+      expect(await archiving).toBe(false);
+      expect(store.archiveFailure()?.code).toBe('DATABASE_UNAVAILABLE');
+      expect(store.page()?.items.map((item) => item.id)).toEqual([1]);
     });
   });
 

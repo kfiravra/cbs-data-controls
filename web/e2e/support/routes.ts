@@ -169,12 +169,14 @@ export class FakeApi {
         return this.withControl(first, (control) => this.version(control, second));
       case 'POST /controls/:n/runs':
         return this.withControl(first, (control) => this.run(control));
+      case 'GET /controls/:n/runs':
+        return this.withControl(first, (control) => ok(this.runsOf(control, query)));
       case 'GET /runs/:n':
         return this.withRun(first, (stored) => ok(stored.run));
       case 'GET /runs/:n/results':
         return this.withRun(first, (stored) => ok(this.results(stored, query)));
       case 'POST /suggestions':
-        return ok({ items: this.suggestions });
+        return ok({ items: this.suggest(body as { rootEntity?: string; max?: number } | null) });
       case 'POST /suggestions/accept':
         return ok(
           { items: (body as { items: { name: string; description?: string; definition: Definition }[] }).items.map((item) => this.create(item)) },
@@ -219,12 +221,40 @@ export class FakeApi {
       .filter((control) => active === 'all' || control.isActive === (active === 'true'))
       .filter((control) => !rootEntity || control.rootEntity === rootEntity)
       .filter((control) => control.name.toLowerCase().includes(search))
-      .sort((a, b) => a.name.localeCompare(b.name, 'he') || a.id - b.id);
+      .sort(this.order(query.get('sort') ?? 'name', query.get('dir') === 'desc' ? -1 : 1));
     const items = matching.slice((page - 1) * pageSize, page * pageSize).map((control) => {
       const { definition: _definition, concurrencyToken: _token, ...summary } = control;
       return { ...summary, lastRun: this.lastRunOf(control) } satisfies ControlSummary;
     });
     return { items, total: matching.length, page, pageSize };
+  }
+
+  /**
+   * The order of the list as contracts/api.md gives it: `dir` turns the sort key only, equal controls stand
+   * by name and then id, and what a key cannot place comes last either way (a control that never ran, and
+   * under `violations` a control whose newest run has no count, before it).
+   */
+  private order(sort: string, direction: 1 | -1): (a: Control, b: Control) => number {
+    const byName = (a: Control, b: Control) => a.name.localeCompare(b.name, 'he') || a.id - b.id;
+    const label = (control: Control) =>
+      this.glossary.entities.find((entity) => entity.key === control.rootEntity)?.label.plural['he'] ?? control.rootEntity;
+    /** Where a control stands whatever the direction: placed by the key, without a count, or never ran. */
+    const rank = (run: LastRun | null) => (run === null ? 2 : sort === 'violations' && run.totalCount === null ? 1 : 0);
+    const key = (run: LastRun) => (sort === 'violations' ? (run.totalCount ?? 0) : Date.parse(run.startedAt));
+    switch (sort) {
+      case 'rootEntity':
+        return (a, b) => direction * label(a).localeCompare(label(b), 'he') || byName(a, b);
+      case 'lastRun':
+      case 'violations':
+        return (a, b) => {
+          const [runA, runB] = [this.lastRunOf(a), this.lastRunOf(b)];
+          const placed = rank(runA) - rank(runB);
+          const keyed = runA && runB && rank(runA) === 0 ? direction * (key(runA) - key(runB)) : 0;
+          return placed || keyed || byName(a, b);
+        };
+      default:
+        return (a, b) => direction * a.name.localeCompare(b.name, 'he') || a.id - b.id;
+    }
   }
 
   private create(body: { name: string; description?: string | null; definition: Definition }): Control {
@@ -319,6 +349,25 @@ export class FakeApi {
     return ok(stored.run, 201);
   }
 
+  /** The control's runs, newest first (by `startedAt`, then `id`), paged. */
+  private runsOf(control: Control, query: URLSearchParams): ApiPage<Run> {
+    const page = Number(query.get('page') ?? 1);
+    const pageSize = Number(query.get('pageSize') ?? 25);
+    const runs = this.runs
+      .map((stored) => stored.run)
+      .filter((run) => run.controlId === control.id)
+      .sort((a, b) => b.startedAt.localeCompare(a.startedAt) || b.id - a.id);
+    return { items: runs.slice((page - 1) * pageSize, page * pageSize), total: runs.length, page, pageSize };
+  }
+
+  /** The suggestions, kept to one root entity and to `max` of them when the request says so. */
+  private suggest(body: { rootEntity?: string; max?: number } | null): SuggestionItem[] {
+    const rooted = body?.rootEntity
+      ? this.suggestions.filter((item) => item.definition.rootEntity === body.rootEntity)
+      : this.suggestions;
+    return rooted.slice(0, body?.max ?? 10);
+  }
+
   private results(stored: StoredRun, query: URLSearchParams): ApiPage<ResultItem> {
     const identifying = this.glossary.entities.find((entity) => entity.key === stored.run.rootEntity)?.identifyingFields ?? [];
     const displayText = (row: ResultItem) =>
@@ -328,17 +377,46 @@ export class FakeApi {
         .join(' ');
     const search = (query.get('search') ?? '').trim().toLowerCase();
     const condition = query.get('condition');
-    const direction = query.get('dir') === 'desc' ? -1 : 1;
-    const byDisplay = query.get('sort') === 'display';
     const page = Number(query.get('page') ?? 1);
     const pageSize = Number(query.get('pageSize') ?? 25);
     const matching = stored.results
       .filter((row) => !condition || row.matched.includes(condition))
       .filter((row) => `${displayText(row)}\n${row.reasonText}`.toLowerCase().includes(search))
-      .sort(
-        (a, b) =>
-          direction * ((byDisplay ? displayText(a).localeCompare(displayText(b), 'he') : 0) || a.seq - b.seq),
-      );
+      .sort(this.resultsOrder(stored, query, displayText));
     return { items: matching.slice((page - 1) * pageSize, page * pageSize), total: matching.length, page, pageSize };
+  }
+
+  /**
+   * The order of a run's records as contracts/api.md gives it. `key` and `display` turn both sort keys with
+   * `dir`; `field` (a number by value, anything else as text, a missing value last either way) and `reasons`
+   * (how many, then their text) turn the sort key only and break a tie by `seq`.
+   */
+  private resultsOrder(
+    stored: StoredRun,
+    query: URLSearchParams,
+    displayText: (row: ResultItem) => string,
+  ): (a: ResultItem, b: ResultItem) => number {
+    const direction = query.get('dir') === 'desc' ? -1 : 1;
+    const field = query.get('field') ?? '';
+    const entity = this.glossary.entities.find((candidate) => candidate.key === stored.run.rootEntity);
+    const isNumber = entity?.fields.find((candidate) => candidate.key === field)?.type === 'number';
+    switch (query.get('sort')) {
+      case 'display':
+        return (a, b) => direction * (displayText(a).localeCompare(displayText(b), 'he') || a.seq - b.seq);
+      case 'reasons':
+        return (a, b) =>
+          direction * (a.reasons.length - b.reasons.length || a.reasonText.localeCompare(b.reasonText, 'he')) || a.seq - b.seq;
+      case 'field':
+        return (a, b) => {
+          const [left, right] = [a.display[field] ?? null, b.display[field] ?? null];
+          if (left === null || right === null) {
+            return Number(left === null) - Number(right === null) || a.seq - b.seq;
+          }
+          const compared = isNumber ? Number(left) - Number(right) : String(left).localeCompare(String(right), 'he');
+          return direction * compared || a.seq - b.seq;
+        };
+      default:
+        return (a, b) => direction * (a.seq - b.seq);
+    }
   }
 }

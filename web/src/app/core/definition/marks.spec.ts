@@ -1,6 +1,6 @@
 import { contractExamples } from '../../../testing/contracts';
 import { IdSource, fromDefinition } from './draft';
-import { marksOf, orderedNodeIds } from './marks';
+import { marksOf, orderedNodeIds, toneOf, tonesOf } from './marks';
 
 const LETTERS = ['A', 'B', 'C', 'D'];
 
@@ -38,5 +38,17 @@ describe('marks', () => {
     };
 
     expect([...marksOf(where, LETTERS).values()]).toEqual(['A', 'B', 'C', 'D', '5']);
+  });
+
+  it('gives each node the place of its colour by the order of its mark, and starts the set again when it ends', () => {
+    // eleven nodes over a set of eight colours
+    const ids = ['c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7', 'c8', 'c9', 'c10', 'c11'];
+    const marks = new Map(ids.map((id, index) => [id, String(index + 1)]));
+
+    expect(ids.map((id) => toneOf(marks, id))).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3]);
+    expect([...tonesOf(marks)]).toEqual([['c1', 1], ['c2', 2], ['c3', 3], ['c4', 4], ['c5', 5], ['c6', 6], ['c7', 7], ['c8', 8], ['c9', 1], ['c10', 2], ['c11', 3]]);
+    // a node without a mark has no colour of its own
+    expect(toneOf(marks, 'c999')).toBeNull();
+    expect(toneOf(new Map(), 'c1')).toBeNull();
   });
 });
