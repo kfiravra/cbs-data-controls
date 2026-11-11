@@ -18,8 +18,8 @@ is the server's (`sort` and `dir` in the address and in `GET /api/v1/controls`),
 records, by any identifying field or by the reasons (`sort=field` with `field`, `sort=reasons`). A rule in
 words is plain text: each condition's words are underlined in that condition's colour (a fixed set of eight,
 in the order of the rule), which is also the ground of its letter in the builder, on the filter chips and
-beside each reason; its groups are lines of their own, each led by its joining word, with no bracket and no
-tint. A reason keeps its text as
+beside each reason. It is one flowing sentence: a group has no bracket, no tint and no line of its own, and is
+shown by a thin neutral line under its joining words, which ties it into one underlined run. A reason keeps its text as
 the engine wrote it. A status has one colour
 everywhere: violations red, a clean run green, a run that stopped amber, never ran and archived grey.
 Design: [docs/design.md](../docs/design.md); payloads: [contracts/api.md](../contracts/api.md); errors:

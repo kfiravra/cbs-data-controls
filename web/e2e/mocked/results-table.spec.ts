@@ -149,35 +149,65 @@ test.describe('run results: the order of the records and the layout of the panel
     await shot(page, testInfo, 'results-foot');
   });
 
-  test('a rule with groups is drawn as lines: no bracket, no tint, a group inside a group one step in and led by its joining word, and the plain sentence to be read', async ({ page, api }) => {
+  test('a rule with groups is one flowing sentence: no forced line and nothing set in, no line ends on a joining word, a condition stays whole, and a group is shown by the thread under its joining words', async ({ page, api }) => {
     // example 4: (one condition and (three joined by or)) or (two joined by and)
     const control = controlOf(api, 4);
     const stored = api.addRun(succeededRun(control, RUN));
     await open(page, stored);
     const sentence = ui(page).getByTestId('run-sentence');
-    const lines = sentence.getByTestId('rule-line');
+    const drawn = sentence.getByTestId('drawn-text');
+    const leads = sentence.getByTestId('rule-lead');
     const or = label(joiningWord(glossary, 'or')).trim();
     const and = label(joiningWord(glossary, 'and')).trim();
+    /** For each piece: its condition's words are on one line, and its joining word stands on that line before them. */
+    const placed = () =>
+      sentence.getByTestId('rule-unit').evaluateAll((all) =>
+        all.map((unit) => {
+          const lead = unit.querySelector('[data-testid="rule-lead"]');
+          const words = unit.querySelector('[data-testid="clause"]')!.getClientRects();
+          return { whole: words.length === 1, led: lead === null || Math.abs(lead.getClientRects()[0].top - words[0].top) < 2 };
+        }),
+      );
 
-    // the first group's own condition, the group inside it one step in, and the second group back at the edge
-    await expect(lines).toHaveCount(3);
-    expect(await lines.evaluateAll((all) => all.map((line) => Number(line.getAttribute('data-depth'))))).toEqual([0, 1, 0]);
-    const starts = await lines.evaluateAll((all) => all.map((line) => {
-      const range = document.createRange();
-      range.selectNodeContents(line);
-      const box = range.getBoundingClientRect();
-      return Math.round(box.x + box.width);
-    }));
-    // a line one step in starts further from the edge (the start edge is the right one here)
-    expect(starts[1]).toBeLessThan(starts[0]);
-    expect(starts[2]).toBe(starts[0]);
-    // every group's line is led by the word that joins it, and no line ends with one
-    const texts = (await lines.allInnerTexts()).map((text) => text.trim());
-    expect(texts[1].startsWith(`${and} `)).toBe(true);
-    expect(texts[2].startsWith(`${or} `)).toBe(true);
-    expect(texts.some((text) => text.endsWith(` ${and}`) || text.endsWith(` ${or}`))).toBe(false);
+    // nothing in the sentence makes a line of its own or is set in: pieces in a row and the spaces between them
+    const boxes = await drawn.locator('> *').evaluateAll((all) =>
+      all.map((element) => {
+        const style = getComputedStyle(element);
+        return [element.getAttribute('data-testid'), style.display, style.paddingInlineStart, style.marginInlineStart].join(' ');
+      }),
+    );
+    expect([...new Set(boxes)].sort()).toEqual(['rule-gap inline 0px 0px', 'rule-unit inline-block 0px 0px']);
+    await expect(sentence.locator('br')).toHaveCount(0);
+
+    // six conditions: each whole on a line here, and each joining word on the line of the condition it leads,
+    // so no line ends on one
+    expect(await placed()).toEqual(Array.from({ length: 6 }, () => ({ whole: true, led: true })));
+
+    // the joining words in the order of the rule, with the thread each carries: the first group's own, the
+    // inner group's a step heavier, the one of the top level none, the second group's own
+    expect(await leads.evaluateAll((all) => all.map((lead) => [lead.textContent?.trim(), lead.getAttribute('data-thread')]))).toEqual([
+      [and, '1'],
+      [or, '2'],
+      [or, '2'],
+      [or, null],
+      [and, '1'],
+    ]);
+    // as painted: a thin line under a joining word inside a group, and nothing under the one of the top level
+    const lines = await leads.evaluateAll((all) =>
+      all.map((lead) => {
+        const style = getComputedStyle(lead);
+        return style.backgroundImage === 'none' ? null : style.backgroundSize;
+      }),
+    );
+    expect(lines).toEqual(['100% 1px', '100% 2px', '100% 2px', null, '100% 1px']);
+    // the thread is neutral: the same on every joining word, and none of the conditions' colours
+    const threads = await leads.evaluateAll((all) => [...new Set(all.map((lead) => getComputedStyle(lead).backgroundImage).filter((image) => image !== 'none'))]);
+    expect(threads).toHaveLength(1);
+    // a condition inside a group runs into the thread at its ends: a second line under its words
+    const tied = sentence.getByTestId('clause').first();
+    expect((await tied.evaluate((element) => getComputedStyle(element).backgroundImage)).split('linear-gradient')).toHaveLength(3);
+
     // what is drawn holds no bracket and no ground of its own; what is read holds the engine's sentence
-    const drawn = sentence.getByTestId('drawn-text');
     expect(await drawn.innerText()).not.toMatch(/[()]/);
     const grounds = await drawn.locator('*').evaluateAll((all) => [...new Set(all.map((element) => getComputedStyle(element).backgroundColor))]);
     expect(grounds).toEqual(['rgba(0, 0, 0, 0)']);
@@ -185,5 +215,21 @@ test.describe('run results: the order of the records and the layout of the panel
     await expect(drawn).toHaveAttribute('aria-hidden', 'true');
     // each condition's colour once, in the order of the rule: six conditions, the first six of the set
     await expect.poll(() => ruleTones(sentence)).toEqual(['1', '2', '3', '4', '5', '6']);
+
+    // where a condition is longer than the line it breaks inside its own piece: nothing runs out of the
+    // sentence, and its joining word still stands before its first word
+    await sentence.evaluate((element) => {
+      (element as HTMLElement).style.inlineSize = '120px';
+    });
+    const fits = await sentence.evaluate((element) => {
+      const box = element.getBoundingClientRect();
+      return [...element.querySelectorAll('[data-testid="rule-unit"]')].every((unit) => {
+        const piece = unit.getBoundingClientRect();
+        return piece.left >= box.left - 0.5 && piece.right <= box.right + 0.5;
+      });
+    });
+    expect(fits).toBe(true);
+    expect((await placed()).every((piece) => piece.led)).toBe(true);
+    expect((await placed()).some((piece) => !piece.whole)).toBe(true);
   });
 });

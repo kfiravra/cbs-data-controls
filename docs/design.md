@@ -703,26 +703,32 @@ what is outside it: Action on a resting segment, On inverse on the selected one.
 The signature of the system.
 
 - **The rule in words** is plain text with the engine's own spacing: no letter stands in it, and no word and
-  no group has a ground; the only ground is the container's. The words of each condition are underlined in that
-  condition's colour (The Condition Colours, below); the joining words between conditions are not. The line is
-  drawn under the words, 0.2em thick, and fades out towards both of its ends; where a condition's words run on
-  to another line, each stretch has its own line with its own faded ends. The line takes no room of its own:
-  it starts just under the descenders (a fifth of an em under the baseline) and ends inside its own line of
-  text, so it never reaches into the line below and adds nothing to the height of the rule. So it reads
-  everywhere a rule is
-  shown: the bar of the editor, the top of the results, a suggestion card in the suggestions panel and in the
-  row of a new control, the archived editor.
-- **The groups of a rule** are drawn, not written: no bracket character of the engine's sentence stands on the
-  screen, and a group has no tint. Every group stands on a line of its own, led by the word that joins it to
-  what stands before: a group of the top level at the edge; a group inside a group, and what a condition on
-  related records holds, one step in (24px). What follows a group goes on from a new line at the edge it
-  left. No line ends with a joining word that belongs to the next line, and no line is a joining word alone.
-  Only the engine's own group marks are read: the glossary's `groupOpen` and `groupClose`, in the engine's
-  connecting text. A bracket in a value the user typed, in a field's label or in the name of a relationship is
-  data and is written as it is. The engine's text is untouched: beside the drawing the plain sentence, brackets
-  and all, is given to assistive technology, and the drawing is hidden from it. Where the letters stand on the
-  screen beside the rule (the editor, the results) each condition is named by its letter in that copy; a
-  suggestion shows no letters, and its rule is read as the plain sentence. A reason is not a rule: its brackets are its own punctuation and are written as they came.
+  no group has a ground; the only ground is the container's. It is one flowing sentence that wraps as text
+  does: no line is forced and nothing is set in. A condition and the joining word before it are one piece,
+  whole while it fits on a line and broken inside only when it is longer than the line, so a line never ends
+  on a joining word and a condition's words stay together. The words of each condition are underlined in that
+  condition's colour (The Condition Colours, below). The line is drawn under the words, 0.2em thick, and
+  fades out towards both of its ends; where a condition's words run on to another line, each stretch has its
+  own line with its own faded ends. The line takes no room of its own: it starts just under the descenders (a
+  fifth of an em under the baseline) and ends inside its own line of text, so it never reaches into the line
+  below and adds nothing to the height of the rule. So it reads everywhere a rule is shown: the bar of the
+  editor, the top of the results, a suggestion card in the suggestions panel and in the row of a new control,
+  the archived editor.
+- **The groups of a rule** are shown by the underline alone: no bracket character of the engine's sentence
+  stands on the screen, and a group has no tint, no line of its own and no step in. Inside a group, and inside
+  what a condition on related records holds, the joining words and the spaces carry **the thread**: a thin
+  neutral line (1px, the text's own colour at 60%, so it holds on every ground) at the foot of the coloured
+  ones, and each coloured line runs into it where it fades. The group reads as one unbroken underlined run,
+  from its first word to its last; the words of a condition on related records are tied to what it holds the
+  same way. The joining words of the top level carry no line, so the run stops there. A group inside a group
+  has the thread a little heavier (2px). Only the engine's own group marks are read: the glossary's
+  `groupOpen` and `groupClose`, in the engine's connecting text. A bracket in a value the user typed, in a
+  field's label or in the name of a relationship is data and is written as it is. The engine's text is
+  untouched: beside the drawing the plain sentence, brackets and all, is given to assistive technology, and
+  the drawing is hidden from it. Where the letters stand on the screen beside the rule (the editor, the
+  results) each condition is named by its letter in that copy; a suggestion shows no letters, and its rule is
+  read as the plain sentence. A reason is not a rule: its brackets are its own punctuation and are written as
+  they came.
 - **The Condition Colours.** A fixed set of eight light colours at half strength (`tone-1` to `tone-8`: amber,
   sky, rose, green, violet, orange, mint, orchid), given to the conditions in the order of the rule and started
   again when the set ends; neighbours in the set are far apart in hue. A condition's colour is the ground of

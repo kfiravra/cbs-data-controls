@@ -488,7 +488,18 @@ Same branch, same PR, fast, one reviewer. His word covers one database reset at 
 - [x] The plain sentence, each condition named, for a screen reader.
 - [x] Sent while it was built: the suggestions list stays open across choices; the colours at 50%; the
       sentence set as a normal sentence; the underlines faded at their ends.
-- [ ] Specs; the gate on the real stack; `/check all --tests`; one reviewer; the push.
+- [x] Specs; the gate on the real stack; `/check all --tests`; one reviewer (`gates/phase-12.txt`); the
+      review fixes are `00f8600`. The push and the reset moved to phase 13, which arrived before them.
+
+### Phase 13: the flowing rule (Kfir's look at phase 12, 2026-11-11)
+Same branch, same PR, fast, no reviewer named. His word covers one database reset at the very end.
+
+- [x] One flowing sentence everywhere a rule is shown: no forced line, no step in; no line ends on a joining
+      word; a condition's words stay together while they fit.
+- [x] A nested group and a related-records clause shown by the underline alone: the thread under the joining
+      words inside it, none at the top level.
+- [x] The rest as it was: a colour per condition, no letters, no brackets, no grounds.
+- [x] Specs; `/check all --tests`; the gate on the real stack (`gates/phase-13.txt`); the push.
 - [ ] Last of all: the database reset from the main tree and the six examples.
 
 ### Gate

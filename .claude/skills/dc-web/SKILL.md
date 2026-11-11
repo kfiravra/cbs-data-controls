@@ -117,9 +117,13 @@ playwright install --with-deps chromium` needs sudo on WSL: ask the user to run 
   is underlined in that colour by a drawn line (a gradient that fades at both ends, not a text decoration, and
   placed inside the words' own line box: no padding, nothing added to the height).
   The same `data-tone` is on the condition's `app-mark` in the builder, on the filter chips and beside the
-  reasons. A rule's group marks are not written: a top-level group is a `rule-line`, a group inside a group a
-  line with `data-depth="1"`, and each group's line starts with its joining word (never a line of one alone).
-  The marks are the glossary's `groupOpen` and `groupClose` (round brackets until a
+  reasons. A rule (a text with `marks`) is one flow: each condition with the joining word before it is a
+  `rule-unit` (an inline-block, so it stays whole while it fits and no line ends on a joining word; the word is
+  its `rule-lead`), and the engine's space between two units is a `rule-gap`. A rule's group marks are not
+  written and nothing makes a line or an indent: inside a group or a related node's scope the leads, the gaps
+  and the clauses carry `data-thread` (`1`, or `2` in a group inside a group), which draws the thin neutral
+  line that ties the group; a top-level lead has none. A text without `marks` (a chip) is its clauses in a
+  row, with no units and no thread. The marks are the glossary's `groupOpen` and `groupClose` (round brackets until a
   glossary is read), looked for only in parts with no `role`: a bracket in a value, a label or a relationship's
   name is data and stays. A drawing with colours or lines carries the engine's plain sentence, each condition
   named by its mark (not where `named` is false: a suggestion shows no letters), in a visually hidden

@@ -1,23 +1,27 @@
 # dc-web notes
 
 ## State
-Phase 11, the hot fixes of Kfir's third read (2026-11-11), is done on `feat/web-ux` and pushed into the same
-PR, which is open and not merged: `929ff6f` (the api's sort of a run's results by a field and by the reasons),
-`0428a67` (the client's seven fixes) and the review fixes of both. `/check all --tests` is green and the gate
-passed on the real stack (`gates/phase-11.txt`). Before it: phase 10, the last design round.
+Phase 13, the flowing rule (2026-11-11, Kfir's look at phase 12), is done on `feat/web-ux` for the same PR,
+which is open and not merged. Before it on this branch: phase 12 (`54947e8`, the rule in words in the colours
+of its conditions, and its review fixes `00f8600`), phase 11 (the hot fixes), phase 10 (the last design
+round). `/check all --tests` is green and the gate passed on the real stack, behind the dev server and on the
+build the api hosts (`gates/phase-13.txt`).
 
 ## Next
-1. Kfir reads the hot fixes at `http://localhost:5000`. No new Hebrew text in this phase; one key was removed
-   (`editor.ideas.waiting`). The texts of phase 10 are still to be read (`list.columns.run`, `list.sort.*`,
-   `results.rule`, `results.archived`, `editor.conditions.waiting`, `editor.ideas.loading` and `.none`,
-   `editor.add.advanced` and `.advancedHint`, `editor.toast.closed`).
+1. Kfir reads the rule in words at `http://localhost:5000`: one flowing sentence, groups tied by a thin
+   neutral line. Two things are his to decide: the strength of the coloured lines (decision 103: faint at
+   50%, the review's one critical point) and the 2px line of a group inside a group (decision 111, mine).
+   No new Hebrew text in phases 12 and 13. The texts of phase 10 are still to be read (`list.columns.run`,
+   `list.sort.*`, `results.rule`, `results.archived`, `editor.conditions.waiting`, `editor.ideas.loading`
+   and `.none`, `editor.add.advanced` and `.advancedHint`, `editor.toast.closed`).
 2. The merge of the PR is his.
 3. Still open for dc-delivery (limitations, on Kfir's word): nested groups unnamed for a screen reader in the
    builder, a conflict that discards the draft, a list row's count that may belong to an older version of the
    rule, a closed draft that lives in memory only and for twelve seconds; and for `docs/architecture.md` §7
    and §8, beside the lines of phase 10: `GET /api/v1/runs/{id}/results` takes `sort=field` with `field` and
-   `sort=reasons`; every head of the results sorts; a rule in words shows no bracket (groups are drawn as
-   blocks, the engine's text is unchanged).
+   `sort=reasons`; every head of the results sorts; a rule in words is one flowing sentence of plain text
+   with no letter and no bracket, each condition's words underlined in the colour of its letter, a group
+   shown by a thin neutral line under its joining words (the engine's text is unchanged).
 
 ## Blockers
 - None.
@@ -401,6 +405,28 @@ Taken on 2026-11-11 in the morning (Kfir's second message: "no questions"):
     computed the way the code computes them, the nested lines are checked on example 4, where a group
     stands inside a group, and the checks that could not fail are replaced. The spec of "running again"
     waits 1500 ms instead of 600: it failed once under load, when the run ended between two of its checks.
+
+### The flowing rule (phase 13, 2026-11-11; Kfir's look at phase 12, "fast")
+109. His items 1 and 2 take back decisions 99 and 104: a rule has no line of its own and no step in, anywhere.
+    It is one flow of pieces: a condition with the joining word before it is one piece (an inline block,
+    whole while it fits on a line), and the engine's space before the word is what stands between two
+    pieces, the only place a line breaks. So no line ends on a joining word and a condition's words stay
+    together. A condition longer than the line breaks inside its own piece and nothing runs out of the
+    sentence; what follows it then starts a new line (mine: the price of keeping every shorter one whole).
+110. The thread ("a thin neutral underline"): 1px, the text's own colour at 60% (mine: neutral on every
+    ground the rule stands on, the tint, the card and the dark bar, with no token per ground; 3.9:1 on the
+    card). It is under the joining words and the spaces inside a group or a related node's scope, and each
+    coloured line inside runs into it where it fades (a second, complementary line under the condition's
+    words), which is what makes the run unbroken: without it the two faded ends left a hole at every
+    joint. A run therefore starts and ends on a short stretch of the thread. The words of a related node
+    are tied to what the node holds. Top-level joining words carry nothing.
+111. Mine, beyond his words: a group inside a group has the thread at 2px. Without it "(A and (B or C)) or
+    D" and "(A and B or C) or D" would be drawn alike, since the step in that told them apart is gone. Still
+    one neutral underline; if he wants every thread alike it is one line of the stylesheet.
+112. A text without marks (a chip of the count by condition) is drawn as its words in a row: no pieces and
+    no thread, since it has no coloured lines for a thread to join. Its brackets stay unwritten.
+113. No reviewer in this round: his message asks for the specs, the checks, the gate and the push, and names
+    none ("fast"). The review of phase 12 stands as the last one.
 
 ## Reconciliation with `contracts/` (phase 2, 2026-11-11)
 Read: `api.md`, `errors.md`, `glossary.json`, `control-definition.schema.json`, the six examples and the thirteen
@@ -1241,3 +1267,14 @@ rewrote. A review that found nothing, or did not run, is logged as that.
   skipped by project, 1 failed: "a phone sorts the records from a select" pressed the select again while
   the list of its first choice was closing, so nothing opened. The spec was wrong, not the client: it now
   waits for the list to be gone, and its file passed three times over on both projects (18 of 18).
+- 2026-11-11, the flowing rule (phase 13), from Kfir's look at phase 12, same branch and PR, fast, no
+  reviewer named: the rule in words is one flowing sentence everywhere it is shown, with no forced line and
+  no step in; a condition and the joining word before it are one piece, so no line ends on a joining word
+  and a condition's words stay together; a nested group and a related-records clause are shown by the
+  underline alone, the joining words inside carrying a thin neutral line that the coloured lines run into;
+  the joining words of the top level carry none. Decisions 109 to 113. Gate (`gates/phase-13.txt`):
+  `/check all --tests` green (`sql-check` 27, `contracts-check` 5, the engine's ruff, pyright and 521 tests,
+  the api's build, format and 389 tests with 3 skipped by their switch, the client's type checks, lint, 390
+  unit tests in 37 files and build, the print guard, the hook tests); `e2e/mocked` 219 passed, 5 skipped by
+  project; `e2e/gate` 18 of 18 behind the dev server and 18 of 18 on the build the api hosts; the listing
+  of untagged controls equal before and after both runs.
