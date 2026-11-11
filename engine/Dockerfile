@@ -5,23 +5,25 @@
 #   docker build -f engine/Dockerfile -t dc-engine .
 #
 # engine/Dockerfile.dockerignore keeps the context down to what is copied below.
-# The Debian release is pinned with the Python one: Microsoft's ODBC repository is per Debian release.
-FROM python:3.12-slim-bookworm
+# The Debian release is pinned with the Python one, because Microsoft's ODBC repository is per Debian release:
+# trixie is Debian 13, and the repository below is debian/13.
+FROM python:3.12-slim-trixie
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1
 
-# ODBC Driver 18 for SQL Server and the driver manager, from Microsoft's package repository.
+# ODBC Driver 18 for SQL Server and the driver manager, from Microsoft's package repository. The driver loads
+# libgssapi_krb5 when it starts, and on Debian 13 its package does not ask for it, so it is named here.
 RUN apt-get update \
  && apt-get install -y --no-install-recommends ca-certificates curl \
  && curl -fsSL -o /tmp/packages-microsoft-prod.deb \
-      https://packages.microsoft.com/config/debian/12/packages-microsoft-prod.deb \
+      https://packages.microsoft.com/config/debian/13/packages-microsoft-prod.deb \
  && dpkg -i /tmp/packages-microsoft-prod.deb \
  && rm /tmp/packages-microsoft-prod.deb \
  && apt-get update \
- && ACCEPT_EULA=Y apt-get install -y --no-install-recommends msodbcsql18 unixodbc \
+ && ACCEPT_EULA=Y apt-get install -y --no-install-recommends msodbcsql18 unixodbc libgssapi-krb5-2 \
  && apt-get purge -y --auto-remove curl \
  && rm -rf /var/lib/apt/lists/*
 

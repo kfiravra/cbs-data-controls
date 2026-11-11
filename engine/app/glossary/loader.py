@@ -199,11 +199,14 @@ def _entity(raw: Json, operators: Mapping[str, Operator]) -> Entity:
     for name in identifying:
         if name not in fields:
             raise GlossaryInvalid(f"glossary: entity {key} identifies records by the unknown field {name!r}")
+        if not fields[name].visible:
+            # An identifying field is returned with every violation: hiding it would hide nothing.
+            raise GlossaryInvalid(f"glossary: entity {key} identifies records by the hidden field {name!r}")
     lifecycle_raw = raw.get("lifecycle")
     lifecycle = None
     if lifecycle_raw is not None:
-        if lifecycle_raw["field"] not in fields:
-            raise GlossaryInvalid(f"glossary: entity {key} has a lifecycle on the unknown field")
+        if lifecycle_raw["field"] not in fields or not fields[lifecycle_raw["field"]].visible:
+            raise GlossaryInvalid(f"glossary: entity {key} has a lifecycle on an unknown or hidden field")
         lifecycle = Lifecycle(field=lifecycle_raw["field"], active=lifecycle_raw["active"])
     return Entity(
         key=key,

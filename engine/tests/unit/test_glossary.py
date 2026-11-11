@@ -120,6 +120,8 @@ def test_flags_default_to_comparable_and_not_identifier(synthetic: Glossary) -> 
         (lambda d: d["entities"][0]["identifyingFields"].append("no_such_field"), "no_such_field"),
         (lambda d: d["entities"][0]["lifecycle"].update(field="no_such_field"), "lifecycle"),
         (lambda d: d["relationships"][0].update(to="no_such_entity"), "no_such_entity"),
+        (lambda d: d["entities"][0]["identifyingFields"].append("internal_code"), "hidden field"),
+        (lambda d: d["entities"][0]["lifecycle"].update(field="internal_code"), "unknown or hidden"),
         (lambda d: d["entities"][0]["fields"][0].update(operators=["no_such_operator"]), "no_such_operator"),
         (lambda d: d["operators"][0].update(key="sounds_like"), "sounds_like"),
         (lambda d: d["entities"][0]["fields"][6]["computed"].update(function="shoe_size"), "shoe_size"),

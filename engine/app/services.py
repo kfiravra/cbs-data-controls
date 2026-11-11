@@ -12,7 +12,7 @@ from typing import Any
 from zoneinfo import ZoneInfo
 
 from app import ENGINE_VERSION
-from app.cache import BoundedCache, definition_key
+from app.cache import BoundedCache, fingerprint
 from app.compiler import (
     CATALOG_COLUMN,
     CATALOG_SCHEMA,
@@ -114,11 +114,12 @@ class Services:
 
         Raises `DefinitionInvalid`. Only a valid definition is cached, and never a result.
         """
-        key = definition_key(document, self.glossary.version, ENGINE_VERSION)
-        plan = self.plans.get(key)
+        mark = fingerprint(document, self.glossary.version, ENGINE_VERSION)
+        plan = self.plans.get(mark.key)
         if plan is None:
             plan = compile_definition(validate_definition(document, self.glossary, self.schema), self.glossary)
-            self.plans.put(key, plan)
+            if mark.cacheable:
+                self.plans.put(mark.key, plan)
         return plan
 
     def today(self) -> date:

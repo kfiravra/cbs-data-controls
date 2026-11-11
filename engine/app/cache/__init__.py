@@ -10,14 +10,31 @@ import json
 import threading
 from collections import OrderedDict
 from collections.abc import Mapping
+from dataclasses import dataclass
 from typing import Any
 
-__all__ = ["BoundedCache", "definition_key"]
+__all__ = ["MAX_CACHED_DEFINITION_CHARS", "BoundedCache", "Fingerprint", "fingerprint"]
 
 DEFAULT_CAPACITY = 256
+# A definition within the glossary's limits is a few kilobytes of JSON. One far larger can only be so through
+# long text literals, which the contract does not bound; its plan is compiled and run but not kept, so the
+# cache cannot be made to hold hundreds of megabytes.
+MAX_CACHED_DEFINITION_CHARS = 65_536
 
 
-def definition_key(document: Mapping[str, Any], glossary_version: str, engine_version: str) -> str:
+@dataclass(frozen=True, slots=True)
+class Fingerprint:
+    """The cache key of a definition, and the size of its canonical JSON."""
+
+    key: str
+    size: int
+
+    @property
+    def cacheable(self) -> bool:
+        return self.size <= MAX_CACHED_DEFINITION_CHARS
+
+
+def fingerprint(document: Mapping[str, Any], glossary_version: str, engine_version: str) -> Fingerprint:
     """sha256 of the canonical definition JSON, the glossary version and the engine version.
 
     Canonical: sorted members and no spaces, so two spellings of one definition share a plan. A new glossary or a
@@ -26,9 +43,11 @@ def definition_key(document: Mapping[str, Any], glossary_version: str, engine_ve
     canonical = json.dumps(document, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
     digest = hashlib.sha256()
     for part in (canonical, glossary_version, engine_version):
-        digest.update(part.encode("utf-8"))
+        # A JSON string may hold a lone surrogate, which is not text; it is hashed as it stands and the
+        # validator is the one to refuse it.
+        digest.update(part.encode("utf-8", errors="surrogatepass"))
         digest.update(b"\x00")
-    return digest.hexdigest()
+    return Fingerprint(digest.hexdigest(), len(canonical))
 
 
 class BoundedCache[V]:

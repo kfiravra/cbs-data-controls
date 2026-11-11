@@ -333,3 +333,31 @@ def test_list_limit_is_checked_even_when_the_field_is_unknown(
         ("UNKNOWN_FIELD", f"{C0}/left"),
         ("TOO_MANY_VALUES", f"{C0}/values"),
     ]
+
+
+@pytest.mark.parametrize("values", [[1, 2, 1], [1, 1.0], ["a", "b", "a"]], ids=str)
+def test_list_that_holds_an_item_twice_is_a_schema_violation(
+    values: list[Any], synthetic_glossary: Glossary, schema: DefinitionSchema
+) -> None:
+    document = definition("ticket", all_of(cond("c1", "priority", "in", values=values)))
+    assert rejected(document, synthetic_glossary, schema) == [
+        {"code": "SCHEMA_VIOLATION", "path": f"{C0}/values", "nodeId": "c1", "params": {}}
+    ]
+
+
+def test_number_and_its_spelling_as_text_are_two_items(synthetic_glossary: Glossary, schema: DefinitionSchema) -> None:
+    document = definition("ticket", all_of(cond("c1", "priority", "in", values=[1, "1"])))
+    # Unique for the schema; the text is then refused as a value of a number field.
+    assert codes_and_paths(rejected(document, synthetic_glossary, schema)) == [("VALUE_TYPE_MISMATCH", f"{C0}/values")]
+
+
+@pytest.mark.parametrize("field", ["title", "state", "opened_on"])
+def test_string_that_is_not_text_is_not_a_value(
+    field: str, synthetic_glossary: Glossary, schema: DefinitionSchema
+) -> None:
+    """JSON can carry half of a surrogate pair. It is refused as a value: it could be neither bound nor shown."""
+    half_a_pair = "x" + chr(0xD800)
+    document = definition("ticket", all_of(cond("c1", field, "eq", half_a_pair)))
+    errors = rejected(document, synthetic_glossary, schema)
+    assert codes_and_paths(errors) == [("VALUE_TYPE_MISMATCH", f"{C0}/value")]
+    assert set(errors[0]["params"]) == {"field", "type"}  # the value is not echoed

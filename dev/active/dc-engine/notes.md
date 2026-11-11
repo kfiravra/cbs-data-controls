@@ -136,11 +136,31 @@ continue". He reads these first.
 20. The engine refuses at startup a glossary that lacks a suggestion text it writes (a kind or an evidence
     key), like the other "cannot serve" checks of decision 13.
 
-21. The image is built on `python:3.12-slim-bookworm`, not on the moving `python:3.12-slim` the plan names:
-    Microsoft's ODBC repository is per Debian release, and the pin keeps `debian/12` in the Dockerfile true.
+21. The image is built on `python:3.12-slim-trixie` (Debian 13), not on the moving `python:3.12-slim` the plan
+    names: Microsoft's ODBC repository is per Debian release, and the pin keeps `debian/13` in the Dockerfile
+    true. It was first pinned to bookworm; the image review pointed out that bookworm has had LTS support only
+    since June 2026, so it moved. On Debian 13 the driver's package does not ask for `libgssapi-krb5-2`, which
+    the driver loads, so the Dockerfile names it (found by the smoke: the engine could not open the driver).
     The ignore file is `engine/Dockerfile.dockerignore` (BuildKit reads it for this Dockerfile alone), so the
     repository root gets no `.dockerignore` from this task. The image has no HEALTHCHECK: the compose service
     and its health check are dc-delivery's.
+22. A tree more than eight times past a limit of the glossary (33 nested groups, 241 nodes, 4,001 values) is
+    answered with that limit's error alone, before the schema is asked. Errors.md puts schema errors first;
+    for such a tree they are not reported. Up to eight times a limit the order of errors.md holds. The depth
+    half of this came from the phase 2 review (a crash); the security audit showed the same for size (a
+    megabyte of conditions cost seconds in the schema library). Also for the audit: the schema library gets a
+    copy in which no list is longer than 101 items (one past the schema's longest), and its `uniqueItems` is
+    replaced by a one-pass check with the same result and error location (the library's compares every pair
+    of a list that mixes a string with numbers: 150,000 such values in one request took hours).
+23. The plan of a definition whose canonical JSON is over 64 KiB is compiled and run but not cached. The
+    contract sets no length for a text literal, so a megabyte in one `contains` operand is valid, and 256 such
+    plans would hold about 0.8 GB. A `maxLength` for text literals would be the contract's way to say it; that
+    is Kfir's call and a change for all three services, so the engine only declines to remember.
+24. A string that is not text (JSON can spell half of a surrogate pair, `"\ud800"`) is `VALUE_TYPE_MISMATCH`
+    for a text, enum or date field. Before, it crashed the cache key and answered 500.
+25. The loader refuses a glossary whose identifying field or lifecycle field is hidden: an identifying field
+    is returned with every violation, so hiding it would hide nothing. `scripts/contracts-check.py` already
+    refuses the first; the engine did not.
 
 ## Waiting for a merge
 (none yet)
@@ -182,19 +202,30 @@ says, what is true now. The list goes into the PR body under this heading at `/s
   and on the seed it yields three more proposals (decision 18). Example 1 is never proposed: no generator
   writes a number into a definition.
 - `docker-compose.yml`, the engine service (dc-delivery's), from the image as built: `build: { context: .,
-  dockerfile: engine/Dockerfile }`; it listens on `0.0.0.0:8000` as uid 10001; it needs
-  `DQ_ENGINE_RO_PASSWORD`, `ENGINE_DB_HOST=db` and `ENGINE_DB_PORT=1433` and nothing else (never the `sa` or
-  the `dq_app` password: pass the variables by name, not the whole `.env`); `ENGINE_DB_DRIVER` is set in the
-  image; a health check can be `python -c "import urllib.request;
-  urllib.request.urlopen('http://127.0.0.1:8000/health')"` (the image has no curl); the engine itself waits up
-  to 30 s for the database and then exits non-zero, so `depends_on: db: condition: service_healthy` plus
-  `restart: on-failure` is enough. First build about 4.5 minutes, 250 MB.
+  dockerfile: engine/Dockerfile }` (Debian 13, 249 MB, first build about 4.5 minutes); it listens on
+  `0.0.0.0:8000` as uid 10001, and the port is fixed in the image (`ENGINE_PORT` does nothing there). The
+  engine has no authentication, so its port stays unpublished, or published on 127.0.0.1 only; the api
+  reaches it by service name. It needs `DQ_ENGINE_RO_PASSWORD`, `ENGINE_DB_HOST=db` and
+  `ENGINE_DB_PORT=1433` and nothing else: pass the variables by name, never the whole `.env`, which holds the
+  `sa` and `dq_app` passwords. `ENGINE_DB_DRIVER` is set in the image. It must start after the database is
+  initialised, not merely healthy: `depends_on: { db-init: { condition: service_completed_successfully } }`.
+  With a half-built schema the engine reports a glossary mismatch and exits at once, by design. A health
+  check can be `python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"`
+  (the image has no curl).
+- Repository root, `.dockerignore` (none exists): `engine/Dockerfile.dockerignore` is read by BuildKit only.
+  A root `.dockerignore` that leaves out `.env`, `.git`, `**/.venv` and `**/node_modules` would also cover a
+  legacy builder and the other two images; it belongs with the compose services.
+- For the limitations document, from the image: the Python half is locked by hashes, the Debian half is not
+  (the base tag, `msodbcsql18` and `unixodbc` are whatever the repositories serve on the build day). A driver
+  whose library does not load is treated as a database that does not answer: the engine waits its 30 seconds
+  and exits, with the driver's message in the log.
 - For the limitations document: a suggestion is counted on today's date; the profile and each count are
   separate statements; `/suggest` runs one statement per rootable entity and one per candidate (ten on the
   seed), each under the statement timeout.
 
 ## Last reviewed
-`57e3e28` (phase 5), report in `reviews/phase-5.md`; phases 1 to 4 in `reviews/phase-1.md` to `phase-4.md`.
+`85bfa53` (the whole branch): the security audit in `reviews/security.md`, the image in `reviews/phase-7.md`;
+phases 1 to 5 in `reviews/phase-1.md` to `phase-5.md`.
 
 ## Log
 - 2026-11-10 created plan. Interview in two rounds (plan.md Decisions 1 to 5). Kfir chose `lifecycle` and
@@ -363,3 +394,26 @@ says, what is true now. The list goes into the PR body under this heading at `/s
   flags 1051, 1052 and 1053, `/suggest` returns seven proposals; it runs as uid 10001, lists ODBC Driver 18 and
   holds one password variable. The smoke container was started with a 25-second `timeout` and ended by
   itself; the database container was never stopped or recreated.
+- 2026-11-11 review of phase 7 (`dcc70b6..85bfa53`, one reviewer on opus, `reviews/phase-7.md`): 0 critical,
+  1 warning, 6 info. Warning: `notes.md:190` the note for dc-delivery said a healthy `db` is enough to start
+  the engine; it is not (the schema may be half built): rewritten to wait for `db-init` to complete. Info,
+  fixed: `engine/Dockerfile:9` bookworm is on LTS support only: the image moved to Debian 13 (decision 21),
+  rebuilt and smoked again; `notes.md:185` the port must stay unpublished or on 127.0.0.1, now said;
+  `gates/image-smoke.txt:3` the transcript now shows the command that ran, name and timeout included;
+  `Dockerfile:43` `ENGINE_PORT` does nothing in the image, now said in the note. Info, left by the session
+  and passed to dc-delivery: `Dockerfile:19` the Debian half of the image is not pinned;
+  `Dockerfile.dockerignore:2` only BuildKit reads it, and a root `.dockerignore` is the compose task's.
+- 2026-11-11 security audit of the branch (`origin/main...85bfa53`, one auditor on opus,
+  `reviews/security.md`): 0 critical, 1 high, 1 medium, 2 low; nothing on injection, the login or leakage.
+  High: `app/validator/schema.py:41` one request with a long list that mixes a string with numbers made the
+  schema library compare every pair (4,000 values 4.4 s, 150,000 about 1.7 h); fixed three ways (decision 22):
+  lists are cut at 101 items for the library, `uniqueItems` is a one-pass check, and a tree many times past a
+  limit is answered by the limit alone. Measured after: the auditor's cases answer in under 5 ms, and the
+  heaviest body that is still walked (240 conditions, 3,840 values) in 0.14 s. The session found the last
+  part itself while timing the first two fixes (2,400 lists of 101 values still cost 4 s). Medium:
+  `app/services.py:117` a megabyte of text in an operand is valid and its plan was cached, 3 MB each; fixed:
+  plans of definitions over 64 KiB are not cached (decision 23); the contract gap stays, noted for Kfir. Low,
+  fixed: `app/cache/__init__.py:29` half a surrogate pair crashed the cache key with a 500, now it is
+  `VALUE_TYPE_MISMATCH` (decision 24); `app/glossary/loader.py:199` a hidden identifying field would still
+  be returned, now the loader refuses it (decision 25). Each with tests; all in the review-fix commit that
+  follows this line.

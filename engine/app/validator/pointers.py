@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
+from dataclasses import dataclass
 from typing import Any, cast
 
 
@@ -34,47 +35,65 @@ def document_positions(document: object) -> dict[str, int]:
     return positions
 
 
-def group_nesting(document: object) -> int:
-    """The depth of the tree as contracts/errors.md counts it, read from the raw document without recursion.
+@dataclass(frozen=True, slots=True)
+class TreeSize:
+    """How big a condition tree is, as contracts/errors.md counts it."""
 
-    The root group counts one, each group inside a group one more, and so does the `where` of a related node. It
-    asks nothing of the document's shape, so it can run before the schema does.
+    depth: int
+    nodes: int
+    values: int
+
+
+def tree_size(document: object) -> TreeSize:
+    """Depth, nodes and literal values of the tree, read from the raw document without recursion.
+
+    The root group counts one level, each group inside a group one more, and so does the `where` of a related
+    node; every child that is not a group counts as a node; a `value` counts one and each item of `values`
+    one. It asks nothing of the document's shape, so it can run before the schema does.
     """
-    deepest = 0
+    depth = nodes = values = 0
     root = cast(dict[str, Any], document).get("where") if isinstance(document, dict) else None
     pending: list[tuple[object, int]] = [(root, 1)]
     while pending:
-        node, depth = pending.pop()
-        if not isinstance(node, dict):
+        group, level = pending.pop()
+        if not isinstance(group, dict):
             continue
-        deepest = max(deepest, depth)
-        children = cast(dict[str, Any], node).get("children")
+        depth = max(depth, level)
+        children = cast(dict[str, Any], group).get("children")
         for child in cast(list[Any], children) if isinstance(children, list) else ():
             if not isinstance(child, dict):
                 continue
             members = cast(dict[str, Any], child)
             if isinstance(members.get("children"), list):
-                pending.append((members, depth + 1))
+                pending.append((members, level + 1))
+                continue
+            nodes += 1
+            listed = members.get("values")
+            values += ("value" in members) + (len(cast(list[Any], listed)) if isinstance(listed, list) else 0)
             if "where" in members:
-                pending.append((members["where"], depth + 1))
-    return deepest
+                pending.append((members["where"], level + 1))
+    return TreeSize(depth, nodes, values)
 
 
-def bounded(value: Any, levels: int) -> Any:
-    """A copy of the value in which whatever is nested deeper than `levels` is replaced by null."""
+def bounded(value: Any, levels: int, items: int) -> Any:
+    """A copy of the value cut to a size a valid definition never passes.
+
+    Whatever is nested deeper than `levels` is replaced by null, and a list keeps its first `items` items. The
+    cut list is still longer than the schema allows, so the violation stays where it was.
+    """
     if isinstance(value, dict):
         if levels == 0:
             return None
-        return {name: bounded(member, levels - 1) for name, member in cast(dict[str, Any], value).items()}
+        return {name: bounded(member, levels - 1, items) for name, member in cast(dict[str, Any], value).items()}
     if isinstance(value, list):
         if levels == 0:
             return None
-        return [bounded(item, levels - 1) for item in cast(list[Any], value)]
+        return [bounded(item, levels - 1, items) for item in cast(list[Any], value)[:items]]
     return value
 
 
-def nesting_exceeds(document: object, levels: int) -> bool:
-    """Whether anything in the document is nested deeper than `levels`; no recursion."""
+def exceeds(document: object, levels: int, items: int) -> bool:
+    """Whether anything is nested deeper than `levels`, or any list holds more than `items` items; no recursion."""
     pending: list[tuple[object, int]] = [(document, 0)]
     while pending:
         value, depth = pending.pop()
@@ -82,6 +101,8 @@ def nesting_exceeds(document: object, levels: int) -> bool:
             members: list[Any] = list(cast(dict[str, Any], value).values())
         elif isinstance(value, list):
             members = cast(list[Any], value)
+            if len(members) > items:
+                return True
         else:
             continue
         if depth >= levels:

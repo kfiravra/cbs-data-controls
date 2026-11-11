@@ -1,0 +1,105 @@
+# /check --tests, final gate (all), 2026-11-11T01:39:38+02:00
+== skip (.): sql-init runs from the main tree only (one SQL Server container per machine); this worktree uses the running one
+== sql-check (.): scripts/db-check.sh
+       1088   רבקה מימון  [c5,c6]
+       1115   אביב קדוש  [c1,c3]
+PASS examples: missing-mandatory-data on 2026-11-01: 10 records, keys and matched ids as the example expects
+       1061   אסף גרינברג  [c1]
+       1062   סיגל חזן  [c1]
+       1063   אסתר וקנין  [c1]
+PASS examples: termination-before-hire on 2026-11-01: 3 records, keys and matched ids as the example expects
+db-check: 27 passed, 0 failed (structure permissions glossary hebrew examples)
+exit=0
+== contracts-check (.): uv run scripts/contracts-check.py
+Installed 5 packages in 8ms
+contracts-check: ok, 5 checks passed (schema, glossary, agreement, examples, invalid fixtures)
+exit=0
+== engine-ruff (engine): /home/kfir/projects/cbs-engine/engine/.venv/bin/ruff check .
+All checks passed!
+exit=0
+== engine-pyright (engine): /home/kfir/projects/cbs-engine/engine/.venv/bin/pyright
+0 errors, 0 warnings, 0 informations
+exit=0
+== engine-test (engine): .venv/bin/python -m pytest
+tests/unit/test_settings.py .......................                      [ 71%]
+tests/unit/test_startup.py ...........................                   [ 76%]
+tests/unit/test_suggestions.py ........................                  [ 81%]
+tests/unit/test_validator.py ........................................... [ 89%]
+....................                                                     [ 93%]
+tests/unit/test_validator_operands.py ...............................    [100%]
+
+============================= 505 passed in 23.95s =============================
+exit=0
+== print-guard (.): bash /home/kfir/projects/cbs-engine/.claude/hooks/print-guard.sh --all
+exit=0
+== hooks (.): node --test /home/kfir/projects/cbs-engine/.claude/hooks/tests/*.test.mjs
+# tests 226
+# suites 36
+# pass 226
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 5620.182971
+exit=0
+== print-guard --all
+exit=0
+# result: green
+
+# the lock and its export, 2026-11-11T01:40:30+02:00
+$ uv lock --check
+Resolved 39 packages in 4ms
+exit=0
+$ uv export --no-dev --format requirements-txt | diff - requirements.txt
+exit=0
+# the Windows wheel check (Design A): every pin has a win_amd64 wheel
+3.12 exit=0
+3.13 exit=0
+3.14 exit=0
+
+# the suite under the other Pythons the engine must start on
+$ uv run --isolated --locked --python 3.13 python -m pytest
+.                                                                        [100%]
+505 passed in 23.59s
+exit=0
+  ran on 3.13.14 pyodbc 5.5.0 sqlalchemy 2.0.57 pydantic 2.14.3
+$ uv run --isolated --locked --python 3.14 python -m pytest
+.                                                                        [100%]
+505 passed in 24.11s
+exit=0
+  ran on 3.14.6 pyodbc 5.5.0 sqlalchemy 2.0.57 pydantic 2.14.3
+
+# the gate of architecture §19 for dc-engine, item by item, with the tests that prove it (all in the 505 above)
+golden tests for the six examples (SQL and parameters)
+    tests/golden/test_goldens.py
+    -> 6 tests
+golden text of the six examples, rendered from a run on the seed
+    tests/integration/test_text_goldens_live.py
+    -> 6 tests
+every rejection path: the thirteen invalid fixtures, by code and path
+    tests/unit/test_validator.py::test_every_invalid_fixture_is_rejected_where_it_says
+    -> 13 tests
+every rejection path: every other code of the catalogue, every limit exceeded by one, the order of errors
+    tests/unit/test_validator.py tests/unit/test_validator_operands.py
+    -> 94 tests
+every rejection path, over HTTP: 422 on /validate and /run for each fixture
+    tests/integration/test_examples_live.py::test_invalid_fixture_is_a_definition_problem_on_both_endpoints
+    -> 26 tests
+injection values bound: only in the parameters, never in the text
+    tests/unit/test_compiler.py::test_injection_text_appears_only_in_the_parameters tests/unit/test_compiler.py::test_node_id_or_key_that_carries_sql_never_reaches_the_compiler
+    -> 6 tests
+injection values bound: no literal, no caller string, only glossary identifiers, on generated definitions
+    tests/unit/test_compiler.py::test_invariants_hold_for_every_example tests/unit/test_compiler.py::test_invariants_hold_for_definitions_generated_from_the_real_glossary tests/unit/test_compiler.py::test_invariants_hold_for_a_glossary_the_engine_has_never_seen
+    -> 8 tests
+injection values bound, end to end: no row returned, the table unchanged
+    tests/integration/test_semantics_live.py::test_injection_text_is_a_value_that_matches_nothing_and_changes_nothing tests/integration/test_semantics_live.py::test_key_or_id_that_carries_sql_is_rejected_before_anything_runs
+    -> 2 tests
+the exact planted ids: each example on its date, example 1 also on 2026-10-31, keys and matched ids
+    tests/integration/test_examples_live.py::test_example_flags_exactly_the_records_the_contract_expects
+    -> 7 tests
+the exact planted ids: per-node counts, and the whole answer of contracts/api.md §5
+    tests/integration/test_examples_live.py::test_counts_per_node_agree_with_the_rows tests/integration/test_examples_live.py::test_answer_is_the_example_of_the_api_contract
+    -> 8 tests
+/suggest yields the examples marked heuristic (2 to 5), node for node, flagging their records
+    tests/integration/test_suggest_live.py::test_heuristic_example_is_proposed_node_for_node_and_flags_its_records
+    -> 4 tests

@@ -278,7 +278,7 @@ def _typed(raw: Any, field_type: str) -> Value | None:
         return Decimal(repr(raw))
     if field_type == "bool":
         return raw if isinstance(raw, bool) else None
-    if not isinstance(raw, str):
+    if not isinstance(raw, str) or not _is_text(raw):
         return None
     if field_type == "date":
         if not _ISO_DATE.fullmatch(raw):
@@ -288,6 +288,15 @@ def _typed(raw: Any, field_type: str) -> Value | None:
         except ValueError:
             return None
     return raw
+
+
+def _is_text(raw: str) -> bool:
+    """JSON can spell half of a surrogate pair (`"\\ud800"`); that is not text and cannot be sent or shown."""
+    try:
+        raw.encode("utf-8")
+    except UnicodeEncodeError:
+        return False
+    return True
 
 
 def _above(low: Value, high: Value) -> bool:

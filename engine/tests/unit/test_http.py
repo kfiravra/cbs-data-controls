@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import re
 from typing import Any
 
@@ -282,3 +283,14 @@ def test_validate_lists_the_errors_of_an_invalid_definition(client: TestClient) 
     assert [(error["code"], error["path"]) for error in response.json()["errors"]] == [
         (fixture["expected"]["code"], fixture["expected"]["path"])
     ]
+
+
+def test_string_that_is_not_text_is_a_definition_problem_and_not_a_crash(client: TestClient) -> None:
+    example = read_json(next(path for path in example_files() if path.stem == "missing-mandatory-data"))
+    document = example["definition"]
+    document["where"]["children"][0]["children"][0]["value"] = chr(0xD800)
+    # As a client can send it: the half of a surrogate pair spelled as a JSON escape, in a body of plain ASCII.
+    body = json.dumps({"definition": document}, ensure_ascii=True)
+    response = client.post("/validate", content=body, headers={"content-type": "application/json"})
+    assert_problem(response, 422, "DEFINITION_INVALID", with_errors=True)
+    assert [error["code"] for error in response.json()["errors"]] == ["VALUE_TYPE_MISMATCH"]
