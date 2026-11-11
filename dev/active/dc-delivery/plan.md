@@ -211,10 +211,10 @@ Design section below is the specification each step builds from.
 ### Lane A: documents that need nothing built (starts when dc-contracts has merged; main tree; the three worktrees are running)
 
 #### Phase A0: branch (no commit)
-- [ ] Preconditions: dc-contracts is merged to main. `docs/PRODUCT.md` and `docs/design.md` are Kfir's (his
+- [x] Preconditions: dc-contracts is merged to main. `docs/PRODUCT.md` and `docs/design.md` are Kfir's (his
       docs+infra commit, which dc-web waits for): tracked by now, or still untracked and then left out, because
       this task stages its files by name.
-- [ ] `git switch -c feat/delivery main`.
+- [x] `git switch -c feat/delivery main`.
 
 #### Phase A1: the contract documents and the settled parts of the architecture
 - [ ] `docs/control-definition.md` per Design H.
@@ -239,9 +239,9 @@ contract documents are corrected in the same sitting.
 ### Lane B: integration (starts when engine, api and web have merged to main)
 
 #### Phase B0: reconcile with what was built (no commit of its own)
-- [ ] `git merge main` into `feat/delivery` (a merge, not a rebase).
-- [ ] Kfir's `.env` holds `DB_PORT=1433` and `ENGINE_DB_PORT=1433` explicitly, before the defaults move in B1.
-- [ ] Read what the three tasks left for this one. Their folders moved into the worktrees
+- [x] `git merge main` into `feat/delivery` (a merge, not a rebase).
+- [x] Kfir's `.env` holds `DB_PORT=1433` and `ENGINE_DB_PORT=1433` explicitly, before the defaults move in B1.
+- [x] Read what the three tasks left for this one. Their folders moved into the worktrees
       (`../cbs-engine/dev/active/dc-engine/`, or `dev/completed/` there after `/ship`; the same for api and web):
       - dc-engine, `notes.md` State: the variables as built, the start command, which phases were cut (the image);
       - dc-api, `notes.md`: whether the live tests ran or are handed over;
@@ -249,28 +249,28 @@ contract documents are corrected in the same sitting.
         write about each, whether the gate ran on a pre-loaded list and on the build the api hosts, and what it
         left in the dev `dq` (the six examples of its phase 7);
       - the three lists "Docs for dc-delivery", from the notes and from the PR bodies.
-- [ ] Record "As built" in `notes.md`, ten lines at most. Design A to G use the names the plans gave on
+- [x] Record "As built" in `notes.md`, ten lines at most. Design A to G use the names the plans gave on
       2026-11-10; what was built wins.
-- [ ] Each answer in the asks table holds in the code: the driver choice and the port-less URL (the engine's own
+- [x] Each answer in the asks table holds in the code: the driver choice and the port-less URL (the engine's own
       tests), the published api's content root. One that does not is fixed here per decision 23.
-- [ ] `git diff <A1 sha>..main -- contracts/ docs/` and the three "Docs for dc-delivery" lists: correct the lane-A
+- [x] `git diff <A1 sha>..main -- contracts/ docs/` and the three "Docs for dc-delivery" lists: correct the lane-A
       documents. The corrections ride in the B4 commit.
-- [ ] No session is serving from a worktree and no suite is running: `ss -ltn`, and
+- [x] No session is serving from a worktree and no suite is running: `ss -ltn`, and
       `pgrep -fa "pytest|dotnet test|ng test|vitest|playwright test"` (a bare `playwright` also matches the MCP
       servers every session starts).
 
 #### Phase B1: compose end to end
-- [ ] `.dockerignore` per Design A.
-- [ ] `engine/Dockerfile`: dc-engine's, built once as it stands; written per Design A only if its Phase 7 was cut.
-- [ ] `api/Dockerfile` per Design A.
-- [ ] `docker-compose.yml`: services `engine`, `api` and `examples`, ports and per-service environment per Design A
+- [x] `.dockerignore` per Design A.
+- [x] `engine/Dockerfile`: dc-engine's, built once as it stands; written per Design A only if its Phase 7 was cut.
+- [x] `api/Dockerfile` per Design A.
+- [x] `docker-compose.yml`: services `engine`, `api` and `examples`, ports and per-service environment per Design A
       and B.
-- [ ] `.env.example` per Design B.
-- [ ] `scripts/examples.py` per Design C.
-- [ ] `scripts/lib/env.sh` and `scripts/start.sh` per Design D (executable).
-- [ ] `scripts/lib/env.ps1`, `scripts/start.ps1` and `start.cmd` per Design D, for the Docker path from a Windows
+- [x] `.env.example` per Design B.
+- [x] `scripts/examples.py` per Design C.
+- [x] `scripts/lib/env.sh` and `scripts/start.sh` per Design D (executable).
+- [x] `scripts/lib/env.ps1`, `scripts/start.ps1` and `start.cmd` per Design D, for the Docker path from a Windows
       folder. `.gitattributes`: `*.ps1` and `*.cmd` with `eol=crlf`.
-- [ ] `.claude/skills/dc-sql/SKILL.md`: the facts this phase changed (services, ports, who reaches whom).
+- [x] `.claude/skills/dc-sql/SKILL.md`: the facts this phase changed (services, ports, who reaches whom).
 
 Verify:
 ```

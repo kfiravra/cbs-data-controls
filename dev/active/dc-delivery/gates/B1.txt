@@ -1,0 +1,56 @@
+# B1 verify, 2026-11-11 22:40 (main tree, the development .env with DB_PORT=1433)
+
+$ docker compose ps -a
+SERVICE    STATE     STATUS                      PORTS
+api        running   Up 19 seconds (healthy)     127.0.0.1:5000->8080/tcp
+db         running   Up 23 hours (healthy)       127.0.0.1:1433->1433/tcp
+db-init    exited    Exited (0) 25 seconds ago   
+engine     running   Up 24 seconds (healthy)     8000/tcp
+examples   exited    Exited (0) 11 seconds ago   
+
+$ docker compose exec engine env | names only, passwords by name
+DQ_ENGINE_RO_PASSWORD ENGINE_DB_DRIVER ENGINE_DB_HOST ENGINE_DB_NAME ENGINE_DB_PORT ENGINE_DEBUG_COMPILE ENGINE_LOG_LEVEL ENGINE_QUERY_TIMEOUT_SECONDS ENGINE_ROW_CAP ENGINE_STARTUP_DB_WAIT_SECONDS ENGINE_SUGGEST_MAX ENGINE_TIME_ZONE GPG_KEY HOME HOSTNAME LANG PATH PIP_DISABLE_PIP_VERSION_CHECK PIP_NO_CACHE_DIR PYTHONDONTWRITEBYTECODE PYTHONUNBUFFERED PYTHON_SHA256 PYTHON_VERSION 
+$ docker compose exec api env | names only
+APP_UID ASPNETCORE_HTTP_PORTS ASPNET_VERSION DB_HOST DB_PORT DOTNET_RUNNING_IN_CONTAINER DOTNET_VERSION DQ_APP_PASSWORD Engine__BaseUrl HOME HOSTNAME PATH 
+
+$ docker compose logs examples
+SKIP minor-high-salary: control 5 exists
+SKIP termination-before-hire: control 7 exists
+SKIP active-in-inactive-department: control 2 exists
+SKIP missing-mandatory-data: control 6 exists
+SKIP department-without-active-employees: control 3 exists
+SKIP inactive-ministry-salary-out-of-range: control 4 exists
+
+$ curl -s localhost:5000/api/v1/health
+{"status":"ok","database":"ok","engine":"ok","version":"1.0.0"}
+
+$ python3 scripts/examples.py verify --base-url http://localhost:5000
+SKIP minor-high-salary: control 5 exists
+SKIP termination-before-hire: control 7 exists
+SKIP active-in-inactive-department: control 2 exists
+SKIP missing-mandatory-data: control 6 exists
+SKIP department-without-active-employees: control 3 exists
+SKIP inactive-ministry-salary-out-of-range: control 4 exists
+PASS minor-high-salary: control 5 run 2 on 2026-10-31: 4 violations, keys and matched ids as expected
+PASS minor-high-salary: control 5 run 3 on 2026-11-01: 3 violations, keys and matched ids as expected
+PASS termination-before-hire: control 7 run 4 on 2026-11-01: 3 violations, keys and matched ids as expected
+PASS active-in-inactive-department: control 2 run 5 on 2026-11-01: 6 violations, keys and matched ids as expected
+PASS missing-mandatory-data: control 6 run 6 on 2026-11-01: 10 violations, keys and matched ids as expected
+PASS department-without-active-employees: control 3 run 7 on 2026-11-01: 3 violations, keys and matched ids as expected
+PASS inactive-ministry-salary-out-of-range: control 4 run 8 on 2026-11-01: 3 violations, keys and matched ids as expected
+exit=0
+
+$ scripts/db-check.sh | tail
+exit=0
+PASS lines: 27
+FAIL lines: 0
+       1063   אסתר וקנין  [c1]
+PASS examples: termination-before-hire on 2026-11-01: 3 records, keys and matched ids as the example expects
+db-check: 27 passed, 0 failed (structure permissions glossary hebrew examples)
+
+$ python3 tools/untagged.py > B1-untagged-before.txt   (6 lines: the six examples)
+$ cd web && E2E_BASE_URL=http://localhost:5000 npx playwright test e2e/gate --project=mobile --project=desktop --workers=1
+  18 passed (2.4m)
+$ python3 tools/untagged.py > B1-untagged-after.txt; cmp before after
+equal: the gate changed nothing it did not create
+controls in the store after the gate: 24 (6 examples and 18 archived e2e- controls)

@@ -1,2 +1,5 @@
 # LF in the repository and in every checkout, so shell and SQL scripts survive a Windows clone.
 * text=auto eol=lf
+# The Windows start scripts keep CRLF: cmd.exe reads a batch file line by line with it.
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
