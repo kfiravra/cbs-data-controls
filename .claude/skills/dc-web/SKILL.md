@@ -28,8 +28,16 @@ language, and puts every other string through a translation key. Look for the ex
 
 ```
 cd web && npx ng lint && npx ng test --watch=false && npx ng build
-npx playwright test     # the api on :5000 with engine and db up; screenshots at 390 and 1440
+npm run typecheck:e2e            # the Playwright specs and their typed fixtures; Playwright itself checks no types
+npx playwright test e2e/mocked   # route fixtures only, no service; screenshots at 390 and 1440
+npx playwright test e2e/gate --project=mobile --project=desktop --workers=1   # the api on :5000 with engine and db up
 ```
+
+Two e2e folders. `e2e/mocked` runs on an in-memory api (`e2e/support/routes.ts`) whose text comes from a fake engine
+(`e2e/support/fake-engine.ts`, held to the worked example of `contracts/api.md` §5) and whose records come from
+`sql/60_seed_hr.sql`; a call no fixture answers fails the test. `e2e/gate` needs the real stack. A gate spec acts
+only on controls it created in that test, named `<example name> e2e-<6 chars>`, and finds them by id, never by a
+bare name: the list it runs on also holds the six loaded examples and other people's controls.
 
 The Stop hook runs `npx ngc -p tsconfig.app.json --noEmit` (TypeScript and template type checks, no output) and
 eslint on the touched files. `ng lint` needs `ng add angular-eslint` once; without it the CLI prompts. `npx
@@ -54,10 +62,46 @@ playwright install --with-deps chromium` needs sudo on WSL: ask the user to run 
   provided from the translation files; dates use the `he-IL` locale.
 - Glossary labels come from the glossary the api serves, in the active language. The client holds no table, column
   or field name and never SQL; its validation is a convenience, not a check.
-- Errors: one HTTP interceptor turns problem details (`code`, `params`, `path`) into a translated message; a
-  definition error's JSON path maps to its editor row through the condition id. Never show `detail` or a status text.
+- Text arrives rendered, as parts: `sentenceParts` beside every `sentence`, `textParts` beside every reason's `text`,
+  each part `{ text, nodeId?, role? }`. The client has no renderer: `shared/text-parts` draws the parts (a mark
+  before the first clause of each node, `actual` and `otherActual` parts as values) and applies no template, variant
+  or value format. Marks are computed from a definition's order alone (`core/definition/marks.ts`); their letters
+  are `common.markLetters` in `he.json`.
+- Errors: `problemInterceptor` turns every failed api call into `ApiError { status, code, params, errors }`; a body
+  that is not a problem is the client code `NETWORK_ERROR`. The text of a code is `errors.<CODE>.title` and `.body`,
+  of a definition error `errors.definition.<CODE>`. A definition error goes to its row by `nodeId`, else by
+  resolving `path` against the definition that was sent (`core/definition/pointer.ts`). Never show `detail` or a
+  status text.
+- Unit specs read `contracts/` and the sources with `node:fs` (`src/testing/`). The unit-test builder bundles for
+  the browser, so the test target builds with the `testing` configuration, which keeps `node:fs` and `node:path`
+  external; `src/testing/**` is excluded from `tsconfig.app.json`.
+- Material in RTL: `MatSnackBar` reads `horizontalPosition: 'start'` as the left edge unless the config carries
+  `direction`; `[attr.aria-label]` on `mat-select` is overwritten by its own host binding, so bind its `aria-label`
+  input. Never select an internal `mdc-` or `mat-mdc-` class: use the component's `overrides` mixin
+  (`src/styles/material-theme.scss`), a rule on the host element, or a panel class the app passes in. Where no
+  token exists (the focus ring of a button-toggle segment) the rule names the component's element and its state
+  in ARIA.
+- A button its own press makes unavailable (run, save, run again, the pager's ends) takes
+  `[attr.aria-disabled]`, and its handler ignores a second press: `disabled` would drop the focus the button holds.
+  `disabled` is for a button that cannot be used as the screen stands. Both look the same (`_buttons.scss`).
+- Reduced-motion rules live in `styles/components/_motion.scss`, the last partial of `styles.scss`: they have the
+  specificity of the rules they switch off, so only the order makes them win.
+- The editor's route asks before a changed draft is left (`canDeactivate`, the browser's `confirm`). Playwright
+  dismisses a dialog by default, which keeps the page: a spec that leaves a changed draft answers the dialog.
+- `vitest` is pinned to `~4.0.8`: npm 10.9.2 crashes resolving the peer set of 4.1.x.
 - Dev server: `ng serve` on :4200 proxies `/api` to :5000 (`proxy.conf.json`), so the api needs no CORS entry for
-  it. The production build lands in `dist/web/browser/`, which the api serves.
+  it. The production build lands in `dist/web/browser/`, which the api serves from the `wwwroot` beside its own
+  app (the folder must exist when the api starts): under `dotnet run` that is
+  `api/src/DataControls.Api/bin/Debug/net10.0/wwwroot`.
+- The api deletes nothing, so every gate run adds 18 archived controls to the store. A listing of "every
+  control" must page (`pageSize` is at most 200): one page of 100 silently drops what sorts last.
+- The real engine answers the sample data in about 10 ms and the fixtures say 412: a text that formats a
+  measured value needs a spec at the real size too (the summary's `results.summary.durationUnder`).
+- A toast lives six seconds and rides along through a navigation: a gate shot of the screen after a save waits
+  for it to go, or it stands over the page in the image.
+- A worktree's `.env` may have no engine block: start the engine there with `ENGINE_DB_HOST=127.0.0.1` and
+  `ENGINE_DB_PORT=1433` in the environment (`localhost` resolves to `::1` first on WSL and the ODBC driver does
+  not fall back).
 - Playwright: projects `mobile` (390×844) and `desktop` (1440×900), `locale: 'he-IL'`, `timezoneId:
   'Asia/Jerusalem'`. Each gate spec saves a full-page `page.screenshot` per screen per project; `toHaveScreenshot`
   baselines are per-OS and font-sensitive and are not used. Specs find elements by role and test id and read

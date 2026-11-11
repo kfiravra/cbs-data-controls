@@ -1,0 +1,297 @@
+// Angular Material, pointed at the design tokens. One light theme; the system tokens read the custom
+// properties of tokens.scss, and each component that still differs is corrected through its own overrides
+// mixin. Never a selector on an internal `mdc-` or `mat-mdc-` class: where a token does not reach, Material's
+// default stays. Rules on a Material host element (`mat-form-field`) and on the panel and
+// backdrop classes this app passes in are the app's own.
+@use 'sass:map';
+@use '@angular/material' as mat;
+
+$font: ('IBM Plex Sans Hebrew', 'IBM Plex Sans', system-ui, sans-serif);
+
+// Hebrew is never letter-spaced: every tracking token of the type scale is zero.
+$no-tracking: ();
+@each $role in (display, headline, title, body, label) {
+  @each $size in (large, medium, small) {
+    $no-tracking: map.set($no-tracking, #{$role}-#{$size}-tracking, 0);
+  }
+}
+
+$system: (
+  primary: var(--color-action),
+  on-primary: var(--color-on-action),
+  primary-container: var(--color-action-tint),
+  on-primary-container: var(--color-ink),
+  secondary: var(--color-ink),
+  on-secondary: var(--color-ground),
+  secondary-container: var(--color-tonal),
+  on-secondary-container: var(--color-ink),
+  tertiary: var(--color-ink),
+  on-tertiary: var(--color-ground),
+  background: var(--color-ground),
+  on-background: var(--color-ink),
+  surface: var(--color-ground),
+  surface-dim: var(--color-surface),
+  surface-bright: var(--color-ground),
+  surface-variant: var(--color-surface),
+  surface-container-lowest: var(--color-ground),
+  surface-container-low: var(--color-ground),
+  surface-container: var(--color-ground),
+  surface-container-high: var(--color-ground),
+  surface-container-highest: var(--color-surface),
+  on-surface: var(--color-ink),
+  on-surface-variant: var(--color-muted),
+  inverse-surface: var(--color-bar),
+  inverse-on-surface: var(--color-on-bar),
+  inverse-primary: var(--color-on-bar),
+  outline: var(--color-control-line),
+  outline-variant: var(--color-line),
+  error: var(--color-danger),
+  on-error: var(--color-on-action),
+  error-container: var(--color-danger-tint),
+  on-error-container: var(--color-danger),
+  scrim: var(--color-scrim),
+  corner-extra-small: var(--radius-sm),
+  corner-small: var(--radius-sm),
+  corner-medium: var(--radius-md),
+  corner-large: var(--radius-lg),
+  corner-extra-large: var(--radius-lg),
+  corner-full: var(--radius-sm),
+);
+
+html {
+  color-scheme: light;
+
+  @include mat.theme(
+    (
+      color: (
+        primary: mat.$azure-palette,
+        theme-type: light,
+      ),
+      typography: (
+        plain-family: $font,
+        brand-family: $font,
+        bold-weight: 600,
+        medium-weight: 500,
+        regular-weight: 400,
+      ),
+      density: 0,
+    ),
+    $overrides: map.merge($system, $no-tracking)
+  );
+
+  // fields: 44px (Material's density step -3), a Control line outline, Action on focus
+  @include mat.form-field-overrides(
+    (
+      container-height: var(--size-control),
+      container-vertical-padding: calc((var(--size-control) - 1.4 * var(--text-body)) / 2),
+      container-text-size: var(--text-body),
+      container-text-line-height: 1.4,
+      outlined-container-shape: var(--radius-sm),
+      outlined-outline-width: 1px,
+      outlined-focus-outline-width: 2px,
+      outlined-outline-color: var(--color-control-line),
+      outlined-hover-outline-color: var(--color-muted),
+      outlined-focus-outline-color: var(--color-action),
+      outlined-input-text-color: var(--color-ink),
+      outlined-input-text-placeholder-color: var(--color-muted),
+      outlined-caret-color: var(--color-action),
+      enabled-select-arrow-color: var(--color-muted),
+      focus-select-arrow-color: var(--color-muted),
+      leading-icon-color: var(--color-muted),
+      trailing-icon-color: var(--color-muted),
+      focus-state-layer-opacity: 0,
+      hover-state-layer-opacity: 0,
+    )
+  );
+
+  @include mat.select-overrides(
+    (
+      panel-background-color: var(--color-ground),
+      container-elevation-shadow: var(--shadow-overlay),
+      trigger-text-size: var(--text-body),
+      trigger-text-line-height: 1.4,
+      enabled-arrow-color: var(--color-muted),
+      focused-arrow-color: var(--color-muted),
+      placeholder-text-color: var(--color-muted),
+    )
+  );
+
+  @include mat.menu-overrides(
+    (
+      container-color: var(--color-ground),
+      container-shape: var(--radius-md),
+      container-elevation-shadow: var(--shadow-overlay),
+    )
+  );
+
+  // the dialog: Ground, 8px, the one shadow; its Line strong edge and the Scrim come from the panel and
+  // backdrop classes below
+  @include mat.dialog-overrides(
+    (
+      container-color: var(--color-ground),
+      container-shape: var(--radius-lg),
+      container-elevation-shadow: var(--shadow-overlay),
+      container-max-width: 640px,
+      container-small-max-width: calc(100vw - 2 * var(--gutter)),
+      container-min-width: 0,
+      supporting-text-color: var(--color-ink),
+    )
+  );
+
+  // the toast: Bar ground, one line, at most one text button
+  @include mat.snack-bar-overrides(
+    (
+      container-color: var(--color-bar),
+      container-shape: var(--radius-md),
+      supporting-text-color: var(--color-on-bar),
+      supporting-text-size: var(--text-small),
+      button-color: var(--color-on-bar),
+    )
+  );
+
+  // ink selects
+  @include mat.checkbox-overrides(
+    (
+      selected-icon-color: var(--color-ink),
+      selected-hover-icon-color: var(--color-ink),
+      selected-focus-icon-color: var(--color-ink),
+      selected-pressed-icon-color: var(--color-ink),
+      selected-checkmark-color: var(--color-ground),
+      unselected-icon-color: var(--color-control-line),
+      unselected-hover-icon-color: var(--color-muted),
+      unselected-focus-icon-color: var(--color-ink),
+      selected-hover-state-layer-color: var(--color-ink),
+      selected-focus-state-layer-color: var(--color-ink),
+      selected-pressed-state-layer-color: var(--color-ink),
+      unselected-hover-state-layer-color: var(--color-ink),
+      unselected-focus-state-layer-color: var(--color-ink),
+      unselected-pressed-state-layer-color: var(--color-ink),
+    )
+  );
+
+  @include mat.button-toggle-overrides(
+    (
+      shape: var(--radius-sm),
+      height: var(--size-control-sm),
+      background-color: var(--color-ground),
+      text-color: var(--color-ink),
+      divider-color: var(--color-control-line),
+      selected-state-background-color: var(--color-ink),
+      selected-state-text-color: var(--color-ground),
+      state-layer-color: var(--color-ink),
+      label-text-size: var(--text-small),
+      label-text-weight: 500,
+    )
+  );
+
+  // a value in a list field: 30px, with its remove button
+  @include mat.chips-overrides(
+    (
+      container-height: 30px,
+      container-shape-radius: var(--radius-sm),
+      elevated-container-color: var(--color-tonal),
+      outline-width: 0,
+      label-text-color: var(--color-ink),
+      label-text-size: var(--text-label),
+      label-text-weight: 500,
+      with-trailing-icon-trailing-icon-color: var(--color-muted),
+    )
+  );
+
+  @include mat.tooltip-overrides(
+    (
+      container-color: var(--color-bar),
+      container-shape: var(--radius-sm),
+      supporting-text-color: var(--color-on-bar),
+      supporting-text-size: var(--text-label),
+    )
+  );
+}
+
+// A field is a lighter well: Ground inside its outline, also on a Surface panel. The host holds only the
+// field box, because subscript sizing is dynamic and hints and errors stand outside it.
+mat-form-field {
+  inline-size: 100%;
+  min-inline-size: 0;
+  border-radius: var(--radius-sm);
+  background: var(--color-ground);
+
+  // the soft ring: with the Action outline, at once
+  &:focus-within {
+    box-shadow: 0 0 0 4px color-mix(in oklab, var(--color-action) 20%, transparent);
+  }
+
+  // invalid: a Danger border, doubled
+  &.field--invalid {
+    @include mat.form-field-overrides(
+      (
+        outlined-outline-width: 2px,
+        outlined-outline-color: var(--color-danger),
+        outlined-hover-outline-color: var(--color-danger),
+        outlined-focus-outline-color: var(--color-danger),
+      )
+    );
+
+    &:focus-within {
+      box-shadow: 0 0 0 4px color-mix(in oklab, var(--color-danger) 20%, transparent);
+    }
+  }
+
+  // small controls (36px, 44px on a phone): the quantity and relationship picks, the page size
+  &.field--sm {
+    @include mat.form-field-overrides(
+      (
+        container-height: var(--size-control-sm),
+        container-vertical-padding: calc((var(--size-control-sm) - 1.4 * var(--text-small)) / 2),
+        container-text-size: var(--text-small),
+      )
+    );
+    @include mat.select-overrides(
+      (
+        trigger-text-size: var(--text-small),
+      )
+    );
+  }
+}
+
+// Keyboard focus on a segment. Material shows it as a state layer, which is invisible on the Ink fill of the
+// selected segment, and it has no token for a ring. The rule names the component by its element and the
+// segment by its state in ARIA, never by a class of Material's own. The group clips what is drawn outside
+// it, so the ring stands inside the segment.
+mat-button-toggle-group button:focus-visible {
+  outline: 2px solid var(--color-action);
+  outline-offset: calc(-1 * var(--space-1));
+}
+
+mat-button-toggle-group button:is([aria-checked='true'], [aria-pressed='true']):focus-visible {
+  outline-color: var(--color-ground);
+}
+
+// classes this app passes to MatDialog (panelClass, backdropClass) and MatSnackBar (panelClass)
+.app-dialog {
+  inline-size: 100%;
+  max-inline-size: min(640px, calc(100vw - 2 * var(--gutter)));
+  border: 1px solid var(--color-line-strong);
+  border-radius: var(--radius-lg);
+}
+
+// A dialog fades in and rises 6px. The opening is this app's own, on its own panel class: Material's (a
+// scale from 0.8) is given no time in MAT_DIALOG_DEFAULT_OPTIONS (app.config.ts), and its closing fade stays.
+.app-dialog {
+  animation: dialog-in var(--duration-panel) var(--ease-out);
+}
+
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+.app-dialog--sm {
+  max-inline-size: min(440px, calc(100vw - 2 * var(--gutter)));
+}
+
+.app-scrim {
+  background: var(--color-scrim);
+}

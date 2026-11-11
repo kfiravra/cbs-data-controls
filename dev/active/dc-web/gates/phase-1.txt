@@ -1,0 +1,81 @@
+dc-web gate phase-1
+2026-11-10T22:27:47Z
+459782e
+no suite running
+=== web-ngc: npx ngc -p tsconfig.app.json --noEmit
+--- web-ngc: ok
+=== web-eslint: npx ng lint
+
+Linting "web"...
+
+All files pass linting.
+
+--- web-eslint: ok
+=== web-e2e-types: npm run -s typecheck:e2e
+--- web-e2e-types: ok
+=== web-test: npx ng test --watch=false
+❯ Building...
+✔ Building...
+Initial chunk files                                | Names                                           |  Raw size
+styles.css                                         | styles                                          |  49.01 kB | 
+spec-app-shared-table-foot-table-foot.component.js | spec-app-shared-table-foot-table-foot.component |  27.70 kB | 
+chunk-CGZBV6BD.js                                  | -                                               |   4.07 kB | 
+spec-app-guards.js                                 | spec-app-guards                                 |   2.28 kB | 
+init-testbed.js                                    | init-testbed                                    |   1.21 kB | 
+spec-app-core-i18n-plural.js                       | spec-app-core-i18n-plural                       | 991 bytes | 
+vitest-mock-patch.js                               | vitest-mock-patch                               | 974 bytes | 
+chunk-KQXG34DI.js                                  | -                                               | 828 bytes | 
+
+                                                   | Initial total                                   |  87.07 kB
+
+Application bundle generation complete. [2.185 seconds] - 2026-11-10T22:27:55.676Z
+
+
+ RUN  v4.0.18 /home/kfir/projects/cbs-web/web
+
+ ✓  web  src/app/core/i18n/plural.spec.ts (3 tests) 5ms
+ ✓  web  src/app/guards.spec.ts (4 tests) 12ms
+ ✓  web  src/app/shared/table-foot/table-foot.component.spec.ts (4 tests) 169ms
+
+ Test Files  3 passed (3)
+      Tests  11 passed (11)
+   Start at  00:27:55
+   Duration  1.57s (transform 289ms, setup 977ms, import 480ms, tests 186ms, environment 1.77s)
+
+--- web-test: ok
+=== web-build: npx ng build
+❯ Building...
+✔ Building...
+Initial chunk files | Names               |  Raw size | Estimated transfer size
+chunk-PFPPEXYF.js   | -                   | 276.77 kB |                75.02 kB
+styles-242BJZGP.css | styles              |  41.74 kB |                 6.52 kB
+main-HHULPCWV.js    | main                |  15.86 kB |                 5.08 kB
+
+                    | Initial total       | 334.37 kB |                86.62 kB
+
+Lazy chunk files    | Names               |  Raw size | Estimated transfer size
+chunk-ZZOMJSVR.js   | not-found-component |   1.56 kB |               730 bytes
+chunk-CLBVX3SJ.js   | -                   |   1.32 kB |               713 bytes
+chunk-QSNRWGIZ.js   | -                   | 708 bytes |               708 bytes
+chunk-IO3FFYL7.js   | control-editor-page | 586 bytes |               586 bytes
+chunk-RCFWCGP2.js   | run-results-page    | 561 bytes |               561 bytes
+chunk-7RCL5UPA.js   | controls-list-page  | 500 bytes |               500 bytes
+
+Application bundle generation complete. [2.838 seconds] - 2026-11-10T22:28:01.131Z
+
+Output location: /home/kfir/projects/cbs-web/web/dist/web
+
+--- web-build: ok
+=== print-guard
+no suite running
+=== playwright: npx playwright test e2e/mocked/shell.spec.ts
+
+Running 4 tests using 4 workers
+
+  ✓  2 [mobile] › e2e/mocked/shell.spec.ts:7:3 › shell › opens in Hebrew, right to left, with its own font and no failed request (1.4s)
+  ✓  1 [mobile] › e2e/mocked/shell.spec.ts:33:3 › shell › shows the not-found state for an unknown address and leads back to the list (1.5s)
+  ✓  4 [desktop] › e2e/mocked/shell.spec.ts:33:3 › shell › shows the not-found state for an unknown address and leads back to the list (1.5s)
+  ✓  3 [desktop] › e2e/mocked/shell.spec.ts:7:3 › shell › opens in Hebrew, right to left, with its own font and no failed request (1.5s)
+
+  4 passed (2.3s)
+--- playwright: ok

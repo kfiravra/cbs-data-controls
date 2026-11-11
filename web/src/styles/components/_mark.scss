@@ -1,0 +1,188 @@
+// Every condition carries one mark, a letter in document order. The same mark stands on its row in the
+// builder, on its clause in the sentence, on its line in the breakdown and on each reason it explains.
+
+.mark {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  vertical-align: -0.28em;
+  min-inline-size: var(--size-mark);
+  block-size: var(--size-mark);
+  padding-inline: 4px;
+  border-radius: var(--radius-sm);
+  background: var(--color-action-tint);
+  color: var(--color-action);
+  font-size: var(--text-label);
+  font-weight: 600;
+  line-height: 1;
+  font-style: normal;
+  transition:
+    background-color var(--duration-out) var(--ease-out),
+    color var(--duration-out) var(--ease-out);
+}
+
+.mark--active,
+.mark--traced {
+  background: var(--color-action);
+  color: var(--color-on-action);
+}
+
+// the trace: a condition in focus (its row, its clause or its meter) fills its mark wherever it stands
+.mark--traced {
+  transition-duration: var(--duration-in);
+}
+
+// the settle: when a condition changes, its mark in the sentence fills at once and eases back
+.mark--changed {
+  animation: mark-settle var(--duration-settle) var(--ease-out) both;
+}
+
+@keyframes mark-settle {
+  from {
+    background: var(--color-action);
+    color: var(--color-on-action);
+  }
+}
+
+.mark--open {
+  background: none;
+  box-shadow: inset 0 0 0 1px var(--color-danger);
+  color: var(--color-danger);
+}
+
+// A value stays whole while it fits on a line and moves to the next line as one piece; only a value longer
+// than the line itself (an address, a long name) breaks inside, so it never pushes the page sideways.
+.value {
+  display: inline-block;
+  max-inline-size: 100%;
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  background: var(--color-action-tint);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  // its own box now: a line of 1.35 and the padding stay inside the line of the text around it
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+// the rule sentence, plain: on Ground, for reading
+.sentence {
+  font-size: var(--text-title);
+  line-height: 1.75;
+  max-inline-size: 70ch;
+  text-wrap: pretty;
+}
+
+.sentence--body {
+  font-size: var(--text-body);
+  line-height: 1.7;
+}
+
+.clause {
+  border-radius: var(--radius-xs);
+}
+
+// the rule sentence as a field: the control in words, in the editor
+.sentence-field {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  border-radius: var(--radius-lg);
+  background: var(--color-action);
+  color: var(--color-on-action);
+
+  :focus-visible {
+    outline-color: var(--color-on-action);
+  }
+
+  .sentence {
+    font-size: var(--text-sentence);
+    font-weight: 500;
+    line-height: 1.7;
+  }
+
+  .mark {
+    background: var(--color-on-action-tonal);
+    color: var(--color-on-action);
+  }
+
+  .mark--open {
+    background: none;
+    box-shadow: inset 0 0 0 1px currentColor;
+    color: var(--color-on-action);
+  }
+
+  .mark--traced {
+    background: var(--color-on-action);
+    color: var(--color-action);
+  }
+
+  .mark--changed {
+    animation-name: mark-settle-on-action;
+  }
+
+  .btn--text {
+    color: var(--color-on-action);
+    justify-self: center;
+  }
+
+  .btn[disabled],
+  .btn[aria-disabled='true'] {
+    background: var(--color-on-action-tonal);
+    color: var(--color-on-action);
+  }
+
+  // the last valid sentence, kept while the draft is unfinished or invalid
+  .sentence--stale {
+    color: var(--color-on-action-stale);
+    transition: color var(--duration-in) var(--ease-out);
+  }
+}
+
+@keyframes mark-settle-on-action {
+  from {
+    background: var(--color-on-action);
+    color: var(--color-action);
+  }
+}
+
+.sentence-field__title {
+  font-size: var(--text-small);
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.sentence-field__hint {
+  font-size: var(--text-body);
+  font-weight: 400;
+  line-height: 1.55;
+}
+
+.sentence-field__status {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding-block-start: var(--space-4);
+  border-block-start: 1px solid var(--color-on-action-line);
+  font-size: var(--text-small);
+  line-height: 1.5;
+
+  .icon {
+    margin-block-start: 1px;
+  }
+}
+
+.sentence-field__actions {
+  display: grid;
+  gap: var(--space-3);
+}
+
+@media (min-width: 640px) {
+  .sentence-field__actions {
+    grid-template-columns: 1fr 1fr;
+
+    > .btn--text {
+      grid-column: 1 / -1;
+    }
+  }
+}

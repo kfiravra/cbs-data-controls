@@ -1,0 +1,105 @@
+// Design tokens. Names and values are those of the docs/design.md frontmatter; the only stylesheet that may
+// hold a colour literal. Component styles read these custom properties and nothing else.
+
+:root {
+  // colour: the two greys, the ink, the one accent
+  --color-ground: #eef0f3; // where things are read: the page, tables, sentences
+  --color-surface: #e2e5ea; // where things are operated: the builder, toolbars
+  --color-ink: #0b0c0e;
+  --color-muted: #5d6470; // 5.2:1 on ground, 4.7:1 on surface
+  --color-action: #1f2de6; // 7.1:1 on ground
+  --color-action-hover: #355aec;
+  --color-action-pressed: #486fef;
+  --color-on-action: #ffffff; // 8.2:1 on action
+  --color-on-action-stale: #ffffffb8; // 72% white, 4.9:1 on action: the last valid sentence of an unfinished draft
+  --color-action-tint: #1f2de61a; // 10%: marks, highlighted values, selection
+  --color-action-track: #1f2de629; // 16%: the meter's unfilled track
+  --color-on-action-tonal: #ffffff2e; // 18% white on the cobalt field: marks, the second button
+  --color-on-action-line: #ffffff47; // 28% white on the cobalt field: the divider
+  --color-bar: #0b0c0e; // the app bar
+  --color-on-bar: #eef0f3;
+  --color-line: #0b0c0e1c; // 11% ink: row rules, dividers
+  --color-line-strong: #0b0c0e33; // 20% ink: header rules, panel edges, the tree rail
+  --color-control-line: #767c87; // field borders: 3.3:1 on surface, 3.7:1 on ground
+  --color-tonal: #0b0c0e14; // 8% ink: the secondary button, chips
+  --color-tonal-hover: #0b0c0e24; // 14% ink
+  --color-row-hover: #0b0c0e0a; // 4% ink
+  --color-danger: #b51522; // 5.9:1 on ground
+  --color-danger-tint: #b515221a;
+  --color-danger-line: #b5152259;
+  --color-warning: #825100; // 5.9:1 on ground
+  --color-warning-tint: #8251001a;
+  --color-warning-line: #82510059;
+  --color-success: #1d6835; // 6.0:1 on ground
+  --color-success-tint: #1d68351a;
+  --color-success-line: #1d683559;
+  --color-scrim: #0b0c0e66; // 40% ink behind a dialog
+
+  // type
+  --font-sans: 'IBM Plex Sans Hebrew', 'IBM Plex Sans', system-ui, sans-serif;
+  --text-label: 0.8125rem; // 13
+  --text-small: 0.875rem; // 14
+  --text-body: 1rem; // 16
+  --text-title: 1.125rem; // 18
+  --text-sentence: 1.25rem; // 20
+  --text-page: 1.5rem; // 24, 28 from 1024
+  --text-figure: 2.5rem; // 40, 48 from 1024
+
+  // space: 4, 8, 12, 16, 24, 32, 48, 64
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+
+  // shape
+  --radius-xs: 2px; // the meter, the focus outline
+  --radius-sm: 4px; // controls, buttons, chips, marks
+  --radius-md: 6px; // toolbars, banners, toasts, menus
+  --radius-lg: 8px; // panels, dialogs, the sentence field
+
+  // sizes
+  --size-control: 44px;
+  --size-control-sm: 36px;
+  --size-icon: 20px;
+  --size-mark: 22px;
+  --size-bar: 56px;
+  --gutter: 16px; // 32 from 640, 48 from 1024
+  --container: 1280px;
+
+  // depth: flat; one shadow, for things that float over the page
+  --shadow-overlay: 0 8px 24px #0b0c0e1a, 0 1px 2px #0b0c0e14;
+
+  // motion
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --duration-in: 150ms;
+  --duration-out: 120ms;
+  --duration-press: 90ms;
+  --duration-panel: 200ms;
+  --duration-close: 120ms;
+  --duration-settle: 600ms; // a changed condition's mark easing back in the sentence
+}
+
+// no small controls where fingers are
+@media (max-width: 639px) {
+  :root {
+    --size-control-sm: 44px;
+  }
+}
+
+@media (min-width: 640px) {
+  :root {
+    --gutter: 32px;
+  }
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --gutter: 48px;
+    --text-page: 1.75rem;
+    --text-figure: 3rem;
+  }
+}

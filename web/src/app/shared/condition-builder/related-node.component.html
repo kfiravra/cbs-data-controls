@@ -1,0 +1,79 @@
+<div class="group related" role="group" [attr.aria-label]="'common.condition' | translate: { mark: mark() }">
+  <div
+    class="group__head"
+    (focusin)="trace.emit(node().id)"
+    (focusout)="trace.emit(null)"
+    (pointerenter)="trace.emit(node().id)"
+    (pointerleave)="trace.emit(null)"
+  >
+    <div class="group__how">
+      <app-mark [label]="mark()" [state]="markState()" />
+      <mat-form-field class="field--sm group__pick" appearance="outline" subscriptSizing="dynamic">
+        <mat-select
+          data-testid="related-quantity"
+          data-focus="first"
+          [aria-label]="'editor.related.quantity' | translate"
+          [value]="node().quantifier"
+          (selectionChange)="emit({ kind: 'quantifier', id: node().id, quantifier: $event.value })"
+        >
+          <mat-option value="none">{{ 'editor.related.none' | translate }}</mat-option>
+          <mat-option value="any">{{ 'editor.related.any' | translate }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field
+        class="field--sm group__pick"
+        appearance="outline"
+        subscriptSizing="dynamic"
+        [class.field--invalid]="invalid()"
+      >
+        <mat-select
+          data-testid="related-relationship"
+          data-input="relationship"
+          [appInvalid]="invalid()"
+          [aria-label]="'editor.related.records' | translate"
+          [placeholder]="'editor.related.records' | translate"
+          [value]="node().relationship ?? null"
+          (selectionChange)="emit({ kind: 'relationship', id: node().id, relationship: $event.value })"
+        >
+          @for (option of options(); track option.key) {
+            <mat-option [value]="option.key">{{ language.text(option.label) }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <span class="group__lead">{{ 'editor.related.lead' | translate }}</span>
+      <mat-button-toggle-group
+        data-testid="group-op"
+        [attr.data-op-of]="node().where.key"
+        [attr.aria-label]="'editor.group.how' | translate"
+        [value]="node().where.op"
+        (change)="emit({ kind: 'op', group: node().where.key, op: $event.value })"
+      >
+        <mat-button-toggle value="and">{{ 'editor.group.all' | translate }}</mat-button-toggle>
+        <mat-button-toggle value="or">{{ 'editor.group.any' | translate }}</mat-button-toggle>
+      </mat-button-toggle-group>
+    </div>
+    <button
+      class="icon-btn"
+      type="button"
+      data-testid="remove-row"
+      [attr.aria-label]="'editor.row.remove' | translate: { mark: mark() }"
+      [matTooltip]="'editor.row.remove' | translate: { mark: mark() }"
+      (click)="emit({ kind: 'remove', target: node().id })"
+    >
+      <app-icon name="delete" />
+    </button>
+  </div>
+  @for (message of messages(); track $index) {
+    <p class="field__error" role="alert" data-testid="row-error">
+      <app-icon name="error" size="sm" />{{ message.key | translate: message.params }}
+    </p>
+  }
+  <app-condition-group
+    [group]="node().where"
+    [scope]="relatedEntity()"
+    [view]="view()"
+    [bare]="true"
+    (edit)="edit.emit($event)"
+    (trace)="trace.emit($event)"
+  />
+</div>

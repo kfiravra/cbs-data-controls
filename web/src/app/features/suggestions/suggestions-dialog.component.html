@@ -1,0 +1,64 @@
+<div class="dialog dialog--tall" data-testid="suggestions-dialog">
+  <div class="dialog__head">
+    <div class="stack stack--tight">
+      <h2 class="t-title" id="suggestions-title">{{ 'suggestions.title' | translate }}</h2>
+      <p class="muted t-small">{{ 'suggestions.hint' | translate }}</p>
+    </div>
+    <button
+      class="icon-btn"
+      type="button"
+      [attr.aria-label]="'common.close' | translate"
+      [matTooltip]="'common.close' | translate"
+      [disabled]="creating()"
+      (click)="close()"
+    >
+      <app-icon name="close" />
+    </button>
+  </div>
+
+  <div class="dialog__body">
+    @if (failure(); as error) {
+      <app-error-banner [error]="error" [retryable]="items() === null" (retry)="load()" />
+    }
+    @if (items(); as drafts) {
+      @for (item of drafts; track $index) {
+        <app-suggestion-row
+          [item]="item"
+          [selected]="selected().has($index)"
+          [failed]="refused() === $index"
+          (selectedChange)="toggle($index, $event)"
+          (edit)="edit(item)"
+        />
+      } @empty {
+        <p data-testid="suggestions-empty">{{ 'suggestions.empty' | translate }}</p>
+      }
+    } @else if (!failure()) {
+      <div class="stack" aria-hidden="true" data-testid="suggestions-loading">
+        <app-skeleton width="46%" />
+        <app-skeleton width="82%" />
+        <app-skeleton width="58%" />
+        <app-skeleton width="40%" />
+        <app-skeleton width="76%" />
+      </div>
+    }
+  </div>
+
+  <div class="dialog__foot">
+    <button class="btn btn--tonal" type="button" data-testid="suggestions-close" [disabled]="creating()" (click)="close()">
+      {{ 'common.close' | translate }}
+    </button>
+    <button
+      class="btn btn--primary"
+      type="button"
+      data-testid="suggestions-create"
+      [disabled]="count() === 0"
+      [attr.aria-disabled]="creating() ? 'true' : null"
+      (click)="create()"
+    >
+      @if (creating()) {
+        <span class="spinner" aria-hidden="true"></span>
+      }
+      {{ count() === 0 ? ('suggestions.create.none' | translate) : ('suggestions.create' | plural: count()) }}
+    </button>
+  </div>
+</div>

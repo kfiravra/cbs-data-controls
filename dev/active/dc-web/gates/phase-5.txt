@@ -1,0 +1,253 @@
+dc-web gate phase-5
+2026-11-10T23:32:34Z
+de43850
+no suite running
+=== web-ngc: npx ngc -p tsconfig.app.json --noEmit
+--- web-ngc: ok
+=== web-eslint: npx ng lint
+
+Linting "web"...
+
+All files pass linting.
+
+--- web-eslint: ok
+=== web-e2e-types: npm run -s typecheck:e2e
+--- web-e2e-types: ok
+=== web-test: npx ng test --watch=false
+❯ Building...
+✔ Building...
+Initial chunk files                                              | Names                                                         |  Raw size
+spec-app-shared-condition-builder-condition-builder.component.js | spec-app-shared-condition-builder-condition-builder.component | 126.94 kB | 
+styles.css                                                       | styles                                                        |  49.89 kB | 
+spec-app-features-control-editor-editor.store.js                 | spec-app-features-control-editor-editor.store                 |  39.90 kB | 
+spec-app-shared-results-table-results-table.component.js         | spec-app-shared-results-table-results-table.component         |  25.38 kB | 
+spec-app-features-run-results-results.store.js                   | spec-app-features-run-results-results.store                   |  14.68 kB | 
+chunk-PMLBKRUS.js                                                | -                                                             |  14.21 kB | 
+spec-app-shared-breakdown-breakdown.component.js                 | spec-app-shared-breakdown-breakdown.component                 |  13.93 kB | 
+chunk-6VXNI56O.js                                                | -                                                             |  12.55 kB | 
+spec-app-shared-table-foot-table-foot.component.js               | spec-app-shared-table-foot-table-foot.component               |  12.38 kB | 
+spec-app-core-glossary-glossary.lookups.js                       | spec-app-core-glossary-glossary.lookups                       |   9.22 kB | 
+spec-app-shared-toolbar-toolbar.component.js                     | spec-app-shared-toolbar-toolbar.component                     |   9.08 kB | 
+spec-app-core-api-api.js                                         | spec-app-core-api-api                                         |   8.46 kB | 
+spec-app-core-definition-draft.edit.js                           | spec-app-core-definition-draft.edit                           |   8.36 kB | 
+spec-app-core-definition-draft.check.js                          | spec-app-core-definition-draft.check                          |   8.11 kB | 
+spec-app-core-definition-draft.js                                | spec-app-core-definition-draft                                |   7.43 kB | 
+spec-app-shared-confirm-dialog-confirm-dialog.component.js       | spec-app-shared-confirm-dialog-confirm-dialog.component       |   7.41 kB | 
+spec-app-shared-banner-error-banner.component.js                 | spec-app-shared-banner-error-banner.component                 |   6.21 kB | 
+chunk-JVDOWM4J.js                                                | -                                                             |   6.02 kB | 
+spec-app-core-definition-draft.operations.js                     | spec-app-core-definition-draft.operations                     |   5.57 kB | 
+spec-app-shared-text-parts-text-parts.component.js               | spec-app-shared-text-parts-text-parts.component               |   5.19 kB | 
+chunk-JBWBLPNK.js                                                | -                                                             |   5.19 kB | 
+chunk-HT7KFNAN.js                                                | -                                                             |   5.17 kB | 
+spec-app-core-definition-condition.rules.js                      | spec-app-core-definition-condition.rules                      |   4.91 kB | 
+chunk-MVT4TL7R.js                                                | -                                                             |   4.85 kB | 
+chunk-KVOTFLKB.js                                                | -                                                             |   4.66 kB | 
+chunk-GMALXYEY.js                                                | -                                                             |   4.56 kB | 
+chunk-T3UBOTL6.js                                                | -                                                             |   4.54 kB | 
+spec-app-core-i18n-format.service.js                             | spec-app-core-i18n-format.service                             |   4.00 kB | 
+chunk-5YS4AANG.js                                                | -                                                             |   3.74 kB | 
+spec-app-guards.js                                               | spec-app-guards                                               |   3.40 kB | 
+chunk-S7POCKQD.js                                                | -                                                             |   3.38 kB | 
+chunk-CUZA52NM.js                                                | -                                                             |   3.26 kB | 
+chunk-ZV3FF3IO.js                                                | -                                                             |   3.22 kB | 
+spec-app-shared-toast-toast.service.js                           | spec-app-shared-toast-toast.service                           |   3.10 kB | 
+spec-app-core-definition-pointer.js                              | spec-app-core-definition-pointer                              |   2.98 kB | 
+spec-app-core-text-text-parts.js                                 | spec-app-core-text-text-parts                                 |   2.54 kB | 
+chunk-FQJVQAE3.js                                                | -                                                             |   2.33 kB | 
+chunk-S6PLKAGB.js                                                | -                                                             |   2.28 kB | 
+spec-app-core-glossary-glossary.service.js                       | spec-app-core-glossary-glossary.service                       |   2.17 kB | 
+spec-app-core-definition-marks.js                                | spec-app-core-definition-marks                                |   2.04 kB | 
+chunk-TM4UOBFK.js                                                | -                                                             |   1.89 kB | 
+spec-app-shared-banner-banner.component.js                       | spec-app-shared-banner-banner.component                       |   1.78 kB | 
+chunk-VZ3W45LC.js                                                | -                                                             |   1.35 kB | 
+chunk-GWVMSDZK.js                                                | -                                                             |   1.33 kB | 
+spec-app-core-i18n-plural.js                                     | spec-app-core-i18n-plural                                     |   1.31 kB | 
+init-testbed.js                                                  | init-testbed                                                  |   1.21 kB | 
+chunk-FVG5VKTA.js                                                | -                                                             |   1.11 kB | 
+chunk-COXDGQGK.js                                                | -                                                             |   1.08 kB | 
+chunk-XUQ3H2VX.js                                                | -                                                             |   1.04 kB | 
+vitest-mock-patch.js                                             | vitest-mock-patch                                             | 974 bytes | 
+chunk-3W5OZ7PE.js                                                | -                                                             | 958 bytes | 
+chunk-HQZZVFCT.js                                                | -                                                             | 897 bytes | 
+chunk-Y7VQSYSL.js                                                | -                                                             | 846 bytes | 
+chunk-WVDS3KXD.js                                                | -                                                             | 814 bytes | 
+chunk-C6H72NJB.js                                                | -                                                             | 550 bytes | 
+chunk-GBPI3SUH.js                                                | -                                                             | 209 bytes | 
+
+                                                                 | Initial total                                                 | 480.62 kB
+
+Application bundle generation complete. [4.710 seconds] - 2026-11-10T23:32:47.815Z
+
+
+ RUN  v4.0.18 /home/kfir/projects/cbs-web/web
+
+ ✓  web  src/app/shared/banner/banner.component.spec.ts (3 tests) 167ms
+ ✓  web  src/app/shared/text-parts/text-parts.component.spec.ts (9 tests) 242ms
+ ✓  web  src/app/features/control-editor/editor.store.spec.ts (29 tests) 336ms
+ ✓  web  src/app/shared/banner/error-banner.component.spec.ts (4 tests) 138ms
+ ✓  web  src/app/features/run-results/results.store.spec.ts (17 tests) 133ms
+ ✓  web  src/app/shared/results-table/results-table.component.spec.ts (10 tests) 680ms
+ ✓  web  src/app/shared/confirm-dialog/confirm-dialog.component.spec.ts (3 tests) 504ms
+     ✓ asks with the title, the body and the name of the action  340ms
+ ✓  web  src/app/shared/table-foot/table-foot.component.spec.ts (4 tests) 384ms
+ ✓  web  src/app/core/api/api.spec.ts (9 tests) 49ms
+ ✓  web  src/app/core/i18n/format.service.spec.ts (6 tests) 62ms
+ ✓  web  src/app/core/definition/pointer.spec.ts (4 tests) 5ms
+ ✓  web  src/app/shared/breakdown/breakdown.component.spec.ts (6 tests) 168ms
+ ✓  web  src/app/guards.spec.ts (6 tests) 31ms
+ ✓  web  src/app/core/glossary/glossary.lookups.spec.ts (15 tests) 16ms
+ ✓  web  src/app/core/definition/draft.spec.ts (14 tests) 8ms
+ ✓  web  src/app/shared/toolbar/toolbar.component.spec.ts (4 tests) 634ms
+     ✓ emits the search once, 300ms after the last key  365ms
+ ✓  web  src/app/core/definition/draft.check.spec.ts (14 tests) 10ms
+ ✓  web  src/app/core/definition/draft.operations.spec.ts (12 tests) 11ms
+ ✓  web  src/app/core/definition/draft.edit.spec.ts (12 tests) 8ms
+ ✓  web  src/app/core/definition/condition.rules.spec.ts (11 tests) 3ms
+ ✓  web  src/app/core/glossary/glossary.service.spec.ts (2 tests) 8ms
+ ✓  web  src/app/core/definition/marks.spec.ts (4 tests) 7ms
+ ✓  web  src/app/core/text/text-parts.spec.ts (5 tests) 3ms
+ ✓  web  src/app/core/i18n/plural.spec.ts (4 tests) 2ms
+ ✓  web  src/app/shared/toast/toast.service.spec.ts (2 tests) 5ms
+ ✓  web  src/app/shared/condition-builder/condition-builder.component.spec.ts (29 tests) 4605ms
+       ✓ adds a condition under the last one and letters the rows in order  486ms
+       ✓ keeps one empty row when the last row of the control is removed  459ms
+
+ Test Files  26 passed (26)
+      Tests  238 passed (238)
+   Start at  01:32:47
+   Duration  7.76s (transform 1.45s, setup 4.13s, import 4.82s, tests 8.22s, environment 27.53s)
+
+--- web-test: ok
+=== web-build: npx ng build
+❯ Building...
+✔ Building...
+Initial chunk files | Names               |  Raw size | Estimated transfer size
+chunk-UKS5XMI5.js   | -                   | 309.00 kB |                83.59 kB
+chunk-OMNXLBGW.js   | -                   |  73.91 kB |                17.57 kB
+styles-OJVHDNN3.css | styles              |  42.51 kB |                 6.60 kB
+chunk-S7MU5UT3.js   | -                   |  22.76 kB |                 4.59 kB
+main-AYTMH5UE.js    | main                |  16.17 kB |                 5.27 kB
+
+                    | Initial total       | 464.34 kB |               117.63 kB
+
+Lazy chunk files    | Names               |  Raw size | Estimated transfer size
+chunk-RVSWRKRL.js   | control-editor-page | 212.67 kB |                36.09 kB
+chunk-WP3SW2WY.js   | -                   | 189.49 kB |                37.30 kB
+chunk-5NF653JN.js   | run-results-page    |  29.43 kB |                 8.03 kB
+chunk-HYIISFQQ.js   | -                   |   1.82 kB |               813 bytes
+chunk-KDPYOAMA.js   | -                   |   1.34 kB |               714 bytes
+chunk-GIP7JLYP.js   | -                   | 714 bytes |               714 bytes
+chunk-TLDBIJ6W.js   | controls-list-page  | 506 bytes |               506 bytes
+chunk-N2TFLW4O.js   | not-found-component | 128 bytes |               128 bytes
+
+Application bundle generation complete. [4.089 seconds] - 2026-11-10T23:33:00.527Z
+
+Output location: /home/kfir/projects/cbs-web/web/dist/web
+
+--- web-build: ok
+=== print-guard
+no suite running
+=== playwright: npx playwright test e2e/mocked
+
+Running 96 tests using 4 workers
+
+  ✓   3 [mobile] › e2e/mocked/builder.spec.ts:87:5 › condition builder › builds example 2 with the keyboard alone: a comparison of two fields (3.0s)
+  ✓   1 [mobile] › e2e/mocked/builder.spec.ts:87:5 › condition builder › builds example 1 with the keyboard alone: typed numbers (3.9s)
+  ✓   2 [mobile] › e2e/mocked/builder.spec.ts:76:3 › condition builder › builds example 5 with the keyboard alone: another root entity and a related-records node (4.7s)
+  ✓   7 [mobile] › e2e/mocked/builder.spec.ts:120:3 › condition builder › starts a new control on the first root entity with one empty, open condition (1.0s)
+  ✓   5 [mobile] › e2e/mocked/builder.spec.ts:97:3 › condition builder › walks a row with Tab in the order it reads: field, comparison, value, compare, remove (3.4s)
+  ✓   8 [mobile] › e2e/mocked/builder.spec.ts:132:3 › condition builder › moves the focus to a new row, and back to the row before it when the row is removed (1.7s)
+  ✓   4 [mobile] › e2e/mocked/builder.spec.ts:66:3 › condition builder › builds example 6 with the pointer: a two-hop path and a nested group (7.9s)
+  ✓   9 [mobile] › e2e/mocked/builder.spec.ts:145:3 › condition builder › removes a nested group with its last row, and keeps one row in the root group (1.9s)
+  ✓  11 [mobile] › e2e/mocked/builder.spec.ts:179:3 › condition builder › says in words what the control returns and what else it may ask about (1.5s)
+  ✓  10 [mobile] › e2e/mocked/builder.spec.ts:157:3 › condition builder › disables the adders the limits of the glossary no longer allow (2.3s)
+  ✓  13 [mobile] › e2e/mocked/editor.spec.ts:58:3 › control editor › a stored control opens with its details, its tree and its sentence (1.7s)
+  ✓  14 [mobile] › e2e/mocked/editor.spec.ts:75:3 › control editor › a name-only save keeps the version, and a changed condition is saved as a new version (1.8s)
+  ✓  15 [mobile] › e2e/mocked/editor.spec.ts:90:3 › control editor › an unfinished condition dims the sentence, is named by the status line, and blocks the save with its reason (2.0s)
+  ✓  12 [mobile] › e2e/mocked/editor.spec.ts:33:3 › control editor › a new control is built, read back as the engine sentence with a mark per clause, and saved (4.9s)
+  ✓  16 [mobile] › e2e/mocked/editor.spec.ts:114:3 › control editor › a save without a name asks for the name and sends nothing (3.1s)
+  ✓   6 [mobile] › e2e/mocked/builder.spec.ts:110:3 › condition builder › builds example 4, a tree three groups deep (11.0s)
+  ✓  17 [mobile] › e2e/mocked/editor.spec.ts:125:3 › control editor › an error of a refused save stands on the row it names (2.1s)
+  ✓  18 [mobile] › e2e/mocked/editor.spec.ts:146:3 › control editor › a save that lost to another save says so and loads the current version on request (2.4s)
+  ✓  19 [mobile] › e2e/mocked/editor.spec.ts:166:3 › control editor › a stored control the glossary no longer fits says so at once, on the row that is outdated (2.0s)
+  ✓  21 [mobile] › e2e/mocked/editor.spec.ts:211:3 › control editor › a glossary that cannot be read is said under the page head, and read again on request (1.4s)
+  ✓  22 [mobile] › e2e/mocked/editor.spec.ts:226:3 › control editor › save and run goes to the results of the new run (1.5s)
+  ✓  20 [mobile] › e2e/mocked/editor.spec.ts:193:3 › control editor › an engine that does not answer leaves the screen in place and offers to try again (3.0s)
+  ✓  23 [mobile] › e2e/mocked/editor.spec.ts:236:3 › control editor › another root entity starts the conditions over, and the toast brings them back (1.5s)
+  ✓  24 [mobile] › e2e/mocked/editor.spec.ts:252:3 › control editor › the condition under the pointer fills its mark on its clause in the sentence (1.5s)
+  ✓  25 [mobile] › e2e/mocked/editor.spec.ts:265:3 › control editor › archiving asks first, then leaves for the list (1.7s)
+  ✓  29 [mobile] › e2e/mocked/fake-engine.spec.ts:30:3 › fake engine › renders the rule sentence and each condition as the contract example does (5ms)
+  ✓  30 [mobile] › e2e/mocked/fake-engine.spec.ts:38:3 › fake engine › renders the violations of the contract example, reasons and actual values included (7ms)
+  ✓  31 [mobile] › e2e/mocked/fake-engine.spec.ts:44:3 › fake engine › renders every example of the contracts without a placeholder left in the text (85ms)
+  ✓  26 [mobile] › e2e/mocked/editor.spec.ts:280:3 › control editor › an archived control is read-only and can be duplicated into a new one (1.7s)
+  ✓  28 [mobile] › e2e/mocked/editor.spec.ts:307:3 › control editor › a changed draft is guarded by the browser when the page is left (1.4s)
+  ✓  27 [mobile] › e2e/mocked/editor.spec.ts:299:3 › control editor › an address of no control shows the not-found state (1.6s)
+  ✓  32 [mobile] › e2e/mocked/results.spec.ts:37:3 › run results › a run with violations shows the control in words, the summary, the breakdown and a reason for every record (1.7s)
+  -  36 [mobile] › e2e/mocked/results.spec.ts:139:3 › run results › the first column sorts the records: up, down, and back to the order of the run
+  ✓  33 [mobile] › e2e/mocked/results.spec.ts:68:3 › run results › a breakdown row filters the records by its condition, and says so on its mark everywhere (1.6s)
+  ✓  35 [mobile] › e2e/mocked/results.spec.ts:113:3 › run results › the records page, and the address keeps the page, its size and the order through a reload (2.5s)
+  ✓  38 [mobile] › e2e/mocked/results.spec.ts:183:3 › run results › the condition under the pointer fills its mark in the sentence, the breakdown and the reasons (1.3s)
+  ✓  34 [mobile] › e2e/mocked/results.spec.ts:90:3 › run results › the search narrows the records, and a search that matches nothing says what it looked in (2.8s)
+  ✓  37 [mobile] › e2e/mocked/results.spec.ts:165:3 › run results › a phone sorts the records from a select in the toolbar (1.9s)
+  ✓  39 [mobile] › e2e/mocked/results.spec.ts:197:3 › run results › a run that found nothing says so, with what was checked (1.3s)
+  ✓  41 [mobile] › e2e/mocked/results.spec.ts:223:3 › run results › a run that timed out says after how long it stopped and what to do (1.3s)
+  ✓  42 [mobile] › e2e/mocked/results.spec.ts:236:3 › run results › a run of an outdated definition names the condition by its mark (1.1s)
+  ✓  40 [mobile] › e2e/mocked/results.spec.ts:211:3 › run results › more violations than the cap: the exact total, how many are shown, and counts over all of them (1.6s)
+  ✓  43 [mobile] › e2e/mocked/results.spec.ts:248:3 › run results › a run that failed for another reason offers to run again, and a run in progress to look again (1.7s)
+  ✓  46 [mobile] › e2e/mocked/results.spec.ts:289:3 › run results › a run of an archived control cannot be run again, and the screen says why (1.5s)
+  ✓  47 [mobile] › e2e/mocked/shell.spec.ts:6:3 › shell › opens in Hebrew, right to left, with its own font and no failed request (802ms)
+  ✓  48 [mobile] › e2e/mocked/shell.spec.ts:34:3 › shell › shows the not-found state for an unknown address and leads back to the list (810ms)
+  ✓  44 [mobile] › e2e/mocked/results.spec.ts:259:3 › run results › running again waits on skeleton rows, then opens the new run (2.5s)
+  ✓  45 [mobile] › e2e/mocked/results.spec.ts:278:3 › run results › the head and skeleton bars stand while a run is read, and an unknown run is not found (2.5s)
+  ✓  52 [desktop] › e2e/mocked/builder.spec.ts:87:5 › condition builder › builds example 2 with the keyboard alone: a comparison of two fields (3.6s)
+  ✓  51 [desktop] › e2e/mocked/builder.spec.ts:87:5 › condition builder › builds example 1 with the keyboard alone: typed numbers (4.5s)
+  ✓  50 [desktop] › e2e/mocked/builder.spec.ts:76:3 › condition builder › builds example 5 with the keyboard alone: another root entity and a related-records node (5.5s)
+  ✓  55 [desktop] › e2e/mocked/builder.spec.ts:120:3 › condition builder › starts a new control on the first root entity with one empty, open condition (1.0s)
+  ✓  53 [desktop] › e2e/mocked/builder.spec.ts:97:3 › condition builder › walks a row with Tab in the order it reads: field, comparison, value, compare, remove (3.3s)
+  ✓  56 [desktop] › e2e/mocked/builder.spec.ts:132:3 › condition builder › moves the focus to a new row, and back to the row before it when the row is removed (967ms)
+  ✓  49 [desktop] › e2e/mocked/builder.spec.ts:66:3 › condition builder › builds example 6 with the pointer: a two-hop path and a nested group (8.5s)
+  ✓  57 [desktop] › e2e/mocked/builder.spec.ts:145:3 › condition builder › removes a nested group with its last row, and keeps one row in the root group (1.3s)
+  ✓  58 [desktop] › e2e/mocked/builder.spec.ts:157:3 › condition builder › disables the adders the limits of the glossary no longer allow (1.7s)
+  ✓  59 [desktop] › e2e/mocked/builder.spec.ts:179:3 › condition builder › says in words what the control returns and what else it may ask about (932ms)
+  ✓  61 [desktop] › e2e/mocked/editor.spec.ts:58:3 › control editor › a stored control opens with its details, its tree and its sentence (1.8s)
+  ✓  62 [desktop] › e2e/mocked/editor.spec.ts:75:3 › control editor › a name-only save keeps the version, and a changed condition is saved as a new version (1.7s)
+  ✓  60 [desktop] › e2e/mocked/editor.spec.ts:33:3 › control editor › a new control is built, read back as the engine sentence with a mark per clause, and saved (4.4s)
+  ✓  63 [desktop] › e2e/mocked/editor.spec.ts:90:3 › control editor › an unfinished condition dims the sentence, is named by the status line, and blocks the save with its reason (2.2s)
+  ✓  65 [desktop] › e2e/mocked/editor.spec.ts:125:3 › control editor › an error of a refused save stands on the row it names (1.7s)
+  ✓  64 [desktop] › e2e/mocked/editor.spec.ts:114:3 › control editor › a save without a name asks for the name and sends nothing (3.6s)
+  ✓  66 [desktop] › e2e/mocked/editor.spec.ts:146:3 › control editor › a save that lost to another save says so and loads the current version on request (1.8s)
+  ✓  54 [desktop] › e2e/mocked/builder.spec.ts:110:3 › condition builder › builds example 4, a tree three groups deep (10.6s)
+  ✓  67 [desktop] › e2e/mocked/editor.spec.ts:166:3 › control editor › a stored control the glossary no longer fits says so at once, on the row that is outdated (1.9s)
+  ✓  68 [desktop] › e2e/mocked/editor.spec.ts:193:3 › control editor › an engine that does not answer leaves the screen in place and offers to try again (2.3s)
+  ✓  69 [desktop] › e2e/mocked/editor.spec.ts:211:3 › control editor › a glossary that cannot be read is said under the page head, and read again on request (1.9s)
+  ✓  70 [desktop] › e2e/mocked/editor.spec.ts:226:3 › control editor › save and run goes to the results of the new run (2.1s)
+  ✓  71 [desktop] › e2e/mocked/editor.spec.ts:236:3 › control editor › another root entity starts the conditions over, and the toast brings them back (2.4s)
+  ✓  72 [desktop] › e2e/mocked/editor.spec.ts:252:3 › control editor › the condition under the pointer fills its mark on its clause in the sentence (2.2s)
+  ✓  74 [desktop] › e2e/mocked/editor.spec.ts:280:3 › control editor › an archived control is read-only and can be duplicated into a new one (1.9s)
+  ✓  77 [desktop] › e2e/mocked/fake-engine.spec.ts:30:3 › fake engine › renders the rule sentence and each condition as the contract example does (13ms)
+  ✓  78 [desktop] › e2e/mocked/fake-engine.spec.ts:38:3 › fake engine › renders the violations of the contract example, reasons and actual values included (4ms)
+  ✓  73 [desktop] › e2e/mocked/editor.spec.ts:265:3 › control editor › archiving asks first, then leaves for the list (2.4s)
+  ✓  79 [desktop] › e2e/mocked/fake-engine.spec.ts:44:3 › fake engine › renders every example of the contracts without a placeholder left in the text (59ms)
+  ✓  76 [desktop] › e2e/mocked/editor.spec.ts:307:3 › control editor › a changed draft is guarded by the browser when the page is left (1.4s)
+  ✓  75 [desktop] › e2e/mocked/editor.spec.ts:299:3 › control editor › an address of no control shows the not-found state (2.3s)
+  ✓  81 [desktop] › e2e/mocked/results.spec.ts:68:3 › run results › a breakdown row filters the records by its condition, and says so on its mark everywhere (2.3s)
+  ✓  80 [desktop] › e2e/mocked/results.spec.ts:37:3 › run results › a run with violations shows the control in words, the summary, the breakdown and a reason for every record (2.8s)
+  -  85 [desktop] › e2e/mocked/results.spec.ts:165:3 › run results › a phone sorts the records from a select in the toolbar
+  ✓  82 [desktop] › e2e/mocked/results.spec.ts:90:3 › run results › the search narrows the records, and a search that matches nothing says what it looked in (4.7s)
+  ✓  84 [desktop] › e2e/mocked/results.spec.ts:139:3 › run results › the first column sorts the records: up, down, and back to the order of the run (3.7s)
+  ✓  86 [desktop] › e2e/mocked/results.spec.ts:183:3 › run results › the condition under the pointer fills its mark in the sentence, the breakdown and the reasons (3.2s)
+  ✓  83 [desktop] › e2e/mocked/results.spec.ts:113:3 › run results › the records page, and the address keeps the page, its size and the order through a reload (5.2s)
+  ✓  87 [desktop] › e2e/mocked/results.spec.ts:197:3 › run results › a run that found nothing says so, with what was checked (1.6s)
+  ✓  89 [desktop] › e2e/mocked/results.spec.ts:223:3 › run results › a run that timed out says after how long it stopped and what to do (1.4s)
+  ✓  90 [desktop] › e2e/mocked/results.spec.ts:236:3 › run results › a run of an outdated definition names the condition by its mark (1.4s)
+  ✓  88 [desktop] › e2e/mocked/results.spec.ts:211:3 › run results › more violations than the cap: the exact total, how many are shown, and counts over all of them (2.1s)
+  ✓  91 [desktop] › e2e/mocked/results.spec.ts:248:3 › run results › a run that failed for another reason offers to run again, and a run in progress to look again (2.4s)
+  ✓  94 [desktop] › e2e/mocked/results.spec.ts:289:3 › run results › a run of an archived control cannot be run again, and the screen says why (1.7s)
+  ✓  92 [desktop] › e2e/mocked/results.spec.ts:259:3 › run results › running again waits on skeleton rows, then opens the new run (2.5s)
+  ✓  95 [desktop] › e2e/mocked/shell.spec.ts:6:3 › shell › opens in Hebrew, right to left, with its own font and no failed request (837ms)
+  ✓  96 [desktop] › e2e/mocked/shell.spec.ts:34:3 › shell › shows the not-found state for an unknown address and leads back to the list (786ms)
+  ✓  93 [desktop] › e2e/mocked/results.spec.ts:278:3 › run results › the head and skeleton bars stand while a run is read, and an unknown run is not found (2.6s)
+
+  2 skipped
+  94 passed (58.7s)
+--- playwright: ok

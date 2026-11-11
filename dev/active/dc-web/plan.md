@@ -179,13 +179,13 @@ Playwright run, a reviewer, a critique) and wait for the word. The Design sectio
 step builds from.
 
 ### Phase 0: worktree (from the main tree, no commit)
-- [ ] Kfir's docs+infra commit is on main: `git log -1 --format='%h %s' main -- docs/design.md docs/PRODUCT.md`
+- [x] Kfir's docs+infra commit is on main: `git log -1 --format='%h %s' main -- docs/design.md docs/PRODUCT.md`
       prints it. Not there: stop, nothing starts.
-- [ ] `git worktree add ../cbs-web -b feat/web main`
-- [ ] Move this folder, so one live copy exists: `mkdir -p ../cbs-web/dev/active && mv dev/active/dc-web
+- [x] `git worktree add ../cbs-web -b feat/web main`
+- [x] Move this folder, so one live copy exists: `mkdir -p ../cbs-web/dev/active && mv dev/active/dc-web
       ../cbs-web/dev/active/`. Copy `.claude/settings.local.json` to `../cbs-web/.claude/` (ignored by git: local
       permissions and the impeccable hooks).
-- [ ] A new session in `../cbs-web` on Opus, `/resume dc-web`.
+- [x] A new session in `../cbs-web` on Opus, `/resume dc-web`.
 
 The design reference stays in the main tree and is read by absolute path:
 `/home/kfir/projects/cbs-data-controls/dev/active/design/` (`mock/*.html`, `mock/app.css`, `mock/tokens.css` and the
@@ -194,28 +194,28 @@ eight screenshots). Never read its `vendor/` or `.taste-skill/`.
 Verify: `git -C ../cbs-web status --short` prints nothing and `../cbs-web/docs/design.md` exists.
 
 ### Phase 1: workspace, tokens, shell, i18n (reads nothing from `contracts/`)
-- [ ] Say the cost first (npm install: about two minutes, about 400 MB), then scaffold from the worktree root:
+- [x] Say the cost first (npm install: about two minutes, about 400 MB), then scaffold from the worktree root:
       `ng new web --style=scss --routing --ssr=false --skip-git --package-manager=npm`. In `web/`:
       `ng add @angular/material@21`, `ng add angular-eslint@21`, `npm i @ngx-translate/core@18
       @ngx-translate/http-loader@18 @fontsource/ibm-plex-sans-hebrew`, `npm i -D @playwright/test
       @material-symbols/svg-400`, `npx playwright install chromium` (if system libraries are missing, ask Kfir to
       run the `--with-deps` form with `!`: sudo is denied here).
-- [ ] `angular.json`: `src/assets` in the build assets, `.svg` loaded as text, `proxy.conf.json` (`/api` to
+- [x] `angular.json`: `src/assets` in the build assets, `.svg` loaded as text, `proxy.conf.json` (`/api` to
       `http://localhost:5000`) on serve. `web/.gitignore`: `e2e/screenshots/`, `test-results/`,
       `playwright-report/`.
-- [ ] `eslint.config.js`: the ESLint block of `.claude/standards/linter-followups.md` (no-console, the Hebrew
+- [x] `eslint.config.js`: the ESLint block of `.claude/standards/linter-followups.md` (no-console, the Hebrew
       literal rule, the size warnings; `max-lines-per-function` off for specs).
-- [ ] Styles per Design B: tokens, base, the native component partials, the Material theme. Look up the names of
+- [x] Styles per Design B: tokens, base, the native component partials, the Material theme. Look up the names of
       `mat.theme`, `mat.theme-overrides` and the per-component `overrides` tokens through context7 before writing
       the theme. Two hours at most (Risks).
-- [ ] The font from `@fontsource/ibm-plex-sans-hebrew` (400, 500, 600) through the stylesheet; icons per Design B.
-- [ ] Language and direction per Design C: `main.ts`, `LanguageService`, `LOCALE_ID` and locale data, the translate
+- [x] The font from `@fontsource/ibm-plex-sans-hebrew` (400, 500, 600) through the stylesheet; icons per Design B.
+- [x] Language and direction per Design C: `main.ts`, `LanguageService`, `LOCALE_ID` and locale data, the translate
       providers, the plural helper, Material's Intl strings.
-- [ ] Shell: app bar (brand mark, name), page container, banner slot, the routes of Design D with
+- [x] Shell: app bar (brand mark, name), page container, banner slot, the routes of Design D with
       lazy placeholder screens and the not-found state.
-- [ ] Shared components, first group of Design I.
-- [ ] `he.json` with the keys used so far; the key guard and the style guard of Design N.
-- [ ] `playwright.config.ts` per Design O. `e2e/mocked/shell.spec.ts`: `lang` and `dir`, the
+- [x] Shared components, first group of Design I.
+- [x] `he.json` with the keys used so far; the key guard and the style guard of Design N.
+- [x] `playwright.config.ts` per Design O. `e2e/mocked/shell.spec.ts`: `lang` and `dir`, the
       font is loaded (`document.fonts.check`), no request failed, the not-found state; screenshots.
 
 Verify: `/check --tests` · `cd web && npx playwright test e2e/mocked/shell.spec.ts` (about a minute: say so first)
@@ -223,29 +223,29 @@ Review: `/phase-review web`
 Commit: `feat(web): workspace, design tokens and hebrew rtl shell`
 
 ### Phase 2: contracts in, core logic, api layer
-- [ ] `git merge main` once dc-contracts is merged there (a local merge commit; nothing is pushed). Until then only
+- [x] `git merge main` once dc-contracts is merged there (a local merge commit; nothing is pushed). Until then only
       the two steps marked "no contracts" may run.
-- [ ] Reconcile. Read `contracts/api.md`, `contracts/errors.md`, `contracts/glossary.json` and
+- [x] Reconcile. Read `contracts/api.md`, `contracts/errors.md`, `contracts/glossary.json` and
       `contracts/control-definition.schema.json`. They carry Design E, F and H of the dc-contracts plan (H is
       "Amendments from dc-engine planning"; the plan is in `/home/kfir/projects/cbs-data-controls/dev/active/`).
       List in `notes.md` every place where they differ from Design E to M of this plan and work through the checks
       of Design P. The contracts win; anything that blocks a screen goes to Kfir as one line.
-- [ ] (no contracts) `core/definition`: the contract types from Design C of the dc-contracts plan, the draft model,
+- [x] (no contracts) `core/definition`: the contract types from Design C of the dc-contracts plan, the draft model,
       the tree operations, ids, `fromDefinition` / `toDefinition`, `checkDraft`. Test-first (`/tdd`).
-- [ ] (no contracts) `core/definition/marks.ts`. Test-first.
-- [ ] `core/api/api.types.ts`, the one mirror of `contracts/api.md`; the four api services; the two interceptors
+- [x] (no contracts) `core/definition/marks.ts`. Test-first.
+- [x] `core/api/api.types.ts`, the one mirror of `contracts/api.md`; the four api services; the two interceptors
       and `ApiError` (Design E), with `HttpTestingController` specs.
-- [ ] `core/glossary`: model, service and cache, the lookups of Design F, tested against `contracts/glossary.json`
+- [x] `core/glossary`: model, service and cache, the lookups of Design F, tested against `contracts/glossary.json`
       and against a synthetic glossary with other entities.
-- [ ] `core/definition/pointer.ts`: a definition error to its node and its input, tested with
+- [x] `core/definition/pointer.ts`: a definition error to its node and its input, tested with
       `contracts/examples/invalid/*.json`.
-- [ ] `core/text/text-parts.ts` and the shared `mark`, `value` and `text-parts` components (Design H).
-- [ ] `core/i18n/format.service.ts` (Design C).
-- [ ] `e2e/fixtures` and `e2e/support/routes.ts` per Design O: the glossary, the six examples as controls, validate
+- [x] `core/text/text-parts.ts` and the shared `mark`, `value` and `text-parts` components (Design H).
+- [x] `core/i18n/format.service.ts` (Design C).
+- [x] `e2e/fixtures` and `e2e/support/routes.ts` per Design O: the glossary, the six examples as controls, validate
       answers, runs and result pages for every state.
-- [ ] `he.json`: `errors.<CODE>` and `errors.definition.<CODE>` for every code of `contracts/errors.md`; the key
+- [x] `he.json`: `errors.<CODE>` and `errors.definition.<CODE>` for every code of `contracts/errors.md`; the key
       guard now reads that file.
-- [ ] `.claude/skills/dc-web/SKILL.md`: the facts this plan changed (text arrives as parts and the client has no
+- [x] `.claude/skills/dc-web/SKILL.md`: the facts this plan changed (text arrives as parts and the client has no
       renderer; the `mocked` and `gate` spec folders; a gate spec acts only on its own tagged controls and finds
       them by id).
 
@@ -254,41 +254,41 @@ Review: `/phase-review web`
 Commit: `feat(web): definition draft, glossary and api layer`
 
 ### Phase 3: condition builder
-- [ ] Impeccable setup once per session (`.claude/skills/impeccable/scripts/impeccable context --target
+- [x] Impeccable setup once per session (`.claude/skills/impeccable/scripts/impeccable context --target
       web/src/app`), and `reference/craft-floor.md` before the first UI edit, as that skill requires.
-- [ ] Components of Design I: relationship map, condition group (recursive), condition row, field picker, operator
+- [x] Components of Design I: relationship map, condition group (recursive), condition row, field picker, operator
       picker, value input in every kind, related-records node, adders, the note on missing values.
-- [ ] `EditorStore` (Design J) with the draft only: root entity, tree, issues, traced node. The editor route renders
+- [x] `EditorStore` (Design J) with the draft only: root entity, tree, issues, traced node. The editor route renders
       the builder for a new control over the glossary fixture.
-- [ ] The rules of Design G in the UI: the operator kept or reset when the field changes, the operand reset when its
+- [x] The rules of Design G in the UI: the operator kept or reset when the field changes, the operand reset when its
       kind changes, limits disable the adders, the last row of a nested group removes the group, focus moves to a
       new row and back after a removal.
-- [ ] The row's container query (one line from 560px of its group, stacked below), the rail, the joiner, the
+- [x] The row's container query (one line from 560px of its group, stacked below), the rail, the joiner, the
       nesting indents.
-- [ ] Component specs: adding and removing conditions and groups (the §13 test), the operator list follows the
+- [x] Component specs: adding and removing conditions and groups (the §13 test), the operator list follows the
       field, the value input follows the type and the arity, the comparison toggle.
-- [ ] `e2e/support/builder-driver.ts`, first version, and `e2e/mocked/builder.spec.ts`: examples 5 and 6 built
+- [x] `e2e/support/builder-driver.ts`, first version, and `e2e/mocked/builder.spec.ts`: examples 5 and 6 built
       through the driver, one of them by keyboard only; screenshots of a deep tree at 390 and 1440.
-- [ ] `docs/design.md`: the related-records node carries its own letter (decision 4), and its head as built.
+- [x] `docs/design.md`: the related-records node carries its own letter (decision 4), and its head as built.
 
 Verify: `/check --tests` · `cd web && npx playwright test e2e/mocked/builder.spec.ts`
 Review: `/phase-review web`
 Commit: `feat(web): condition builder from the glossary`
 
 ### Phase 4: editor: sentence, save, run, errors
-- [ ] Sentence field: the parts with their marks, the validate loop of Design J, the stale state, the first-time
+- [x] Sentence field: the parts with their marks, the validate loop of Design J, the stale state, the first-time
       hint, the status line, `aria-live`.
-- [ ] The trace across row and clause. The settle when a clause changes (cut 2).
-- [ ] Load (an existing control, a new one, `?from=<id>`, a suggestion in router state), the details fields, save,
+- [x] The trace across row and clause. The settle when a clause changes (cut 2).
+- [x] Load (an existing control, a new one, `?from=<id>`, a suggestion in router state), the details fields, save,
       save and run, cancel, archive with the confirm dialog, the toasts.
-- [ ] Errors: client issues on save, 422 mapped to rows and inputs, the conflict banner with its reload, an outdated
+- [x] Errors: client issues on save, 422 mapped to rows and inputs, the conflict banner with its reload, an outdated
       definition on load, the engine down.
-- [ ] A root entity change clears the tree with an Undo toast; `beforeunload` while the draft is dirty.
-- [ ] Specs: validation errors map to rows (the §13 test); the validate loop (no request for an incomplete draft,
+- [x] A root entity change clears the tree with an Undo toast; `beforeunload` while the draft is dirty.
+- [x] Specs: validation errors map to rows (the §13 test); the validate loop (no request for an incomplete draft,
       stale while incomplete, an older answer never replaces a newer one); the save states.
-- [ ] `e2e/mocked/editor.spec.ts`: new, existing, incomplete, 422 on a row, conflict, outdated, engine down;
+- [x] `e2e/mocked/editor.spec.ts`: new, existing, incomplete, 422 on a row, conflict, outdated, engine down;
       screenshots.
-- [ ] `docs/design.md`: Rule sentence (the stale form replaces the open clause), the stale token with its measured
+- [x] `docs/design.md`: Rule sentence (the stale form replaces the open clause), the stale token with its measured
       contrast (at least 4.5:1 on Action; white at 72% measured about 4.8 in planning, re-measure), the settle's
       trigger, and the closing paragraph on what the contracts now provide.
 
@@ -297,58 +297,64 @@ Review: `/phase-review web`
 Commit: `feat(web): control editor with the engine's sentence, save and run`
 
 ### Phase 5: run results
-- [ ] `ResultsStore` with the query parameters of Design D; page head, plain sentence, run summary, breakdown,
+- [x] `ResultsStore` with the query parameters of Design D; page head, plain sentence, run summary, breakdown,
       toolbar, results table and card rows, table foot.
-- [ ] Reasons from `textParts` with the actual values marked; marks from the definition of the version that ran;
+- [x] Reasons from `textParts` with the actual values marked; marks from the definition of the version that ran;
       the trace across breakdown, sentence and reasons; the active mark while a condition filters.
-- [ ] The states of Design L: loading and re-run skeletons, no violations, cap exceeded, timed out, outdated
+- [x] The states of Design L: loading and re-run skeletons, no violations, cap exceeded, timed out, outdated
       definition, failed otherwise, a search that matches nothing, run not found.
-- [ ] Sort (cut 4): the first column's header, and the sort select on a phone.
-- [ ] Specs: the results table (marks, marked values, `<bdi>`), the breakdown filter, the state chosen from a run.
-- [ ] `e2e/mocked/results.spec.ts`: every state above; screenshots.
-- [ ] `docs/design.md`: the rows of the States table that decisions 15 and 16 change.
+- [x] Sort (cut 4): the first column's header, and the sort select on a phone.
+- [x] Specs: the results table (marks, marked values, `<bdi>`), the breakdown filter, the state chosen from a run.
+- [x] `e2e/mocked/results.spec.ts`: every state above; screenshots.
+- [x] `docs/design.md`: the rows of the States table that decisions 15 and 16 change.
 
 Verify: `/check --tests` · `cd web && npx playwright test e2e/mocked/results.spec.ts`
 Review: `/phase-review web`
 Commit: `feat(web): run results with reasons, breakdown and states`
 
 ### Phase 6: controls list and suggestions
-- [ ] `ListStore`, the table and card rows, the toolbar (search; entity and state filters; the phone's filter
+- [x] `ListStore`, the table and card rows, the toolbar (search; entity and state filters; the phone's filter
       button), the result cell, run in place (decision 8), edit, duplicate, paging, the two empty states, loading.
-- [ ] The archived view (cut 1): the state filter and archived rows with duplicate only.
-- [ ] The suggestions dialog per Design M: request, drafts with marks, selection, create selected, open in editor
+- [x] The archived view (cut 1): the state filter and archived rows with duplicate only.
+- [x] The suggestions dialog per Design M: request, drafts with marks, selection, create selected, open in editor
       (cut 3), its empty and failed states.
-- [ ] Specs: the result cell from `lastRun`, run in place, the dialog's selection count.
-- [ ] `e2e/mocked/list.spec.ts` and `suggestions.spec.ts`; screenshots, among them the first screen of the
+- [x] Specs: the result cell from `lastRun`, run in place, the dialog's selection count.
+- [x] `e2e/mocked/list.spec.ts` and `suggestions.spec.ts`; screenshots, among them the first screen of the
       delivered system (six examples, none of them run: Design K). `e2e/preview.ts`.
-- [ ] `docs/design.md`: the archive dialog's text (no restore).
+- [x] `docs/design.md`: the archive dialog's text (no restore).
 
 Verify: `/check --tests` · `cd web && npx playwright test e2e/mocked`
 Review: `/phase-review web`
 Commit: `feat(web): controls list and suggestions dialog`
 
 ### Phase 7: the real stack
-- [ ] `git merge main` when the api and the engine are on it, or run them from their worktrees; the db runs from
+
+Status on 2026-11-11: done. The night run wrote the gate fixture and the three gate specs and dry-ran them on
+a stand-in. In the morning the api and the engine were on main (`eec007d`); on Kfir's word `origin/main` was
+merged, both services were started from this worktree against the shared database, and the four waiting steps
+ran (notes.md, Log; `gates/phase-7.txt`).
+
+- [x] `git merge main` when the api and the engine are on it, or run them from their worktrees; the db runs from
       the main tree. Say what will run and for how long, and wait for the word. Port 8000: ask before stopping
       another project's container.
-- [ ] `e2e/support/gate.ts` per Design O: the health check, the tag, the ids a test created, the teardown.
-- [ ] `e2e/gate/examples.spec.ts` per Design O: the six examples built through the UI under tagged names, saved,
+- [x] `e2e/support/gate.ts` per Design O: the health check, the tag, the ids a test created, the teardown.
+- [x] `e2e/gate/examples.spec.ts` per Design O: the six examples built through the UI under tagged names, saved,
       run and read; example 4 leaves `gate-editor` and `gate-results`; one example reloads its results by URL.
-- [ ] `e2e/gate/list.spec.ts`, on a control of its own (example 4, created through the api): `gate-list` before it
+- [x] `e2e/gate/list.spec.ts`, on a control of its own (example 4, created through the api): `gate-list` before it
       creates anything; the row found by search and id; run from the row and the row's result; search and the
       condition filter on that run's results; duplicate, the copy saved and found by its own id; archive, after
       which no active row carries the test's tag.
-- [ ] `e2e/gate/suggestions.spec.ts` per Design O: the drafts as the engine's answer holds them,
+- [x] `e2e/gate/suggestions.spec.ts` per Design O: the drafts as the engine's answer holds them,
       `gate-suggestions`, one draft created under a tagged name and opened by its id.
-- [ ] Fix what the real payloads show. A difference from the contracts is one line to Kfir, never a silent adapter.
-- [ ] The pre-loaded list (decision 22). Save the "before" listing of Design O. If no control carries an example's
+- [x] Fix what the real payloads show. A difference from the contracts is one line to Kfir, never a silent adapter.
+- [x] The pre-loaded list (decision 22). Save the "before" listing of Design O. If no control carries an example's
       exact name, say what will be posted and wait for the word, then post the six examples under their Hebrew
       names with the loop of Design O (with `scripts/examples.py` on the branch: `python3 scripts/examples.py
       load`). They stay, active and untouched: dc-delivery's loader skips a name that exists, archived or not, so
       an archived example is never loaded again. Then the gate twice in a row; after each run the listing equals
       the one saved before it. Without the word, skip the step and say so in the Log: dc-delivery's phase B1 is
       then the first run on such a list.
-- [ ] The build the api hosts. From this worktree's own build of the api, after the merge, never from another
+- [x] The build the api hosts. From this worktree's own build of the api, after the merge, never from another
       session's worktree: `npx ng build`, the output copied into the `wwwroot` beside the api's executable (under
       `bin/`, which git ignores; dc-api plan, Design D), the api started as its README says, then the gate once
       with `E2E_BASE_URL=http://localhost:5000`. If the api is not on this branch yet, skip it and write that into
@@ -360,27 +366,34 @@ Review: `/phase-review web`
 Commit: `test(web): six-example gate against the real stack`
 
 ### Phase 8: design pass
-- [ ] `/impeccable audit` on the three screens; fix what fails (names, focus order, contrast, reduced motion).
-- [ ] `/impeccable critique`, once per screen. Say the spend first (two opus sub-agents per run, three runs, one
+- [x] `/impeccable audit` on the three screens; fix what fails (names, focus order, contrast, reduced motion).
+- [x] `/impeccable critique`, once per screen. Say the spend first (two opus sub-agents per run, three runs, one
       run at a time) and wait for the word. Fix its P0 and P1 findings.
-- [ ] `/impeccable polish`, once, over the client.
-- [ ] A keyboard pass by hand through the gate flow: every action reachable, focus visible, a dialog traps focus
+- [x] `/impeccable polish`, once, over the client.
+- [x] A keyboard pass by hand through the gate flow: every action reachable, focus visible, a dialog traps focus
       and returns it.
-- [ ] `web/README.md` per Design Q: serve, test, the two e2e folders, the gate command with what it needs and
+- [x] `web/README.md` per Design Q: serve, test, the two e2e folders, the gate command with what it needs and
       leaves, the projects, the screenshot folder, the build output folder.
-- [ ] `notes.md`, "Hand-over to dc-delivery": the as-built lines and every cut, per Design Q.
+- [x] `notes.md`, "Hand-over to dc-delivery": the as-built lines and every cut, per Design Q.
 
 Verify: `/check all --tests` · `cd web && npx playwright test e2e/mocked` · the gate command of Design O
 Review: `/phase-review web`
 Commit: `fix(web): design critique and polish`
 
 ### Gate
-- [ ] After phase 8: the mocked and the gate specs green on `mobile` and `desktop`, the gate on the pre-loaded
+Status, 2026-11-11: `gates/final.txt` holds `/check all --tests` (the engine and the api among its parts now),
+the mocked specs and the gate specs on the real stack, behind the dev server and on the build the api hosts, on
+the pre-loaded list; all green (notes.md, Log, for the one red line of the first run and its cause). The
+screenshots are in `gates/final/screenshots/`. The steps of `/ship` were done by hand (checks, secrets, drift,
+PR body; the folder is not archived, decision 51) and the branch is pushed with its PR on Kfir's word of that
+morning. Open: his reading of the Hebrew interface, and the merge, which is his.
+
+- [x] After phase 8: the mocked and the gate specs green on `mobile` and `desktop`, the gate on the pre-loaded
       list and, where phase 7 could run it, on the build the api hosts; `/check all --tests` green. The output
       goes to `gates/final.txt`, the screenshots to `gates/final/`.
 - [ ] Kfir reads the Hebrew interface, on the preview script or the screenshots. It is the last cheap moment for a
       wording change.
-- [ ] `notes.md` is complete for dc-delivery (Design Q): the hand-over block, a Log line per review, and the drift
+- [x] `notes.md` is complete for dc-delivery (Design Q): the hand-over block, a Log line per review, and the drift
       list checked line by line against the documents on main.
 - [ ] `/ship`. Its docs-drift step edits only this task's own files (decision 26). Every other row of its table
       becomes a line under a fifth heading of the PR body, `## Docs for dc-delivery`, taken from the list in
@@ -720,11 +733,16 @@ left behind.
   `E2E_BASE_URL=http://localhost:5000` in front for the build the api hosts. One worker keeps another test's
   controls out of the list shot and the runs apart; the specs pass without the flag too.
 - **Before and after.** The listing below prints every control that carries no tag. Saved under `gates/` before a
-  gate run and after it, the two files are equal: the gate changed nothing it did not create.
+  gate run and after it, the two files are equal: the gate changed nothing it did not create. It reads every
+  page: the api deletes nothing, each gate run adds 18 archived controls, and one page of 100 dropped the
+  control that sorts last once the store held 118 (found at the final gate, 2026-11-11).
 
   ```
-  curl -s 'http://localhost:5000/api/v1/controls?active=all&pageSize=100' \
-    | jq -c '.items[] | select(.name | test(" e2e-[0-9a-z]{6}") | not) | [.id, .name, .version, .isActive, .lastRun.id]'
+  p=1; while page=$(curl -s "http://localhost:5000/api/v1/controls?active=all&pageSize=100&page=$p") \
+      && [ "$(jq '.items | length' <<<"$page")" -gt 0 ]; do
+    jq -c '.items[] | select(.name | test(" e2e-[0-9a-z]{6}") | not) | [.id, .name, .version, .isActive, .lastRun.id]' <<<"$page"
+    p=$((p+1))
+  done
   ```
 - **Pre-load** (phase 7, on Kfir's word). The committed loader is dc-delivery's `scripts/examples.py`. Until it
   exists, the six examples are posted once from the worktree root, and they stay:

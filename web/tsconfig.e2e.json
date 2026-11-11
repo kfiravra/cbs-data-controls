@@ -1,0 +1,13 @@
+/* Type check for the Playwright specs and their typed fixtures: `npm run typecheck:e2e`. */
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "types": ["node"]
+  },
+  "include": ["e2e/**/*.ts", "playwright.config.ts", "src/**/*.d.ts"]
+}

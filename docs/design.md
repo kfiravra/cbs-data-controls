@@ -11,6 +11,7 @@ colors:
   action-hover: "#355aec"
   action-pressed: "#486fef"
   on-action: "#ffffff"
+  on-action-stale: "#ffffffb8"
   action-tint: "#1f2de61a"
   action-track: "#1f2de629"
   on-action-tonal: "#ffffff2e"
@@ -317,7 +318,8 @@ icon and words. Each colour below is the CSS custom property `--color-<name>`.
 - **Action tint** (`#1f2de61a`, 10%): the ground of a mark, of a highlighted value and of a selected filter row.
   **Action track** (`#1f2de629`, 16%): the unfilled part of a meter.
 - **On action tonal** (`#ffffff2e`) and **On action line** (`#ffffff47`): marks, the second button and the divider
-  on the sentence field.
+  on the sentence field. **On action stale** (`#ffffffb8`, 72% white): the last valid sentence, kept on the field
+  while the draft is unfinished or refused.
 
 ### Neutral
 
@@ -348,6 +350,7 @@ icon and words. Each colour below is the CSS custom property `--color-<name>`.
 | Muted on Ground / on Surface | 5.2 / 4.7 |
 | Action on Ground / on Surface / on Action tint | 7.1 / 6.5 / 6.2 |
 | On action on Action / on Action hover | 8.2 / 5.5 |
+| On action stale on Action | 4.9 |
 | On bar on Bar | 17.1 |
 | Danger, Warning, Success on Ground | 5.9, 5.9, 6.0 |
 | Danger, Warning, Success on their own tint over Surface (worst case) | 4.7, 4.6, 4.7 |
@@ -484,7 +487,8 @@ table, grouping is a rule.
 
 Square with eased corners, four radii: 2px for the meter and the focus outline, 4px for every control, button,
 chip, mark and highlighted value, 6px for toolbars, banners, toasts and menus, 8px for panels, dialogs and the
-sentence field. No pills and no circles, the spinner aside.
+sentence field. No pills and no circles, the spinner aside. The panel of a select keeps the component library's
+4px: the library has no token for its shape.
 
 Lines are 1px. A field's border is Control line and turns Muted on hover, Action with a soft ring on focus, and
 Danger, doubled to 2px, when invalid. A rule between rows is Line; the rule under a table header and the
@@ -514,8 +518,9 @@ Plain and exact; they step, they do not glow.
 - **Icon button:** 44px square, Muted icon, Tonal ground on hover; always with a name for assistive technology and
   a tooltip.
 - **States:** hover changes the ground and lifts 1px for a fine pointer; a press sinks 1px and scales to 0.985;
-  focus is the ring; disabled is Tonal ground with Muted text; while its action runs, the button is disabled and
-  shows a 16px spinner before its label (`ההרצה מתבצעת`).
+  focus is the ring; disabled is Tonal ground with Muted text; while its action runs, the button looks the
+  same, is unavailable and keeps the focus (Dialogs and toast, below), and shows a 16px spinner before its label
+  (`ההרצה מתבצעת`).
 - An underline anywhere (text button, link, adder) rests at 40% of its text colour and fills on hover.
 
 ### Fields
@@ -532,7 +537,8 @@ Plain and exact; they step, they do not glow.
 ### Segmented control
 
 Two or three joined buttons sharing one border; the selected one is filled with Ink. Used for all of / any of.
-36px, 44px on a phone.
+36px, 44px on a phone. Keyboard focus is a 2px ring drawn inside the segment, because the shared border clips
+what is outside it: Action on a resting segment, Ground on the selected one.
 
 ### Chips
 
@@ -545,13 +551,17 @@ The signature of the system.
 
 - **Mark:** 22px square (wider for two letters), 4px radius, Action tint ground, Action letter at weight 600.
   Letters follow the order of the conditions in the definition, top to bottom, and are recomputed on every edit:
-  Hebrew numerals (א to י, then יא, יב and on). The mark is display only: it is derived
-  from the condition's stable id and never stored. On a run, the marks are those of the version that ran.
+  Hebrew numerals (א to י, then יא, יב and on). A condition on related records has a letter of its own, given
+  before the letters of the conditions inside it: a run matches that node as a whole, so its letter is the one a
+  reason and the breakdown show. The mark is display only: it is derived from the order of the definition and
+  never stored. On a run, the marks are those of the version that ran.
 - **States:** resting; **traced**, filled with Action while its condition is under the pointer or in focus
   anywhere on the screen; **active**, filled while it is the current filter; **open**, an outline in Danger while
   its condition is incomplete or invalid. On the sentence field the same four read in On action.
 - **Value:** the actual value that matched, inside its reason: Action tint ground, Body strong, 4px radius. A
-  reason reads as a statement with its value marked: `גיל [15] נמוך מ־16`.
+  reason reads as a statement with its value marked: `גיל [15] נמוך מ־16`. A value stays whole while it fits on
+  a line; only one longer than the line itself (an address, a long name) breaks inside its tint, so no value
+  widens the page.
 - A mark is hidden from assistive technology where a name already says it (`תנאי ב`), and is its name where
   nothing else does.
 
@@ -562,25 +572,37 @@ never ends on a mark. Two forms:
 
 - **Field:** in the editor only. Action ground, On action text, 8px radius, 24px padding: a small heading
   (`הבקרה במילים`), the sentence, under a divider one line of status when something is unfinished (`תנאי ה לא
-  הושלם: חסר ערך להשוואה.`), then save and run, save, and cancel. An unfinished clause is underlined with dashes
-  and ends in an ellipsis.
+  הושלם: חסר ערך להשוואה.`), then save and run, save, and cancel. The sentence is the engine's: the editor asks
+  for it 400ms after the last edit of a complete draft and draws what comes back. While a condition is
+  unfinished nothing is asked; a complete draft the engine refuses is asked about again on its next edit. In
+  both cases the last valid sentence stays, in On action stale, the mark of the open condition is outlined,
+  and the status line names it. Marks are those of the current draft, so a clause
+  whose condition was removed stands without one. Before the first valid sentence the field holds one line of
+  hint, which says why there is no sentence: no condition is complete yet (`כאן תוצג הבקרה במילים, לאחר שהתנאי
+  הראשון יושלם.`), the conditions were refused (`הבקרה תוצג כאן במילים לאחר תיקון התנאים.`), or the engine does
+  not answer (`אי אפשר להציג כעת את הבקרה במילים.`). A sentence that is waiting for its answer is not dimmed, so
+  typing does not make it flicker. Changes of the sentence and of the status line are announced politely.
 - **Plain:** on Ground, for reading: under the title of a run, and for each draft in the suggestions dialog.
 
 ### Relationship map
 
 The root entity picker. The entities the glossary allows as a root are options of one radio group, 44px, joined by
-their relationships, each link labelled as the user would say it from the chosen root (`המשרד של המחלקה`). The
-chosen entity is filled with Ink and says `ישות ראשית`. One sentence under the map states what the control will
-return and what else it may ask about. It is drawn from the glossary and assumes no number of entities.
+their relationships. A link carries the glossary's label of the relationship that leads away from the chosen
+root, so it reads as the user would say it from there (`המשרד`, `עובד במחלקה`); two neighbours that no
+relationship joins have no link. The chosen entity is filled with Ink and says `ישות ראשית`. One sentence under
+the map states what the control will return and lists what else it may ask about (`הבקרה תחזיר מחלקות. אפשר
+להתנות גם על: המשרד ועובד במחלקה.`). It is drawn from the glossary and assumes no number of entities. Arrow
+keys move the choice, and the chosen entity is the group's one tab stop.
 
 ### Condition builder
 
 One Surface panel. Inside it:
 
-- **Group:** a head with the segmented control (`כל התנאים` / `אחד התנאים לפחות`) and, for a nested group, a
-  remove button; under it a body indented behind a **rail**, a 1px Line strong line down its start edge.
+- **Group:** a head with a lead word (`מתקיימים`, `מתקיים`), the segmented control (`כל התנאים` / `אחד התנאים
+  לפחות`) and, for a nested group, a remove button; under it a body indented behind a **rail**, a 1px Line
+  strong line down its start edge.
 - **Joiner:** between two neighbours of a group, the group's joining word (`וגם` or `או`) in Label, Muted, sitting
-  on the rail. It is the same word the sentence uses.
+  on the rail. It is the same word the sentence uses: both come from the glossary.
 - **Condition row:** the mark, a field picker, a comparison picker, a value input and a remove button. The field
   picker shows the path before the field, in Muted, when the field belongs to a related entity (`המשרד של המחלקה
   / פעיל`); its list is grouped by entity and relationship label. The comparison list holds only what the field's
@@ -588,11 +610,18 @@ One Surface panel. Inside it:
 - **Value input:** by the field's type, as under Fields. Beside it, a toggle to compare with another field
   instead of a value: an icon alone when the row is one line, the icon and its words when the row is stacked;
   filled with Ink while on, and the value input then becomes a field picker.
-- **Related records:** a group whose head reads as the start of a sentence: an icon, a quantity (`אין אף` / `יש
-  לפחות אחד`), the relationship (`עובד במחלקה`) and `שמקיים את כל התנאים`. Its rows are about the related entity.
+- **Related records:** a group whose head reads as the start of a sentence: its mark, a quantity (`אין אף` /
+  `יש`), the relationship (`עובד במחלקה`), the word `עם` and the segmented control of its own rows (`כל התנאים` /
+  `אחד התנאים לפחות`), then a remove button. The wording carries no gender. Its rows are about the related
+  entity, and their letters continue after the node's own.
 - **Adders:** at the foot of each group, text buttons with a plus: condition, group, condition on related records.
+- **Removing:** a removed condition or group is offered back by a toast for as long as it stands (`תנאי ב הוסר`
+  or `הקבוצה הוסרה, עם התנאים שבה`, with `שחזור`), and so are the conditions a changed root entity cleared. The
+  offer is withdrawn as soon as the conditions are another draft (edited further, read again from the server,
+  started over), because the way back leads to the draft as it was.
 - **Note:** once, at the foot of the panel, the rule about missing values (a comparison does not match a missing
-  value; to find missing values choose `ריק`).
+  value; missing values are found with the comparisons that ask whether a value is missing or empty). The note
+  names no comparison: their labels are the glossary's.
 - **Validation:** a server error is placed by its path on the row it names: the row's mark turns open, the
   offending input takes the error state, the reason stands under the row, and the sentence field's status line
   names the condition.
@@ -600,7 +629,8 @@ One Surface panel. Inside it:
 ### Toolbar
 
 A strip of Surface, 6px radius, 12px padding, over the table it controls: a search field with a leading icon, then
-filters. It wraps; on a phone the filters fold into one square Tonal button.
+filters. It wraps; on a phone the filters fold into one square Tonal button, and unfold by themselves while one of
+them narrows the list, so a narrowed list always shows what narrows it.
 
 ### Tables and card rows
 
@@ -608,27 +638,39 @@ filters. It wraps; on a phone the filters fold into one square Tonal button.
   12px padded, top aligned, divided by Line; Row hover under the pointer. The table bleeds 12px past the content
   edge on both sides so its text stays on the page's edge.
 - **Sorting:** a header is a button; the sorted column shows an arrow and turns Ink.
-- **Card rows (below 640px):** the same cells, stacked between rules, 16px padded; no boxes.
+- **Card rows (below 640px):** the same cells, stacked between rules, 16px padded; no boxes. The header row is
+  read by assistive technology and not seen, and its sort button is not there: the toolbar's select sorts.
+- **A link in a row** (a control's name, a result) answers a touch 8px above and below its line, the height of a
+  control in all; the row keeps its height and the focus ring stays on the text.
 - **Controls list:** the name (a link to the editor) over its description; the root entity; the last run; the
   result; the actions: run (small tonal button with its label) and icon buttons for edit and duplicate. The result
   is one of: a count as an Action link to that run (`3 חריגות`), `ללא חריגות` with a check in Success, `ההרצה
-  נעצרה` with the error icon in Danger linking to the failed run, or a dash when the control has never run.
+  נעצרה` with the error icon in Danger, both linking to their run as the count does, or a dash when the control
+  has never run. Under the page title stands the number of controls of the state shown (`6 בקרות פעילות`); under
+  a search or an entity filter the line says how many were found (`נמצאו 3 בקרות`).
+- **A run from the list** stays on the list. The row's button keeps the focus and is marked unavailable while
+  the run is on its way, the actions column holds its width, and the start and the outcome are said to assistive
+  technology by name (`הרצת הבקרה ”…” הסתיימה: 3 חריגות`); the row's result and its run button are described by
+  the control's name.
 - **Results:** the record's identifying fields, then the reasons: one line for each condition the record matched,
   its mark, then the sentence with the value marked.
-- **Foot:** the range in words, a page size select and previous and next icon buttons.
+- **Foot:** the range in words, a page size select and previous and next icon buttons. The range is a status:
+  after a search, a filter, a sort or another page it is said to assistive technology.
 
 ### Run summary
 
 A statement, not a row of tiles: between two Line strong rules, the Figure with its noun (`23 חריגות`), then a
 short list of terms and values: what was checked, how long it took, and the count of the previous run with its
-date.
+date. The time is in seconds with one decimal at most (`0.4 שניות`); a run that rounds to nothing is said in
+words (`פחות משנייה`), never as `0 שניות`.
 
 ### Breakdown by condition
 
 A meter list in a Surface panel: one row for each condition with its mark, its clause, the number of violations
 that match it, and that share of the total as an 8px bar (Action on Action track), plus a first row for all
 violations. Each row is a button that filters the table; the chosen row takes Action tint and its mark turns
-active. A record may match several conditions, and the panel says so.
+active. A record may match several conditions, and the panel says so. To assistive technology a row's number is
+read with its noun (`8 חריגות`).
 
 ### Banner
 
@@ -647,14 +689,19 @@ Every empty, waiting and failed state, and what it says. The error codes are tho
 
 | State | Where | Component | Says | Next step |
 |---|---|---|---|---|
-| No controls yet | Controls list | State panel, neutral | What a control is, with one example in the user's terms | New control (primary); suggestions (tonal) |
+| No controls yet | Controls list, in place of the toolbar and the table; the page head leaves its two actions to the panel | State panel, neutral | What a control is, in one sentence. No example: an example would name the entities of one glossary | New control (primary); suggestions (tonal) |
+| Every control archived | Controls list, under the toolbar | State panel, neutral, no icon | That no control is active and where the archived ones are | Show the archived controls |
 | Never run | A list row | Text | `טרם הורצה` as the last run; a dash as the result | Run |
-| Run in progress | List row, results | Disabled button with spinner; skeleton rows in the table | `ההרצה מתבצעת` | Wait |
+| Run in progress | List row, results | Button with spinner, unavailable (on a list row it keeps the focus); skeleton rows in the table | `ההרצה מתבצעת` | Wait |
 | No violations | Results | State panel, Success | That the control was checked against every record and none matched | Run again; back to the list |
-| More violations than the cap, `ROW_CAP_EXCEEDED` | Results, above the table | Banner, Warning | The exact total and how many are shown; the breakdown counts the shown rows | Edit the conditions |
+| More violations than the cap, `ROW_CAP_EXCEEDED` | Results, above the table | Banner, Warning | The exact total and how many are shown; the figure and the breakdown count all violations; the search, the filter and the sort reach the stored rows only, and a search that finds none there says so | Edit the conditions |
 | Run timed out, `QUERY_TIMEOUT` | Results; the list row shows `ההרצה נעצרה` | State panel, Danger | After how long it stopped, and that nothing was checked | Edit the conditions; run again |
-| Engine or database not answering, `DATABASE_UNAVAILABLE` | Any screen, under the page head | Banner, Danger | What still works (reading) and what waits (run, save) | Try again |
-| A field left the glossary, `GLOSSARY_MISMATCH` | Results, editor | State panel, Warning | Which field, by its last known label | Edit the control |
+| Run failed for another reason (a run error other than the two beside it) | Results; the list row shows `ההרצה נעצרה` | State panel, Danger | That the run did not complete, and what stopped it then, in the past tense: the run may be days old, and the text of a live failure would say the system is down now | Run again |
+| Run still in progress when its results are opened (`running`) | Results; the page head offers no run | State panel, neutral, no icon | That the results appear when the run ends | Look again |
+| Engine, database or network not answering, `ENGINE_UNAVAILABLE`, `DATABASE_UNAVAILABLE`, `NETWORK_ERROR` | Any screen, under the page head | Banner, Danger | What still works (reading) and what waits (run, save) | Try again |
+| The saved definition no longer fits the glossary, `CONTROL_DEFINITION_OUTDATED` | Results: state panel, Warning, and the page head offers no run. Editor: banner, Warning, and the error on the row | Which condition, by its mark: the label of a field that left the glossary no longer exists, and a key never reaches the screen | Edit the control |
+| Control archived, `CONTROL_ARCHIVED` | Editor, under the page head: the control is shown as text. Results, after "run again" was refused | Banner, Warning | That it can be read but not changed or run | Editor: duplicate into a new control. Results: none |
+| No such control, run or page | In place of the screen | State panel, neutral | That the address may be wrong or the thing gone | Back to the list |
 | Definition not valid, `DEFINITION_INVALID` | Editor | Field error on the row; status line on the sentence field | What is missing on that condition | Fix the row |
 | Saved elsewhere meanwhile (conflict) | Editor, under the page head | Banner, Warning | That this screen's changes are not saved | Load the current version |
 | Search or filter matches nothing | Under a toolbar | State panel, neutral, no icon | The term searched and what the search looks in | Clear the search |
@@ -668,11 +715,26 @@ in the shape of the rows to come.
 - **Dialog:** Ground, Line strong edge, 8px radius, 24px padding, the Overlay shadow, over the Scrim. A title and
   a close button; the buttons at the end edge with the main one last. Used for two things only: to confirm
   archiving a control, and for suggestions. Everything else happens in the page.
-- **Suggestions dialog:** a list of drafts, each a checkbox, a name, its sentence in the plain form with marks,
-  one line of rationale in Small Muted, the evidence as chips, and a text button to open it in the editor. The
-  main button counts what will be created (`יצירת 2 הבקרות שנבחרו`). Nothing is saved or run by opening it.
+- **Archive confirmation:** says what archiving does and what it does not: the control leaves the list, its
+  runs and results are kept, and it can be duplicated into a new control (`הבקרה ”…” תוסר מהרשימה. ההרצות
+  והתוצאות שלה יישמרו, ואפשר יהיה לשכפל אותה לבקרה חדשה.`). There is no restore in this version, so the text
+  promises none. Archiving is an action of the editor's page head; the list shows archived controls under its
+  state filter, marked with a chip, with duplicate as their one action.
+- **Suggestions dialog:** a list of drafts, each a checkbox (none ticked at first), a name, its sentence in the
+  plain form with marks, one line of rationale in Small Muted, the evidence as chips, and a text button to open
+  it in the editor. The main button counts what will be created (`יצירת 2 הבקרות שנבחרו`) and is disabled while
+  nothing is ticked. Nothing is saved or run by opening it. The head and the buttons stay in view and the list
+  scrolls between them.
 - **Toast:** Bar ground, On bar text, 6px radius, the Overlay shadow; one line and at most one text button; at the
   bottom, at the start edge. Never for an error.
+- **Leaving a changed draft** is asked by the browser's own prompt, on closing the tab and on a link of the
+  application alike (`השינויים בבקרה לא נשמרו. לצאת מהעריכה בלי לשמור?`). It is not a dialog of the
+  application, and an unchanged control is left without a question.
+- **A button made unavailable by its own press** (save, run, the last page of a pager) keeps the focus it holds:
+  it is marked unavailable for assistive technology and ignores a second press, and is not removed from the tab
+  order. A button that cannot be used as the screen stands (nothing ticked, a limit reached) is disabled. The
+  pager's two buttons are of the first kind at both ends, also on a first page nobody has pressed yet: one
+  button, one behaviour.
 
 ### Motion
 
@@ -685,20 +747,22 @@ two signs of waiting.
 | `--duration-in` | 150ms | A hover arriving: ground, border, underline, a mark being traced |
 | `--duration-out` | 120ms | The same leaving |
 | `--duration-press` | 90ms | A button's step: 1px up on hover (fine pointer only), 1px down and 0.985 on press |
-| `--duration-panel` | 200ms | A dialog or menu opening: fades in and rises 6px |
-| `--duration-close` | 120ms | A dialog or menu closing: fades out |
+| `--duration-panel` | 200ms | A dialog opening: fades in and rises 6px |
+| `--duration-close` | 120ms | A dialog closing: the component library's own fade, inside this time |
 | `--duration-settle` | 600ms | The settle, below |
 
 - **Focus is instant:** the ring and a field's focus border appear with no transition.
 - **The trace:** while a condition is under the pointer or in focus (its row, its clause, its meter row), its mark
   fills everywhere it stands on the screen.
-- **The settle:** when a condition is edited, its clause in the sentence is rewritten in place and its mark there
-  fills at once and eases back over 600ms, so the eye finds what the edit changed. This is the one authored moment
-  of the product.
+- **The settle:** when a new sentence arrives from the engine, each clause whose text changed is rewritten in
+  place and its mark there fills at once and eases back over 600ms, so the eye finds what the edit changed. The
+  first sentence of a screen settles nothing. This is the one authored moment of the product.
 - **Waiting:** a 16px spinner turning once a second inside the button that started the work, and skeleton rows
   breathing between full and 45% opacity over 1.4s.
+- **Panels of a select:** they keep the component library's own opening and closing (about 120ms); only the
+  dialog's opening is authored, on the application's own panel class.
 - **Reduced motion:** buttons do not step and a press shows as a tone (Action pressed); the spinner and the
-  skeletons stand still; a dialog only fades; the settle does not run.
+  skeletons stand still; a dialog and a select's panel appear at once; the settle does not run.
 
 ## Do's and Don'ts
 
@@ -725,7 +789,8 @@ two signs of waiting.
 - **Don't** open a dialog for anything but confirming an archive and reviewing suggestions.
 - **Don't** let a table name, a column name, a condition id or an error code reach the screen.
 - **Don't** load a font or an icon from a network: the product may run with no internet access.
-- **Don't** restyle Angular Material by its internal classes.
+- **Don't** restyle Angular Material by its internal classes. Where no token exists (the focus ring of a segment)
+  the rule names the component's element and its state in ARIA.
 
 ## Implementation
 
@@ -750,8 +815,9 @@ Notes for the client task; the visual system above does not depend on them.
   the worded form.
 - **Fonts and icons.** IBM Plex Sans Hebrew (SIL Open Font License 1.1) in weights 400, 500 and 600 and the
   Material Symbols Sharp icons in use (Apache 2.0) are bundled with the build; icons are registered as SVG.
-- **What the design asks of the contracts.** The sentence needs the preview as parts, each tied to a condition id
-  where it speaks for one, or built in the client from the glossary's templates; a single string cannot carry the
-  marks. A reason needs its condition id and its actual value as a parameter, apart from the text. The breakdown
-  needs a count per condition for the run, and the results need a filter by condition. A run needs the definition
-  of the version that ran, so marks and clauses match what was checked.
+- **What the contracts provide.** Every sentence arrives with `sentenceParts` and every reason with `textParts`
+  (`contracts/api.md`): pieces of text, each tied to the condition it speaks for and to its role (the field, a
+  value, the record's actual value). The client draws the parts and renders no text of its own; a mark stands
+  before the first clause of each condition, and an actual value is drawn as the value. A run carries a count per
+  condition that can be matched, exact also above the row cap, and its results filter by condition. The
+  definition of the version that ran is one request away, so the marks of a run are those of what was checked.

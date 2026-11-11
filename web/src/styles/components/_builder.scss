@@ -1,0 +1,378 @@
+// The condition builder: one panel of the operating grey; inside it, depth is a rail, never a box in a box.
+
+.builder {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-3);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.group {
+  display: grid;
+  gap: var(--space-3);
+  min-inline-size: 0;
+}
+
+.group__head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: var(--space-2);
+}
+
+.group__how {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  min-block-size: var(--size-control);
+}
+
+.group__lead {
+  font-weight: 500;
+}
+
+.group__pick {
+  inline-size: auto;
+  min-inline-size: 150px;
+}
+
+// the rail: one line down the start edge of a group, with the joining word of the group sitting on it
+.group__body {
+  --rail-pad: var(--space-2);
+
+  display: grid;
+  gap: var(--space-2);
+  min-inline-size: 0;
+  margin-inline-start: var(--space-4);
+  padding-inline-start: var(--rail-pad);
+  border-inline-start: 1px solid var(--color-line-strong);
+  container-type: inline-size;
+}
+
+.joiner {
+  inline-size: var(--space-6);
+  margin-inline-start: calc(-1 * var(--rail-pad) - var(--space-4));
+  padding-block: 1px;
+  background: var(--color-surface);
+  text-align: center;
+  font-size: var(--text-label);
+  font-weight: 500;
+  color: var(--color-muted);
+  line-height: 1.4;
+}
+
+.cond {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-2);
+  min-inline-size: 0;
+}
+
+.cond__name {
+  font-size: var(--text-small);
+  font-weight: 500;
+  color: var(--color-muted);
+}
+
+.cond__field,
+.cond__op,
+.cond__value,
+.cond__error {
+  grid-column: 1 / -1;
+  min-inline-size: 0;
+}
+
+// remove is the row's last control in reading order and stands at the end of its first line
+.cond__remove {
+  grid-column: 3;
+  grid-row: 1;
+}
+
+.cond__value {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.cond__error {
+  margin-block-start: -2px;
+}
+
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  gap: var(--space-1);
+  min-block-size: var(--size-control);
+  padding: 0 var(--space-1);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--color-muted);
+  font-size: var(--text-small);
+  font-weight: 500;
+  transition:
+    background-color var(--duration-out) var(--ease-out),
+    color var(--duration-out) var(--ease-out);
+
+  &:hover {
+    background: var(--color-tonal);
+    color: var(--color-ink);
+    transition-duration: var(--duration-in);
+  }
+
+  &[aria-pressed='true'] {
+    background: var(--color-ink);
+    color: var(--color-ground);
+  }
+}
+
+// a row answers to its own group's width, not to the window
+@container (min-width: 560px) {
+  .cond {
+    grid-template-columns:
+      var(--size-mark) minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, 1.3fr)
+      var(--size-control);
+    align-items: start;
+  }
+
+  .cond > .mark {
+    margin-block-start: calc((var(--size-control) - var(--size-mark)) / 2);
+  }
+
+  .cond__name {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .cond__field {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .cond__op {
+    grid-column: 3;
+    grid-row: 1;
+  }
+
+  .cond__value {
+    grid-column: 4;
+    grid-row: 1;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--space-2);
+    align-items: start;
+  }
+
+  .cond__value--bare {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .toggle {
+    inline-size: var(--size-control);
+    justify-content: center;
+    padding: 0;
+  }
+
+  .toggle__words {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .cond__remove {
+    grid-column: 5;
+    grid-row: 1;
+  }
+
+  .cond__error {
+    grid-column: 2 / 5;
+    grid-row: 2;
+  }
+}
+
+.adders {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-3);
+}
+
+.adder {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-block-size: var(--size-control);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-ink);
+  font-size: var(--text-small);
+  font-weight: 500;
+
+  span {
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 4px;
+    text-decoration-color: color-mix(in oklab, currentColor 40%, transparent);
+    transition: text-decoration-color var(--duration-out) var(--ease-out);
+  }
+
+  &:hover span {
+    text-decoration-color: currentColor;
+  }
+
+  &[disabled] {
+    color: var(--color-muted);
+    cursor: not-allowed;
+  }
+}
+
+.note {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  font-size: var(--text-small);
+  line-height: 1.55;
+  color: var(--color-muted);
+
+  .icon {
+    margin-block-start: 1px;
+  }
+}
+
+@media (min-width: 640px) {
+  .builder {
+    padding: var(--space-5);
+  }
+
+  .group__body {
+    --rail-pad: var(--space-4);
+  }
+}
+
+// the relationship map: the root entity picker
+.relmap {
+  display: grid;
+  gap: 0;
+}
+
+.entity {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-block-size: var(--size-control);
+  padding-inline: var(--space-4);
+  border: 1px solid var(--color-control-line);
+  border-radius: var(--radius-sm);
+  background: var(--color-ground);
+  font-weight: 500;
+  text-align: start;
+  transition:
+    background-color var(--duration-out) var(--ease-out),
+    border-color var(--duration-out) var(--ease-out);
+
+  &:hover {
+    border-color: var(--color-muted);
+    background: var(--color-row-hover);
+  }
+
+  &[aria-checked='true'] {
+    background: var(--color-ink);
+    border-color: var(--color-ink);
+    color: var(--color-ground);
+  }
+}
+
+.entity__role {
+  font-size: var(--text-label);
+  font-weight: 400;
+  opacity: 0.8;
+}
+
+.relmap__link {
+  display: flex;
+  align-items: center;
+  min-block-size: 32px;
+  margin-inline-start: var(--space-5);
+  padding-inline-start: var(--space-3);
+  border-inline-start: 1px solid var(--color-line-strong);
+  font-size: var(--text-label);
+  color: var(--color-muted);
+}
+
+@media (min-width: 640px) {
+  .relmap {
+    display: flex;
+    align-items: center;
+  }
+
+  .relmap__link {
+    flex: 1 1 0;
+    min-inline-size: 120px;
+    max-inline-size: 220px;
+    margin: 0;
+    padding: 0 var(--space-2) var(--space-5);
+    min-block-size: 0;
+    block-size: 0;
+    border: 0;
+    border-block-start: 1px solid var(--color-line-strong);
+    justify-content: center;
+    text-align: center;
+    position: relative;
+    inset-block-start: -1px;
+
+    span {
+      position: relative;
+      inset-block-start: 14px;
+      background: var(--color-ground);
+      padding-inline: var(--space-2);
+      white-space: nowrap;
+    }
+  }
+}
+
+// two neighbours that no relationship joins: a gap, no line (after the wide layout, whose border it removes)
+.relmap__link.relmap__link--none {
+  border-color: transparent;
+}
+
+// editor layout
+.editor {
+  display: grid;
+  gap: var(--space-6);
+}
+
+.editor__main {
+  display: grid;
+  gap: var(--space-6);
+  min-inline-size: 0;
+
+  > section {
+    display: grid;
+    gap: var(--space-4);
+  }
+}
+
+@media (min-width: 1024px) {
+  .editor {
+    grid-template-columns: minmax(0, 2fr) minmax(320px, 1fr);
+    gap: var(--space-7);
+    align-items: start;
+  }
+
+  .editor__main {
+    gap: var(--space-7);
+  }
+
+  .editor__side {
+    position: sticky;
+    inset-block-start: var(--space-5);
+  }
+}

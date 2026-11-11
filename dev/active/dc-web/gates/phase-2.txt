@@ -1,0 +1,135 @@
+dc-web gate phase-2
+2026-11-10T22:48:44Z
+1dda6d3
+no suite running
+=== web-ngc: npx ngc -p tsconfig.app.json --noEmit
+--- web-ngc: ok
+=== web-eslint: npx ng lint
+
+Linting "web"...
+
+All files pass linting.
+
+--- web-eslint: ok
+=== web-e2e-types: npm run -s typecheck:e2e
+--- web-e2e-types: ok
+=== web-test: npx ng test --watch=false
+❯ Building...
+✔ Building...
+Initial chunk files                                        | Names                                                   |  Raw size
+styles.css                                                 | styles                                                  |  49.03 kB | 
+spec-app-shared-text-parts-text-parts.component.js         | spec-app-shared-text-parts-text-parts.component         |  19.25 kB | 
+chunk-PMLBKRUS.js                                          | -                                                       |  14.21 kB | 
+spec-app-shared-table-foot-table-foot.component.js         | spec-app-shared-table-foot-table-foot.component         |  12.38 kB | 
+spec-app-core-definition-draft.check.js                    | spec-app-core-definition-draft.check                    |  11.58 kB | 
+spec-app-core-api-api.js                                   | spec-app-core-api-api                                   |  11.49 kB | 
+spec-app-core-glossary-glossary.lookups.js                 | spec-app-core-glossary-glossary.lookups                 |   9.10 kB | 
+spec-app-shared-toolbar-toolbar.component.js               | spec-app-shared-toolbar-toolbar.component               |   9.08 kB | 
+spec-app-core-definition-draft.operations.js               | spec-app-core-definition-draft.operations               |   8.20 kB | 
+spec-app-core-i18n-format.service.js                       | spec-app-core-i18n-format.service                       |   7.52 kB | 
+spec-app-shared-confirm-dialog-confirm-dialog.component.js | spec-app-shared-confirm-dialog-confirm-dialog.component |   7.41 kB | 
+spec-app-core-definition-condition.rules.js                | spec-app-core-definition-condition.rules                |   6.56 kB | 
+spec-app-shared-banner-error-banner.component.js           | spec-app-shared-banner-error-banner.component           |   6.21 kB | 
+chunk-JVDOWM4J.js                                          | -                                                       |   6.02 kB | 
+spec-app-core-definition-draft.js                          | spec-app-core-definition-draft                          |   5.97 kB | 
+chunk-JBWBLPNK.js                                          | -                                                       |   5.19 kB | 
+chunk-5OVTGMRS.js                                          | -                                                       |   5.11 kB | 
+chunk-7RKRQCGJ.js                                          | -                                                       |   4.48 kB | 
+chunk-TVQ2I2XA.js                                          | -                                                       |   4.24 kB | 
+spec-app-core-definition-pointer.js                        | spec-app-core-definition-pointer                        |   4.16 kB | 
+spec-app-guards.js                                         | spec-app-guards                                         |   3.40 kB | 
+spec-app-shared-toast-toast.service.js                     | spec-app-shared-toast-toast.service                     |   3.10 kB | 
+spec-app-core-text-text-parts.js                           | spec-app-core-text-text-parts                           |   2.54 kB | 
+spec-app-core-definition-marks.js                          | spec-app-core-definition-marks                          |   2.44 kB | 
+chunk-S6PLKAGB.js                                          | -                                                       |   2.28 kB | 
+spec-app-core-glossary-glossary.service.js                 | spec-app-core-glossary-glossary.service                 |   2.17 kB | 
+chunk-TM4UOBFK.js                                          | -                                                       |   1.89 kB | 
+spec-app-shared-banner-banner.component.js                 | spec-app-shared-banner-banner.component                 |   1.78 kB | 
+chunk-VZ3W45LC.js                                          | -                                                       |   1.35 kB | 
+init-testbed.js                                            | init-testbed                                            |   1.21 kB | 
+chunk-COXDGQGK.js                                          | -                                                       |   1.08 kB | 
+chunk-XUQ3H2VX.js                                          | -                                                       |   1.04 kB | 
+spec-app-core-i18n-plural.js                               | spec-app-core-i18n-plural                               | 991 bytes | 
+vitest-mock-patch.js                                       | vitest-mock-patch                                       | 974 bytes | 
+chunk-3W5OZ7PE.js                                          | -                                                       | 958 bytes | 
+chunk-HQZZVFCT.js                                          | -                                                       | 897 bytes | 
+chunk-Y7VQSYSL.js                                          | -                                                       | 846 bytes | 
+chunk-WVDS3KXD.js                                          | -                                                       | 814 bytes | 
+chunk-GBPI3SUH.js                                          | -                                                       | 209 bytes | 
+
+                                                           | Initial total                                           | 237.17 kB
+
+Application bundle generation complete. [3.164 seconds] - 2026-11-10T22:48:54.553Z
+
+
+ RUN  v4.0.18 /home/kfir/projects/cbs-web/web
+
+ ✓  web  src/app/shared/banner/banner.component.spec.ts (3 tests) 196ms
+ ✓  web  src/app/core/i18n/format.service.spec.ts (6 tests) 87ms
+ ✓  web  src/app/shared/text-parts/text-parts.component.spec.ts (8 tests) 261ms
+ ✓  web  src/app/guards.spec.ts (6 tests) 30ms
+ ✓  web  src/app/shared/banner/error-banner.component.spec.ts (4 tests) 247ms
+ ✓  web  src/app/core/glossary/glossary.lookups.spec.ts (15 tests) 17ms
+ ✓  web  src/app/core/glossary/glossary.service.spec.ts (2 tests) 10ms
+ ✓  web  src/app/core/api/api.spec.ts (9 tests) 63ms
+ ✓  web  src/app/core/definition/draft.spec.ts (12 tests) 9ms
+ ✓  web  src/app/core/definition/marks.spec.ts (4 tests) 6ms
+ ✓  web  src/app/core/definition/draft.check.spec.ts (13 tests) 14ms
+ ✓  web  src/app/core/text/text-parts.spec.ts (5 tests) 2ms
+ ✓  web  src/app/core/definition/draft.operations.spec.ts (12 tests) 6ms
+ ✓  web  src/app/core/definition/condition.rules.spec.ts (10 tests) 5ms
+ ✓  web  src/app/core/i18n/plural.spec.ts (3 tests) 4ms
+ ✓  web  src/app/core/definition/pointer.spec.ts (4 tests) 8ms
+ ✓  web  src/app/shared/toast/toast.service.spec.ts (2 tests) 13ms
+ ✓  web  src/app/shared/confirm-dialog/confirm-dialog.component.spec.ts (3 tests) 345ms
+ ✓  web  src/app/shared/table-foot/table-foot.component.spec.ts (4 tests) 256ms
+ ✓  web  src/app/shared/toolbar/toolbar.component.spec.ts (4 tests) 403ms
+
+ Test Files  20 passed (20)
+      Tests  129 passed (129)
+   Start at  00:48:54
+   Duration  2.86s (transform 891ms, setup 3.57s, import 3.17s, tests 1.98s, environment 21.50s)
+
+--- web-test: ok
+=== web-build: npx ng build
+❯ Building...
+✔ Building...
+Initial chunk files | Names               |  Raw size | Estimated transfer size
+chunk-PPKAODF2.js   | -                   | 277.43 kB |                75.20 kB
+styles-FRBYTSL2.css | styles              |  41.79 kB |                 6.50 kB
+main-3RBEM34F.js    | main                |  16.84 kB |                 5.45 kB
+
+                    | Initial total       | 336.06 kB |                87.15 kB
+
+Lazy chunk files    | Names               |  Raw size | Estimated transfer size
+chunk-GCLYS6B3.js   | not-found-component |   1.81 kB |               806 bytes
+chunk-JSXHZRMA.js   | -                   |   1.32 kB |               714 bytes
+chunk-5GFJNIMG.js   | -                   | 709 bytes |               709 bytes
+chunk-AKOM5HJ4.js   | control-editor-page | 586 bytes |               586 bytes
+chunk-BVL355PN.js   | run-results-page    | 561 bytes |               561 bytes
+chunk-2IOIX4JK.js   | controls-list-page  | 500 bytes |               500 bytes
+
+Application bundle generation complete. [3.252 seconds] - 2026-11-10T22:49:01.579Z
+
+Output location: /home/kfir/projects/cbs-web/web/dist/web
+
+--- web-build: ok
+=== print-guard
+no suite running
+=== playwright: npx playwright test e2e/mocked
+
+Running 10 tests using 4 workers
+
+  ✓   1 [mobile] › e2e/mocked/fake-engine.spec.ts:38:3 › fake engine › renders the violations of the contract example, reasons and actual values included (11ms)
+  ✓   4 [mobile] › e2e/mocked/fake-engine.spec.ts:30:3 › fake engine › renders the rule sentence and each condition as the contract example does (13ms)
+  ✓   2 [mobile] › e2e/mocked/fake-engine.spec.ts:44:3 › fake engine › renders every example of the contracts without a placeholder left in the text (69ms)
+  ✓   6 [desktop] › e2e/mocked/fake-engine.spec.ts:30:3 › fake engine › renders the rule sentence and each condition as the contract example does (13ms)
+  ✓   7 [desktop] › e2e/mocked/fake-engine.spec.ts:38:3 › fake engine › renders the violations of the contract example, reasons and actual values included (15ms)
+  ✓   3 [mobile] › e2e/mocked/shell.spec.ts:6:3 › shell › opens in Hebrew, right to left, with its own font and no failed request (728ms)
+  ✓   8 [desktop] › e2e/mocked/fake-engine.spec.ts:44:3 › fake engine › renders every example of the contracts without a placeholder left in the text (77ms)
+  ✓   5 [mobile] › e2e/mocked/shell.spec.ts:34:3 › shell › shows the not-found state for an unknown address and leads back to the list (748ms)
+  ✓   9 [desktop] › e2e/mocked/shell.spec.ts:6:3 › shell › opens in Hebrew, right to left, with its own font and no failed request (487ms)
+  ✓  10 [desktop] › e2e/mocked/shell.spec.ts:34:3 › shell › shows the not-found state for an unknown address and leads back to the list (404ms)
+
+  10 passed (2.7s)
+--- playwright: ok

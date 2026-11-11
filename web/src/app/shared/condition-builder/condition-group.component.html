@@ -1,0 +1,104 @@
+<div class="group">
+  @if (!bare()) {
+    <div class="group__head">
+      <div class="group__how">
+        <span class="group__lead">{{ (group().op === 'and' ? 'editor.group.leadAll' : 'editor.group.leadAny') | translate }}</span>
+        <mat-button-toggle-group
+          data-testid="group-op"
+          [attr.data-op-of]="group().key"
+          [attr.aria-label]="'editor.group.how' | translate"
+          [value]="group().op"
+          (change)="setOp($event.value)"
+        >
+          <mat-button-toggle value="and">{{ 'editor.group.all' | translate }}</mat-button-toggle>
+          <mat-button-toggle value="or">{{ 'editor.group.any' | translate }}</mat-button-toggle>
+        </mat-button-toggle-group>
+      </div>
+      @if (!root()) {
+        <button
+          class="icon-btn"
+          type="button"
+          data-testid="remove-group"
+          [attr.aria-label]="'editor.group.remove' | translate"
+          [matTooltip]="'editor.group.remove' | translate"
+          (click)="edit.emit({ kind: 'remove', target: group().key })"
+        >
+          <app-icon name="delete" />
+        </button>
+      }
+    </div>
+  }
+  <div class="group__body">
+    @for (child of group().children; track nodeName(child); let first = $first) {
+      @if (!first) {
+        <span class="joiner" data-testid="joiner">{{ joiner() }}</span>
+      }
+      @switch (child.type) {
+        @case ('condition') {
+          <app-condition-row
+            [attr.data-parent]="group().key"
+            [condition]="child"
+            [scope]="scope()"
+            [view]="view()"
+            (edit)="edit.emit($event)"
+            (trace)="trace.emit($event)"
+          />
+        }
+        @case ('group') {
+          <app-condition-group
+            [attr.data-parent]="group().key"
+            [group]="child"
+            [scope]="scope()"
+            [view]="view()"
+            (edit)="edit.emit($event)"
+            (trace)="trace.emit($event)"
+          />
+        }
+        @case ('related') {
+          <app-related-node
+            [attr.data-parent]="group().key"
+            [node]="child"
+            [scope]="scope()"
+            [view]="view()"
+            (edit)="edit.emit($event)"
+            (trace)="trace.emit($event)"
+          />
+        }
+      }
+    }
+    <div class="adders">
+      <button
+        class="adder"
+        type="button"
+        data-adder="condition"
+        [attr.data-adder-of]="group().key"
+        [disabled]="!canAdd()"
+        (click)="add('addCondition')"
+      >
+        <app-icon name="add" size="sm" /><span>{{ 'editor.add.condition' | translate }}</span>
+      </button>
+      <button
+        class="adder"
+        type="button"
+        data-adder="group"
+        [attr.data-adder-of]="group().key"
+        [disabled]="!canGroup()"
+        (click)="add('addGroup')"
+      >
+        <app-icon name="add" size="sm" /><span>{{ 'editor.add.group' | translate }}</span>
+      </button>
+      @if (hasRelated()) {
+        <button
+          class="adder"
+          type="button"
+          data-adder="related"
+          [attr.data-adder-of]="group().key"
+          [disabled]="!canRelate()"
+          (click)="add('addRelated')"
+        >
+          <app-icon name="add" size="sm" /><span>{{ 'editor.add.related' | translate }}</span>
+        </button>
+      }
+    </div>
+  </div>
+</div>

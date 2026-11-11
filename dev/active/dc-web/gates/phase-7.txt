@@ -1,0 +1,284 @@
+dc-web gate phase-7
+2026-11-11T07:43:13Z
+268a0f7
+no suite running
+=== web-ngc: npx ngc -p tsconfig.app.json --noEmit
+--- web-ngc: ok
+=== web-eslint: npx ng lint
+
+Linting "web"...
+
+All files pass linting.
+
+--- web-eslint: ok
+=== web-e2e-types: npm run -s typecheck:e2e
+--- web-e2e-types: ok
+=== web-test: npx ng test --watch=false
+❯ Building...
+✔ Building...
+Initial chunk files                                              | Names                                                         |  Raw size
+spec-app-shared-condition-builder-condition-builder.component.js | spec-app-shared-condition-builder-condition-builder.component | 126.94 kB | 
+styles.css                                                       | styles                                                        |  51.86 kB | 
+spec-app-features-suggestions-suggestions-dialog.component.js    | spec-app-features-suggestions-suggestions-dialog.component    |  32.02 kB | 
+spec-app-features-controls-list-controls-table.component.js      | spec-app-features-controls-list-controls-table.component      |  32.02 kB | 
+chunk-UJJ5NPON.js                                                | -                                                             |  26.14 kB | 
+spec-app-shared-results-table-results-table.component.js         | spec-app-shared-results-table-results-table.component         |  25.51 kB | 
+spec-app-features-control-editor-editor.store.js                 | spec-app-features-control-editor-editor.store                 |  19.69 kB | 
+spec-app-features-run-results-results.store.js                   | spec-app-features-run-results-results.store                   |  17.14 kB | 
+spec-app-shared-breakdown-breakdown.component.js                 | spec-app-shared-breakdown-breakdown.component                 |  16.04 kB | 
+chunk-PMLBKRUS.js                                                | -                                                             |  14.21 kB | 
+spec-app-shared-table-foot-table-foot.component.js               | spec-app-shared-table-foot-table-foot.component               |  13.34 kB | 
+spec-app-features-controls-list-list.store.js                    | spec-app-features-controls-list-list.store                    |  13.30 kB | 
+chunk-6VXNI56O.js                                                | -                                                             |  12.55 kB | 
+spec-app-shared-toolbar-toolbar.component.js                     | spec-app-shared-toolbar-toolbar.component                     |  10.39 kB | 
+spec-app-core-glossary-glossary.lookups.js                       | spec-app-core-glossary-glossary.lookups                       |   9.22 kB | 
+spec-app-core-definition-draft.edit.js                           | spec-app-core-definition-draft.edit                           |   8.36 kB | 
+spec-app-core-definition-draft.check.js                          | spec-app-core-definition-draft.check                          |   8.11 kB | 
+spec-app-core-definition-draft.js                                | spec-app-core-definition-draft                                |   7.43 kB | 
+spec-app-shared-confirm-dialog-confirm-dialog.component.js       | spec-app-shared-confirm-dialog-confirm-dialog.component       |   7.41 kB | 
+spec-app-core-api-api.js                                         | spec-app-core-api-api                                         |   7.41 kB | 
+spec-app-features-control-editor-editor.sentence.js              | spec-app-features-control-editor-editor.sentence              |   6.66 kB | 
+chunk-JVDOWM4J.js                                                | -                                                             |   6.02 kB | 
+spec-app-core-definition-draft.operations.js                     | spec-app-core-definition-draft.operations                     |   5.57 kB | 
+spec-app-shared-text-parts-text-parts.component.js               | spec-app-shared-text-parts-text-parts.component               |   5.19 kB | 
+chunk-JBWBLPNK.js                                                | -                                                             |   5.19 kB | 
+chunk-HT7KFNAN.js                                                | -                                                             |   5.17 kB | 
+spec-app-core-definition-condition.rules.js                      | spec-app-core-definition-condition.rules                      |   4.91 kB | 
+chunk-MVT4TL7R.js                                                | -                                                             |   4.85 kB | 
+chunk-KVOTFLKB.js                                                | -                                                             |   4.66 kB | 
+chunk-GMALXYEY.js                                                | -                                                             |   4.56 kB | 
+chunk-T3UBOTL6.js                                                | -                                                             |   4.54 kB | 
+spec-app-core-i18n-format.service.js                             | spec-app-core-i18n-format.service                             |   4.06 kB | 
+chunk-DO5EIOQG.js                                                | -                                                             |   3.94 kB | 
+chunk-URYOSMTP.js                                                | -                                                             |   3.94 kB | 
+spec-app-shared-toast-toast.service.js                           | spec-app-shared-toast-toast.service                           |   3.82 kB | 
+spec-app-guards.js                                               | spec-app-guards                                               |   3.40 kB | 
+chunk-S7POCKQD.js                                                | -                                                             |   3.38 kB | 
+chunk-CUZA52NM.js                                                | -                                                             |   3.26 kB | 
+chunk-ZV3FF3IO.js                                                | -                                                             |   3.22 kB | 
+spec-app-core-definition-pointer.js                              | spec-app-core-definition-pointer                              |   2.98 kB | 
+spec-app-core-text-text-parts.js                                 | spec-app-core-text-text-parts                                 |   2.54 kB | 
+spec-app-shared-banner-error-banner.component.js                 | spec-app-shared-banner-error-banner.component                 |   2.38 kB | 
+chunk-FQJVQAE3.js                                                | -                                                             |   2.33 kB | 
+chunk-S6PLKAGB.js                                                | -                                                             |   2.28 kB | 
+spec-app-core-glossary-glossary.service.js                       | spec-app-core-glossary-glossary.service                       |   2.17 kB | 
+spec-app-core-definition-marks.js                                | spec-app-core-definition-marks                                |   2.04 kB | 
+chunk-TM4UOBFK.js                                                | -                                                             |   1.89 kB | 
+spec-app-shared-banner-banner.component.js                       | spec-app-shared-banner-banner.component                       |   1.78 kB | 
+chunk-V3H36QZV.js                                                | -                                                             |   1.77 kB | 
+chunk-BPNXDTJX.js                                                | -                                                             |   1.42 kB | 
+chunk-VZ3W45LC.js                                                | -                                                             |   1.35 kB | 
+chunk-GWVMSDZK.js                                                | -                                                             |   1.33 kB | 
+init-testbed.js                                                  | init-testbed                                                  |   1.21 kB | 
+chunk-JLJKBO6D.js                                                | -                                                             |   1.20 kB | 
+chunk-FVG5VKTA.js                                                | -                                                             |   1.11 kB | 
+spec-app-core-i18n-plural.js                                     | spec-app-core-i18n-plural                                     |   1.09 kB | 
+chunk-COXDGQGK.js                                                | -                                                             |   1.08 kB | 
+chunk-XUQ3H2VX.js                                                | -                                                             |   1.04 kB | 
+vitest-mock-patch.js                                             | vitest-mock-patch                                             | 974 bytes | 
+chunk-3W5OZ7PE.js                                                | -                                                             | 958 bytes | 
+chunk-HQZZVFCT.js                                                | -                                                             | 897 bytes | 
+chunk-Y7VQSYSL.js                                                | -                                                             | 846 bytes | 
+chunk-NJ3DPEVZ.js                                                | -                                                             | 841 bytes | 
+chunk-WVDS3KXD.js                                                | -                                                             | 814 bytes | 
+chunk-C6H72NJB.js                                                | -                                                             | 550 bytes | 
+chunk-D4MBNG4P.js                                                | -                                                             | 346 bytes | 
+chunk-GBPI3SUH.js                                                | -                                                             | 209 bytes | 
+
+                                                                 | Initial total                                                 | 584.90 kB
+
+Application bundle generation complete. [4.542 seconds] - 2026-11-11T07:43:27.302Z
+
+
+ RUN  v4.0.18 /home/kfir/projects/cbs-web/web
+
+ ✓  web  src/app/shared/breakdown/breakdown.component.spec.ts (7 tests) 540ms
+ ✓  web  src/app/shared/confirm-dialog/confirm-dialog.component.spec.ts (3 tests) 529ms
+     ✓ asks with the title, the body and the name of the action  402ms
+ ✓  web  src/app/shared/results-table/results-table.component.spec.ts (12 tests) 768ms
+ ✓  web  src/app/shared/text-parts/text-parts.component.spec.ts (9 tests) 150ms
+ ✓  web  src/app/shared/toolbar/toolbar.component.spec.ts (5 tests) 875ms
+     ✓ emits the search once, 300ms after the last key  538ms
+ ✓  web  src/app/features/run-results/results.store.spec.ts (20 tests) 134ms
+ ✓  web  src/app/features/control-editor/editor.store.spec.ts (32 tests) 315ms
+ ✓  web  src/app/features/controls-list/controls-table.component.spec.ts (13 tests) 1127ms
+ ✓  web  src/app/features/controls-list/list.store.spec.ts (13 tests) 96ms
+ ✓  web  src/app/shared/banner/error-banner.component.spec.ts (4 tests) 104ms
+ ✓  web  src/app/features/control-editor/editor.sentence.spec.ts (10 tests) 114ms
+ ✓  web  src/app/shared/table-foot/table-foot.component.spec.ts (5 tests) 210ms
+ ✓  web  src/app/core/i18n/format.service.spec.ts (6 tests) 59ms
+ ✓  web  src/app/core/definition/draft.check.spec.ts (14 tests) 12ms
+ ✓  web  src/app/shared/banner/banner.component.spec.ts (3 tests) 65ms
+ ✓  web  src/app/core/api/api.spec.ts (9 tests) 59ms
+ ✓  web  src/app/core/glossary/glossary.service.spec.ts (2 tests) 14ms
+ ✓  web  src/app/core/glossary/glossary.lookups.spec.ts (15 tests) 23ms
+ ✓  web  src/app/core/definition/draft.edit.spec.ts (12 tests) 17ms
+ ✓  web  src/app/core/definition/draft.operations.spec.ts (12 tests) 23ms
+ ✓  web  src/app/core/definition/draft.spec.ts (14 tests) 7ms
+ ✓  web  src/app/guards.spec.ts (6 tests) 41ms
+ ✓  web  src/app/core/definition/condition.rules.spec.ts (11 tests) 4ms
+ ✓  web  src/app/shared/toast/toast.service.spec.ts (3 tests) 11ms
+ ✓  web  src/app/core/text/text-parts.spec.ts (5 tests) 2ms
+ ✓  web  src/app/core/definition/pointer.spec.ts (4 tests) 5ms
+ ✓  web  src/app/core/definition/marks.spec.ts (4 tests) 6ms
+ ✓  web  src/app/core/i18n/plural.spec.ts (4 tests) 1ms
+ ✓  web  src/app/features/suggestions/suggestions-dialog.component.spec.ts (10 tests) 1020ms
+     ✓ asks for suggestions when it opens and shows skeleton bars meanwhile  353ms
+ ✓  web  src/app/shared/condition-builder/condition-builder.component.spec.ts (29 tests) 4573ms
+       ✓ adds a condition under the last one and letters the rows in order  729ms
+       ✓ keeps one empty row when the last row of the control is removed  304ms
+
+ Test Files  30 passed (30)
+      Tests  296 passed (296)
+   Start at  09:43:27
+   Duration  7.80s (transform 2.81s, setup 3.41s, import 7.33s, tests 10.91s, environment 30.68s)
+
+--- web-test: ok
+=== web-build: npx ng build
+❯ Building...
+✔ Building...
+Initial chunk files | Names                        |  Raw size | Estimated transfer size
+chunk-IGYR3C62.js   | -                            | 234.66 kB |                66.41 kB
+chunk-OMRJ3DVT.js   | -                            | 118.81 kB |                27.20 kB
+chunk-YQ5S4FO3.js   | -                            |  74.96 kB |                18.77 kB
+styles-PXFSA333.css | styles                       |  44.19 kB |                 6.93 kB
+chunk-BZ6A32HL.js   | -                            |  26.10 kB |                 6.25 kB
+chunk-655H2WD6.js   | -                            |  22.79 kB |                 4.61 kB
+main-2NJGVBZ6.js    | main                         |  16.62 kB |                 5.47 kB
+chunk-LUCPI2SM.js   | -                            |   6.96 kB |                 1.61 kB
+chunk-GGCQOBNC.js   | -                            |  90 bytes |                90 bytes
+
+                    | Initial total                | 545.19 kB |               137.33 kB
+
+Lazy chunk files    | Names                        |  Raw size | Estimated transfer size
+chunk-AIHRZC5F.js   | control-editor-page          | 142.60 kB |                25.43 kB
+chunk-WTP7XZXV.js   | -                            | 114.52 kB |                21.38 kB
+chunk-LLCSKQVX.js   | -                            |  48.02 kB |                 8.25 kB
+chunk-LXZTRJUF.js   | suggestions-dialog-component |  37.17 kB |                 7.28 kB
+chunk-ZNDDYRVY.js   | run-results-page             |  27.80 kB |                 7.59 kB
+chunk-4ODX6SUV.js   | -                            |  21.02 kB |                 5.90 kB
+chunk-YHV5WEV7.js   | controls-list-page           |  18.05 kB |                 5.25 kB
+chunk-XD7ZDN6Y.js   | -                            |   5.04 kB |                 1.81 kB
+chunk-MZE6FCYD.js   | -                            |   5.04 kB |                 1.88 kB
+chunk-7EW7KWJS.js   | -                            |   1.17 kB |               595 bytes
+chunk-AUEWVK7F.js   | -                            | 821 bytes |               821 bytes
+chunk-EYSCFKU5.js   | -                            | 714 bytes |               714 bytes
+chunk-GHE3RH3O.js   | -                            | 283 bytes |               283 bytes
+chunk-SN6AFPYN.js   | not-found-component          | 179 bytes |               179 bytes
+
+Application bundle generation complete. [4.648 seconds] - 2026-11-11T07:43:39.744Z
+
+Output location: /home/kfir/projects/cbs-web/web/dist/web
+
+--- web-build: ok
+=== print-guard
+
+=== the real stack (2026-11-11, this worktree at 268a0f7, origin/main eec007d merged)
+engine: engine/.venv (uv sync), uvicorn on 127.0.0.1:8000, ENGINE_DB_HOST=127.0.0.1 ENGINE_DB_PORT=1433 in the environment
+api: dotnet run --project src/DataControls.Api --no-build, Development, http://localhost:5000, settings from .env
+database: the shared container data-controls-db-1 on 127.0.0.1:1433, not started, stopped or reset here
+GET :8000/health -> {"status":"ok","database":"ok","glossaryVersion":"1.0.0","engineVersion":"0.1.0"}
+GET :5000/api/v1/health -> {"status":"ok","database":"ok","engine":"ok","version":"1.0.0"}
+
+=== gate run 1: npm run e2e:gate at 4200, before the two fixes, the list without the six examples
+
+Running 16 tests using 1 worker
+
+  ✓   1 [mobile] › e2e/gate/examples.spec.ts:43:5 › the six examples on the real stack › example 1 is built in the editor, saved, run and read (9.1s)
+  ✓   2 [mobile] › e2e/gate/examples.spec.ts:43:5 › the six examples on the real stack › example 2 is built in the editor, saved, run and read (3.4s)
+  ✓   3 [mobile] › e2e/gate/examples.spec.ts:43:5 › the six examples on the real stack › example 3 is built in the editor, saved, run and read (4.7s)
+  ✓   4 [mobile] › e2e/gate/examples.spec.ts:43:5 › the six examples on the real stack › example 4 is built in the editor, saved, run and read (9.0s)
+  ✓   5 [mobile] › e2e/gate/examples.spec.ts:43:5 › the six examples on the real stack › example 5 is built in the editor, saved, run and read (5.7s)
+  ✓   6 [mobile] › e2e/gate/examples.spec.ts:43:5 › the six examples on the real stack › example 6 is built in the editor, saved, run and read (7.4s)
+  ✓   7 [mobile] › e2e/gate/list.spec.ts:11:1 › a control of its own is found, run from its row, filtered in its results, duplicated and archived (7.4s)
+  ✓   8 [mobile] › e2e/gate/suggestions.spec.ts:10:1 › the dialog shows the drafts the engine proposes, and creates one as a control (3.1s)
+  ✓   9 [desktop] › e2e/gate/examples.spec.ts:43:5 › the six examples on the real stack › example 1 is built in the editor, saved, run and read (4.7s)
+  ✓  10 [desktop] › e2e/gate/examples.spec.ts:43:5 › the six examples on the real stack › example 2 is built in the editor, saved, run and read (3.0s)
+  ✓  11 [desktop] › e2e/gate/examples.spec.ts:43:5 › the six examples on the real stack › example 3 is built in the editor, saved, run and read (4.5s)
+  ✓  12 [desktop] › e2e/gate/examples.spec.ts:43:5 › the six examples on the real stack › example 4 is built in the editor, saved, run and read (9.6s)
+  ✓  13 [desktop] › e2e/gate/examples.spec.ts:43:5 › the six examples on the real stack › example 5 is built in the editor, saved, run and read (5.8s)
+  ✓  14 [desktop] › e2e/gate/examples.spec.ts:43:5 › the six examples on the real stack › example 6 is built in the editor, saved, run and read (7.3s)
+  ✓  15 [desktop] › e2e/gate/list.spec.ts:11:1 › a control of its own is found, run from its row, filtered in its results, duplicated and archived (6.4s)
+  ✓  16 [desktop] › e2e/gate/suggestions.spec.ts:10:1 › the dialog shows the drafts the engine proposes, and creates one as a control (2.6s)
+
+  16 passed (2.0m)
+--- after it: 18 controls with an e2e- tag, all archived; the four controls without a tag unchanged (phase-7-list-before-preload.txt)
+
+=== the pre-load: six POST /api/v1/controls, each 201 (phase-7-list-preloaded.txt)
+
+=== gate run 2: npm run e2e:gate at 4200, the pre-loaded list, with the two fixes
+
+Running 16 tests using 1 worker
+
+  ✓   1 [mobile] › e2e/gate/examples.spec.ts:43:5 › the six examples on the real stack › example 1 is built in the editor, saved, run and read (4.3s)
+  ✓   2 [mobile] › e2e/gate/examples.spec.ts:43:5 › the six examples on the real stack › example 2 is built in the editor, saved, run and read (3.4s)
+  ✓   3 [mobile] › e2e/gate/examples.spec.ts:43:5 › the six examples on the real stack › example 3 is built in the editor, saved, run and read (4.4s)
+  ✓   4 [mobile] › e2e/gate/examples.spec.ts:43:5 › the six examples on the real stack › example 4 is built in the editor, saved, run and read (15.7s)
+  ✓   5 [mobile] › e2e/gate/examples.spec.ts:43:5 › the six examples on the real stack › example 5 is built in the editor, saved, run and read (5.6s)
+  ✓   6 [mobile] › e2e/gate/examples.spec.ts:43:5 › the six examples on the real stack › example 6 is built in the editor, saved, run and read (7.4s)
+  ✓   7 [mobile] › e2e/gate/list.spec.ts:11:1 › a control of its own is found, run from its row, filtered in its results, duplicated and archived (6.8s)
+  ✓   8 [mobile] › e2e/gate/suggestions.spec.ts:10:1 › the dialog shows the drafts the engine proposes, and creates one as a control (2.2s)
+  ✓   9 [desktop] › e2e/gate/examples.spec.ts:43:5 › the six examples on the real stack › example 1 is built in the editor, saved, run and read (4.4s)
+  ✓  10 [desktop] › e2e/gate/examples.spec.ts:43:5 › the six examples on the real stack › example 2 is built in the editor, saved, run and read (3.6s)
+  ✓  11 [desktop] › e2e/gate/examples.spec.ts:43:5 › the six examples on the real stack › example 3 is built in the editor, saved, run and read (4.6s)
+  ✓  12 [desktop] › e2e/gate/examples.spec.ts:43:5 › the six examples on the real stack › example 4 is built in the editor, saved, run and read (15.8s)
+  ✓  13 [desktop] › e2e/gate/examples.spec.ts:43:5 › the six examples on the real stack › example 5 is built in the editor, saved, run and read (5.7s)
+  ✓  14 [desktop] › e2e/gate/examples.spec.ts:43:5 › the six examples on the real stack › example 6 is built in the editor, saved, run and read (7.7s)
+  ✓  15 [desktop] › e2e/gate/list.spec.ts:11:1 › a control of its own is found, run from its row, filtered in its results, duplicated and archived (6.7s)
+  ✓  16 [desktop] › e2e/gate/suggestions.spec.ts:10:1 › the dialog shows the drafts the engine proposes, and creates one as a control (2.5s)
+
+  16 passed (1.8m)
+--- listing after it (phase-7-list-after-run-1.txt): equal to phase-7-list-preloaded.txt
+
+=== gate run 3: the same, again
+
+Running 16 tests using 1 worker
+
+  ✓   1 [mobile] › e2e/gate/examples.spec.ts:43:5 › the six examples on the real stack › example 1 is built in the editor, saved, run and read (4.4s)
+  ✓   2 [mobile] › e2e/gate/examples.spec.ts:43:5 › the six examples on the real stack › example 2 is built in the editor, saved, run and read (3.0s)
+  ✓   3 [mobile] › e2e/gate/examples.spec.ts:43:5 › the six examples on the real stack › example 3 is built in the editor, saved, run and read (4.5s)
+  ✓   4 [mobile] › e2e/gate/examples.spec.ts:43:5 › the six examples on the real stack › example 4 is built in the editor, saved, run and read (15.2s)
+  ✓   5 [mobile] › e2e/gate/examples.spec.ts:43:5 › the six examples on the real stack › example 5 is built in the editor, saved, run and read (5.6s)
+  ✓   6 [mobile] › e2e/gate/examples.spec.ts:43:5 › the six examples on the real stack › example 6 is built in the editor, saved, run and read (7.5s)
+  ✓   7 [mobile] › e2e/gate/list.spec.ts:11:1 › a control of its own is found, run from its row, filtered in its results, duplicated and archived (6.6s)
+  ✓   8 [mobile] › e2e/gate/suggestions.spec.ts:10:1 › the dialog shows the drafts the engine proposes, and creates one as a control (2.4s)
+  ✓   9 [desktop] › e2e/gate/examples.spec.ts:43:5 › the six examples on the real stack › example 1 is built in the editor, saved, run and read (4.6s)
+  ✓  10 [desktop] › e2e/gate/examples.spec.ts:43:5 › the six examples on the real stack › example 2 is built in the editor, saved, run and read (2.9s)
+  ✓  11 [desktop] › e2e/gate/examples.spec.ts:43:5 › the six examples on the real stack › example 3 is built in the editor, saved, run and read (4.5s)
+  ✓  12 [desktop] › e2e/gate/examples.spec.ts:43:5 › the six examples on the real stack › example 4 is built in the editor, saved, run and read (16.0s)
+  ✓  13 [desktop] › e2e/gate/examples.spec.ts:43:5 › the six examples on the real stack › example 5 is built in the editor, saved, run and read (6.0s)
+  ✓  14 [desktop] › e2e/gate/examples.spec.ts:43:5 › the six examples on the real stack › example 6 is built in the editor, saved, run and read (7.2s)
+  ✓  15 [desktop] › e2e/gate/list.spec.ts:11:1 › a control of its own is found, run from its row, filtered in its results, duplicated and archived (6.8s)
+  ✓  16 [desktop] › e2e/gate/suggestions.spec.ts:10:1 › the dialog shows the drafts the engine proposes, and creates one as a control (2.4s)
+
+  16 passed (1.8m)
+--- listing after it (phase-7-list-after-run-2.txt): equal to phase-7-list-preloaded.txt
+
+=== gate run 4: E2E_BASE_URL=http://localhost:5000 npm run e2e:gate, the build the api hosts (ng build copied to bin/Debug/net10.0/wwwroot, the api restarted); no dev server
+
+Running 16 tests using 1 worker
+
+  ✓   1 [mobile] › e2e/gate/examples.spec.ts:43:5 › the six examples on the real stack › example 1 is built in the editor, saved, run and read (5.4s)
+  ✓   2 [mobile] › e2e/gate/examples.spec.ts:43:5 › the six examples on the real stack › example 2 is built in the editor, saved, run and read (2.6s)
+  ✓   3 [mobile] › e2e/gate/examples.spec.ts:43:5 › the six examples on the real stack › example 3 is built in the editor, saved, run and read (4.2s)
+  ✓   4 [mobile] › e2e/gate/examples.spec.ts:43:5 › the six examples on the real stack › example 4 is built in the editor, saved, run and read (15.4s)
+  ✓   5 [mobile] › e2e/gate/examples.spec.ts:43:5 › the six examples on the real stack › example 5 is built in the editor, saved, run and read (5.3s)
+  ✓   6 [mobile] › e2e/gate/examples.spec.ts:43:5 › the six examples on the real stack › example 6 is built in the editor, saved, run and read (7.0s)
+  ✓   7 [mobile] › e2e/gate/list.spec.ts:11:1 › a control of its own is found, run from its row, filtered in its results, duplicated and archived (6.3s)
+  ✓   8 [mobile] › e2e/gate/suggestions.spec.ts:10:1 › the dialog shows the drafts the engine proposes, and creates one as a control (1.7s)
+  ✓   9 [desktop] › e2e/gate/examples.spec.ts:43:5 › the six examples on the real stack › example 1 is built in the editor, saved, run and read (4.0s)
+  ✓  10 [desktop] › e2e/gate/examples.spec.ts:43:5 › the six examples on the real stack › example 2 is built in the editor, saved, run and read (2.6s)
+  ✓  11 [desktop] › e2e/gate/examples.spec.ts:43:5 › the six examples on the real stack › example 3 is built in the editor, saved, run and read (3.9s)
+  ✓  12 [desktop] › e2e/gate/examples.spec.ts:43:5 › the six examples on the real stack › example 4 is built in the editor, saved, run and read (15.5s)
+  ✓  13 [desktop] › e2e/gate/examples.spec.ts:43:5 › the six examples on the real stack › example 5 is built in the editor, saved, run and read (5.3s)
+  ✓  14 [desktop] › e2e/gate/examples.spec.ts:43:5 › the six examples on the real stack › example 6 is built in the editor, saved, run and read (6.9s)
+  ✓  15 [desktop] › e2e/gate/list.spec.ts:11:1 › a control of its own is found, run from its row, filtered in its results, duplicated and archived (5.6s)
+  ✓  16 [desktop] › e2e/gate/suggestions.spec.ts:10:1 › the dialog shows the drafts the engine proposes, and creates one as a control (1.7s)
+
+  16 passed (1.6m)
+--- listing after it (phase-7-list-after-hosted.txt): equal to phase-7-list-preloaded.txt
+
+=== e2e/mocked/results.spec.ts after the duration fix (both projects)
+[38/38] [desktop] › e2e/mocked/results.spec.ts:368:3 › run results › a run of an archived control cannot be run again, and the screen says why
+  2 skipped
+  36 passed (36.1s)

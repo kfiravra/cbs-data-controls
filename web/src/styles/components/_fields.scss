@@ -1,0 +1,93 @@
+// A visible label above; the reason for an error under its own field. The field itself is Material's form
+// field, themed in material-theme.scss; these rules cover what stands around it.
+
+.field {
+  display: grid;
+  gap: var(--space-2);
+  min-inline-size: 0;
+}
+
+.field__label {
+  font-size: var(--text-small);
+  font-weight: 500;
+  line-height: 1.4;
+
+  .muted {
+    font-weight: 400;
+  }
+}
+
+.field__hint {
+  font-size: var(--text-label);
+  line-height: 1.5;
+  color: var(--color-muted);
+  text-wrap: pretty;
+}
+
+.field__error {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  font-size: var(--text-small);
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--color-danger);
+
+  .icon {
+    margin-block-start: 1px;
+  }
+}
+
+.field__path {
+  color: var(--color-muted);
+  font-size: var(--text-small);
+
+  &::after {
+    content: '/';
+    margin-inline: 6px;
+    color: var(--color-control-line);
+  }
+}
+
+.field__prefix {
+  color: var(--color-muted);
+}
+
+.field__unit {
+  color: var(--color-muted);
+  font-size: var(--text-small);
+  white-space: nowrap;
+}
+
+.novalue {
+  display: flex;
+  align-items: center;
+  min-block-size: var(--size-control);
+  font-size: var(--text-small);
+  color: var(--color-muted);
+}
+
+.range {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.range__word {
+  font-size: var(--text-small);
+  color: var(--color-muted);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  block-size: 24px;
+  padding-inline: var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--color-tonal);
+  font-size: var(--text-label);
+  font-weight: 500;
+  white-space: nowrap;
+}

@@ -1,0 +1,173 @@
+dc-web gate phase-3
+2026-11-10T23:02:29Z
+d57b922
+no suite running
+=== web-ngc: npx ngc -p tsconfig.app.json --noEmit
+--- web-ngc: ok
+=== web-eslint: npx ng lint
+
+Linting "web"...
+
+All files pass linting.
+
+--- web-eslint: ok
+=== web-e2e-types: npm run -s typecheck:e2e
+--- web-e2e-types: ok
+=== web-test: npx ng test --watch=false
+❯ Building...
+✔ Building...
+Initial chunk files                                              | Names                                                         |  Raw size
+spec-app-shared-condition-builder-condition-builder.component.js | spec-app-shared-condition-builder-condition-builder.component | 119.01 kB | 
+styles.css                                                       | styles                                                        |  49.03 kB | 
+spec-app-shared-text-parts-text-parts.component.js               | spec-app-shared-text-parts-text-parts.component               |  16.17 kB | 
+chunk-PMLBKRUS.js                                                | -                                                             |  14.21 kB | 
+spec-app-shared-table-foot-table-foot.component.js               | spec-app-shared-table-foot-table-foot.component               |  12.38 kB | 
+spec-app-core-api-api.js                                         | spec-app-core-api-api                                         |  11.49 kB | 
+spec-app-core-glossary-glossary.lookups.js                       | spec-app-core-glossary-glossary.lookups                       |   9.10 kB | 
+spec-app-shared-toolbar-toolbar.component.js                     | spec-app-shared-toolbar-toolbar.component                     |   9.08 kB | 
+spec-app-core-i18n-format.service.js                             | spec-app-core-i18n-format.service                             |   7.52 kB | 
+spec-app-core-definition-draft.check.js                          | spec-app-core-definition-draft.check                          |   7.49 kB | 
+spec-app-shared-confirm-dialog-confirm-dialog.component.js       | spec-app-shared-confirm-dialog-confirm-dialog.component       |   7.41 kB | 
+spec-app-core-definition-draft.edit.js                           | spec-app-core-definition-draft.edit                           |   6.64 kB | 
+spec-app-shared-banner-error-banner.component.js                 | spec-app-shared-banner-error-banner.component                 |   6.21 kB | 
+chunk-JVDOWM4J.js                                                | -                                                             |   6.02 kB | 
+spec-app-core-definition-draft.js                                | spec-app-core-definition-draft                                |   5.97 kB | 
+spec-app-core-definition-draft.operations.js                     | spec-app-core-definition-draft.operations                     |   5.57 kB | 
+chunk-JBWBLPNK.js                                                | -                                                             |   5.19 kB | 
+chunk-5OVTGMRS.js                                                | -                                                             |   5.11 kB | 
+spec-app-core-definition-condition.rules.js                      | spec-app-core-definition-condition.rules                      |   4.51 kB | 
+chunk-7RKRQCGJ.js                                                | -                                                             |   4.48 kB | 
+chunk-5VUGD64U.js                                                | -                                                             |   4.34 kB | 
+chunk-OQGE3S32.js                                                | -                                                             |   4.33 kB | 
+chunk-TVQ2I2XA.js                                                | -                                                             |   4.24 kB | 
+spec-app-core-definition-pointer.js                              | spec-app-core-definition-pointer                              |   4.16 kB | 
+spec-app-guards.js                                               | spec-app-guards                                               |   3.40 kB | 
+chunk-ADUWINCZ.js                                                | -                                                             |   3.22 kB | 
+chunk-4MB6V3SO.js                                                | -                                                             |   3.14 kB | 
+spec-app-shared-toast-toast.service.js                           | spec-app-shared-toast-toast.service                           |   3.10 kB | 
+spec-app-core-text-text-parts.js                                 | spec-app-core-text-text-parts                                 |   2.54 kB | 
+chunk-POCKATIH.js                                                | -                                                             |   2.33 kB | 
+chunk-S6PLKAGB.js                                                | -                                                             |   2.28 kB | 
+spec-app-core-glossary-glossary.service.js                       | spec-app-core-glossary-glossary.service                       |   2.17 kB | 
+spec-app-core-definition-marks.js                                | spec-app-core-definition-marks                                |   2.04 kB | 
+chunk-TM4UOBFK.js                                                | -                                                             |   1.89 kB | 
+spec-app-shared-banner-banner.component.js                       | spec-app-shared-banner-banner.component                       |   1.78 kB | 
+chunk-VZ3W45LC.js                                                | -                                                             |   1.35 kB | 
+init-testbed.js                                                  | init-testbed                                                  |   1.21 kB | 
+chunk-COXDGQGK.js                                                | -                                                             |   1.08 kB | 
+chunk-XUQ3H2VX.js                                                | -                                                             |   1.04 kB | 
+spec-app-core-i18n-plural.js                                     | spec-app-core-i18n-plural                                     | 991 bytes | 
+vitest-mock-patch.js                                             | vitest-mock-patch                                             | 974 bytes | 
+chunk-3W5OZ7PE.js                                                | -                                                             | 958 bytes | 
+chunk-HQZZVFCT.js                                                | -                                                             | 897 bytes | 
+chunk-Y7VQSYSL.js                                                | -                                                             | 846 bytes | 
+chunk-WVDS3KXD.js                                                | -                                                             | 814 bytes | 
+chunk-C6H72NJB.js                                                | -                                                             | 550 bytes | 
+chunk-GBPI3SUH.js                                                | -                                                             | 209 bytes | 
+
+                                                                 | Initial total                                                 | 368.49 kB
+
+Application bundle generation complete. [4.920 seconds] - 2026-11-10T23:02:44.461Z
+
+
+ RUN  v4.0.18 /home/kfir/projects/cbs-web/web
+
+ ✓  web  src/app/shared/text-parts/text-parts.component.spec.ts (8 tests) 913ms
+ ✓  web  src/app/shared/banner/banner.component.spec.ts (3 tests) 800ms
+     ✓ is announced politely by default and interrupts when it is urgent  416ms
+ ✓  web  src/app/shared/banner/error-banner.component.spec.ts (4 tests) 909ms
+     ✓ says what happened and what still works in the words of the code, never the code itself  730ms
+ ✓  web  src/app/core/glossary/glossary.service.spec.ts (2 tests) 86ms
+ ✓  web  src/app/guards.spec.ts (6 tests) 50ms
+ ✓  web  src/app/core/api/api.spec.ts (9 tests) 517ms
+ ✓  web  src/app/core/i18n/format.service.spec.ts (6 tests) 655ms
+     ✓ groups the digits of a number and keeps one decimal of a duration  338ms
+ ✓  web  src/app/core/definition/draft.operations.spec.ts (12 tests) 14ms
+ ✓  web  src/app/core/glossary/glossary.lookups.spec.ts (15 tests) 101ms
+ ✓  web  src/app/core/definition/draft.edit.spec.ts (9 tests) 17ms
+ ✓  web  src/app/core/definition/condition.rules.spec.ts (10 tests) 32ms
+ ✓  web  src/app/core/definition/pointer.spec.ts (4 tests) 16ms
+ ✓  web  src/app/core/definition/draft.spec.ts (12 tests) 23ms
+ ✓  web  src/app/core/definition/draft.check.spec.ts (13 tests) 34ms
+ ✓  web  src/app/shared/confirm-dialog/confirm-dialog.component.spec.ts (3 tests) 1069ms
+     ✓ asks with the title, the body and the name of the action  880ms
+ ✓  web  src/app/shared/table-foot/table-foot.component.spec.ts (4 tests) 632ms
+     ✓ disables previous on the first page and offers next when rows remain  362ms
+ ✓  web  src/app/core/text/text-parts.spec.ts (5 tests) 2ms
+ ✓  web  src/app/core/definition/marks.spec.ts (4 tests) 6ms
+ ✓  web  src/app/core/i18n/plural.spec.ts (3 tests) 3ms
+ ✓  web  src/app/shared/toolbar/toolbar.component.spec.ts (4 tests) 1076ms
+     ✓ emits the search once, 300ms after the last key  808ms
+ ✓  web  src/app/shared/toast/toast.service.spec.ts (2 tests) 10ms
+ ✓  web  src/app/shared/condition-builder/condition-builder.component.spec.ts (24 tests) 4893ms
+       ✓ adds a condition under the last one and letters the rows in order  416ms
+       ✓ keeps one empty row when the last row of the control is removed  359ms
+       ✓ is two inputs for a range and a list of values for a list  316ms
+       ✓ relabels the comparison for two fields when the glossary has such a label  415ms
+       ✓ is not offered when the comparison or the field cannot compare two fields  342ms
+
+ Test Files  22 passed (22)
+      Tests  162 passed (162)
+   Start at  01:02:44
+   Duration  13.99s (transform 7.94s, setup 11.98s, import 16.35s, tests 11.86s, environment 78.53s)
+
+--- web-test: ok
+=== web-build: npx ng build
+❯ Building...
+✔ Building...
+Initial chunk files | Names               |  Raw size | Estimated transfer size
+chunk-MJT5BQJW.js   | -                   | 308.22 kB |                83.35 kB
+chunk-VJ3WYGF3.js   | -                   |  88.05 kB |                19.51 kB
+styles-FRBYTSL2.css | styles              |  41.79 kB |                 6.50 kB
+main-Y7AS3CWX.js    | main                |  16.21 kB |                 5.25 kB
+
+                    | Initial total       | 454.27 kB |               114.61 kB
+
+Lazy chunk files    | Names               |  Raw size | Estimated transfer size
+chunk-RNPWESR4.js   | control-editor-page | 293.23 kB |                50.70 kB
+chunk-2MI2DH7Z.js   | not-found-component |   1.83 kB |               813 bytes
+chunk-6QZQX25P.js   | -                   |   1.34 kB |               716 bytes
+chunk-I3V4MTJI.js   | -                   | 714 bytes |               714 bytes
+chunk-4PVCDMU7.js   | run-results-page    | 568 bytes |               568 bytes
+chunk-X6BNSZUK.js   | controls-list-page  | 506 bytes |               506 bytes
+
+Application bundle generation complete. [6.362 seconds] - 2026-11-10T23:03:06.112Z
+
+Output location: /home/kfir/projects/cbs-web/web/dist/web
+
+--- web-build: ok
+=== print-guard
+no suite running
+=== playwright: npx playwright test e2e/mocked
+
+Running 26 tests using 4 workers
+
+  ✓   3 [mobile] › e2e/mocked/builder.spec.ts:89:3 › condition builder › starts a new control on the first root entity with one empty, open condition (1.6s)
+  ✓   5 [mobile] › e2e/mocked/builder.spec.ts:101:3 › condition builder › moves the focus to a new row, and back to the row before it when the row is removed (1.3s)
+  ✓   6 [mobile] › e2e/mocked/builder.spec.ts:114:3 › condition builder › removes a nested group with its last row, and keeps one row in the root group (1.4s)
+  ✓   1 [mobile] › e2e/mocked/builder.spec.ts:69:3 › condition builder › builds example 5 with the keyboard alone: another root entity and a related-records node (5.9s)
+  ✓   7 [mobile] › e2e/mocked/builder.spec.ts:126:3 › condition builder › disables the adders the limits of the glossary no longer allow (2.0s)
+  ✓   9 [mobile] › e2e/mocked/fake-engine.spec.ts:30:3 › fake engine › renders the rule sentence and each condition as the contract example does (4ms)
+  ✓  10 [mobile] › e2e/mocked/fake-engine.spec.ts:38:3 › fake engine › renders the violations of the contract example, reasons and actual values included (8ms)
+  ✓  11 [mobile] › e2e/mocked/fake-engine.spec.ts:44:3 › fake engine › renders every example of the contracts without a placeholder left in the text (67ms)
+  ✓   8 [mobile] › e2e/mocked/builder.spec.ts:143:3 › condition builder › says in words what the control returns and what else it may ask about (1.7s)
+  ✓  12 [mobile] › e2e/mocked/shell.spec.ts:6:3 › shell › opens in Hebrew, right to left, with its own font and no failed request (1.2s)
+  ✓   2 [mobile] › e2e/mocked/builder.spec.ts:59:3 › condition builder › builds example 6 with the pointer: a two-hop path and a nested group (8.1s)
+  ✓  13 [mobile] › e2e/mocked/shell.spec.ts:34:3 › shell › shows the not-found state for an unknown address and leads back to the list (810ms)
+  ✓   4 [mobile] › e2e/mocked/builder.spec.ts:79:3 › condition builder › builds example 4, a tree three groups deep (11.3s)
+  ✓  17 [desktop] › e2e/mocked/builder.spec.ts:89:3 › condition builder › starts a new control on the first root entity with one empty, open condition (1.9s)
+  ✓  15 [desktop] › e2e/mocked/builder.spec.ts:69:3 › condition builder › builds example 5 with the keyboard alone: another root entity and a related-records node (7.4s)
+  ✓  18 [desktop] › e2e/mocked/builder.spec.ts:101:3 › condition builder › moves the focus to a new row, and back to the row before it when the row is removed (1.6s)
+  ✓  14 [desktop] › e2e/mocked/builder.spec.ts:59:3 › condition builder › builds example 6 with the pointer: a two-hop path and a nested group (9.3s)
+  ✓  19 [desktop] › e2e/mocked/builder.spec.ts:114:3 › condition builder › removes a nested group with its last row, and keeps one row in the root group (1.9s)
+  ✓  22 [desktop] › e2e/mocked/fake-engine.spec.ts:30:3 › fake engine › renders the rule sentence and each condition as the contract example does (8ms)
+  ✓  23 [desktop] › e2e/mocked/fake-engine.spec.ts:38:3 › fake engine › renders the violations of the contract example, reasons and actual values included (11ms)
+  ✓  24 [desktop] › e2e/mocked/fake-engine.spec.ts:44:3 › fake engine › renders every example of the contracts without a placeholder left in the text (47ms)
+  ✓  20 [desktop] › e2e/mocked/builder.spec.ts:126:3 › condition builder › disables the adders the limits of the glossary no longer allow (1.8s)
+  ✓  21 [desktop] › e2e/mocked/builder.spec.ts:143:3 › condition builder › says in words what the control returns and what else it may ask about (1.1s)
+  ✓  26 [desktop] › e2e/mocked/shell.spec.ts:34:3 › shell › shows the not-found state for an unknown address and leads back to the list (910ms)
+  ✓  25 [desktop] › e2e/mocked/shell.spec.ts:6:3 › shell › opens in Hebrew, right to left, with its own font and no failed request (1.0s)
+  ✓  16 [desktop] › e2e/mocked/builder.spec.ts:79:3 › condition builder › builds example 4, a tree three groups deep (12.8s)
+
+  26 passed (23.2s)
+--- playwright: ok

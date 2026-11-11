@@ -1,0 +1,375 @@
+// A strip of the operating grey over the table it controls; a table from 640, card rows below it.
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.toolbar__search {
+  flex: 1 1 180px;
+}
+
+// Material insets its own icon in a field's prefix and not another element: the search icon stands as far
+// from the field's edge as a field's text does
+.toolbar__search-icon {
+  margin-inline: var(--space-3) var(--space-2);
+}
+
+.toolbar__filter {
+  flex: 0 1 auto;
+  min-inline-size: 180px;
+}
+
+.toolbar__filters {
+  display: none;
+  flex: 1 1 100%;
+  gap: var(--space-3);
+
+  &.is-open {
+    display: grid;
+  }
+}
+
+@media (min-width: 640px) {
+  .toolbar__search {
+    flex: 0 1 380px;
+  }
+
+  // beside the search, as wide as its text asks: a field is full width only where it stands alone
+  .toolbar__filter {
+    inline-size: auto;
+    flex: 0 1 220px;
+  }
+
+  .toolbar__filters,
+  .toolbar__filters.is-open {
+    display: contents;
+  }
+}
+
+.table {
+  inline-size: 100%;
+  border-collapse: collapse;
+
+  thead {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--space-1) var(--space-3);
+    padding-block: var(--space-4);
+    border-block-end: 1px solid var(--color-line);
+  }
+
+  td {
+    display: block;
+    padding: 0;
+    min-inline-size: 0;
+  }
+
+  .cell-main,
+  .cell-full {
+    grid-column: 1 / -1;
+  }
+
+  .cell-end {
+    text-align: end;
+  }
+
+  .cell-result {
+    align-self: center;
+  }
+
+  .cell-actions {
+    grid-column: 2;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--space-1);
+  }
+
+  .cell-void {
+    display: none;
+  }
+}
+
+// the records of a run: below 640 the identifying fields share the card's first line and the reasons take
+// the line under it
+.table--records {
+  tr {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--space-1) var(--space-3);
+  }
+
+  .cell-full {
+    flex: 1 1 100%;
+    margin-block-start: var(--space-2);
+  }
+}
+
+.cell-title {
+  font-weight: 500;
+  text-decoration: none;
+}
+
+a.cell-title:hover {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+}
+
+// A link that stands alone in a row is a target of its own: its box is a step taller than its line, and it
+// answers a touch two more steps above and below, the height of a control in all. The row keeps its height
+// (the negative margin) and the focus ring stays close to the text.
+a.cell-title,
+.table a.link,
+.table a.status {
+  position: relative;
+  padding-block: var(--space-1);
+  margin-block: calc(-1 * var(--space-1));
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset-inline: 0;
+    inset-block: calc(-1 * var(--space-2));
+  }
+}
+
+a.cell-title,
+.table a.link {
+  display: inline-block;
+}
+
+.cell-desc {
+  font-size: var(--text-small);
+  line-height: 1.5;
+  color: var(--color-muted);
+  text-wrap: pretty;
+}
+
+.cell-meta {
+  font-size: var(--text-small);
+  color: var(--color-muted);
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-small);
+  font-weight: 500;
+}
+
+.status--success {
+  color: var(--color-success);
+}
+
+.status--danger {
+  color: var(--color-danger);
+}
+
+.status--quiet {
+  color: var(--color-muted);
+  font-weight: 400;
+}
+
+.reasons {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.reason {
+  display: grid;
+  grid-template-columns: var(--size-mark) minmax(0, 1fr);
+  gap: var(--space-2);
+  align-items: start;
+  line-height: 1.6;
+
+  .mark {
+    margin-block-start: 2px;
+  }
+}
+
+// the marks of a run could not be read: the reason takes the line alone
+.reason--unmarked {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.table-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-block-start: var(--space-4);
+  font-size: var(--text-small);
+  color: var(--color-muted);
+}
+
+.pager {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+// The header's button is taller than its text; the negative margin keeps the header row at its height.
+// Below 640 the header is read and not seen, and the toolbar's select sorts: the button is not there, so
+// the keyboard never lands on something invisible, and the header cell is named by its own label.
+.th-sort {
+  display: none;
+  align-items: center;
+  gap: var(--space-1);
+  border: 0;
+  padding-block: var(--space-2);
+  padding-inline: 0;
+  margin-block: calc(-1 * var(--space-2));
+  background: none;
+  font: inherit;
+  color: inherit;
+}
+
+th[aria-sort='ascending'] .th-sort,
+th[aria-sort='descending'] .th-sort {
+  color: var(--color-ink);
+}
+
+@media (min-width: 640px) {
+  .th-sort {
+    display: inline-flex;
+  }
+
+  .table {
+    thead {
+      position: static;
+      inline-size: auto;
+      block-size: auto;
+      overflow: visible;
+      clip-path: none;
+    }
+
+    tr {
+      display: table-row;
+      padding: 0;
+    }
+
+    th,
+    td {
+      display: table-cell;
+      padding: var(--space-3);
+      text-align: start;
+      vertical-align: top;
+      border-block-end: 1px solid var(--color-line);
+    }
+
+    th {
+      padding-block: var(--space-2);
+      font-size: var(--text-small);
+      font-weight: 500;
+      color: var(--color-muted);
+      white-space: nowrap;
+      border-block-end-color: var(--color-line-strong);
+      vertical-align: bottom;
+    }
+
+    tbody tr {
+      transition: background-color var(--duration-out) var(--ease-out);
+    }
+
+    tbody tr:hover {
+      background: var(--color-row-hover);
+    }
+
+    .cell-actions {
+      display: table-cell;
+      inline-size: 1%;
+      white-space: nowrap;
+      text-align: end;
+      padding-block: var(--space-2);
+
+      > * {
+        vertical-align: middle;
+      }
+    }
+
+    // A run button is wider while it runs (the spinner and the text of `list.actions.running`, about
+    // 9.25rem in Hebrew): the column keeps room for that, so starting a run does not move the other columns
+    // of the table. A longer text in another language only brings the movement back; nothing breaks.
+    .cell-actions:has(.btn--run) {
+      min-inline-size: calc(9.25rem + 2 * var(--size-control) + 2 * var(--space-3) + var(--space-2));
+    }
+
+    .cell-end {
+      text-align: start;
+    }
+
+    .cell-void {
+      display: table-cell;
+      color: var(--color-muted);
+    }
+
+    .cell-meta {
+      padding-block-start: var(--space-4);
+    }
+
+    .cell-nowrap {
+      white-space: nowrap;
+    }
+
+    .col-40 {
+      inline-size: 40%;
+    }
+
+    .col-16 {
+      inline-size: 16%;
+    }
+
+    .col-18 {
+      inline-size: 18%;
+    }
+
+    .col-20 {
+      inline-size: 20%;
+    }
+
+    .col-12 {
+      inline-size: 12%;
+    }
+
+    .col-id {
+      inline-size: 13%;
+    }
+  }
+
+  .table--records {
+    tr {
+      display: table-row;
+    }
+
+    .cell-full {
+      margin-block-start: 0;
+    }
+
+    .cell-meta {
+      padding-block-start: var(--space-3);
+    }
+  }
+
+  // the table's text stays on the page's edge
+  .table-bleed {
+    margin-inline: calc(-1 * var(--space-3));
+  }
+}
