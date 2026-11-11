@@ -28,8 +28,8 @@
 
 .marked > .mark {
   position: absolute;
-  inset-block-start: -0.5em;
-  inset-inline-start: -0.3em;
+  inset-block-start: -0.62em;
+  inset-inline-start: -0.35em;
   min-inline-size: var(--size-mark-corner);
   block-size: var(--size-mark-corner);
   padding-inline: 2px;
@@ -48,21 +48,24 @@
   background: var(--color-tonal);
 }
 
-.rule-line,
-.rule-joiner {
+.rule-line {
   display: block;
 }
 
-.rule-line + .rule-joiner,
-.rule-joiner + .rule-line {
+.rule-line + .rule-line {
   margin-block-start: 2px;
 }
 
+// the word that joins a line to the one before it leads the line, a step quieter than the rule
 .rule-joiner {
-  padding-inline-start: var(--space-2);
-  font-size: var(--text-label);
-  line-height: var(--leading-title);
+  margin-inline-end: var(--space-2);
+  font-size: var(--text-small);
   color: var(--color-muted);
+}
+
+// the copy of a rule that is read aloud is not also taken when the rule is selected and copied
+.plain-copy {
+  user-select: none;
 }
 
 // the settle: when a condition changes, its mark in the sentence fills at once and eases back
@@ -148,6 +151,11 @@
 
   .rule-group {
     background: var(--color-on-inverse-tonal);
+  }
+
+  // two lines of a rule fill the bar's room exactly: no air between them, or the room would scroll by it
+  .rule-line + .rule-line {
+    margin-block-start: 0;
   }
 
   .rule-joiner {

@@ -104,7 +104,8 @@ internal static class RunAnswers
         for (var position = fields.Count - 1; position >= 0; position--)
         {
             var token = Token(fields[position], position, violation);
-            display[fields[position].Key] = token is null ? null : fields[position].IsNumber ? long.Parse(token) : token;
+            // a number field takes a number; a token that is none is stored as it is, as an older run may hold
+            display[fields[position].Key] = token is null ? null : fields[position].IsNumber && long.TryParse(token, out var number) ? number : token;
         }
 
         return new JsonObject

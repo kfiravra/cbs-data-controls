@@ -1,5 +1,8 @@
+using System.Data;
 using System.Reflection;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace DataControls.Api.Persistence;
 
@@ -10,6 +13,10 @@ namespace DataControls.Api.Persistence;
 public sealed class DqDbContext(DbContextOptions<DqDbContext> options) : DbContext(options)
 {
     internal const string Schema = "dq";
+
+    /// <summary>What <c>JSON_VALUE</c> returns and what <c>TRY_CONVERT(float, ...)</c> returns, for the translation of <see cref="JsonNumber"/>.</summary>
+    private static readonly StringTypeMapping _jsonText = new("nvarchar(4000)", DbType.String, unicode: true, size: 4000);
+    private static readonly DoubleTypeMapping _float = new("float", DbType.Double);
 
     internal DbSet<Control> Controls => Set<Control>();
 
@@ -29,12 +36,33 @@ public sealed class DqDbContext(DbContextOptions<DqDbContext> options) : DbConte
     internal static string? JsonValue(string json, string path) =>
         throw new NotSupportedException("JSON_VALUE is evaluated by the database.");
 
+    /// <summary>
+    /// The same member as a number: <c>TRY_CONVERT(float, JSON_VALUE(...))</c>. A stored value that is not a
+    /// number (the field was of another type when the run was stored) gives null, not a failed query.
+    /// </summary>
+    internal static double? JsonNumber(string json, string path) =>
+        throw new NotSupportedException("JSON_VALUE is evaluated by the database.");
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(DqDbContext).Assembly);
         modelBuilder
-            .HasDbFunction(typeof(DqDbContext).GetMethod(nameof(JsonValue), BindingFlags.NonPublic | BindingFlags.Static)!)
+            .HasDbFunction(Function(nameof(JsonValue)))
             .HasName("JSON_VALUE")
             .IsBuiltIn();
+        // the type TRY_CONVERT converts to is a word of this code, not a value of any request
+        modelBuilder
+            .HasDbFunction(Function(nameof(JsonNumber)))
+            .HasTranslation(arguments => new SqlFunctionExpression(
+                "TRY_CONVERT",
+                [new SqlFragmentExpression("float"), new SqlFunctionExpression("JSON_VALUE", arguments, nullable: true, [false, false], typeof(string), _jsonText)],
+                nullable: true,
+                [false, false],
+                typeof(double),
+                _float));
     }
+
+    private static MethodInfo Function(string name) =>
+        typeof(DqDbContext).GetMethod(name, BindingFlags.NonPublic | BindingFlags.Static)
+        ?? throw new InvalidOperationException($"No function {name} to map.");
 }

@@ -18,6 +18,7 @@ import { ControlsApi } from '../../core/api/controls.api';
 import { RunsApi } from '../../core/api/runs.api';
 import { MarksService } from '../../core/definition/marks.service';
 import { GlossaryService } from '../../core/glossary/glossary.service';
+import { REASONS_COLUMN } from '../../shared/results-table/results-table.component';
 
 export const DEFAULT_PAGE_SIZE = 25;
 export const PAGE_SIZES = [10, 25, 50, 100] as const;
@@ -32,15 +33,13 @@ export interface ResultsView {
   /** The node the rows are filtered by; null for all violations. */
   readonly condition: string | null;
   /**
-   * The column the records are sorted by: the key of an identifying field, `reasons`, or null for the order
-   * of the run. The order itself is the server's.
+   * The column the records are sorted by: the key of an identifying field, the reasons column
+   * (`REASONS_COLUMN`), or null for the order of the run. The order itself is the server's.
    */
   readonly sort: string | null;
   readonly dir: SortDirection;
 }
 
-/** The name of the reasons column in a view and in the address. */
-export const REASONS_COLUMN = 'reasons';
 
 export type LoadState = 'loading' | 'ready' | 'notFound' | 'failed';
 

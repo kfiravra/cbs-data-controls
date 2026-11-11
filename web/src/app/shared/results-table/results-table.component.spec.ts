@@ -164,7 +164,7 @@ describe('ResultsTableComponent', () => {
 
     // every column has a name that sorts, the reasons last
     expect(buttons()).toHaveLength(heads().length);
-    expect(buttons().at(-1)!.closest('[data-column]')!.getAttribute('data-column')).toBe('reasons');
+    expect(buttons().at(-1)!.closest('[data-column]')!.getAttribute('data-column')).toBe('_reasons');
     expect(heads().map((head) => head.getAttribute('aria-sort'))).toEqual(heads().map(() => 'none'));
     buttons()[1].click();
 
@@ -178,7 +178,7 @@ describe('ResultsTableComponent', () => {
     // another column starts from ascending, whatever this one was at
     buttons().at(-1)!.click();
 
-    expect(asked).toEqual([{ column, dir: 'asc' }, { column, dir: 'desc' }, null, { column: 'reasons', dir: 'asc' }]);
+    expect(asked).toEqual([{ column, dir: 'asc' }, { column, dir: 'desc' }, null, { column: '_reasons', dir: 'asc' }]);
   });
 
   it('stands skeleton rows in the shape of the table while rows are on their way', async () => {

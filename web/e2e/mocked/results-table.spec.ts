@@ -53,16 +53,16 @@ test.describe('run results: the order of the records and the layout of the panel
       await head(field).click();
       await expect.poll(asked).toBe(`field:${field}:asc`);
     }
-    await head('reasons').click();
-    await expect(page).toHaveURL(/sort=reasons/);
+    await head('_reasons').click();
+    await expect(page).toHaveURL(/sort=_reasons/);
     await expect.poll(asked).toBe('reasons::asc');
-    await expect(cell('reasons')).toHaveAttribute('aria-sort', 'ascending');
+    await expect(cell('_reasons')).toHaveAttribute('aria-sort', 'ascending');
     const fewest = Math.min(...stored.results.map((row) => row.reasons.length));
     await expect(rows(page).first().getByTestId('reason')).toHaveCount(fewest);
 
     // the address keeps the order over a reload
     await page.reload();
-    await expect(cell('reasons')).toHaveAttribute('aria-sort', 'ascending');
+    await expect(cell('_reasons')).toHaveAttribute('aria-sort', 'ascending');
     await expect.poll(asked).toBe('reasons::asc');
   });
 
@@ -90,7 +90,7 @@ test.describe('run results: the order of the records and the layout of the panel
 
     await ui(page).getByTestId('sort-select').click();
     await page.getByRole('option', { name: t('results.sort.asc', { column: t('results.table.reasons') }), exact: true }).click();
-    await expect(page).toHaveURL(/sort=reasons/);
+    await expect(page).toHaveURL(/sort=_reasons/);
   });
 
   test('the panel reads from the top: the rule on a tint, one block for the run and its filter, the records as wide as the panel, and the pager at the foot', async ({ page, api }, testInfo) => {

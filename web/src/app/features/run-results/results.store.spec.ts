@@ -265,7 +265,7 @@ describe('ResultsStore', () => {
       const unsorted = await next('/api/v1/runs/41/results');
       expect([unsorted.request.params.get('sort'), unsorted.request.params.get('field')]).toEqual(['key', null]);
 
-      store.show({ ...VIEW, sort: 'reasons', dir: 'desc' });
+      store.show({ ...VIEW, sort: '_reasons', dir: 'desc' });
       const byReasons = await next('/api/v1/runs/41/results');
       expect([byReasons.request.params.get('sort'), byReasons.request.params.get('field'), byReasons.request.params.get('dir')]).toEqual([
         'reasons',

@@ -186,3 +186,9 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+// The toast stands over the bar that is fixed at the bottom of the window (the list's count, a panel's foot
+// of a table), not on it: the bar's own height and a step of air under the toast.
+.app-toast {
+  margin-block-end: calc(var(--size-control) + 2 * var(--space-2) + var(--space-2));
+}

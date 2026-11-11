@@ -59,25 +59,38 @@ interface Frame {
   readonly items: (TextPart | Frame)[];
 }
 
-const BRACKET = /([()])/;
 const isFrame = (item: TextPart | Frame): item is Frame => 'items' in item;
+const escaped = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+/** The two marks the engine opens and closes a group with: the glossary's `groupOpen` and `groupClose`. */
+export interface Brackets {
+  readonly open: string;
+  readonly close: string;
+}
 
 /**
- * The parts of a text as a tree: every pair of brackets the engine wrote becomes a group, and the bracket
- * characters themselves are left out, so a group can be drawn as a block. Nothing else of the text is
+ * The parts of a text as a tree: every pair of group marks the engine wrote becomes a group, and the marks
+ * themselves are left out, so a group can be drawn as a block. Only the engine's own connecting text is
+ * read for them (a part with no role): a value the user typed, a field's label or the name of a
+ * relationship is data and is never taken apart, whatever characters it holds. Nothing else of the text is
  * touched: the words, their order and the nodes they belong to are the engine's. A text that is one group
- * from end to end is that group's content. A bracket that never closes closes at the end of the text.
+ * from end to end is that group's content. A group that never closes closes at the end of the text.
  */
-export function toBlocks(parts: readonly TextPart[]): Block[] {
+export function toBlocks(parts: readonly TextPart[], brackets: Brackets): Block[] {
   const root: Frame = { logical: true, items: [] };
   const open: Frame[] = [root];
+  const marks = new RegExp(`(${escaped(brackets.open)}|${escaped(brackets.close)})`);
   for (const part of parts) {
-    for (const piece of part.text.split(BRACKET)) {
-      if (piece === '(') {
+    if (part.role !== undefined) {
+      open.at(-1)!.items.push(part);
+      continue;
+    }
+    for (const piece of part.text.split(marks)) {
+      if (piece === brackets.open) {
         const frame: Frame = { logical: part.nodeId === undefined, items: [] };
         open.at(-1)!.items.push(frame);
         open.push(frame);
-      } else if (piece === ')') {
+      } else if (piece === brackets.close) {
         if (open.length > 1) {
           open.pop();
         }

@@ -476,8 +476,8 @@ change of item 4 and one database reset at the very end. The seven items are in 
 - [x] Items 1, 2, 3 and 7: the suggestions row after the choice, with an entrance; every suggestion replaces
       name, description and conditions; the results' search shows its whole placeholder; the list's count in
       a bar fixed at the bottom of the window.
-- [ ] Specs; the gate on the real stack; `/check all --tests`; one reviewer; the push; then the database
-      reset and the six examples.
+- [x] Specs; the gate on the real stack; `/check all --tests`; one reviewer; the push.
+- [ ] Last of all: the database reset from the main tree and the six examples.
 
 ### Gate
 Status, 2026-11-11: `gates/final.txt` holds `/check all --tests` (the engine and the api among its parts now),

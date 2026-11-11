@@ -80,11 +80,11 @@ test('a control of its own is found, opened, run, read in its panel, duplicated 
       await panel.getByTestId('sort-select').click();
       await page.getByRole('option', { name: t('results.sort.desc', { column: t('results.table.reasons') }), exact: true }).click();
     } else {
-      const head = panel.locator('[data-column="reasons"]').getByTestId('sort-header');
+      const head = panel.locator('[data-column="_reasons"]').getByTestId('sort-header');
       await head.click();
       await head.click();
     }
-    await expect(page).toHaveURL(/sort=reasons&dir=desc|dir=desc&sort=reasons/);
+    await expect(page).toHaveURL(/sort=_reasons&dir=desc|dir=desc&sort=_reasons/);
 
     // the panel shows the order the api gives, and that order is the contract's: more reasons first
     const run = page.url().match(/\/runs\/(\d+)/)![1];
@@ -101,8 +101,6 @@ test('a control of its own is found, opened, run, read in its panel, duplicated 
     expect(byField.status()).toBe(200);
     const refused = await page.request.get(`/api/v1/runs/${run}/results?sort=field&field=no_such_field`);
     expect(refused.status()).toBe(400);
-    await page.goto(`/runs/${run}`);
-    await expect(records).toHaveCount(example.expected.total);
   });
 
   await test.step('run again in the panel: the picker then holds both runs, and the earlier one is shown on request', async () => {

@@ -112,13 +112,16 @@ playwright install --with-deps chromium` needs sudo on WSL: ask the user to run 
   the link as a user's click does; the run and action cells stand over the link and are clicked as usual.
 - A button that says it is unavailable with `aria-disabled` is not enabled for Playwright: `click()` waits on
   it. A spec that presses such a button on purpose forces the click.
-- `app-text-parts` draws a rule's brackets as blocks (`rule-group`) and writes none; a text that has a block
-  carries the engine's plain sentence in a visually hidden `plain-text` span and hides the drawing
-  (`drawn-text`) from assistive technology, so `textContent` of such a sentence holds the words twice. A reason
-  (`markValues`) keeps its brackets. In a marked sentence the mark is placed over the first word with no space
+- `app-text-parts` draws a rule's group marks as blocks (`rule-group`) and writes none. The marks are the
+  glossary's `groupOpen` and `groupClose` (round brackets until a glossary is read), looked for only in parts
+  with no `role`: a bracket in a value, a label or a relationship's name is data and stays. A text that has a
+  block carries the engine's plain sentence, each condition named by its mark, in a visually hidden
+  `plain-text` span and hides the drawing (`drawn-text`) from assistive technology, so `textContent` of such a
+  sentence holds the words twice. A reason (`markValues`) keeps its brackets. In a marked sentence the mark is placed over the first word with no space
   between them in the DOM.
-- A results view sorts by a column: an identifying field's key or `reasons` in the address (`?sort=`), sent to
-  the api as `sort=field&field=<key>` or `sort=reasons`; null is the run's order (`sort=key`).
+- A results view sorts by a column: an identifying field's key or `_reasons` (`REASONS_COLUMN`, a name no
+  field can have) in the address (`?sort=`), sent to the api as `sort=field&field=<key>` or `sort=reasons`;
+  null is the run's order (`sort=key`).
 - The builder offers one adder until its "advanced" action is pressed (`data-testid="advanced"`), or the draft
   holds a group or a related-records node. The e2e builder driver presses it before a group or a related node.
 - A shot with a panel open is of the window, not the whole page (`e2e/support/shots.ts`): the page behind the

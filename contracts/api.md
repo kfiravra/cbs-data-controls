@@ -555,7 +555,9 @@ response.
 
 ### `GET /api/v1/runs/{id}/results`
 
-Served from the run's stored snapshot; the engine is not called. A run with no stored rows gives an empty page.
+Served from the run's stored snapshot. The engine is not called for a page, a search or a filter; `sort=field`
+needs the glossary, and asks the engine for it only when the api holds none. A run with no stored rows gives an
+empty page.
 
 | Query parameter | Type | Notes |
 |---|---|---|
@@ -570,8 +572,9 @@ A `sort` or `dir` outside its words is 400 `MALFORMED`. 200 `Page<ResultItem>`; 
 pass `search` and `condition`. 404 `RUN_NOT_FOUND`.
 
 `sort=field` orders by the field's glossary type: a `number` by its value, anything else as text (a `date` is
-written year first, so its text orders by date). A violation that has no value in the field comes last in both
-directions. The api checks `field` against the glossary before it reads anything by it: `sort=field` without a
+written year first, so its text orders by date; an `enum` and a `boolean` order by the stored value, not by its
+label). A violation that has no value in the field, or whose stored value is not a number in a `number` field,
+comes last in both directions. The api checks `field` against the glossary before it reads anything by it: `sort=field` without a
 `field` is 400 `REQUIRED` on `field`; a key that is not one of the identifying fields of the run's root entity is
 400 `MALFORMED` on `field`, answered after the 404 of a run that does not exist. The value is read from the
 stored `display` by a path that is bound like any other value: no part of the request is written into a

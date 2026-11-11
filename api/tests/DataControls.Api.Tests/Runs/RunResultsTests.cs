@@ -94,6 +94,20 @@ public sealed class RunResultsTests(ApiFixture fixture, ITestOutputHelper output
     }
 
     [Fact]
+    public async Task Results_place_a_stored_value_that_is_no_number_last_and_do_not_fail_when_the_field_is_a_number()
+    {
+        // A run stored while the field was text keeps its text: the sort must not fail the whole page on it.
+        var (position, field) = RunAnswers.IdentifyingField(_rootEntity, number: true);
+        var run = await RunAsync(RunAnswers.Build(_rootEntity, [Differing("1", position, "100"), Differing("2", position, "n/a"), Differing("3", position, "9")], 3));
+
+        var ascending = await RunRequests.ResultsAsync(_client, run, $"?sort=field&field={field}");
+        var descending = await RunRequests.ResultsAsync(_client, run, $"?sort=field&field={field}&dir=desc");
+
+        Assert.Equal(["3", "1", "2"], RunRequests.Keys(ascending));
+        Assert.Equal(["1", "3", "2"], RunRequests.Keys(descending));
+    }
+
+    [Fact]
     public async Task Results_are_ordered_by_the_number_of_reasons_and_then_by_their_text_when_sort_is_reasons()
     {
         var run = await RunAsync(RunAnswers.Build(

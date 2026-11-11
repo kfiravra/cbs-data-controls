@@ -709,10 +709,13 @@ The signature of the system.
 - **The groups of a rule** are drawn, not written: no bracket character of the engine's sentence stands on the
   screen. What a pair of brackets holds is one soft block (Tonal on a light ground, On inverse tonal on the bar,
   6px radius, 8px of room at its sides), and a block in a block is a shade deeper. Where the top level of a rule
-  joins groups, each stands on a line of its own and the joining word on a short line between them (Label,
-  Muted; Action ink on the rule's tint). The engine's text is untouched: beside a drawing that has blocks the
-  plain sentence, brackets and all, is given to assistive technology, and the drawing is hidden from it. A
-  reason is not a rule: its brackets are its own punctuation and are written as they came.
+  joins groups, each stands on a line of its own, led by the word that joins it to the line before (Small,
+  Muted; Action ink on the rule's tint). Only the engine's own group marks are drawn this way: the glossary's
+  `groupOpen` and `groupClose`, read in the engine's connecting text. A bracket in a value the user typed, in a
+  field's label or in the name of a relationship is data and is written as it is. The engine's text is
+  untouched: beside a drawing that has blocks the plain sentence, brackets and all, with each condition named
+  by its letter, is given to assistive technology, and the drawing is hidden from it. A reason is not a rule:
+  its brackets are its own punctuation and are written as they came.
 - **Mark:** an 18px badge (wider for two letters), 6px radius, Action tint ground, Action ink letter (0.75rem,
   600). In a sentence it is a superscript (13px, 0.625rem, 4px radius): placed over the start corner of its
   clause, above the first word, and out of the line, so it takes no room in it and the words keep their own
@@ -974,7 +977,8 @@ start and says in words that they are being computed.
   restore in this version, so the text promises none. After it the focus goes to the row that took the place of
   the archived one.
 - **Toast:** Inverse ground, On inverse text, 12px radius, the Overlay shadow; one line and at most one text
-  button; at the bottom, at the start edge. Never for an error.
+  button; at the start edge, over the bar that is fixed at the bottom of the window and not on it. Never for an
+  error.
 - **Closing a changed draft never asks.** The panel closes at once, by its X, by Esc or by a click beside it,
   and a toast says so (`הבקרה נסגרה בלי שמירה`) with `שחזור`, which opens the editor again at the same address
   with the draft as it was. That toast stands twelve seconds, twice a plain one: its button is the only way back

@@ -1,21 +1,23 @@
 # dc-web notes
 
 ## State
-Phase 10, the last design round (Kfir's second read, 2026-11-11), is done on `feat/web-ux` and pushed into the
-same PR, which is open and not merged: `15658ca` (the api's sort of the controls list), `b47d203` (the client's
-round), `cc23057` (the review fixes of both). The gate ran on the real stack and `/check all --tests` is green
-(`gates/phase-10.txt`). After the push the dev database was reset from the main tree and the six examples
-were posted again (`gates/phase-10-reset.txt`): the store holds those six, active, none run. The engine (8000)
-and the api (5000, serving the branch's last build) are left running. After this round only bugs.
+Phase 11, the hot fixes of Kfir's third read (2026-11-11), is done on `feat/web-ux` and pushed into the same
+PR, which is open and not merged: `929ff6f` (the api's sort of a run's results by a field and by the reasons),
+`0428a67` (the client's seven fixes) and the review fixes of both. `/check all --tests` is green and the gate
+passed on the real stack (`gates/phase-11.txt`). Before it: phase 10, the last design round.
 
 ## Next
-1. Kfir reads the last design round at `http://localhost:5000` and its new Hebrew texts: `list.columns.run`,
-   `list.sort.*`, `results.rule`, `results.archived`, `editor.conditions.waiting`, `editor.ideas.waiting`,
-   `.loading` and `.none`, `editor.add.advanced` and `.advancedHint`, `editor.toast.closed`.
-2. The merge of the PR is his. After this round only bugs.
-3. Still open for dc-delivery (limitations, on Kfir's word): nested groups unnamed for a screen reader, a
-   conflict that discards the draft, a list row's count that may belong to an older version of the rule, a
-   closed draft that lives in memory only (one draft, until the page is reloaded).
+1. Kfir reads the hot fixes at `http://localhost:5000`. No new Hebrew text in this phase; one key was removed
+   (`editor.ideas.waiting`). The texts of phase 10 are still to be read (`list.columns.run`, `list.sort.*`,
+   `results.rule`, `results.archived`, `editor.conditions.waiting`, `editor.ideas.loading` and `.none`,
+   `editor.add.advanced` and `.advancedHint`, `editor.toast.closed`).
+2. The merge of the PR is his.
+3. Still open for dc-delivery (limitations, on Kfir's word): nested groups unnamed for a screen reader in the
+   builder, a conflict that discards the draft, a list row's count that may belong to an older version of the
+   rule, a closed draft that lives in memory only and for twelve seconds; and for `docs/architecture.md` §7
+   and §8, beside the lines of phase 10: `GET /api/v1/runs/{id}/results` takes `sort=field` with `field` and
+   `sort=reasons`; every head of the results sorts; a rule in words shows no bracket (groups are drawn as
+   blocks, the engine's text is unchanged).
 
 ## Blockers
 - None.
@@ -368,9 +370,9 @@ invalid fixtures, as merged in `f9928bf`. Where they differ from Design E to M o
 - Nothing in `contracts/` looked wrong, and nothing blocks a screen: no line for Kfir from this step.
 
 ## Last reviewed
-`b47d203` (web) and `15658ca` (api), 2026-11-11: the phase review of the last design round, two opus
-`reviewer` sub-agents, one per area. Findings and what happened to each are in the Log. Before it:
-`3b4013b` (the UX pass).
+`929ff6f` (api) and `0428a67` (web), 2026-11-11: the one review of the hot fixes, one opus `reviewer`
+sub-agent over both commits. Findings and what happened to each are in the Log. Before it: `b47d203` and
+`15658ca` (the last design round).
 
 ## Hand-over to dc-delivery
 Read by its phase B0 (plan.md Design Q). Complete: phase 7 ran on the real stack on 2026-11-11.
@@ -1118,3 +1120,36 @@ rewrote. A review that found nothing, or did not run, is logged as that.
   rule, groups as soft blocks, top groups on their own lines, the plain sentence for a screen reader; (6) the
   letters as superscripts that take no room in the line; (7) the list's count in a bar fixed at the bottom.
   Decisions 91 to 96.
+- 2026-11-11, the gate of phase 11 (`gates/phase-11.txt`): `/check all --tests` green (sql-check 27,
+  contracts-check 5, the engine's ruff, pyright and 521 tests, the api's build, format and 388 tests with 3
+  live ones skipped, the client's ngc, lint, e2e types, 378 unit tests in 37 files and build, the print guard,
+  the hook tests), the mocked specs 213 passed with 5 skipped on purpose. The gate failed 2 of 18 in each of
+  its two runs, the same test in both projects, at one step: the step this phase added reloaded the page at a
+  run's address, which by design opens the panel over the list's default view, and a later step asserts that
+  the list kept its search. A fault of the new step, not of the client: the reload is gone from it. The
+  listing of controls without a gate tag was equal before and after both runs.
+- 2026-11-11, the review of phase 11: one opus `reviewer`, read-only, over `929ff6f` and `0428a67`. One
+  critical, five warnings, five notes. **Critical**, fixed: the drawing took apart every bracket in a rule,
+  also one in a value the user typed or in a label, so "(03)" lost its brackets and a stray one swallowed the
+  rest of the sentence. Only the engine's connecting text is read now (parts with no role), and for the
+  glossary's own `groupOpen` and `groupClose`, not for a hard-coded pair; unit tests hold values "(03)", "x)",
+  "a(" and a label with brackets. **Warnings**, fixed: the read-aloud copy of a rule with blocks named no
+  condition (it does now, by its letter, and is left out of a selection); `CONVERT(float, ...)` would fail a
+  whole page on a stored value that is no number (now `TRY_CONVERT`, such a value sorts last, with a test);
+  `contracts/api.md` said the engine is not called and then named `ENGINE_UNAVAILABLE` (reworded, in the code's
+  comment too); the fixed bar reserved no room and stood under the toast (the page keeps the bar's height and
+  a phone's bottom inset under its content, and the toast stands over the bar); in the editor's bar a rule of
+  two groups needed three lines in the room of two (the joining word now leads the next line, so it needs
+  two). **Notes**: one name for the reasons column, `_reasons`, which no field key can be (fixed); the
+  contract says an enum and a boolean sort by the stored value (fixed); the superscript is set a little
+  higher and further out, clear of the first letter. Left: with no glossary readable and a sort in the
+  address, the records are asked for twice and the second answer is 503 (an engine that is down, and a link
+  that sorts); the row-order assertions of the mocked sort spec test the app against the mock's own order
+  (the real order is pinned by the api's tests and by the gate).
+- 2026-11-11, after the review fixes of phase 11 (`gates/phase-11.txt`, its last sections): `contracts-check`
+  5, the api's build, format and 389 tests (3 live ones skipped), the client's ngc, lint, e2e types, 381 unit
+  tests in 37 files and build, the print guard, the mocked specs 213 passed with 5 skipped on purpose; the gate
+  on the build the api hosts, 18 of 18, with the listing of controls without a gate tag equal before and after
+  (`phase-11-list-before-last.txt`, `phase-11-list-after-last.txt`). One style fix after that run (two lines
+  of a rule scrolled the editor's bar by the 2px between them), with the client's checks and the mocked specs
+  run again, green. Secrets: the diff holds no token and no password value.

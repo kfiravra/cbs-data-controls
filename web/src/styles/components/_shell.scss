@@ -28,11 +28,15 @@
   line-height: 1;
 }
 
+// The room under the page's content is the height of the bar that is fixed at the bottom of the window (a
+// control and its two paddings), the room a phone keeps at its own bottom edge, and a step of air: the last
+// row and its actions never stand under the bar.
 .page {
   display: block;
   max-inline-size: calc(var(--container) + 2 * var(--gutter));
   margin-inline: auto;
-  padding: var(--space-5) var(--gutter) var(--space-8);
+  padding: var(--space-5) var(--gutter)
+    calc(var(--size-control) + 2 * var(--space-2) + env(safe-area-inset-bottom, 0px) + var(--space-5));
 }
 
 .page-head {

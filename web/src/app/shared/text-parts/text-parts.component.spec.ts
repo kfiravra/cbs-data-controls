@@ -130,7 +130,10 @@ describe('TextPartsComponent', () => {
     expect([...drawn.querySelectorAll('[data-testid="rule-group"]')].map((group) => group.textContent)).toEqual(['Bquantity over 3']);
     expect(drawn.querySelector('.rule-line')).toBeNull();
     // to be read: the engine's sentence as it wrote it, and the drawing is not read twice
-    expect(host().querySelector('[data-testid="plain-text"]')!.textContent).toBe('no line with (quantity over 3)');
+    const named = (mark: string) => t('common.condition', { mark });
+    expect(host().querySelector('[data-testid="plain-text"]')!.textContent).toBe(
+      `${named('A')} no line with (${named('B')} quantity over 3)`,
+    );
     expect(drawn.getAttribute('aria-hidden')).toBe('true');
   });
 
@@ -155,19 +158,35 @@ describe('TextPartsComponent', () => {
 
     const drawn = host().querySelector('[data-testid="drawn-text"]')!;
     const lines = [...drawn.children];
-    expect(lines.map((line) => line.className)).toEqual(['rule-line', 'rule-joiner', 'rule-line']);
+    expect(lines.map((line) => line.className)).toEqual(['rule-line', 'rule-line']);
     expect(lines.map((line) => line.textContent?.trim())).toEqual([
       'Astate: open and Bmail: empty or Cpay: missing',
-      'or',
-      'Dstate: closed',
+      'or Dstate: closed',
     ]);
+    // the joining word leads the line it joins to the one before; the first line has none
+    expect(lines.map((line) => line.querySelector('.rule-joiner')?.textContent?.trim() ?? null)).toEqual([null, 'or']);
     // the inner group is a block inside the first line's block
     const outer = lines[0].querySelector('[data-testid="rule-group"]')!;
     expect(outer.querySelector('[data-testid="rule-group"]')!.textContent).toBe('Bmail: empty or Cpay: missing');
     expect(drawn.textContent).not.toMatch(/[()]/);
+    const named = (mark: string) => t('common.condition', { mark });
     expect(host().querySelector('[data-testid="plain-text"]')!.textContent).toBe(
-      '(state: open and (mail: empty or pay: missing)) or (state: closed)',
+      `(${named('A')} state: open and (${named('B')} mail: empty or ${named('C')} pay: missing)) or (${named('D')} state: closed)`,
     );
+  });
+
+  it('writes a bracket that the user typed, or that a label holds, as it is, and makes no group of it', async () => {
+    const typed: TextPart[] = [
+      { text: 'pay (gross)', nodeId: 'c1', role: 'field' },
+      { text: ' is ', nodeId: 'c1' },
+      { text: '(03)', nodeId: 'c1', role: 'value' },
+    ];
+
+    await draw({ parts: typed, marks: new Map([['c1', 'A']]) });
+
+    expect(host().textContent).toBe('Apay (gross) is (03)');
+    expect(host().querySelector('[data-testid="rule-group"]')).toBeNull();
+    expect(host().querySelector('[data-testid="plain-text"]')).toBeNull();
   });
 
   it('draws a text without brackets as before: one run of clauses, read as it is drawn', async () => {

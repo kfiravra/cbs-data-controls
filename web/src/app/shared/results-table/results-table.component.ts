@@ -19,8 +19,11 @@ export interface ResultColumn {
 /** How the rows are ordered: by one column (an identifying field's key, or `reasons`), or as the run returned them (null). */
 export type DisplaySort = { readonly column: string; readonly dir: SortDirection } | null;
 
-/** The name of the reasons column. */
-const REASONS = 'reasons';
+/**
+ * The name of the reasons column, in a sort and in the address. A field's key starts with a letter, so no
+ * field of any glossary can have this name.
+ */
+export const REASONS_COLUMN = '_reasons';
 
 const SKELETON_ROWS = ['70%', '52%', '64%'];
 const SKELETON_REASONS = ['62%', '84%', '46%'];
@@ -67,7 +70,7 @@ export class ResultsTableComponent {
     return this.format.value(row.display[column.key] ?? null, column.field);
   }
 
-  protected readonly reasons = REASONS;
+  protected readonly reasons = REASONS_COLUMN;
 
   protected sortedBy(column: string): SortDirection | null {
     const sort = this.sort();

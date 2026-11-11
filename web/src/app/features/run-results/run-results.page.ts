@@ -15,14 +15,19 @@ import { ErrorBannerComponent } from '../../shared/banner/error-banner.component
 import { IconComponent } from '../../shared/icon/icon.component';
 import { NotFoundComponent } from '../../shared/not-found/not-found.component';
 import { PageHeadComponent } from '../../shared/page-head/page-head.component';
-import { DisplaySort, ResultColumn, ResultsTableComponent } from '../../shared/results-table/results-table.component';
+import {
+  DisplaySort,
+  REASONS_COLUMN,
+  ResultColumn,
+  ResultsTableComponent,
+} from '../../shared/results-table/results-table.component';
 import { PreviousRunFact, RunFact, RunOverviewComponent } from '../../shared/run-overview/run-overview.component';
 import { SkeletonComponent } from '../../shared/skeleton/skeleton.component';
 import { StatePanelComponent } from '../../shared/state-panel/state-panel.component';
 import { TableFootComponent } from '../../shared/table-foot/table-foot.component';
 import { TextPartsComponent } from '../../shared/text-parts/text-parts.component';
 import { ToolbarComponent } from '../../shared/toolbar/toolbar.component';
-import { DEFAULT_PAGE_SIZE, PAGE_SIZES, REASONS_COLUMN, ResultsStore, ResultsView } from './results.store';
+import { DEFAULT_PAGE_SIZE, PAGE_SIZES, ResultsStore, ResultsView } from './results.store';
 
 const NUMBER = /^[1-9]\d*$/;
 const positive = (text: string | undefined, fallback: number) => (text && NUMBER.test(text) ? Number(text) : fallback);

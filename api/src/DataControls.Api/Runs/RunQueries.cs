@@ -10,7 +10,8 @@ namespace DataControls.Api.Runs;
 
 /// <summary>
 /// Reads runs and their stored results. Everything here is answered from the snapshot in <c>dq</c>; the
-/// engine is never called for a page, a search, a filter or a sort.
+/// engine is never called for a page, a search or a filter. A sort by a field needs the glossary, to check
+/// the field and learn its type: the api's held copy serves, and the engine is asked only when there is none.
 /// </summary>
 public sealed class RunQueries(DqDbContext db, GlossaryService glossary)
 {
@@ -123,8 +124,8 @@ public sealed class RunQueries(DqDbContext db, GlossaryService glossary)
     /// checked first against the glossary's identifying fields of the run's root entity; then its value is
     /// read from the stored display by a JSON path that is sent bound, like every value of the query: no
     /// part of it is written into the statement. A number is ordered by value and anything else as text (a
-    /// date is ISO text, so by date); a violation without the value comes last in both directions, and
-    /// equal ones stand by <c>seq</c>.
+    /// date is ISO text, so by date); a violation without the value, or whose stored value is no number in
+    /// a number field, comes last in both directions, and equal ones stand by <c>seq</c>.
     /// </summary>
     private async Task<Func<IQueryable<RunResult>, IQueryable<RunResult>>> ByFieldAsync(int runKey, string field, bool descending, CancellationToken cancellationToken)
     {
@@ -139,13 +140,17 @@ public sealed class RunQueries(DqDbContext db, GlossaryService glossary)
             ?? throw ApiException.RequestInvalid("field", RequestErrorCodes.Malformed);
 
         var path = $"$.\"{field}\"";
-        Expression<Func<RunResult, bool>> missing = result => DqDbContext.JsonValue(result.RecordDisplay, path) == null;
+        var isNumber = type == NumberType;
         Expression<Func<RunResult, string?>> asText = result => DqDbContext.JsonValue(result.RecordDisplay, path);
-        Expression<Func<RunResult, double>> asNumber = result => Convert.ToDouble(DqDbContext.JsonValue(result.RecordDisplay, path));
+        Expression<Func<RunResult, double?>> asNumber = result => DqDbContext.JsonNumber(result.RecordDisplay, path);
+        // missing as the order reads the value: a number field's value that is no number has no place either
+        Expression<Func<RunResult, bool>> missing = isNumber
+            ? result => DqDbContext.JsonNumber(result.RecordDisplay, path) == null
+            : result => DqDbContext.JsonValue(result.RecordDisplay, path) == null;
         return results =>
         {
             var placed = results.OrderBy(missing);
-            var ordered = (type == NumberType, descending) switch
+            var ordered = (isNumber, descending) switch
             {
                 (true, false) => placed.ThenBy(asNumber),
                 (true, true) => placed.ThenByDescending(asNumber),
