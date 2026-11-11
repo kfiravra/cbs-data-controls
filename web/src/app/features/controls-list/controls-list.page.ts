@@ -1,11 +1,12 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { MatFormField } from '@angular/material/form-field';
 import { MatOption, MatSelect, MatSelectTrigger } from '@angular/material/select';
 import { Router, RouterLink } from '@angular/router';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import { ControlSummary } from '../../core/api/api.types';
 import { rootEntities } from '../../core/glossary/glossary.lookups';
+import { CountedService } from '../../core/i18n/counted.service';
 import { LanguageService } from '../../core/i18n/language.service';
 import { PluralPipe } from '../../core/i18n/plural.pipe';
 import { SUGGESTIONS_OPENER } from '../../core/suggestions/suggestions-opener';
@@ -16,7 +17,7 @@ import { StatePanelComponent } from '../../shared/state-panel/state-panel.compon
 import { TableFootComponent } from '../../shared/table-foot/table-foot.component';
 import { ToastService } from '../../shared/toast/toast.service';
 import { ToolbarComponent } from '../../shared/toolbar/toolbar.component';
-import { ControlsTableComponent } from './controls-table.component';
+import { ControlsTableComponent, resultOf } from './controls-table.component';
 import { ListState, ListStore, ListView } from './list.store';
 
 const STATES: readonly ListState[] = ['active', 'archived', 'all'];
@@ -53,6 +54,8 @@ export class ControlsListPage {
   protected readonly language = inject(LanguageService);
   private readonly router = inject(Router);
   private readonly toast = inject(ToastService);
+  private readonly translate = inject(TranslateService);
+  private readonly counted = inject(CountedService);
   private readonly openSuggestions = inject(SUGGESTIONS_OPENER);
 
   protected readonly states = STATES;
@@ -85,7 +88,13 @@ export class ControlsListPage {
     return chosen ? this.language.text(chosen.label.plural) : null;
   });
 
-  private readonly narrowed = computed(() => this.view().search !== '' || this.view().entity !== null);
+  protected readonly narrowed = computed(() => this.view().search !== '' || this.view().entity !== null);
+
+  /**
+   * What a run from the list is doing or has found, said to assistive technology: the row changes in place,
+   * and a change in place is silent. A run that could not be started is said by its banner, which is an alert.
+   */
+  protected readonly announcement = signal('');
 
   /**
    * Why the list is empty: no control exists at all (the first-use state), every control is archived, or
@@ -121,8 +130,25 @@ export class ControlsListPage {
     void this.router.navigate([], { queryParams, replaceUrl: 'search' in change });
   }
 
-  protected run(control: ControlSummary): void {
-    void this.store.run(control);
+  protected async run(control: ControlSummary): Promise<void> {
+    if (this.store.running().has(control.id)) {
+      return;
+    }
+    const name = control.name;
+    this.announcement.set(this.translate.instant('list.announce.started', { name }) as string);
+    const run = await this.store.run(control);
+    const result = resultOf(run);
+    if (result === 'violations' || result === 'none') {
+      const found =
+        result === 'none'
+          ? (this.translate.instant('list.result.none') as string)
+          : this.counted.text('results.violations', run?.totalCount ?? 0);
+      this.announcement.set(this.translate.instant('list.announce.finished', { name, result: found }) as string);
+    } else if (result === 'stopped') {
+      this.announcement.set(this.translate.instant('list.announce.stopped', { name }) as string);
+    } else {
+      this.announcement.set('');
+    }
   }
 
   /** Reviews the engine's suggestions: created controls join the list, a draft may go on to the editor. */

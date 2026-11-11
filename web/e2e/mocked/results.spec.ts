@@ -173,6 +173,9 @@ test.describe('run results', () => {
         .fields.find((field) => field.key === glossary.entities.find((e) => e.key === stored.run.rootEntity)!.identifyingFields[0])!.label,
     );
 
+    // the header is read and not seen at this width: its button must not be a stop the keyboard cannot see
+    await expect(page.getByTestId('sort-display')).toBeHidden();
+
     await page.getByTestId('toolbar-filters-toggle').click();
     await page.getByTestId('sort-select').click();
     await page.getByRole('option', { name: t('results.sort.desc', { column }), exact: true }).click();
@@ -220,6 +223,12 @@ test.describe('run results', () => {
     await expect(breakdown(page).first().getByTestId('breakdown-count')).toHaveText('6,412');
     await expect(page.getByTestId('table-range')).toHaveText(t('results.range', { from: 1, to: 20, total: 20 }));
     await shot(page, testInfo, 'results-cap');
+
+    // the search reads the stored records only: when it finds none, the screen says how far it looked
+    await page.getByTestId('toolbar-search').fill('zzz-no-such-record');
+    await expect(page.getByTestId('no-match')).toContainText(
+      t('results.noMatch.bodyCapped', { total: '6,412', stored: '20' }),
+    );
   });
 
   test('a run that timed out says after how long it stopped and what to do', async ({ page, api }, testInfo) => {
@@ -244,18 +253,25 @@ test.describe('run results', () => {
     const panel = page.getByTestId('state-outdated');
     await expect(panel).toContainText(t('errors.CONTROL_DEFINITION_OUTDATED.title'));
     await expect(panel).toContainText(t('results.outdated.one', { marks: letters[1] }));
+    // the panel says the control cannot run: the head must not offer to run it
+    await expect(page.getByTestId('rerun')).toHaveCount(0);
+    await expect(page.getByTestId('edit-control')).toBeVisible();
     await shot(page, testInfo, 'results-outdated');
   });
 
   test('a run that failed for another reason offers to run again, and a run in progress to look again', async ({ page, api }, testInfo) => {
     const failed = api.addRun(failedRun(controlOf(api, 1), RUN, 'DATABASE_UNAVAILABLE'));
     await open(page, failed);
-    await expect(page.getByTestId('state-failed')).toContainText(t('errors.DATABASE_UNAVAILABLE.body'));
+    // the run is in the past: the panel says what stopped it then, not that the data is unavailable now
+    await expect(page.getByTestId('state-failed')).toContainText(t('results.failed.reasons.DATABASE_UNAVAILABLE'));
+    await expect(page.getByTestId('rerun')).toBeVisible();
     await shot(page, testInfo, 'results-failed');
 
     const running = api.addRun(runningRun(controlOf(api, 2), RUN + 1));
     await open(page, running);
     await expect(page.getByTestId('state-running')).toContainText(t('results.running.title'));
+    // a run is on its way: the head offers no second one
+    await expect(page.getByTestId('rerun')).toHaveCount(0);
     await shot(page, testInfo, 'results-running');
   });
 
@@ -282,10 +298,12 @@ test.describe('run results', () => {
     await open(page, stored);
     await expect(rows(page)).toHaveCount(stored.run.totalCount!);
 
-    await page.getByTestId('rerun').click();
+    await page.getByTestId('rerun').focus();
+    await page.keyboard.press('Enter');
 
     await expect(page.getByTestId('rerun')).toBeDisabled();
     await expect(page.getByTestId('rerun')).toContainText(t('results.actions.running'));
+    await expect(page.getByTestId('rerun')).toBeFocused();
     await expect(page.getByTestId('skeleton-row').first()).toBeVisible();
     await shot(page, testInfo, 'results-rerunning');
 

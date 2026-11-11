@@ -46,9 +46,14 @@ test.describe('controls list', () => {
     await open(page);
     const row = rowOf(page, control);
 
-    await row.getByTestId('run').click();
+    const announced = page.getByTestId('run-announcement');
+    await row.getByTestId('run').focus();
+    await page.keyboard.press('Enter');
     await expect(row.getByTestId('run')).toBeDisabled();
     await expect(row.getByTestId('run')).toContainText(t('list.actions.running'));
+    // the row changes in place: the button keeps the focus, and the start and the outcome are said aloud
+    await expect(row.getByTestId('run')).toBeFocused();
+    await expect(announced).toHaveText(t('list.announce.started', { name: control.name }));
 
     const link = row.getByTestId('result').getByRole('link');
     expect(example.expected.total).toBeGreaterThan(2);
@@ -56,6 +61,13 @@ test.describe('controls list', () => {
     await expect(row.getByTestId('last-run')).toContainText(t('common.todayAt', { time: '' }).trim());
     await expect(page).toHaveURL(/\/$/);
     await expect(row.getByTestId('run')).toBeEnabled();
+    await expect(row.getByTestId('run')).toBeFocused();
+    await expect(announced).toHaveText(
+      t('list.announce.finished', {
+        name: control.name,
+        result: t('results.violations.other', { count: example.expected.total }),
+      }),
+    );
 
     await link.click();
     await expect(page).toHaveURL(new RegExp(`/runs/${api.runs.at(-1)!.run.id}$`));
@@ -69,8 +81,8 @@ test.describe('controls list', () => {
     await open(page);
 
     await expect(rowOf(page, found).getByTestId('result').getByRole('link')).toHaveAttribute('href', '/runs/501');
-    await expect(rowOf(page, clean).getByTestId('result')).toHaveText(t('list.result.none'));
-    await expect(rowOf(page, clean).getByTestId('result').getByRole('link')).toHaveCount(0);
+    await expect(rowOf(page, clean).getByTestId('result').getByRole('link')).toHaveText(t('list.result.none'));
+    await expect(rowOf(page, clean).getByTestId('result').getByRole('link')).toHaveAttribute('href', '/runs/502');
     await expect(rowOf(page, stopped).getByTestId('result').getByRole('link')).toHaveText(t('list.result.stopped'));
     await expect(rowOf(page, stopped).getByTestId('result').getByRole('link')).toHaveAttribute('href', '/runs/503');
     await shot(page, testInfo, 'list-results');
@@ -84,6 +96,8 @@ test.describe('controls list', () => {
     await expect(rows(page)).toHaveCount(1);
     await expect(rowOf(page, control)).toBeVisible();
     await expect(page).toHaveURL(/search=/);
+    // narrowed, the head says how many were found; "N active controls" is only said of the whole state
+    await expect(page.getByTestId('page-meta')).toHaveText(t('list.count.found.one'));
 
     await page.getByTestId('toolbar-search').fill('zzz-no-such-control');
     const panel = page.getByTestId('no-match');

@@ -158,7 +158,11 @@ describe('SuggestionsDialogComponent', () => {
     const closeButton = host().querySelector<HTMLButtonElement>('[data-testid="suggestions-close"]')!;
     expect(ref.disableClose).toBe(true);
     expect(closeButton.disabled).toBe(true);
-    expect(createButton().disabled).toBe(true);
+    // unavailable, not disabled: the pressed button keeps the focus, and a second press creates nothing more
+    expect(createButton().getAttribute('aria-disabled')).toBe('true');
+    expect(createButton().disabled).toBe(false);
+    createButton().click();
+    http.expectNone('/api/v1/suggestions/accept');
 
     request.flush({ items: [{ id: 1 }] }, { status: 201, statusText: 'Created' });
     await settled();
@@ -190,6 +194,7 @@ describe('SuggestionsDialogComponent', () => {
     expect(marked).toEqual([false, false, true]);
     expect(closed).toEqual([]);
     expect(createButton().disabled).toBe(false);
+    expect(createButton().hasAttribute('aria-disabled')).toBe(false);
   });
 
   it('says so when the engine has nothing to suggest', async () => {

@@ -50,13 +50,19 @@
   color: var(--color-danger);
 }
 
+// A value stays whole while it fits on a line and moves to the next line as one piece; only a value longer
+// than the line itself (an address, a long name) breaks inside, so it never pushes the page sideways.
 .value {
+  display: inline-block;
+  max-inline-size: 100%;
   padding: 1px 6px;
   border-radius: var(--radius-sm);
   background: var(--color-action-tint);
   font-weight: 500;
   font-variant-numeric: tabular-nums;
-  white-space: nowrap;
+  // its own box now: a line of 1.35 and the padding stay inside the line of the text around it
+  line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 
 // the rule sentence, plain: on Ground, for reading
@@ -120,7 +126,8 @@
     justify-self: center;
   }
 
-  .btn[disabled] {
+  .btn[disabled],
+  .btn[aria-disabled='true'] {
     background: var(--color-on-action-tonal);
     color: var(--color-on-action);
   }

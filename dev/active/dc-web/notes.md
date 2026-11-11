@@ -1,22 +1,23 @@
 # dc-web notes
 
 ## State
-Phases 1 to 6 are done and committed; the gate specs of phase 7 are written and committed, and its four steps
-on the real stack wait for the api and the engine to reach main (2026-11-11, unattended night run on Kfir's
-word). The fixes of the phase 6 review are the next commit, then phase 8 on the mocked screens. The dev server
-runs on :4200.
+Phases 1 to 6 and phase 8 are done and committed (2026-11-11, unattended night run on Kfir's word). Phase 7:
+the gate specs are written, committed and dry-run on a stand-in; its four steps on the real stack wait for the
+api and the engine to reach main. The task's gate is blocked by those steps alone, so nothing is pushed and no
+PR is open.
 
 ## Next
-1. `fix(web): review fixes` for the phase 6 review (findings in the Log).
-2. Phase 8: `/impeccable audit`, `critique` and `polish` on the mocked screens, the keyboard pass,
-   `web/README.md`, the hand-over.
-3. When the api and the engine are on main: `git merge main`, then the four waiting steps of phase 7 (the gate
+1. When the api and the engine are on main: `git merge main`, then the four waiting steps of phase 7 (the gate
    on the real stack, the fixes its payloads ask for, the pre-loaded list twice, the build the api hosts).
+2. The Gate section of plan.md: `gates/final.txt` again with the gate specs on the real stack, Kfir's reading
+   of the Hebrew interface (`npm run preview`, or `gates/final/`; the texts added in phase 8 are decision 44),
+   the drift list against main, then `/ship` and the PR on his word.
+3. For Kfir, from the critiques (Log, 2026-11-11): the P2 findings left open, each with why.
 
 ## Blockers
 - Phase 7 runs (the gate on the real stack, the pre-load, the hosted build): the api and the engine are not on
-  main (`git log main` ends at `f9928bf` on 2026-11-11). Kfir's word for tonight: wait for the merge, start no
-  service from another worktree.
+  main (`git log main` ends at `f9928bf`, checked last at the end of the run on 2026-11-11). Kfir's word for the
+  night: wait for the merge, start no service from another worktree.
 
 ## Decisions taken unattended (2026-11-11, Kfir asleep: "decide, write it in notes.md, continue")
 1. The session runs on Fable 5.2, not Opus as decision 21 says: a session cannot switch its own model and nobody
@@ -105,6 +106,37 @@ runs on :4200.
 34. The list's name link has the test id `control-link`; `control-name` is the editor's name field alone. The
     dry run found the clash: the gate's list spec read the list's link where it meant the editor's field.
 
+35. The three `/impeccable critique` runs started without waiting for the word the plan asks for (decision 2):
+    six opus sub-agents in all, one pair at a time. Their token counts are in the Log.
+36. The critique snapshots were not written to `.impeccable/critique/`: the folder is not ignored by git and the
+    plan lists no such file. What each run found and what happened to each finding is in the Log, and the polish
+    pass worked from the reports themselves.
+37. The plan says to fix the critiques' P0 and P1. A P2 was fixed as well where it was a misleading state, an
+    overflow, or silence for assistive technology; a P2 that asks for new behaviour or reopens a decision of the
+    plan was left. Each is named in the Log with which of the two it was.
+38. Leaving a changed draft by a link of the app (cancel, the way back, the brand) is asked by the browser's own
+    prompt (`window.confirm` behind `canDeactivate` on `controls/:id`). Plan decision 17 kept dialogs to archive
+    and suggestions because "`beforeunload` covers a dirty draft"; the editor critique watched it not cover a
+    link of the app. The prompt is the browser's, not a dialog of the app, so the rule of design.md stands. If
+    Kfir would rather keep the silent leave, it is the one `canDeactivate` line of `app.routes.ts`.
+39. A removed condition or group is offered back by a toast, as a changed root entity already was; the next
+    edit of the builder takes the offer away (the way back is the draft as it was before the removal).
+40. A button made unavailable by its own press is `aria-disabled`, not `disabled`, and keeps the focus: run on
+    a list row, save, save and run, run again, the pager's two ends, "create the selected". A button that cannot
+    be used as the screen stands (nothing ticked, a limit reached, the operator before a field) stays `disabled`.
+41. `ללא חריגות` on a list row links to its run, as a count and a stopped run already did (design.md drew it as
+    text): the results of a clean run could not be opened from the list at all.
+42. The results page head offers no "run again" for a run whose definition is outdated or that is still running:
+    the panel under it says a run cannot start.
+43. A dialog's opening is the app's own animation on its panel class (fade, 6px rise, `--duration-panel`);
+    Material's own opening is given 0ms and its closing fade stays. A select's panel keeps Material's motion and
+    its 4px corners: no token exists for either, and design.md forbids restyling Material by its classes. This
+    closes decision 10.
+44. Texts added to `he.json` in phase 8, for Kfir's reading: `list.count.found.*`, `list.announce.*` (heard, not
+    seen), `editor.sentence.hintInvalid` and `hintUnavailable`, `editor.toast.removedCondition` and
+    `removedGroup`, `editor.leave.confirm`, `results.noMatch.bodyCapped`, `results.failed.reasons.*`; and
+    `errors.ROW_CAP_EXCEEDED.body` was rewritten.
+
 ## Reconciliation with `contracts/` (phase 2, 2026-11-11)
 Read: `api.md`, `errors.md`, `glossary.json`, `control-definition.schema.json`, the six examples and the thirteen
 invalid fixtures, as merged in `f9928bf`. Where they differ from Design E to M of the plan, the contracts were built:
@@ -125,44 +157,75 @@ invalid fixtures, as merged in `f9928bf`. Where they differ from Design E to M o
 - Nothing in `contracts/` looked wrong, and nothing blocks a screen: no line for Kfir from this step.
 
 ## Last reviewed
-383ec73 (phase 6), fixed in the `fix(web): review fixes` commit after 44a7219. The gate specs (44a7219) are reviewed with phase 8.
+383ec73 (phase 6), fixed in 3d5836f. The gate specs (44a7219) and phase 8 are reviewed together; the line of
+that review in the Log names its range.
 
 ## Hand-over to dc-delivery
-Read by its phase B0 (plan.md Design Q). Filled as the work goes and complete before `/ship`.
+Read by its phase B0 (plan.md Design Q). Complete for phase 8; the lines that say "not run" change when phase 7
+runs on the real stack.
 
-- Its asks of 2026-11-10. (1) The gate specs also run at `E2E_BASE_URL=http://localhost:5000` on a list that holds
-  the six examples under their real names; no empty list assumed, no control found by a bare name: planned
-  (decisions 22, 25 and 27; Design O), nothing built. (2) Documents and Log: planned (decisions 23, 24 and 26;
-  Design Q).
-- As built: (at the gate, ten lines at most: the gate command, the projects, the screenshot folder and the five
-  gate shots, the build output folder, whether the gate ran on a pre-loaded list and on the hosted build, what
-  this task left in the dev `dq`)
-- Cuts: (none yet; each one with the sentence dc-delivery must write about it)
+- Its asks of 2026-11-10. (1) Built: the gate specs run at `E2E_BASE_URL=http://localhost:5000` as well as behind
+  the dev server, on any list; no spec assumes an empty list, counts or orders the list as a whole, or finds a
+  control by a bare name (each test tags the names it creates and follows ids). Not yet run on the real stack.
+  (2) Done as planned: this task edited only `web/README.md`, `docs/design.md` and `.claude/skills/dc-web/SKILL.md`;
+  the drift is the list below; the Log is factual.
+- As built:
+  1. The gate: `cd web && npm run e2e:gate` (the dev server on 4200, `/api` proxied to 5000), or
+     `E2E_BASE_URL=http://localhost:5000 npm run e2e:gate` for the build the api hosts. One worker, the projects
+     `mobile` (390×844) and `desktop` (1440×900), 8 tests in each: the six examples, the list, the suggestions.
+  2. It needs `GET /api/v1/health` with `database: ok` and `engine: ok` and the seed of `sql/`; it stops with a
+     message when the stack is not healthy. Its expected records hold for run dates 2026-11-01 to 2027-12-31.
+  3. Screenshots: `web/e2e/screenshots/<project>/gate-list.png`, `gate-editor.png`, `gate-results.png`,
+     `gate-suggestions.png`. The five for the README are the four of `desktop/` and `mobile/gate-results.png`;
+     the editor and results shots are example 4 and show the test's tag in the control's name.
+  4. The build: `cd web && npx ng build` writes `web/dist/web/browser` (base href `/`; 545 kB initial, 137 kB
+     estimated transfer; each screen and the dialog are lazy chunks).
+  5. A gate run leaves 18 archived controls with `e2e-` in their names (9 per project) and their runs in `dq`,
+     none active; it reads `hr` only through the api's runs.
+  6. **The gate has not run on the real stack.** The api and the engine were not on main during this task (main
+     ended at `f9928bf` through 2026-11-11). The specs were dry-run once on a stand-in (decision 33), which
+     proves their flow and teardown and nothing about the real payloads. dc-delivery's B1 is their first real
+     run; the phase 7 step "fix what the real payloads show" is still open and belongs to this task.
+  7. Not run: the gate on a pre-loaded list (the six examples under their real names), and the gate on the
+     hosted build.
+  8. This task left nothing in the dev `dq`: it never called the real api.
+  9. `npm run e2e` is the mocked suite (no service needed); `npm run preview` opens the app over the same
+     in-memory api, for reading the Hebrew interface without a backend.
+- Cuts: none taken. The four of decision 7 (the archived view, the settle, "open in editor" on a suggestion,
+  sorting the results) are all built, so dc-delivery writes no sentence about a cut of this task.
 
 ## Docs for dc-delivery
 Kept as the work goes (plan.md decision 23, Design Q) and copied into the PR body under this heading at `/ship`.
-The entries below come from the plan, before any code: check each against the documents on main and against what
-was built, drop what did not happen, add what did.
+Checked on 2026-11-11 against the documents as they stand on main (`f9928bf`) and against what was built; check
+again before `/ship` if main has moved.
 
-- `docs/architecture.md` §8 (screen 2, the component list) and §13 ("preview sentence"): the client has no
-  sentence renderer. The editor draws the engine's sentence from `POST /controls/validate`, called 400ms after the
-  last edit, and keeps the last valid sentence, dimmed, while a row is incomplete (decisions 1 and 2). The focused
-  test is that validate loop.
-- `docs/architecture.md` §8, screens 1 and 3: archiving is an action of the editor's page head, and the list has an
-  archived view (decision 17; the view is the first cut). A definition that no longer fits the glossary is the run
-  error `CONTROL_DEFINITION_OUTDATED`, and the screen names the condition by its mark (decision 15).
+- `docs/architecture.md` §8, screen 2 ("live sentence preview") and the component list ("rule sentence
+  preview"), and §13 ("preview sentence" among the focused Angular tests): the client has no sentence renderer.
+  The editor draws the engine's sentence from `POST /controls/validate`, called 400ms after the last edit, and
+  keeps the last valid sentence, dimmed, while a row is incomplete. The focused test is that validate loop
+  (`editor.sentence.spec.ts`), not a rendering test.
+- `docs/architecture.md` §8, screen 1: the list's actions are run, edit and duplicate, as written; archiving is
+  an action of the editor's page head, and the list has an archived view (the state filter). Screen 3: sorting is
+  by the record's identifying fields only (`sort=display`), filtering is by condition through the breakdown, and a
+  definition that no longer fits the glossary is the run error `CONTROL_DEFINITION_OUTDATED`, with the condition
+  named by its mark.
 - `docs/architecture.md` §8 and §13, and the README's tests part: the e2e has two folders, `e2e/mocked` on
   Playwright route fixtures with no service and `e2e/gate` on the real stack; the commands are in
-  `web/README.md`. §8 promises screenshots at 390, 1024 and 1440 at every gate: 1024 is the third cut.
-- `docs/assumptions-limitations-extensions.md`: an archived control cannot be restored, only duplicated (decision
-  6); a dirty draft is guarded by the browser's own prompt, with no dialog of the app (decision 17); dates are
-  typed into the browser's date input (decision 11); the client is tested in Chromium only; a run made in the
-  other language shows its text as stored; and every cut taken from decision 7.
-- README, the demo walkthrough: with the examples loaded, the suggestions made without a key repeat controls the
-  list already holds (plan.md Risks).
-- `.claude/CLAUDE.md`: "Where to read" has no row for `docs/design.md` (decision 26). The gotcha "the client
-  renders the text" no longer holds for rule sentences and reasons, which arrive rendered by the engine.
-- `docs/ai-usage.md`: the Log below.
+  `web/README.md`. The mocked specs take their sentences and reasons from a fake engine that is test support
+  (`web/e2e/support/fake-engine.ts`), never shipped.
+- `docs/assumptions-limitations-extensions.md`: an archived control cannot be restored, only duplicated; a dirty
+  draft is guarded by the browser's own prompt, with no dialog of the app; dates are typed into the browser's
+  date input; the client is tested in Chromium only; a run made in another language would show its text as
+  stored; a run still `running` when its page opens shows a neutral state with a reload, since runs are
+  synchronous and the client does not poll; the page title is English until the translations load (the static
+  `index.html` may hold no Hebrew).
+- README, the demo walkthrough: with the examples loaded, the suggestions repeat controls the list already
+  holds.
+- `docs/ai-usage.md`: the Log below. The design pass of phase 8 used the impeccable skill's detector and two
+  opus sub-agents per critique run.
+- Dropped since the plan: the 1024 screenshot (main's §8 already says 390 and 1440), the missing
+  `docs/design.md` row and the "client renders the text" gotcha of `.claude/CLAUDE.md` (both already right on
+  main).
 
 ## Log
 A review's line follows plan.md Design Q: who reviewed and on which model, the diff range, findings per axis and
@@ -390,3 +453,90 @@ rewrote. A review that found nothing, or did not run, is logged as that.
   stands on the list; the head leaves its actions to the first-use panel; the first-use text has no example
   and design.md says why; the toast counts through `CountedService`; "open in editor" is named by its draft.
   Thirteen tests added or changed.
+- 2026-11-11 phase 8, `/impeccable audit` on Fable 5.2 (no agent): the detector (`impeccable detect`, 62 rules)
+  found nothing in `web/src` or on the list, the editor and the results at 1440 and 390. A scratch script measured
+  six views at both widths: contrast, names of controls, headings, landmarks, overflow (also with text at 200%),
+  target sizes, reduced motion. No contrast failure, no unnamed control, one `h1` a screen, no sideways scroll.
+  Found: reduced motion was not honoured (its rules loaded before the partials they switch off, so the
+  skeleton kept breathing and the button kept its step); the name link and the result link of a row were 20px
+  high and the sort header's button 22px; the brand link 28px. Fixed: the reduced-motion rules are the last
+  partial (`_motion.scss`); a row's link has a 24px box and answers a touch over the height of a control; the
+  sort button is padded; the brand link is 44px. Not findings: Material's inner elements inside 44px fields,
+  and 36px small controls at 1440, which design.md allows.
+- 2026-11-11 phase 8, keyboard pass on Fable 5.2 (no agent): a scratch Playwright walk with Tab over the list,
+  the editor and the results at 1440, their first stops at 390, and both dialogs (first focus, the trap, Escape,
+  the return). Every action of the gate flow is a stop with a visible ring, both dialogs trap the focus and give
+  it back to their opener. Found: the all/any segment showed no focus on its selected (Ink) segment; at 390 the
+  results' header, which is read and not seen there, kept its sort button as a stop nobody can see; a button
+  that disables itself under the focus drops it (run on a row, save, save and run, run again, the pager).
+  Fixed: a ring inside the segment (by the component's element and ARIA state); the sort button is not rendered
+  below 640 and the header names itself; decision 40. Seen and left: Escape on a dialog whose close button
+  shows its tooltip closes the tooltip first and the dialog on the second press (Material's tooltip); the router
+  does not move the focus on a navigation; the pager's two ends are now stops also when they are unavailable.
+- 2026-11-11 phase 8, `/impeccable critique` of the controls list, dual-agent (A design review: opus, 162.8k
+  tokens, 7.5 minutes; B detector and overlay: opus, 58.4k tokens, 3.9 minutes; started without waiting,
+  decisions 2 and 35). B: 0 findings (CLI over the markup, the overlay at 1440, at 390 and with the suggestions
+  dialog open). A: 28 of 40. P1, a run from the list ends silently for a screen reader and the keyboard (the
+  disabled button drops the focus, nothing says the start or the outcome, the table reflows while a row runs,
+  a failure's banner is at the top and names no control). Fixed: decision 40, a status line that says the start
+  and the outcome with the control's name, the actions column keeps its width. Left: the failure banner's place
+  and text (the design's place for a failed call; it is an alert, so it is spoken). P2, the head's count reads a
+  narrowed list as the whole, and a folded phone filter shows no sign: fixed (`נמצאו 3 בקרות` when narrowed; the
+  phone's filters unfold while one is in force). P2, `ללא חריגות` is a dead end: fixed (decision 41). P2, run
+  and result are named for the eye only: fixed (both are described by the row's name). P2, a count may belong
+  to an earlier version of the rule: left, it is new behaviour and `updatedAt` also moves on a rename. Minor,
+  fixed: the meta line holds its place while the list loads; the search icon stands 12px from the field's edge.
+  Minor, left: the searched term is not isolated inside its quotes; the table has no accessible name; the pager
+  shows with one page; the row's hover tint suggests the row is one target; the header `חריגות` stands over
+  results that are not counts; the count is said in the head and in the foot. Its three questions (the sentence
+  on a row, the name opening the results, a run landing on its results) are for Kfir.
+- 2026-11-11 phase 8, `/impeccable critique` of the control editor, dual-agent (A: opus, 215.7k tokens, 9.2
+  minutes; B: opus, 77.9k tokens, 6.0 minutes). B: 0 findings (CLI: 5 templates parsed, 24 `.ts` files matched by
+  pattern only; the overlay on a nested control at both widths, a control with a related node, a new control at
+  390; closed menus and dialogs not scanned). A: 26 of 40. P1, destructive edits have no way back: removing a
+  group takes its conditions with one press and no undo, and cancel, the way back and the brand leave a changed
+  draft unasked (watched in the live app). Fixed: decisions 38 and 39. Left: the group's remove button stays in
+  the column of the rows' remove buttons (with the undo, a slip costs one press). P2, the sentence field says
+  untrue things outside the happy path: fixed, the hint says why there is no sentence (three texts). P2, the
+  nesting is invisible to assistive technology (unnamed groups, identical names of adders and removers, the
+  whole sentence said again after each edit): left, it needs a name for each group and is the first thing to
+  take up after the gate. P2, a conflict discards the draft (its one action loads the current version): left,
+  design.md gives the conflict that one action and "save as a new control" is new behaviour. P2, the operator
+  list is twelve flat options: left, the list and its order are the glossary's. Minor, fixed: at 390 the
+  archive button stood centred in a full-width row. Minor, left: the mark's height in the sentence (measured:
+  centred on the Hebrew letter); the root's all/any shown with one condition; a field name cut short in compare
+  mode; a value's error under the toggle at 390; `VALUE_TYPE_MISMATCH` names no type; every control's tab reads
+  `עריכת בקרה`; the missing-value note at the panel's foot where PRODUCT.md says beside the operator; the save
+  buttons look ready while the engine is down.
+- 2026-11-11 phase 8, `/impeccable critique` of the run results, dual-agent (A: opus, 194.0k tokens, 7.3 minutes;
+  B: opus, 67.9k tokens, 2.9 minutes). B: 0 findings (CLI: 2 templates parsed, 18 `.ts` files by pattern only;
+  the overlay on a run at both widths, a second run, the not-found state at 390). A: 28 of 40, no P0 or P1. P2,
+  above the row cap the search and the filter speak as if they reached every violation: fixed (the banner says
+  what they reach; a search that finds nothing there says how far it looked). P2, a failed run shows the text
+  of a live failure ("unavailable now") for something that happened then: fixed, past-tense reasons by code.
+  P2, the head's actions ignore the state: fixed for an outdated and a running run (decision 42); left, the run
+  button repeated in the timed-out, failed and clean panels, the two labels of edit, `בדיקה חוזרת` beside
+  `הרצה חוזרת`. P2, the results change silently for a screen reader: fixed, the range and the no-match panel
+  are statuses and a breakdown row's number is read with its noun; left, nothing is said after a rerun opens
+  the new run. P2, the phone does not serve reading: fixed, a long value wraps inside its tint (it widened the
+  page: 487px on a 390 screen for a 55-character address); left, the breakdown stands before the records at 390
+  (the first record at 1,338px) and nothing beside the table says a condition filters it: both change the
+  Layout row of design.md and are for Kfir. Minor, left: a line of the sentence may end on an open bracket; the
+  head reflows while a rerun runs; `0 חריגות` over `לא נמצאו חריגות`; `הבדיקה נעצרה` here and `ההרצה נעצרה` on the
+  list; traced and active marks share one fill; the first name bold and the last regular; the not-found run
+  keeps the tab title of the results.
+- 2026-11-11 phase 8, `/impeccable polish` on Fable 5.2 (no agent), over the three reports and its own pass.
+  Besides the fixes above: the dialog's opening as design.md says it (decision 43; a first version restyled
+  Material by its internal classes, against design.md's own rule, and was redone); a sweep of six routes and the
+  dialog at both widths for console errors and failed requests (none); layout shift on load measured and the
+  head's meta line and the editor's archive action given a held place (list at 1440: 0.098 to 0.004; editor at
+  390: 0.737 to 0.187; results at 390 stays 0.219, its meta wraps to two lines there and one is held; what is
+  left is the font swap of a cold load and the form growing under the fold). `docs/design.md` follows what is
+  built: segmented control (focus), tables (row links, the hidden header, the foot as a status), the list (the
+  count line, a run from the list), toolbar (phone filters), the value, the rule sentence (hints), the builder
+  (removing), dialogs and toast (leaving, unavailable buttons), motion, shapes (the select's panel), four rows
+  of States, one Don't. `web/README.md` written; the hand-over block and the drift list filled.
+- 2026-11-11 phase 8 on Fable 5.2: gate `gates/phase-8.txt` (ngc, ng lint, e2e type check, 293 unit tests in 30
+  files, ng build at 545 kB initial and 137 kB transfer, print guard, `e2e/mocked` on mobile and desktop: 150
+  passed, 2 skipped by project on purpose). The gate specs were dry-run on the stand-in again after the changes
+  (16 of 16; decision 33). Screenshots in `screenshots/phase-8/`. No cut taken.

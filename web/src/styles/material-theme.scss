@@ -254,12 +254,38 @@ mat-form-field {
   }
 }
 
+// Keyboard focus on a segment. Material shows it as a state layer, which is invisible on the Ink fill of the
+// selected segment, and it has no token for a ring. The rule names the component by its element and the
+// segment by its state in ARIA, never by a class of Material's own. The group clips what is drawn outside
+// it, so the ring stands inside the segment.
+mat-button-toggle-group button:focus-visible {
+  outline: 2px solid var(--color-action);
+  outline-offset: -4px;
+}
+
+mat-button-toggle-group button:is([aria-checked='true'], [aria-pressed='true']):focus-visible {
+  outline-color: var(--color-ground);
+}
+
 // classes this app passes to MatDialog (panelClass, backdropClass) and MatSnackBar (panelClass)
 .app-dialog {
   inline-size: 100%;
   max-inline-size: min(640px, calc(100vw - 2 * var(--gutter)));
   border: 1px solid var(--color-line-strong);
   border-radius: var(--radius-lg);
+}
+
+// A dialog fades in and rises 6px. The opening is this app's own, on its own panel class: Material's (a
+// scale from 0.8) is given no time in MAT_DIALOG_DEFAULT_OPTIONS (app.config.ts), and its closing fade stays.
+.app-dialog {
+  animation: dialog-in var(--duration-panel) var(--ease-out);
+}
+
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
 }
 
 .app-dialog--sm {

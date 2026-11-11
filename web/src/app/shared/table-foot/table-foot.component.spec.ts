@@ -28,17 +28,32 @@ describe('TableFootComponent', () => {
     await fixture.whenStable();
   });
 
-  it('disables previous on the first page and offers next when rows remain', () => {
-    expect(button('page-previous').disabled).toBe(true);
-    expect(button('page-next').disabled).toBe(false);
+  const unavailable = (testId: string) => button(testId).getAttribute('aria-disabled') === 'true';
+
+  it('marks previous as unavailable on the first page and offers next when rows remain', () => {
+    expect(unavailable('page-previous')).toBe(true);
+    expect(unavailable('page-next')).toBe(false);
   });
 
-  it('disables next on the last page when the total is not a whole number of pages', async () => {
+  it('marks next as unavailable on the last page when the total is not a whole number of pages', async () => {
     ref.setInput('page', 3);
     await fixture.whenStable();
 
-    expect(button('page-next').disabled).toBe(true);
-    expect(button('page-previous').disabled).toBe(false);
+    expect(unavailable('page-next')).toBe(true);
+    expect(unavailable('page-previous')).toBe(false);
+  });
+
+  it('keeps a button at its end focusable, and asks for no page when it is pressed', async () => {
+    ref.setInput('page', 3);
+    await fixture.whenStable();
+    const pages: number[] = [];
+    fixture.componentInstance.pageChange.subscribe((page) => pages.push(page));
+
+    // a disabled button would drop the focus of the press that brought the last page
+    expect(button('page-next').disabled).toBe(false);
+    button('page-next').click();
+
+    expect(pages).toEqual([]);
   });
 
   it('emits the neighbouring page when previous or next is pressed', async () => {

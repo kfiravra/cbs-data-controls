@@ -40,6 +40,13 @@ const DESCRIPTION_MAX = 1000;
 
 const NO_MESSAGES: ReadonlyMap<string, readonly RowMessage[]> = new Map();
 
+/** What a removal took away, and the way back. */
+export interface Removal {
+  /** The mark of the condition that was removed; undefined for a group, which goes with its conditions. */
+  readonly mark?: string;
+  readonly undo: () => void;
+}
+
 /**
  * The state of the control editor, provided by its page: the loaded control and its token, the details, the
  * root entity and the draft tree, what the client's check and the server say about them, the engine's
@@ -307,12 +314,18 @@ export class EditorStore {
     };
   }
 
-  apply(edit: DraftEdit): void {
+  /**
+   * Applies one edit of the builder. A removal answers with what it took away and the way back to the draft
+   * as it was, for the toast's undo: a group goes with every condition in it, and one press must not be final.
+   */
+  apply(edit: DraftEdit): Removal | null {
     const glossary = this.glossary();
     const rootEntity = this.rootEntity();
     if (!glossary || !rootEntity) {
-      return;
+      return null;
     }
+    const before = { draft: this.draft(), serverErrors: this.serverErrors(), liveErrors: this.liveErrors() };
+    const mark = edit.kind === 'remove' ? this.marks().get(edit.target) : undefined;
     const result = applyEdit(this.draft(), edit, { glossary, rootEntity, ids: this.ids });
     this.draft.set(result.draft);
     this.dirty.set(true);
@@ -327,6 +340,18 @@ export class EditorStore {
       location.nodeId === undefined || (present.has(location.nodeId) && location.nodeId !== edited);
     this.serverErrors.update((errors) => errors.filter(stands));
     this.liveErrors.update((errors) => errors.filter(stands));
+    if (edit.kind !== 'remove' || result.draft === before.draft) {
+      return null;
+    }
+    return {
+      mark,
+      undo: () => {
+        this.draft.set(before.draft);
+        this.serverErrors.set(before.serverErrors);
+        this.liveErrors.set(before.liveErrors);
+        this.focus.set(null);
+      },
+    };
   }
 
   // ---------------------------------------------------------------- the sentence

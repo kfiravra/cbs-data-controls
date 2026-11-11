@@ -79,6 +79,13 @@ playwright install --with-deps chromium` needs sudo on WSL: ask the user to run 
   `direction`; `[attr.aria-label]` on `mat-select` is overwritten by its own host binding, so bind its `aria-label`
   input. Never select an internal `mdc-` or `mat-mdc-` class: use the component's `overrides` mixin
   (`src/styles/material-theme.scss`), a rule on the host element, or a panel class the app passes in.
+- A button its own press makes unavailable (run, save, run again, the pager's ends) takes
+  `[attr.aria-disabled]`, and its handler ignores a second press: `disabled` would drop the focus the button holds.
+  `disabled` is for a button that cannot be used as the screen stands. Both look the same (`_buttons.scss`).
+- Reduced-motion rules live in `styles/components/_motion.scss`, the last partial of `styles.scss`: they have the
+  specificity of the rules they switch off, so only the order makes them win.
+- The editor's route asks before a changed draft is left (`canDeactivate`, the browser's `confirm`). Playwright
+  dismisses a dialog by default, which keeps the page: a spec that leaves a changed draft answers the dialog.
 - `vitest` is pinned to `~4.0.8`: npm 10.9.2 crashes resolving the peer set of 4.1.x.
 - Dev server: `ng serve` on :4200 proxies `/api` to :5000 (`proxy.conf.json`), so the api needs no CORS entry for
   it. The production build lands in `dist/web/browser/`, which the api serves.

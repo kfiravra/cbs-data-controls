@@ -1,4 +1,5 @@
-// Global styles: the tokens, the base rules, the Material theme, then the native component partials.
+// Global styles: the tokens, the base rules, the Material theme, the native component partials, and the
+// reduced-motion rules last.
 @use 'styles/tokens';
 @use 'styles/base';
 @use 'styles/material-theme';
@@ -10,3 +11,4 @@
 @use 'styles/components/results';
 @use 'styles/components/builder';
 @use 'styles/components/states';
+@use 'styles/components/motion';

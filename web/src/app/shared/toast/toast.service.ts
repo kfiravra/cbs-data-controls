@@ -29,6 +29,11 @@ export class ToastService {
     this.open(this.translate.instant(messageKey, params) as string, action);
   }
 
+  /** Takes the toast away now: its action no longer fits what is on the screen. */
+  dismiss(): void {
+    this.snackBar.dismiss();
+  }
+
   private open(message: string, action?: ToastAction): void {
     const label: string | undefined = action ? this.translate.instant(action.labelKey) : undefined;
     const ref = this.snackBar.open(message, label, {

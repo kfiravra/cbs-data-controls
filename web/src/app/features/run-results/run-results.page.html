@@ -2,24 +2,33 @@
   <app-not-found />
 } @else {
   @let run = store.run();
-  <app-page-head [title]="run?.controlName ?? ('results.title' | translate)" [meta]="meta()" [back]="true">
+  <app-page-head
+    [title]="run?.controlName ?? ('results.title' | translate)"
+    [meta]="meta()"
+    [metaPending]="store.loadState() === 'loading'"
+    [back]="true"
+  >
     @if (run) {
       <a class="btn btn--tonal" data-testid="edit-control" [routerLink]="['/controls', run.controlId]">
         <app-icon name="edit" />{{ 'results.actions.edit' | translate }}
       </a>
-      <button
-        class="btn btn--primary"
-        type="button"
-        data-testid="rerun"
-        [disabled]="store.rerunning()"
-        (click)="rerun()"
-      >
-        @if (store.rerunning()) {
-          <span class="spinner" aria-hidden="true"></span>{{ 'results.actions.running' | translate }}
-        } @else {
-          <app-icon name="play_arrow" />{{ 'results.actions.rerun' | translate }}
-        }
-      </button>
+      <!-- not where the screen itself says a run cannot start: the definition is outdated, or a run is on its way -->
+      @if (store.state() !== 'outdated' && store.state() !== 'running') {
+        <!-- aria-disabled while the run is on its way: the pressed button keeps the focus (see _buttons.scss) -->
+        <button
+          class="btn btn--primary"
+          type="button"
+          data-testid="rerun"
+          [attr.aria-disabled]="store.rerunning() ? 'true' : null"
+          (click)="rerun()"
+        >
+          @if (store.rerunning()) {
+            <span class="spinner" aria-hidden="true"></span>{{ 'results.actions.running' | translate }}
+          } @else {
+            <app-icon name="play_arrow" />{{ 'results.actions.rerun' | translate }}
+          }
+        </button>
+      }
     }
   </app-page-head>
 
@@ -92,7 +101,7 @@
               tone="warning"
               data-testid="cap-banner"
               [title]="'errors.ROW_CAP_EXCEEDED.title' | translate: capParams()"
-              [body]="'errors.ROW_CAP_EXCEEDED.body' | translate"
+              [body]="'errors.ROW_CAP_EXCEEDED.body' | translate: capParams()"
               [actionLabel]="'results.actions.editConditions' | translate"
               (action)="editControl()"
             />
@@ -120,6 +129,7 @@
 
           @if (nothingMatches() && !store.rowsLoading()) {
             <app-state-panel
+              role="status"
               data-testid="no-match"
               [title]="
                 view().search
@@ -127,7 +137,14 @@
                   : ('results.noMatch.titleFilter' | translate)
               "
             >
-              <p>{{ 'results.noMatch.body' | translate }}</p>
+              <!-- above the row cap the search reads the stored records only: "nothing matches" must say so -->
+              <p>
+                {{
+                  run!.capExceeded
+                    ? ('results.noMatch.bodyCapped' | translate: capParams())
+                    : ('results.noMatch.body' | translate)
+                }}
+              </p>
               <button actions class="btn btn--tonal" type="button" (click)="go({ search: '', condition: null })">
                 {{ 'results.noMatch.clear' | translate }}
               </button>
@@ -167,7 +184,7 @@
         [title]="'results.none.title' | translate"
       >
         <p>{{ 'results.none.body' | translate: { entity: entityLabel() } }}</p>
-        <button actions class="btn btn--tonal" type="button" [disabled]="store.rerunning()" (click)="rerun()">
+        <button actions class="btn btn--tonal" type="button" [attr.aria-disabled]="store.rerunning() ? 'true' : null" (click)="rerun()">
           <app-icon name="play_arrow" />{{ 'results.actions.rerun' | translate }}
         </button>
         <a actions class="btn btn--text" routerLink="/">{{ 'results.actions.toList' | translate }}</a>
@@ -184,7 +201,7 @@
         <a actions class="btn btn--tonal" [routerLink]="['/controls', run!.controlId]">
           <app-icon name="edit" />{{ 'results.actions.editConditions' | translate }}
         </a>
-        <button actions class="btn btn--tonal" type="button" [disabled]="store.rerunning()" (click)="rerun()">
+        <button actions class="btn btn--tonal" type="button" [attr.aria-disabled]="store.rerunning() ? 'true' : null" (click)="rerun()">
           <app-icon name="play_arrow" />{{ 'results.actions.rerun' | translate }}
         </button>
       </app-state-panel>
@@ -209,8 +226,9 @@
         data-testid="state-failed"
         [title]="'results.failed.title' | translate"
       >
-        <p>{{ 'errors.' + (run!.error?.code ?? 'INTERNAL_ERROR') + '.body' | translate }}</p>
-        <button actions class="btn btn--tonal" type="button" [disabled]="store.rerunning()" (click)="rerun()">
+        <!-- the run is in the past: the text says what stopped it then, not what is unavailable now -->
+        <p>{{ failedReason() | translate }}</p>
+        <button actions class="btn btn--tonal" type="button" [attr.aria-disabled]="store.rerunning() ? 'true' : null" (click)="rerun()">
           <app-icon name="play_arrow" />{{ 'results.actions.rerun' | translate }}
         </button>
       </app-state-panel>

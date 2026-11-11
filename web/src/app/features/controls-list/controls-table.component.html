@@ -24,7 +24,13 @@
         @for (row of rows(); track row.control.id) {
           <tr data-testid="control-row" [attr.data-id]="row.control.id">
             <td class="cell-main">
-              <a class="cell-title" data-testid="control-link" [routerLink]="['/controls', row.control.id]">
+              <!-- the row's result and its run button are described by this name: every row says "run" alike -->
+              <a
+                class="cell-title"
+                data-testid="control-link"
+                [id]="'control-' + row.control.id"
+                [routerLink]="['/controls', row.control.id]"
+              >
                 <bdi>{{ row.control.name }}</bdi>
               </a>
               @if (!row.control.isActive) {
@@ -41,17 +47,29 @@
             <td class="cell-result cell-nowrap" data-testid="result" [attr.data-result]="row.result">
               @switch (row.result) {
                 @case ('violations') {
-                  <a class="link num" [routerLink]="['/runs', row.control.lastRun!.id]">
+                  <a
+                    class="link num"
+                    [routerLink]="['/runs', row.control.lastRun!.id]"
+                    [attr.aria-describedby]="'control-' + row.control.id"
+                  >
                     {{ 'results.violations' | plural: row.control.lastRun!.totalCount! }}
                   </a>
                 }
                 @case ('none') {
-                  <span class="status status--success">
+                  <a
+                    class="status status--success"
+                    [routerLink]="['/runs', row.control.lastRun!.id]"
+                    [attr.aria-describedby]="'control-' + row.control.id"
+                  >
                     <app-icon name="check_circle" size="sm" />{{ 'list.result.none' | translate }}
-                  </span>
+                  </a>
                 }
                 @case ('stopped') {
-                  <a class="status status--danger" [routerLink]="['/runs', row.control.lastRun!.id]">
+                  <a
+                    class="status status--danger"
+                    [routerLink]="['/runs', row.control.lastRun!.id]"
+                    [attr.aria-describedby]="'control-' + row.control.id"
+                  >
                     <app-icon name="error" size="sm" />{{ 'list.result.stopped' | translate }}
                   </a>
                 }
@@ -66,11 +84,14 @@
             </td>
             <td class="cell-actions">
               @if (row.control.isActive) {
+                <!-- aria-disabled, not disabled: a disabled button drops the focus it holds, and the keyboard
+                     and a screen reader lose their place in the row; a second press is ignored by the store -->
                 <button
-                  class="btn btn--tonal btn--sm"
+                  class="btn btn--tonal btn--sm btn--run"
                   type="button"
                   data-testid="run"
-                  [disabled]="row.running"
+                  [attr.aria-disabled]="row.running ? 'true' : null"
+                  [attr.aria-describedby]="'control-' + row.control.id"
                   (click)="run.emit(row.control)"
                 >
                   @if (row.running) {

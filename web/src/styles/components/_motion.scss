@@ -1,0 +1,33 @@
+// Reduced motion. This partial loads last: its rules have the specificity of the ones they switch off,
+// so only the order makes them win.
+
+@media (prefers-reduced-motion: reduce) {
+  .btn,
+  .btn:hover,
+  .btn:active {
+    transform: none;
+    transition-property: background-color, color, border-color;
+  }
+
+  // a press shows as a tone, not as a step
+  .btn--primary:active {
+    background: var(--color-action-pressed);
+  }
+
+  .btn--tonal:active {
+    background: var(--color-line-strong);
+  }
+
+  // the settle stays off inside the sentence field too, where a second class names its keyframes
+  .skeleton,
+  .spinner,
+  .mark--changed,
+  .sentence-field .mark--changed {
+    animation: none;
+  }
+
+  // a dialog appears at once (Material drops its own transitions by itself)
+  .app-dialog {
+    animation: none;
+  }
+}

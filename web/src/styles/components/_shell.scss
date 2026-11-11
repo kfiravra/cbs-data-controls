@@ -23,6 +23,7 @@
   display: inline-flex;
   align-items: center;
   gap: var(--space-3);
+  min-block-size: var(--size-control);
   text-decoration: none;
   font-size: var(--text-title);
   font-weight: 500;
@@ -62,6 +63,11 @@
 
   > .btn {
     flex: 1 1 0;
+  }
+
+  // a text button keeps its own width and stands at the start edge: stretched, its label floats mid-row
+  > .btn--text {
+    flex: 0 0 auto;
   }
 }
 

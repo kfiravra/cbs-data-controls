@@ -162,25 +162,3 @@ button {
     display: none !important;
   }
 }
-
-@media (prefers-reduced-motion: reduce) {
-  .btn,
-  .btn:hover,
-  .btn:active {
-    transform: none;
-  }
-
-  .btn--primary:active {
-    background: var(--color-action-pressed);
-  }
-
-  .btn--tonal:active {
-    background: var(--color-line-strong);
-  }
-
-  .skeleton,
-  .spinner,
-  .mark--changed {
-    animation: none;
-  }
-}

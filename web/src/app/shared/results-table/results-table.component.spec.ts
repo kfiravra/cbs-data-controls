@@ -92,6 +92,14 @@ describe('ResultsTableComponent', () => {
     expect(heads).toEqual([...COLUMNS.map((column) => column.label), t('results.table.reasons')]);
   });
 
+  it('names the sortable header itself, for the width at which its button is not rendered', async () => {
+    await draw();
+
+    const [first, second] = host().querySelectorAll('th');
+    expect(first.getAttribute('aria-label')).toBe(COLUMNS[0].label);
+    expect(second.hasAttribute('aria-label')).toBe(false);
+  });
+
   it('writes the identifying fields of each record, isolated from the direction of the page', async () => {
     await draw();
 

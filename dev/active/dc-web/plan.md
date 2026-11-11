@@ -365,15 +365,15 @@ Review: `/phase-review web`
 Commit: `test(web): six-example gate against the real stack`
 
 ### Phase 8: design pass
-- [ ] `/impeccable audit` on the three screens; fix what fails (names, focus order, contrast, reduced motion).
-- [ ] `/impeccable critique`, once per screen. Say the spend first (two opus sub-agents per run, three runs, one
+- [x] `/impeccable audit` on the three screens; fix what fails (names, focus order, contrast, reduced motion).
+- [x] `/impeccable critique`, once per screen. Say the spend first (two opus sub-agents per run, three runs, one
       run at a time) and wait for the word. Fix its P0 and P1 findings.
-- [ ] `/impeccable polish`, once, over the client.
-- [ ] A keyboard pass by hand through the gate flow: every action reachable, focus visible, a dialog traps focus
+- [x] `/impeccable polish`, once, over the client.
+- [x] A keyboard pass by hand through the gate flow: every action reachable, focus visible, a dialog traps focus
       and returns it.
-- [ ] `web/README.md` per Design Q: serve, test, the two e2e folders, the gate command with what it needs and
+- [x] `web/README.md` per Design Q: serve, test, the two e2e folders, the gate command with what it needs and
       leaves, the projects, the screenshot folder, the build output folder.
-- [ ] `notes.md`, "Hand-over to dc-delivery": the as-built lines and every cut, per Design Q.
+- [x] `notes.md`, "Hand-over to dc-delivery": the as-built lines and every cut, per Design Q.
 
 Verify: `/check all --tests` · `cd web && npx playwright test e2e/mocked` · the gate command of Design O
 Review: `/phase-review web`

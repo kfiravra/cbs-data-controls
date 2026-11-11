@@ -77,9 +77,12 @@ test.describe('control editor', () => {
     await openStored(page, control);
 
     await page.getByTestId('control-name').fill(`${control.name} 2`);
-    await page.getByTestId('save').click();
+    await page.getByTestId('save').focus();
+    await page.keyboard.press('Enter');
     await expect(page.getByText(t('editor.toast.saved'), { exact: true })).toBeVisible();
     expect(api.controls.find((candidate) => candidate.id === control.id)!.version).toBe(1);
+    // the button was unavailable while it saved and kept the focus: the keyboard goes on from where it was
+    await expect(page.getByTestId('save')).toBeFocused();
 
     await row(page, 0).getByTestId('value-single').fill('17');
     await page.getByTestId('save').click();
@@ -186,6 +189,7 @@ test.describe('control editor', () => {
     await expect(page.getByTestId('outdated-banner')).toContainText(t('errors.CONTROL_DEFINITION_OUTDATED.title'));
     await expect(row(page, 0).getByTestId('row-error')).toHaveText(t('errors.definition.UNKNOWN_FIELD'));
     await expect(row(page, 0).getByTestId('field-picker')).toContainText(t('editor.field.gone'));
+    await expect(page.getByTestId('sentence-hint')).toHaveText(t('editor.sentence.hintInvalid'));
     await expect(page.getByText('a_field_that_is_gone')).toHaveCount(0);
     await shot(page, testInfo, 'editor-outdated');
   });
@@ -198,7 +202,8 @@ test.describe('control editor', () => {
     const banner = page.getByTestId('error-banner');
     await expect(banner).toHaveAttribute('data-code', 'ENGINE_UNAVAILABLE');
     await expect(banner).toContainText(t('errors.ENGINE_UNAVAILABLE.title'));
-    await expect(page.getByTestId('sentence-hint')).toBeVisible();
+    // both conditions are complete: the field must not say it waits for a first one
+    await expect(page.getByTestId('sentence-hint')).toHaveText(t('editor.sentence.hintUnavailable'));
     await shot(page, testInfo, 'editor-engine-down');
 
     api.heal('POST /controls/validate');
@@ -352,6 +357,56 @@ test.describe('control editor', () => {
 
     await page.goto('/controls/not-a-number');
     await expect(page.getByTestId('not-found')).toBeVisible();
+  });
+
+  test('a removed condition is offered back by the toast, with its value and its mark', async ({ page, api }) => {
+    const control = stored(api);
+    const count = control.definition.where.children.length;
+    await openStored(page, control);
+    const value = String((control.definition.where.children[1] as ConditionNode).value);
+    await expect(row(page, 1).getByTestId('value-single')).toHaveValue(value);
+
+    await row(page, 1).getByTestId('remove-row').click();
+    await expect(page.getByTestId('condition-row')).toHaveCount(count - 1);
+    await expect(page.getByText(t('editor.toast.removedCondition', { mark: letters[1] }), { exact: true })).toBeVisible();
+
+    await page.getByRole('button', { name: t('editor.toast.restore'), exact: true }).click();
+    await expect(page.getByTestId('condition-row')).toHaveCount(count);
+    await expect(row(page, 1).getByTestId('value-single')).toHaveValue(value);
+    await expect(row(page, 1).getByTestId('mark')).toHaveText(letters[1]);
+  });
+
+  test('a changed draft is not left by a link of the app without a word', async ({ page, api }) => {
+    await openStored(page, stored(api));
+    await page.getByTestId('control-name').fill('changed and not saved');
+
+    // the browser's own prompt, as on closing the tab: a "no" keeps the screen and what was typed
+    page.once('dialog', (dialog) => {
+      expect(dialog.type()).toBe('confirm');
+      expect(dialog.message()).toBe(t('editor.leave.confirm'));
+      void dialog.dismiss();
+    });
+    await page.getByTestId('cancel').click();
+    await expect(page).toHaveURL(/\/controls\/\d+$/);
+    await expect(page.getByTestId('control-name')).toHaveValue('changed and not saved');
+
+    page.once('dialog', (dialog) => void dialog.accept());
+    await page.getByTestId('back-to-list').click();
+    await expect(page).toHaveURL(/\/$/);
+  });
+
+  test('an unchanged control is left without a question', async ({ page, api }) => {
+    await openStored(page, stored(api));
+    let asked = false;
+    page.on('dialog', (dialog) => {
+      asked = true;
+      void dialog.accept();
+    });
+
+    await page.getByTestId('cancel').click();
+
+    await expect(page).toHaveURL(/\/$/);
+    expect(asked).toBe(false);
   });
 
   test('a changed draft is guarded by the browser when the page is left', async ({ page, api }) => {

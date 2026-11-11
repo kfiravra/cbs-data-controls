@@ -1,6 +1,13 @@
+<!-- "6 active controls" is a fact about the whole state; under a search or an entity filter the line says
+     how many were found, so a narrowed list never reads as the whole -->
 <app-page-head
   [title]="'list.title' | translate"
-  [meta]="store.page() ? ('list.count.' + view().state | plural: store.page()!.total) : undefined"
+  [meta]="
+    store.page()
+      ? ((narrowed() ? 'list.count.found' : 'list.count.' + view().state) | plural: store.page()!.total)
+      : undefined
+  "
+  [metaPending]="store.loading()"
 >
   <!-- in the first-use state the panel carries the two actions: one filled button in a view -->
   @if (empty() !== 'first') {
@@ -12,6 +19,8 @@
     </a>
   }
 </app-page-head>
+
+<p class="sr-only" role="status" data-testid="run-announcement">{{ announcement() }}</p>
 
 <div class="stack page-banners">
   @if (store.glossaryError(); as error) {
@@ -42,6 +51,7 @@
     [searchLabel]="'list.search.label' | translate"
     [placeholder]="'list.search.placeholder' | translate"
     [filtersLabel]="'list.filters.label' | translate"
+    [filtersActive]="view().entity !== null || view().state !== 'active'"
     (searchChange)="go({ search: $event })"
   >
     <mat-form-field class="toolbar__filter" appearance="outline" subscriptSizing="dynamic">
@@ -88,6 +98,7 @@
     </app-state-panel>
   } @else if (empty() === 'noMatch') {
     <app-state-panel
+      role="status"
       data-testid="no-match"
       [title]="
         view().search

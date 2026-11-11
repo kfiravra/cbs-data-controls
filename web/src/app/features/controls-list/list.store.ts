@@ -3,7 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Subject, catchError, firstValueFrom, map, of, switchMap } from 'rxjs';
 
 import { ApiError, toApiError } from '../../core/api/api-error';
-import { ActiveFilter, ControlSummary, ControlsQuery, Page } from '../../core/api/api.types';
+import { ActiveFilter, ControlSummary, ControlsQuery, LastRun, Page } from '../../core/api/api.types';
 import { ControlsApi } from '../../core/api/controls.api';
 import { RunsApi } from '../../core/api/runs.api';
 import { GlossaryService } from '../../core/glossary/glossary.service';
@@ -120,21 +120,24 @@ export class ListStore {
   }
 
   /** Runs a control and puts the finished run on its row, whatever its outcome. */
-  async run(control: ControlSummary): Promise<void> {
+  /** Answers with the run as the row now shows it; null when the control was already running or the run could not be started. */
+  async run(control: ControlSummary): Promise<LastRun | null> {
     if (this.running().has(control.id)) {
-      return;
+      return null;
     }
     this.running.update((ids) => new Set(ids).add(control.id));
     this.runFailure.set(null);
     try {
       const run = await firstValueFrom(this.runsApi.start(control.id));
-      const lastRun = { id: run.id, startedAt: run.startedAt, status: run.status, totalCount: run.totalCount };
+      const lastRun: LastRun = { id: run.id, startedAt: run.startedAt, status: run.status, totalCount: run.totalCount };
       this.page.update(
         (page) =>
           page && { ...page, items: page.items.map((item) => (item.id === control.id ? { ...item, lastRun } : item)) },
       );
+      return lastRun;
     } catch (error) {
       this.runFailure.set(toApiError(error));
+      return null;
     } finally {
       this.running.update((ids) => new Set([...ids].filter((id) => id !== control.id)));
     }

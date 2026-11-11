@@ -1,9 +1,17 @@
 @if (notFound()) {
   <app-not-found />
 } @else {
-  <app-page-head [title]="title() | translate" [meta]="meta()" [back]="true">
-    @if (store.control() && !store.archived()) {
-      <button class="btn btn--text" type="button" data-testid="archive" [disabled]="busy()" (click)="archive()">
+  <!-- a stored control has a meta line and, unless archived, the archive action: both hold their place while
+       it is read, so the form under the head does not move when they arrive -->
+  <app-page-head [title]="title() | translate" [meta]="meta()" [metaPending]="opening()" [back]="true">
+    @if (opening() || (store.control() && !store.archived())) {
+      <button
+        class="btn btn--text"
+        type="button"
+        data-testid="archive"
+        [disabled]="busy() || !store.control()"
+        (click)="archive()"
+      >
         <app-icon name="archive" />{{ 'editor.archive.action' | translate }}
       </button>
     }
@@ -166,7 +174,7 @@
               [rootEntity]="store.rootEntity()!"
               [view]="view"
               [focus]="store.focus()"
-              (edit)="store.apply($event)"
+              (edit)="edit($event)"
               (trace)="store.traced.set($event)"
             />
           } @else {
@@ -186,10 +194,18 @@
           [traced]="store.traced()"
           [open]="store.openNodes()"
           [changed]="store.settling()"
+          [hintKey]="sentenceHint()"
           [status]="status()"
           (trace)="store.traced.set($event)"
         >
-          <button class="btn btn--on-action" type="button" data-testid="save-run" [disabled]="busy()" (click)="save(true)">
+          <!-- aria-disabled while a save is on its way: the pressed button keeps the focus (see _buttons.scss) -->
+          <button
+            class="btn btn--on-action"
+            type="button"
+            data-testid="save-run"
+            [attr.aria-disabled]="busy() ? 'true' : null"
+            (click)="save(true)"
+          >
             @if (store.saveState() === 'running') {
               <span class="spinner" aria-hidden="true"></span>{{ 'editor.actions.running' | translate }}
             } @else {
@@ -200,7 +216,7 @@
             class="btn btn--on-action-tonal"
             type="button"
             data-testid="save"
-            [disabled]="busy()"
+            [attr.aria-disabled]="busy() ? 'true' : null"
             (click)="save(false)"
           >
             @if (store.saveState() === 'saving') {

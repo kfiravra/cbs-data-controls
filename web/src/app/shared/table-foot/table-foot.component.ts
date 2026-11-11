@@ -16,7 +16,8 @@ import { IconComponent } from '../icon/icon.component';
   imports: [IconComponent, MatFormField, MatOption, MatSelect, MatTooltip, TranslatePipe],
   template: `
     <div class="table-foot">
-      <span class="num" data-testid="table-range">{{ rangeKey() | translate: range() }}</span>
+      <!-- a status: after a search, a filter, a sort or another page, assistive technology hears what is shown -->
+      <span class="num" role="status" data-testid="table-range">{{ rangeKey() | translate: range() }}</span>
       <div class="pager">
         @if (pageSizes().length > 0) {
           <mat-form-field class="field--sm pager__size" appearance="outline" subscriptSizing="dynamic">
@@ -38,8 +39,8 @@ import { IconComponent } from '../icon/icon.component';
           data-testid="page-previous"
           [attr.aria-label]="'common.previousPage' | translate"
           [matTooltip]="'common.previousPage' | translate"
-          [disabled]="page() <= 1"
-          (click)="pageChange.emit(page() - 1)"
+          [attr.aria-disabled]="page() <= 1 ? 'true' : null"
+          (click)="go(page() - 1)"
         >
           <app-icon name="chevron_left" [mirrored]="true" />
         </button>
@@ -49,8 +50,8 @@ import { IconComponent } from '../icon/icon.component';
           data-testid="page-next"
           [attr.aria-label]="'common.nextPage' | translate"
           [matTooltip]="'common.nextPage' | translate"
-          [disabled]="page() >= lastPage()"
-          (click)="pageChange.emit(page() + 1)"
+          [attr.aria-disabled]="page() >= lastPage() ? 'true' : null"
+          (click)="go(page() + 1)"
         >
           <app-icon name="chevron_right" [mirrored]="true" />
         </button>
@@ -88,4 +89,14 @@ export class TableFootComponent {
     const to = Math.min(this.page() * this.pageSize(), this.total());
     return { from: format.format(from), to: format.format(to), total: format.format(this.total()) };
   });
+
+  /**
+   * The two buttons stay focusable at the ends (`aria-disabled`): a press on "next" that lands on the last
+   * page must not drop the focus from the button. A press past an end asks for nothing.
+   */
+  protected go(page: number): void {
+    if (page >= 1 && page <= this.lastPage()) {
+      this.pageChange.emit(page);
+    }
+  }
 }

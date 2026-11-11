@@ -66,4 +66,18 @@ describe('ToolbarComponent', () => {
 
     expect(toggle.getAttribute('aria-expanded')).toBe('true');
   });
+
+  it('shows its filters while one of them narrows the list, and keeps them open when it is lifted', () => {
+    fixture.componentRef.setInput('filtersLabel', 'filters');
+    fixture.componentRef.setInput('filtersActive', true);
+    fixture.detectChanges();
+    const toggle = host().querySelector<HTMLButtonElement>('[data-testid="toolbar-filters-toggle"]')!;
+
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+
+    fixture.componentRef.setInput('filtersActive', false);
+    fixture.detectChanges();
+
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+  });
 });

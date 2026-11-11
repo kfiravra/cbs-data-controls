@@ -10,7 +10,8 @@ const NONE: ReadonlySet<string> = new Set();
 /**
  * The control in words, in the editor: the engine's sentence with a mark per clause, one line of status
  * when something is unfinished, then the actions (projected). While the draft is unfinished or invalid the
- * last valid sentence stays, dimmed (`stale`); before any valid sentence there is a one-line hint.
+ * last valid sentence stays, dimmed (`stale`); before any valid sentence there is a one-line hint that says
+ * why there is none yet.
  * Changes are announced politely.
  */
 @Component({
@@ -32,7 +33,7 @@ const NONE: ReadonlySet<string> = new Set();
             />
           </p>
         } @else {
-          <p class="sentence-field__hint" data-testid="sentence-hint">{{ 'editor.sentence.hint' | translate }}</p>
+          <p class="sentence-field__hint" data-testid="sentence-hint">{{ hintKey() | translate }}</p>
         }
       </div>
       <div aria-live="polite">
@@ -64,6 +65,8 @@ export class SentenceFieldComponent {
   readonly open = input<ReadonlySet<string>>(NONE);
   /** The nodes whose clause was just rewritten: their marks play the settle once. */
   readonly changed = input<ReadonlySet<string>>(NONE);
+  /** The key of the line shown while there is no sentence: it differs by why there is none. */
+  readonly hintKey = input('editor.sentence.hint');
   /** One translated line that names what is unfinished; absent when nothing is. */
   readonly status = input<string | null>(null);
   readonly trace = output<string | null>();

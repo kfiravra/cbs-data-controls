@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, linkedSignal, output } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatFormField, MatPrefix } from '@angular/material/form-field';
 import { MatInput } from '@angular/material/input';
@@ -19,7 +19,7 @@ const SEARCH_DEBOUNCE_MS = 300;
   template: `
     <div class="toolbar" role="search">
       <mat-form-field class="toolbar__search" appearance="outline" subscriptSizing="dynamic">
-        <app-icon matIconPrefix name="search" />
+        <app-icon matIconPrefix class="toolbar__search-icon" name="search" />
         <input
           matInput
           type="search"
@@ -61,9 +61,15 @@ export class ToolbarComponent {
   readonly placeholder = input('');
   /** The name of the phone's filter button; leave it out for a toolbar with no filters. */
   readonly filtersLabel = input<string>();
+  /** Whether a filter narrows what is shown: the phone then shows the filters, so a narrowed list says so. */
+  readonly filtersActive = input(false);
   readonly searchChange = output<string>();
 
-  protected readonly open = signal(false);
+  /** Folded on a phone until asked for. A filter coming into force unfolds it; one that is lifted leaves it as it is. */
+  protected readonly open = linkedSignal<boolean, boolean>({
+    source: this.filtersActive,
+    computation: (active, previous) => active || (previous?.value ?? false),
+  });
   protected readonly typed = new Subject<string>();
 
   constructor() {

@@ -68,13 +68,13 @@ describe('ControlsTableComponent', () => {
       expect(link.getAttribute('href')).toBe('/runs/40');
     });
 
-    it('says no violations, as a success, when the run found none', async () => {
+    it('says no violations, as a success and a link to that run, when the run found none', async () => {
       await draw([control(1, ran('succeeded', 0))]);
 
       const result = cell(rows()[0], 'result')!;
       expect(result.getAttribute('data-result')).toBe('none');
       expect(result.textContent?.trim()).toBe(t('list.result.none'));
-      expect(result.querySelector('a')).toBeNull();
+      expect(result.querySelector('a')!.getAttribute('href')).toBe('/runs/40');
     });
 
     it('says the run stopped, with a link to it, for a failed and for a timed-out run', async () => {
@@ -125,13 +125,26 @@ describe('ControlsTableComponent', () => {
     expect(asked).toEqual([2]);
   });
 
-  it('disables the button of a running control and says the run is on its way', async () => {
+  it('marks the button of a running control as unavailable, keeps it focusable, and says the run is on its way', async () => {
     await draw([control(1, null), control(2, null)], { running: new Set([2]) });
 
     const [first, second] = rows().map((row) => cell(row, 'run') as HTMLButtonElement);
-    expect(first.disabled).toBe(false);
-    expect(second.disabled).toBe(true);
+    expect(first.hasAttribute('aria-disabled')).toBe(false);
+    expect(second.getAttribute('aria-disabled')).toBe('true');
+    // a disabled button would drop the focus it holds when the run starts
+    expect(second.disabled).toBe(false);
     expect(second.textContent?.trim()).toBe(t('list.actions.running'));
+  });
+
+  it('describes the run button and the result of a row by the name of its control', async () => {
+    await draw([control(1, ran('succeeded', 3)), control(2, ran('succeeded', 0))]);
+
+    for (const row of rows()) {
+      const name = cell(row, 'control-link')!;
+      expect(name.id).toMatch(/^control-\d+$/);
+      expect(cell(row, 'run')!.getAttribute('aria-describedby')).toBe(name.id);
+      expect(cell(row, 'result')!.querySelector('a')!.getAttribute('aria-describedby')).toBe(name.id);
+    }
   });
 
   it('offers only duplicate for an archived control, and marks it', async () => {

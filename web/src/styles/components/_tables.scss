@@ -14,6 +14,12 @@
   flex: 1 1 180px;
 }
 
+// Material insets its own icon in a field's prefix and not another element: the search icon stands as far
+// from the field's edge as a field's text does
+.toolbar__search-icon {
+  margin-inline: var(--space-3) var(--space-2);
+}
+
 .toolbar__filter {
   flex: 0 1 auto;
   min-inline-size: 180px;
@@ -125,6 +131,28 @@ a.cell-title:hover {
   text-underline-offset: 4px;
 }
 
+// A link that stands alone in a row is a target of its own: it answers a touch 8px above and below its
+// line, the height of a control in all, while the row keeps its height and the focus ring stays on the text.
+a.cell-title,
+.table a.link,
+.table a.status {
+  position: relative;
+  padding-block: 2px;
+  margin-block: -2px;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset-inline: 0;
+    inset-block: calc(-1 * var(--space-2));
+  }
+}
+
+a.cell-title,
+.table a.link {
+  display: inline-block;
+}
+
 .cell-desc {
   font-size: var(--text-small);
   line-height: 1.5;
@@ -197,12 +225,17 @@ a.cell-title:hover {
   gap: var(--space-2);
 }
 
+// The header's button is taller than its text; the negative margin keeps the header row at its height.
+// Below 640 the header is read and not seen, and the toolbar's select sorts: the button is not there, so
+// the keyboard never lands on something invisible, and the header cell is named by its own label.
 .th-sort {
-  display: inline-flex;
+  display: none;
   align-items: center;
   gap: var(--space-1);
   border: 0;
-  padding: 0;
+  padding-block: var(--space-2);
+  padding-inline: 0;
+  margin-block: calc(-1 * var(--space-2));
   background: none;
   font: inherit;
   color: inherit;
@@ -214,6 +247,10 @@ th[aria-sort='descending'] .th-sort {
 }
 
 @media (min-width: 640px) {
+  .th-sort {
+    display: inline-flex;
+  }
+
   .table {
     thead {
       position: static;
@@ -265,6 +302,12 @@ th[aria-sort='descending'] .th-sort {
       > * {
         vertical-align: middle;
       }
+    }
+
+    // A run button is wider while it runs (the spinner and `ההרצה מתבצעת`, about 9.25rem): the column
+    // keeps room for that, so starting a run does not move the other columns of the table.
+    .cell-actions:has(.btn--run) {
+      min-inline-size: calc(9.25rem + 2 * var(--size-control) + 2 * var(--space-3) + var(--space-2));
     }
 
     .cell-end {

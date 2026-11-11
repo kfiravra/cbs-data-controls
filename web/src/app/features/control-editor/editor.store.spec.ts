@@ -8,7 +8,7 @@ import {
   sentenceOf,
 } from '../../../testing/editor-store';
 import { SYNTHETIC_GLOSSARY } from '../../../testing/synthetic-glossary';
-import { DraftCondition } from '../../core/definition/draft';
+import { DraftCondition, DraftGroup } from '../../core/definition/draft';
 import { VALIDATE_DEBOUNCE_MS } from './editor.store';
 
 describe('EditorStore', () => {
@@ -417,6 +417,36 @@ describe('EditorStore', () => {
       undo!();
       expect([store.rootEntity(), store.draft()]).toEqual(['order', before]);
       expect(store.chooseRoot('order')).toBeNull();
+    });
+
+    it('gives a way back from a removal: the condition returns under its id and its mark', async () => {
+      await open({ id: 7 }, control());
+      answerValidate([]);
+      const before = store.draft();
+
+      const removal = store.apply({ kind: 'remove', target: 'c2' });
+
+      expect(removal!.mark).toBe(letters[1]);
+      expect(store.draft().children).toHaveLength(1);
+
+      removal!.undo();
+      expect(store.draft()).toBe(before);
+      expect(store.marks().get('c2')).toBe(letters[1]);
+      expect(store.dirty()).toBe(true);
+    });
+
+    it('names no mark for a removed group, and offers no way back from an edit that removes nothing', async () => {
+      await open({ id: 7 }, control());
+      answerValidate([]);
+      store.apply({ kind: 'addGroup', group: store.draft().key });
+      const group = store.draft().children.at(-1) as DraftGroup;
+      const before = store.draft();
+
+      expect(store.apply({ kind: 'op', group: group.key, op: 'or' })).toBeNull();
+      const removal = store.apply({ kind: 'remove', target: group.key });
+
+      expect(removal!.mark).toBeUndefined();
+      expect(store.draft().children).toHaveLength(before.children.length - 1);
     });
 
     it('archives the stored control', async () => {

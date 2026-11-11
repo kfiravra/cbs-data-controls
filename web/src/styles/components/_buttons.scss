@@ -1,4 +1,9 @@
 // One filled action per view; every other action is tonal or a text button.
+//
+// Two ways of being unavailable. `disabled` is for a button that cannot be used as the screen stands (nothing
+// is ticked, a limit is reached). `aria-disabled="true"` is for a button made unavailable by its own press
+// (a save, a run, the last page): it looks the same and ignores a second press, but it keeps the focus it
+// holds, which a disabled button drops.
 
 .btn {
   display: inline-flex;
@@ -108,7 +113,8 @@
   transform: none;
 }
 
-.btn--text[disabled] {
+.btn--text[disabled],
+.btn--text[aria-disabled='true'] {
   background: none;
 }
 
@@ -132,7 +138,8 @@
     transition-duration: var(--duration-in);
   }
 
-  &[disabled] {
+  &[disabled],
+  &[aria-disabled='true'] {
     color: var(--color-line-strong);
     cursor: not-allowed;
     background: none;

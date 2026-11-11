@@ -9,6 +9,7 @@ import {
   provideBrowserGlobalErrorListeners,
 } from '@angular/core';
 import { MAT_BUTTON_TOGGLE_DEFAULT_OPTIONS } from '@angular/material/button-toggle';
+import { MAT_DIALOG_DEFAULT_OPTIONS, MatDialogConfig } from '@angular/material/dialog';
 import { TitleStrategy, provideRouter, withComponentInputBinding } from '@angular/router';
 import { TranslateService, provideTranslateService } from '@ngx-translate/core';
 import { provideTranslateHttpLoader } from '@ngx-translate/http-loader';
@@ -40,6 +41,12 @@ export const appConfig: ApplicationConfig = {
     provideAppInitializer(() => firstValueFrom(inject(TranslateService).use(DEFAULT_LANGUAGE))),
     provideIcons(),
     provideSuggestions(),
+    // the opening of a dialog is this app's own (`.app-dialog` in material-theme.scss), so Material's gets no
+    // time; the closing is Material's fade, inside --duration-close (tokens.scss), which it times in script
+    {
+      provide: MAT_DIALOG_DEFAULT_OPTIONS,
+      useValue: { ...new MatDialogConfig(), enterAnimationDuration: '0ms', exitAnimationDuration: '120ms' },
+    },
     // ink selects: the filled option is the signal, no check mark beside it
     {
       provide: MAT_BUTTON_TOGGLE_DEFAULT_OPTIONS,

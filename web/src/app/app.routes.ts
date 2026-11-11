@@ -14,6 +14,8 @@ export const routes: Routes = [
     title: (route) => (route.paramMap.get('id') === 'new' ? 'editor.titleNew' : 'editor.titleEdit'),
     loadComponent: () =>
       import('./features/control-editor/control-editor.page').then((m) => m.ControlEditorPage),
+    // a changed draft is not left by a link of the app without a word, as it is not by closing the tab
+    canDeactivate: [(editor: { mayLeave(): boolean }) => editor.mayLeave()],
   },
   {
     path: 'runs/:id',

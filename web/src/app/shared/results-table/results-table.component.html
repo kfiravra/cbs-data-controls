@@ -3,7 +3,14 @@
     <thead>
       <tr>
         @for (column of columns(); track column.key; let first = $first) {
-          <th scope="col" class="col-id" [attr.aria-sort]="first ? ariaSort() : null">
+          <!-- the sort button is not rendered below 640px (the toolbar's select sorts there), so the header
+               carries its name itself and is still read with its column -->
+          <th
+            scope="col"
+            class="col-id"
+            [attr.aria-sort]="first ? ariaSort() : null"
+            [attr.aria-label]="first ? column.label : null"
+          >
             @if (first) {
               <button class="th-sort" type="button" data-testid="sort-display" (click)="cycleSort()">
                 {{ column.label }}<app-icon size="sm" [name]="sortIcon()" />
