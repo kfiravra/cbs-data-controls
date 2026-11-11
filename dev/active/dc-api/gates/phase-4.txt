@@ -1,0 +1,42 @@
+# phase-4 gate: /check --tests (2026-11-11T01:05+0200, branch feat/api, head a619323 plus the working tree)
+
+## api-build: (cd api && dotnet build -warnaserror)
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  DataControls.Api -> api/src/DataControls.Api/bin/Debug/net10.0/DataControls.Api.dll
+  DataControls.Api.Tests -> api/tests/DataControls.Api.Tests/bin/Debug/net10.0/DataControls.Api.Tests.dll
+Build succeeded.
+    0 Warning(s)
+    0 Error(s)
+Time Elapsed 00:00:02.14
+exit=0
+
+## api-format: (cd api && dotnet format --verify-no-changes)
+exit=0
+
+## api-test: (cd api && dotnet test)
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  DataControls.Api -> api/src/DataControls.Api/bin/Debug/net10.0/DataControls.Api.dll
+  DataControls.Api.Tests -> api/tests/DataControls.Api.Tests/bin/Debug/net10.0/DataControls.Api.Tests.dll
+Test run for api/tests/DataControls.Api.Tests/bin/Debug/net10.0/DataControls.Api.Tests.dll (.NETCoreApp,Version=v10.0)
+VSTest version 18.0.2 (x64)
+Starting test execution, please wait...
+A total of 1 test files matched the specified pattern.
+Passed!  - Failed:     0, Passed:   290, Skipped:     0, Total:   290, Duration: 30 s - DataControls.Api.Tests.dll (net10.0)
+exit=0
+
+## print-guard: (cd . && bash /home/kfir/projects/cbs-api/.claude/hooks/print-guard.sh <the touched .cs files>)
+exit=0
+
+RESULT: green
+
+## The 5,000-violation snapshot (plan Phase 4, last step)
+Test: RunResultsTests.Run_stores_5000_violations_in_one_snapshot_when_the_engine_returns_the_full_cap, run alone
+three times with `dotnet test --no-build --filter "FullyQualifiedName~Run_stores_5000_violations" --logger
+"console;verbosity=detailed"`. The time covers the whole POST: the stub's answer (about 3 MB of JSON) parsed, the
+run opened, 5,000 rows inserted in one SaveChanges with the provider's default batch size, the run closed and read back.
+  A run of 5000 violations was stored and answered in 2011 ms.
+  A run of 5000 violations was stored and answered in 1813 ms.
+  A run of 5000 violations was stored and answered in 1880 ms.
+Under "a few seconds": the batch size was not raised.

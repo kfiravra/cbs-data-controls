@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\DataControls.Api\DataControls.Api.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Expected values are read from the contract, so the files travel to the test output. -->
+    <None Include="..\..\..\contracts\**" LinkBase="contracts" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="Fixtures\**" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\requests.http" Link="requests.http" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+</Project>

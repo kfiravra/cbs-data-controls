@@ -1,0 +1,30 @@
+# Phase 1 gate: /check --tests (2026-11-10T22:19Z, branch feat/api, base f9928bf)
+
+## api-build: (cd api && dotnet build -warnaserror)
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  DataControls.Api -> src/DataControls.Api/bin/Debug/net10.0/DataControls.Api.dll
+  DataControls.Api.Tests -> tests/DataControls.Api.Tests/bin/Debug/net10.0/DataControls.Api.Tests.dll
+Build succeeded.
+    0 Warning(s)
+    0 Error(s)
+Time Elapsed 00:00:02.37
+exit=0
+
+## api-format: (cd api && dotnet format --verify-no-changes)
+exit=0
+
+## api-test: (cd api && dotnet test)
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  DataControls.Api -> src/DataControls.Api/bin/Debug/net10.0/DataControls.Api.dll
+  DataControls.Api.Tests -> tests/DataControls.Api.Tests/bin/Debug/net10.0/DataControls.Api.Tests.dll
+Test run for tests/DataControls.Api.Tests/bin/Debug/net10.0/DataControls.Api.Tests.dll (.NETCoreApp,Version=v10.0)
+VSTest version 18.0.2 (x64)
+Starting test execution, please wait...
+A total of 1 test files matched the specified pattern.
+Passed!  - Failed:     0, Passed:    64, Skipped:     0, Total:    64, Duration: 2 s - DataControls.Api.Tests.dll (net10.0)
+exit=0
+
+## print-guard: (cd . && bash /home/kfir/projects/cbs-api/.claude/hooks/print-guard.sh api/src/DataControls.Api/Engine/EngineModule.cs api/src/DataControls.Api/Engine/EngineOptions.cs api/src/DataControls.Api/Errors/ApiException.cs api/src/DataControls.Api/Errors/ApiExceptionHandler.cs api/src/DataControls.Api/Errors/ErrorCodes.cs api/src/DataControls.Api/Errors/ErrorsModule.cs api/src/DataControls.Api/Errors/ModelStateErrors.cs api/src/DataControls.Api/Errors/ProblemResult.cs api/src/DataControls.Api/Errors/ProblemWriter.cs api/src/DataControls.Api/Errors/RequestCheck.cs api/src/DataControls.Api/Errors/RequestError.cs api/src/DataControls.Api/Errors/RequestErrorCodes.cs api/src/DataControls.Api/Errors/RequestErrorParams.cs api/src/DataControls.Api/Errors/StatusCodeProblems.cs api/src/DataControls.Api/Glossary/GlossaryModule.cs api/src/DataControls.Api/Glossary/GlossaryOptions.cs api/src/DataControls.Api/Health/HealthController.cs api/src/DataControls.Api/Health/HealthModule.cs api/src/DataControls.Api/Health/HealthResponse.cs api/src/DataControls.Api/Health/HealthService.cs api/src/DataControls.Api/Hosting/CorrelationId.cs api/src/DataControls.Api/Hosting/CorsSettings.cs api/src/DataControls.Api/Hosting/DotEnvConfigurationProvider.cs api/src/DataControls.Api/Hosting/DotEnvConfigurationSource.cs api/src/DataControls.Api/Hosting/HostingModule.cs api/src/DataControls.Api/Hosting/JsonDefaults.cs api/src/DataControls.Api/Hosting/LanguageRule.cs api/src/DataControls.Api/Hosting/RequestBodyLimitMiddleware.cs api/src/DataControls.Api/Hosting/RequestContext.cs api/src/DataControls.Api/Hosting/RequestContextAccessor.cs api/src/DataControls.Api/Hosting/RequestContextMiddleware.cs api/src/DataControls.Api/Hosting/SupportedLanguages.cs api/src/DataControls.Api/Hosting/UtcClock.cs api/src/DataControls.Api/Hosting/UtcTimestampJsonConverter.cs api/src/DataControls.Api/Persistence/Control.cs api/src/DataControls.Api/Persistence/ControlVersion.cs api/src/DataControls.Api/Persistence/DatabaseOptions.cs api/src/DataControls.Api/Persistence/DqDbContext.cs api/src/DataControls.Api/Persistence/EntityConfigurations.cs api/src/DataControls.Api/Persistence/PersistenceModule.cs api/src/DataControls.Api/Persistence/Run.cs api/src/DataControls.Api/Persistence/RunOutcome.cs api/src/DataControls.Api/Persistence/RunResult.cs api/src/DataControls.Api/Persistence/RunStatus.cs api/src/DataControls.Api/Persistence/RunStatusNames.cs api/src/DataControls.Api/Persistence/SqlFailure.cs api/src/DataControls.Api/Persistence/StoredDefinition.cs api/src/DataControls.Api/Persistence/UtcDateTimeConverter.cs api/src/DataControls.Api/Program.cs api/src/DataControls.Api/Runs/RunTimeZone.cs api/src/DataControls.Api/Runs/RunsModule.cs api/src/DataControls.Api/Runs/RunsOptions.cs api/tests/DataControls.Api.Tests/Errors/ErrorCodesContractTests.cs api/tests/DataControls.Api.Tests/Errors/ModelStateErrorsTests.cs api/tests/DataControls.Api.Tests/Errors/ProblemShapeTests.cs api/tests/DataControls.Api.Tests/Health/HealthTests.cs api/tests/DataControls.Api.Tests/Hosting/ConfigurationTests.cs api/tests/DataControls.Api.Tests/Hosting/CorrelationIdTests.cs api/tests/DataControls.Api.Tests/Hosting/LanguageTests.cs api/tests/DataControls.Api.Tests/Persistence/RoundTripTests.cs api/tests/DataControls.Api.Tests/Support/ApiFactory.cs api/tests/DataControls.Api.Tests/Support/ApiFixture.cs api/tests/DataControls.Api.Tests/Support/ContractFiles.cs api/tests/DataControls.Api.Tests/Support/EngineStub.cs api/tests/DataControls.Api.Tests/Support/HttpAssert.cs api/tests/DataControls.Api.Tests/Support/ProbeController.cs api/tests/DataControls.Api.Tests/Support/TestData.cs)
+exit=0

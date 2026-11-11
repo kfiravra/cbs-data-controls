@@ -1,0 +1,32 @@
+# phase-2 gate: /check --tests (2026-11-11T00:35+0200, branch feat/api, head a781c91 plus the working tree)
+
+## api-build: (cd api && dotnet build -warnaserror)
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  DataControls.Api -> api/src/DataControls.Api/bin/Debug/net10.0/DataControls.Api.dll
+  DataControls.Api.Tests -> api/tests/DataControls.Api.Tests/bin/Debug/net10.0/DataControls.Api.Tests.dll
+Build succeeded.
+    0 Warning(s)
+    0 Error(s)
+Time Elapsed 00:00:02.39
+exit=0
+
+## api-format: (cd api && dotnet format --verify-no-changes)
+exit=0
+
+## api-test: (cd api && dotnet test)
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  DataControls.Api -> api/src/DataControls.Api/bin/Debug/net10.0/DataControls.Api.dll
+  DataControls.Api.Tests -> api/tests/DataControls.Api.Tests/bin/Debug/net10.0/DataControls.Api.Tests.dll
+Test run for api/tests/DataControls.Api.Tests/bin/Debug/net10.0/DataControls.Api.Tests.dll (.NETCoreApp,Version=v10.0)
+VSTest version 18.0.2 (x64)
+Starting test execution, please wait...
+A total of 1 test files matched the specified pattern.
+Passed!  - Failed:     0, Passed:   159, Skipped:     0, Total:   159, Duration: 8 s - DataControls.Api.Tests.dll (net10.0)
+exit=0
+
+## print-guard: (cd . && bash /home/kfir/projects/cbs-api/.claude/hooks/print-guard.sh <the touched .cs files>)
+exit=0
+
+RESULT: green

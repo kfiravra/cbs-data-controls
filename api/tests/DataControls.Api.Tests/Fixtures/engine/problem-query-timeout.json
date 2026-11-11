@@ -1,0 +1,10 @@
+{
+  "type": "about:blank",
+  "title": "QUERY_TIMEOUT",
+  "status": 504,
+  "code": "QUERY_TIMEOUT",
+  "params": {
+    "timeoutSeconds": 30
+  },
+  "correlationId": "5f2c0d8e9a7b4c1d8e3f6a2b7c9d0e1f"
+}

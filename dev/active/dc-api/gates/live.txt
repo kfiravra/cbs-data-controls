@@ -1,0 +1,141 @@
+dc-api live pass, 2026-11-11, branch feat/api after the merge of origin/main (0e07fca, the engine, PR #2). Two passes: 08:41 and, on the final code, 08:56.
+
+Engine: started from this worktree at 08:41, stopped at 08:43.
+  cd engine && uv sync
+  ENGINE_DB_HOST=127.0.0.1 ENGINE_DB_PORT=1433 uv run python -m uvicorn app.main:create_app --factory --host 127.0.0.1 --port 8000
+  (the two ENGINE_DB_* values are those of .env.example; this worktree's .env has no engine block)
+  GET http://127.0.0.1:8000/health -> {"status":"ok","database":"ok","glossaryVersion":"1.0.0","engineVersion":"0.1.0"}
+  GET http://localhost:8000/health -> 200 (the api's default Engine:BaseUrl)
+
+1. cd api && DC_LIVE=1 dotnet test --filter Category=Live        (08:41:51 to 08:41:58)
+  Passed DataControls.Api.Tests.Live.LiveEngineTests.Every_example_flags_the_expected_records_on_its_run_date_and_on_its_alternate_dates [1 s]
+  Passed DataControls.Api.Tests.Live.LiveEngineTests.Glossary_is_served_from_the_engine [61 ms]
+  Passed DataControls.Api.Tests.Live.LiveEngineTests.Every_semantic_fixture_is_rejected_by_the_engine_with_its_code_and_path [103 ms]
+Total tests: 3
+     Passed: 3
+ Total time: 4.2027 Seconds
+
+2. One walk through api/requests.http, in the file's order, against the api started as the file says
+   (cd api && dotnet run --project src/DataControls.Api; http://localhost:5000, Development, Engine:BaseUrl at its default)
+   GET /api/v1/health before the walk -> {"status":"ok","database":"ok","engine":"ok","version":"1.0.0"}
+
+ 1. 200 ok  GET /api/v1/health
+      Health: status=ok database=ok engine=ok version=1.0.0
+ 2. 200 ok  GET /api/v1/glossary
+      Glossary: glossaryVersion=1.0.0 entities=3
+ 3. 200 ok  GET /api/v1/controls?search=&rootEntity=employee&active=all&page=1&pageSize=25
+      List controls: total=0 items=0
+ 4. 201 ok  POST /api/v1/controls
+      Create a control (the definition of contracts/examples/minor-high-salary.json): id=1462 version=1 isActive=True
+ 5. 200 ok  GET /api/v1/controls/1462
+      Read a control: id=1462 version=1 isActive=True
+ 6. 200 ok  PUT /api/v1/controls/1462
+      Update a control: id=1462 version=2 isActive=True
+ 7. 200 ok  GET /api/v1/controls/1462/versions
+      List a control's versions, newest first: [{'version': 2, 'createdAt': '2026-11-11T06:42:48.902Z', 'definitionHash': '32c001bc3989fff1de6d6284cfdacef025019eb9fa93
+ 8. 200 ok  GET /api/v1/controls/1462/versions/1
+      Read one version: version=1
+ 9. 200 ok  POST /api/v1/controls/validate
+      Validate a definition without saving it: valid=True sentence=תאריך סיום העסקה לפני תאריך תחילת העסקה
+10. 201 ok  POST /api/v1/controls/1462/runs
+      Start a run: status=succeeded id=679 totalCount=1 storedCount=1 sentence=גיל מתחת ל־18 וגם שכר מעל 20,000 ₪
+11. 200 ok  GET /api/v1/controls/1462/runs?page=1&pageSize=25
+      List a control's runs, newest first: total=1 items=1
+12. 200 ok  GET /api/v1/runs/679
+      Read a run: status=succeeded id=679 totalCount=1 storedCount=1 sentence=גיל מתחת ל־18 וגם שכר מעל 20,000 ₪
+13. 200 ok  GET /api/v1/runs/679/results?page=1&pageSize=25&search=&condition=c1&sort=display&dir=asc
+      A page of a run's results, from the stored snapshot: total=1 items=1 keys=1052
+14. 200 ok  POST /api/v1/suggestions
+      Ask for suggestions: items=4
+15. 201 ok  POST /api/v1/suggestions/accept
+      Accept suggestions: items=1
+16. 204 ok  DELETE /api/v1/controls/1462
+      Archive a control: 
+16 requests, 0 unexpected
+--- extra checks on the live pair, 08:43:03
+raw forward (value with + < > & and a quote): True שם פרטי: a+b <c> & 'd'  ""
+unparsable json: 400 REQUEST_INVALID [{'path': '', 'code': 'MALFORMED', 'params': {}}]
+wrong content type: {"type":"about:blank","title":"REQUEST_INVALID","status":415,"code":"REQUEST_INVALID","params":{},"correlationId":"f1807374520f419eb117af1295fa3bbe"} 415
+semantic error relayed from the engine: {"type":"about:blank","title":"DEFINITION_INVALID","status":422,"code":"DEFINITION_INVALID","params":{},"errors":[{"code":"UNKNOWN_FIELD","path":"/where/children/0/left","nodeId":"c1","params":{"entity":"employee","field":"no_such_field"}}],"correlationId":"7b23e6dc93fb4fd9bd1ceb4f7715f6a1"} 422
+left active by the walk: 1 [(1463, 'Termination before hire')]
+archive the control the walk accepted (1463): 204
+active controls after the walk: 0
+
+After the walk: both controls it created (1462 by the file's last request, 1463 by the line above) are
+archived, through the api. The api's log of the pass holds no password, connection string or SQL text
+(grep for password, "select ", "insert ", "Server=": 0 lines). Both processes were stopped with SIGTERM;
+ports 5000 and 8000 are free. The database container was not touched (Up 9 hours, healthy).
+
+
+============================================================================================================
+Second pass, on the final code (after the security audit fixes), 2026-11-11 08:56 to 08:57
+Same commands. Engine started from this worktree at 08:56, stopped at 08:57.
+
+1. cd api && DC_LIVE=1 dotnet test --filter Category=Live        (08:56:36 to 08:56:44)
+  Passed DataControls.Api.Tests.Live.LiveEngineTests.Every_example_flags_the_expected_records_on_its_run_date_and_on_its_alternate_dates [1 s]
+  Passed DataControls.Api.Tests.Live.LiveEngineTests.Glossary_is_served_from_the_engine [67 ms]
+  Passed DataControls.Api.Tests.Live.LiveEngineTests.Every_semantic_fixture_is_rejected_by_the_engine_with_its_code_and_path [116 ms]
+Total tests: 3
+     Passed: 3
+ Total time: 4.5625 Seconds
+
+2. One walk through api/requests.http, then the inputs the audit and the engine's line were about
+
+walk on the final code, 2026-11-11 08:57:03
+health before the walk: {"status":"ok","database":"ok","engine":"ok","version":"1.0.0"}
+ 1. 200 ok  GET /api/v1/health
+      Health: status=ok database=ok engine=ok version=1.0.0
+ 2. 200 ok  GET /api/v1/glossary
+      Glossary: glossaryVersion=1.0.0 entities=3
+ 3. 200 ok  GET /api/v1/controls?search=&rootEntity=employee&active=all&page=1&pageSize=25
+      List controls: total=2 items=2
+ 4. 201 ok  POST /api/v1/controls
+      Create a control (the definition of contracts/examples/minor-high-salary.json): id=1676 version=1 isActive=True
+ 5. 200 ok  GET /api/v1/controls/1676
+      Read a control: id=1676 version=1 isActive=True
+ 6. 200 ok  PUT /api/v1/controls/1676
+      Update a control: id=1676 version=2 isActive=True
+ 7. 200 ok  GET /api/v1/controls/1676/versions
+      List a control's versions, newest first: [{'version': 2, 'createdAt': '2026-11-11T06:57:04.548Z', 'definitionHash': '32c001bc3989fff1de6d6284cfdacef025019eb9fa93
+ 8. 200 ok  GET /api/v1/controls/1676/versions/1
+      Read one version: version=1
+ 9. 200 ok  POST /api/v1/controls/validate
+      Validate a definition without saving it: valid=True sentence=תאריך סיום העסקה לפני תאריך תחילת העסקה
+10. 201 ok  POST /api/v1/controls/1676/runs
+      Start a run: status=succeeded id=795 totalCount=1 storedCount=1 sentence=גיל מתחת ל־18 וגם שכר מעל 20,000 ₪
+11. 200 ok  GET /api/v1/controls/1676/runs?page=1&pageSize=25
+      List a control's runs, newest first: total=1 items=1
+12. 200 ok  GET /api/v1/runs/795
+      Read a run: status=succeeded id=795 totalCount=1 storedCount=1 sentence=גיל מתחת ל־18 וגם שכר מעל 20,000 ₪
+13. 200 ok  GET /api/v1/runs/795/results?page=1&pageSize=25&search=&condition=c1&sort=display&dir=asc
+      A page of a run's results, from the stored snapshot: total=1 items=1 keys=1052
+14. 200 ok  POST /api/v1/suggestions
+      Ask for suggestions: items=4
+15. 201 ok  POST /api/v1/suggestions/accept
+      Accept suggestions: items=1
+16. 204 ok  DELETE /api/v1/controls/1676
+      Archive a control: 
+16 requests, 0 unexpected
+walk exit 0
+--- extra checks on the live pair, 08:57:05
+value with + < > & and a quote, forwarded as sent: 200 valid=True שם פרטי: a+b <c> & 'd' 
+240 empty children (answered by the api): 422 DEFINITION_INVALID  errors=241 first={"code": "SCHEMA_VIOLATION", "path": "/where/children", "params": {}}
+241 empty children (left to the engine): 422 DEFINITION_INVALID  errors=1 first={"code": "TOO_MANY_CONDITIONS", "path": "/where", "params": {"max": 30, "actual": 241}}
+50,000 empty children (left to the engine): 422 DEFINITION_INVALID  errors=1 first={"code": "TOO_MANY_CONDITIONS", "path": "/where", "params": {"max": 30, "actual": 50000}}
+   took 0.05s 
+241 well-formed conditions (left to the engine): 422 DEFINITION_INVALID  errors=1 first={"code": "TOO_MANY_CONDITIONS", "path": "/where", "params": {"max": 30, "actual": 241}}
+values [1e30,1] (left to the engine): 422 DEFINITION_INVALID  errors=1 first={"code": "VALUE_TYPE_MISMATCH", "path": "/where/children/0/values", "nodeId": "c1", "params": {"field": "age", "type": "number", "index": 0}}
+half a surrogate pair in a value: 400 REQUEST_INVALID  errors=1 first={"path": "", "code": "MALFORMED", "params": {}}
+half a surrogate pair, sent as text/json: 400 REQUEST_INVALID  errors=1 first={"path": "", "code": "MALFORMED", "params": {}}
+member name of 500,000 characters over 9,000 items: 422 DEFINITION_INVALID  errors=1 first={"code": "SCHEMA_VIOLATION", "path": "", "params": {}}
+   took 0.02s 
+unparsable json: 400 REQUEST_INVALID  errors=1 first={"path": "", "code": "MALFORMED", "params": {}}
+wrong content type: 415 REQUEST_INVALID  
+left active by the walk: 1 [(1677, 'Termination before hire')]
+archive the control the walk accepted (1677): 204
+active controls after the walk: 0
+
+After the walk: both controls it created (1676 and 1677) are archived, through the api. The api's log of the
+pass holds no password, connection string or SQL text (0 lines) and four lines "A definition was left to the
+engine's schema check". Both processes were stopped with SIGTERM; ports 5000 and 8000 are free. The database
+container was not touched (Up 9 hours, healthy).

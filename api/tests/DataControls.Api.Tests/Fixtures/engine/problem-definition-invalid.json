@@ -1,0 +1,19 @@
+{
+  "type": "about:blank",
+  "title": "DEFINITION_INVALID",
+  "status": 422,
+  "code": "DEFINITION_INVALID",
+  "params": {},
+  "errors": [
+    {
+      "code": "UNKNOWN_FIELD",
+      "path": "/where/children/1/left",
+      "nodeId": "c2",
+      "params": {
+        "entity": "employee",
+        "field": "nickname"
+      }
+    }
+  ],
+  "correlationId": "5f2c0d8e9a7b4c1d8e3f6a2b7c9d0e1f"
+}

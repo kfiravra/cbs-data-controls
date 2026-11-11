@@ -1,0 +1,144 @@
+# One request per row of the application table in contracts/api.md (§4), in the table's order except for the
+# archive, which comes last because an archived control cannot be run.
+# Works in VS Code (REST Client), Rider and Visual Studio. Start the api first:
+#   cd api && dotnet run --project src/DataControls.Api
+# Run "Create a control" before the requests that use {{controlId}}, and "Start a run" before the ones that
+# use {{runId}}: each takes its id from the response of that request.
+
+@host = http://localhost:5000
+@api = {{host}}/api/v1
+
+### Health: always 200; what is down is in the body
+GET {{api}}/health
+
+### Glossary: the engine's public glossary, cached by the api
+GET {{api}}/glossary
+
+### List controls
+GET {{api}}/controls?search=&rootEntity=employee&active=all&page=1&pageSize=25
+
+### Create a control (the definition of contracts/examples/minor-high-salary.json)
+# @name createControl
+POST {{api}}/controls
+Content-Type: application/json
+
+{
+  "name": "Minors with a high salary",
+  "description": "Employees under 18 whose salary is above 15,000.",
+  "definition": {
+    "schemaVersion": 1,
+    "rootEntity": "employee",
+    "where": {
+      "type": "group",
+      "op": "and",
+      "children": [
+        { "type": "condition", "id": "c1", "left": { "field": "age" }, "operator": "lt", "value": 18 },
+        { "type": "condition", "id": "c2", "left": { "field": "salary" }, "operator": "gt", "value": 15000 }
+      ]
+    }
+  }
+}
+
+###
+@controlId = {{createControl.response.body.$.id}}
+@concurrencyToken = {{createControl.response.body.$.concurrencyToken}}
+
+### Read a control
+GET {{api}}/controls/{{controlId}}
+
+### Update a control: a changed definition becomes version 2
+PUT {{api}}/controls/{{controlId}}
+Content-Type: application/json
+
+{
+  "name": "Minors with a high salary",
+  "description": "Employees under 18 whose salary is above 20,000.",
+  "concurrencyToken": "{{concurrencyToken}}",
+  "definition": {
+    "schemaVersion": 1,
+    "rootEntity": "employee",
+    "where": {
+      "type": "group",
+      "op": "and",
+      "children": [
+        { "type": "condition", "id": "c1", "left": { "field": "age" }, "operator": "lt", "value": 18 },
+        { "type": "condition", "id": "c2", "left": { "field": "salary" }, "operator": "gt", "value": 20000 }
+      ]
+    }
+  }
+}
+
+### List a control's versions, newest first
+GET {{api}}/controls/{{controlId}}/versions
+
+### Read one version
+GET {{api}}/controls/{{controlId}}/versions/1
+
+### Validate a definition without saving it
+POST {{api}}/controls/validate
+Content-Type: application/json
+
+{
+  "definition": {
+    "schemaVersion": 1,
+    "rootEntity": "employee",
+    "where": {
+      "type": "group",
+      "op": "and",
+      "children": [
+        { "type": "condition", "id": "c1", "left": { "field": "termination_date" }, "operator": "lt", "right": { "field": "hire_date" } }
+      ]
+    }
+  }
+}
+
+### Start a run: 201 with the run, also when the run failed
+# @name startRun
+POST {{api}}/controls/{{controlId}}/runs
+Content-Type: application/json
+
+{ "runDate": "2026-11-01" }
+
+###
+@runId = {{startRun.response.body.$.id}}
+
+### List a control's runs, newest first
+GET {{api}}/controls/{{controlId}}/runs?page=1&pageSize=25
+
+### Read a run
+GET {{api}}/runs/{{runId}}
+
+### A page of a run's results, from the stored snapshot
+GET {{api}}/runs/{{runId}}/results?page=1&pageSize=25&search=&condition=c1&sort=display&dir=asc
+
+### Ask for suggestions
+POST {{api}}/suggestions
+Content-Type: application/json
+
+{ "rootEntity": "employee", "max": 5 }
+
+### Accept suggestions: every item becomes a control, or none does
+POST {{api}}/suggestions/accept
+Content-Type: application/json
+
+{
+  "items": [
+    {
+      "name": "Termination before hire",
+      "definition": {
+        "schemaVersion": 1,
+        "rootEntity": "employee",
+        "where": {
+          "type": "group",
+          "op": "and",
+          "children": [
+            { "type": "condition", "id": "c1", "left": { "field": "termination_date" }, "operator": "lt", "right": { "field": "hire_date" } }
+          ]
+        }
+      }
+    }
+  ]
+}
+
+### Archive a control: 204, and 204 again on a repeat (last, because an archived control cannot be run)
+DELETE {{api}}/controls/{{controlId}}

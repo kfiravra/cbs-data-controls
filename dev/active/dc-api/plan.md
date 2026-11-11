@@ -48,7 +48,9 @@ Settled here, inside the architecture:
     for one attempt timeout at most. (§7 asks for "a single retry".)
 11. **The circuit breaker counts connection errors, attempt timeouts, 502 and 503**, and opens at 5 calls with
     half of them failed. A 504 is one control's slow query, not an unhealthy engine. (The library defaults need
-    100 calls in 30 seconds and would never open here.)
+    100 calls in 30 seconds and would never open here.) Narrowed in the Phase 2 review (notes, unattended
+    decision 12): a 503 that carries the engine's own problem document is not counted, and a health probe is
+    neither retried nor counted.
 12. **A run outlives its request.** Once the run row exists the engine call ignores the client's disconnect, so a
     closed tab does not leave a `running` row; host shutdown still cancels it. A run cut by a crash stays
     `running` and the next run of the control supersedes it in the list (a stated limitation, no sweeper).
@@ -152,47 +154,46 @@ specification each step builds from. Where `contracts/api.md` or `contracts/erro
 contract wins and the plan line is corrected in the same step.
 
 ### Before Phase 1 (nothing here is this session's work)
-- [ ] dc-contracts has passed its gate and is merged: `contracts/` and `sql/` exist on main.
-- [ ] SQL Server is up and initialised from the main tree (`docker compose up -d db && scripts/db-init.sh`).
-- [ ] On Kfir's word, from the main tree: `git worktree add ../cbs-api -b feat/api origin/main`,
-      `cp .env ../cbs-api/.env`, `mkdir -p ../cbs-api/dev/active && mv dev/active/dc-api ../cbs-api/dev/active/`.
-      This task's session runs in `../cbs-api` on Opus.
+- [x] dc-contracts has passed its gate and is merged: `contracts/` and `sql/` exist on main (`f9928bf`, #1).
+- [x] SQL Server is up and initialised from the main tree (`data-controls-db-1`, healthy on 2026-11-11).
+- [x] The worktree `../cbs-api` on `feat/api` exists with its `.env`; the task folder came with git (task folders
+      are tracked since `bce225b`, so the `mv` step fell away).
 
 ### Phase 1: skeleton, request pipeline, persistence model
-- [ ] Contract diff: read `contracts/api.md`, `contracts/errors.md` and `sql/30_dq_tables.sql` as merged and
+- [x] Contract diff: read `contracts/api.md`, `contracts/errors.md` and `sql/30_dq_tables.sql` as merged and
       compare them with Design C and Design H. Correct the plan where they differ. Anything the api needs that
       the contract still leaves open goes to `notes.md` Blockers and to Kfir before code depends on it.
-- [ ] `api/` skeleton per Design A: solution, the two projects, `Directory.Build.props`,
+- [x] `api/` skeleton per Design A: solution, the two projects, `Directory.Build.props`,
       `Directory.Packages.props`, `.editorconfig`, launch profile on `http://localhost:5000`, the content root
       fixed to the app's own folder (Design I). Remove the template's weather sample, HTTPS redirect,
       authorization call and `.http` file.
-- [ ] Configuration per Design B: options classes with validation and `ValidateOnStart()`, the Development
+- [x] Configuration per Design B: options classes with validation and `ValidateOnStart()`, the Development
       `.env` source, the api block of `.env.example`.
-- [ ] Errors per Design D: `ApiException`, `ErrorCodes`, the problem writer, the `IExceptionHandler`, the
+- [x] Errors per Design D: `ApiException`, `ErrorCodes`, the problem writer, the `IExceptionHandler`, the
       model-state mapping, the `/api/{**rest}` catch-all.
-- [ ] Correlation id and language middleware per Design D.
-- [ ] Persistence per Design C: entities with their behaviour, configurations, the UTC converter, `DqDbContext`.
-- [ ] `GET /api/v1/health` with the database probe (the engine probe arrives in Phase 2).
-- [ ] Test support per Design G: `ApiFactory`, a minimal `EngineStub`, the marker and its sweep, the
+- [x] Correlation id and language middleware per Design D.
+- [x] Persistence per Design C: entities with their behaviour, configurations, the UTC converter, `DqDbContext`.
+- [x] `GET /api/v1/health` with the database probe (the engine probe arrives in Phase 2).
+- [x] Test support per Design G: `ApiFactory`, a minimal `EngineStub`, the marker and its sweep, the
       "SQL Server is not reachable" failure message.
-- [ ] Tests: the problem shape for an unknown api path, a malformed body and a missing required member; the
+- [x] Tests: the problem shape for an unknown api path, a malformed body and a missing required member; the
       correlation id echoed and generated; language resolution; health with the database up; `ErrorCodes`
       against `contracts/errors.md`; one row of each `dq` table written and read back through the model.
-- [ ] `.claude/skills/dc-api/SKILL.md`: replace "the task plan picks" with decision 1, and add the package pins.
+- [x] `.claude/skills/dc-api/SKILL.md`: replace "the task plan picks" with decision 1, and add the package pins.
 
 Verify: `/check --tests` (`cd api && dotnet build -warnaserror && dotnet format --verify-no-changes && dotnet test`)
 Review: `/phase-review api`
 Commit: `feat(api): host skeleton, problem details and the dq persistence model`
 
 ### Phase 2: engine client, glossary, validation
-- [ ] `EngineClient`, the forwarding handler and the resilience pipeline per Design E.
-- [ ] The engine error map per Design E, one table, tested against `contracts/errors.md`.
-- [ ] Engine fixtures under `tests/.../Fixtures/engine/`, shaped by `contracts/api.md` as written, with
+- [x] `EngineClient`, the forwarding handler and the resilience pipeline per Design E.
+- [x] The engine error map per Design E, one table, tested against `contracts/errors.md`.
+- [x] Engine fixtures under `tests/.../Fixtures/engine/`, shaped by `contracts/api.md` as written, with
       `sentenceParts` and `textParts` where the contract puts them.
-- [ ] Glossary cache, `GET /glossary`, the startup probe, the engine half of `/health` (Design F).
-- [ ] `DefinitionSchemaValidator` over the embedded schema with paths per dc-contracts H4a (Design F, H1), and
+- [x] Glossary cache, `GET /glossary`, the startup probe, the engine half of `/health` (Design F).
+- [x] `DefinitionSchemaValidator` over the embedded schema with paths per dc-contracts H4a (Design F, H1), and
       `POST /controls/validate`. Re-run the probe of `research/schema-probe.md` on the real schema first.
-- [ ] Tests: calls reaching the stub per failure kind (connection error 2, 503 2, 504 1, 422 1, 500 1, attempt
+- [x] Tests: calls reaching the stub per failure kind (connection error 2, 503 2, 504 1, 422 1, 500 1, attempt
       timeout 1); timeout and connection error answer 503 `ENGINE_UNAVAILABLE`; the breaker opens and fails
       fast (its own factory); correlation id and language forwarded; the glossary fetched once for two reads,
       served stale when the engine is down, 503 when it was never fetched; every schema-layer fixture of
@@ -206,9 +207,9 @@ Review: `/phase-review api`
 Commit: `feat(api): engine client, glossary cache and definition validation`
 
 ### Phase 3: controls
-- [ ] `DefinitionHasher` and the `Control` and `ControlVersion` behaviour (create, rename, add version, archive).
-- [ ] `ControlService` and `ControlsController`: create, read, update, archive, list, versions (Design F).
-- [ ] Tests: create answers 201 with `Location` and version 1; a Hebrew name comes back intact and is found by
+- [x] `DefinitionHasher` and the `Control` and `ControlVersion` behaviour (create, rename, add version, archive).
+- [x] `ControlService` and `ControlsController`: create, read, update, archive, list, versions (Design F).
+- [x] Tests: create answers 201 with `Location` and version 1; a Hebrew name comes back intact and is found by
       `search`; read and both 404s; an update with a changed definition writes version n+1; a rename keeps the
       version and works with the engine down; a stale token is 409 and a malformed one 400; `PUT` on an archived
       control is 409; archive is 204 twice; list filters, order, paging, a page past the end and bad paging
@@ -220,10 +221,10 @@ Review: `/phase-review api`
 Commit: `feat(api): controls with versions, optimistic concurrency and archive`
 
 ### Phase 4: runs and the snapshot
-- [ ] `Run` and `RunResult` behaviour, `RunService.StartAsync` (Design F): the run row, the engine call, the
+- [x] `Run` and `RunResult` behaviour, `RunService.StartAsync` (Design F): the run row, the engine call, the
       snapshot and the close in one `SaveChanges`, each failure kind closed with its code.
-- [ ] The results query, run history, `GET /runs/{id}` with `previousRun`, and `lastRun` in the controls list.
-- [ ] Tests: a run answers 201 with `Location`, counts and summary; `sentenceParts` and each reason's
+- [x] The results query, run history, `GET /runs/{id}` with `previousRun`, and `lastRun` in the controls list.
+- [x] Tests: a run answers 201 with `Location`, counts and summary; `sentenceParts` and each reason's
       `textParts` come back exactly as the stub sent them; for each of the six examples the keys and matched
       ids of `expected` come back in order; total above stored sets `capExceeded`; engine 422 closes the run
       as `CONTROL_DEFINITION_OUTDATED`, 504 as `timed_out` with `QUERY_TIMEOUT`, 503 as `DATABASE_UNAVAILABLE`,
@@ -232,26 +233,26 @@ Commit: `feat(api): controls with versions, optimistic concurrency and archive`
       clock); a malformed `runDate` is 400; 60 violations page as 25, 25, 10; `sort` and `dir`; `search` finds
       Hebrew text and treats `%` and `_` literally; `condition` filters; `previousRun`; run history newest
       first.
-- [ ] Measure one 5,000-violation snapshot and write the time into `gates/phase-4.txt`.
+- [x] Measure one 5,000-violation snapshot and write the time into `gates/phase-4.txt`.
 
 Verify: `/check --tests`
 Review: `/phase-review api`
 Commit: `feat(api): runs, result snapshots and the results query`
 
 ### Phase 5: suggestions, OpenAPI, static hosting
-- [ ] `POST /suggestions` and `POST /suggestions/accept` (Design F), the accept through `ControlService`.
-- [ ] OpenAPI: document title and version, a response type per status on every action, `MapOpenApi()` in every
+- [x] `POST /suggestions` and `POST /suggestions/accept` (Design F), the accept through `ControlService`.
+- [x] OpenAPI: document title and version, a response type per status on every action, `MapOpenApi()` in every
       environment; Swagger UI at `/api/docs` over `/openapi/v1.json`.
-- [ ] Static hosting per Design D: static files, `index.html` not cached, the SPA fallback behind the api
+- [x] Static hosting per Design D: static files, `index.html` not cached, the SPA fallback behind the api
       catch-all; CORS from `Cors:AllowedOrigins`.
-- [ ] `api/requests.http`: one request per row of the application table in `contracts/api.md`.
-- [ ] The conformance test: every method and path of that table is mapped, and nothing else is under `/api/v1`.
-- [ ] `LiveEngineTests` per Design G, skipped unless `DC_LIVE=1`.
-- [ ] `README.md`: the api section only (run, configure, test, `/api/docs`, the publish command). Nothing else
+- [x] `api/requests.http`: one request per row of the application table in `contracts/api.md`.
+- [x] The conformance test: every method and path of that table is mapped, and nothing else is under `/api/v1`.
+- [x] `LiveEngineTests` per Design G, skipped unless `DC_LIVE=1`.
+- [x] `README.md`: the api section only (run, configure, test, `/api/docs`, the publish command). Nothing else
       in the README and no file under `docs/` (decision 26).
-- [ ] The published app started once from another directory, per Design I, after the tests of this phase are
+- [x] The published app started once from another directory, per Design I, after the tests of this phase are
       green and before its review, so a fix it calls for lands in this phase.
-- [ ] Tests: `/suggestions` forwards the body and the language and returns the engine's body; accept creates
+- [x] Tests: `/suggestions` forwards the body and the language and returns the engine's body; accept creates
       all or none and names the failing index; the OpenAPI document lists every contract path; `/api/docs`
       answers; `/` and an unknown client path return `index.html`; an unknown api path is a 404 problem; a
       preflight passes only for a configured origin.
@@ -261,17 +262,25 @@ Review: `/phase-review api`
 Commit: `feat(api): suggestions, openapi and static hosting`
 
 ### Gate
-- [ ] `/check all --tests` from the worktree; the output saved as `gates/final.txt`.
-- [ ] `dotnet list api package --include-transitive` shows JsonSchema.Net 8.0.5, JsonPointer.Net 6.0.1 and
+- [x] `/check all --tests` from the worktree; the output saved as `gates/final.txt`.
+- [x] `dotnet list api package --include-transitive` shows JsonSchema.Net 8.0.5, JsonPointer.Net 6.0.1 and
       Json.More.Net 2.2.0, and no Microsoft package at 11.x.
-- [ ] Live pass, if the engine worktree answers `GET /health`: state the minutes and wait, then
+- [x] Live pass, if the engine worktree answers `GET /health`: state the minutes and wait, then
       `DC_LIVE=1 dotnet test --filter Category=Live`, and walk `api/requests.http` once. If the engine is not up,
       write the hand-off to dc-delivery into `notes.md`; the tests are ready to run there.
-- [ ] `notes.md` holds the Log line of the start from another directory (Design I) and a Log line per review in
+      (2026-11-11 01:35: no engine answers on this machine and `feat/engine` is not merged; the step waited.
+      2026-11-11 08:43: done after the merge of PR #2, on Kfir's word, with the engine started from this
+      worktree: 3 live tests passed, 16 of 16 requests of the walk as expected; repeated at 08:57 on the
+      final code, after the security audit's fixes, with the same result; `gates/live.txt`.)
+- [x] `notes.md` holds the Log line of the start from another directory (Design I) and a Log line per review in
       the form of decision 27.
 - [ ] `/ship`. In its docs-drift step, edit only what decision 26 gives this task; everything else goes, item by
       item, into the PR body under a fifth heading, "Docs for dc-delivery", taken from the list in `notes.md`
       and from the step's own table. Then the PR and the merge on Kfir's word.
+      (2026-11-11 01:35: checks, secrets and docs drift are done and the PR body is `pr-body.md` in this
+      folder; the push and the PR wait for the live pass. 2026-11-11 morning: live pass and security audit
+      done, checks and secrets scan repeated; the push and the PR follow on Kfir's word of that morning. The
+      box stays open for the merge, which is his, and for the move of this folder to `dev/completed/`.)
 
 ## Design
 
@@ -387,10 +396,14 @@ static files · controllers, `/openapi/v1.json`, `/api/docs` · the `/api/{**res
   factories (`ApiException.ControlNotFound(id)`). The `IExceptionHandler` writes it; it maps a connection-level
   `SqlException` to 503 `DATABASE_UNAVAILABLE`, a request aborted by the client to no response, and everything
   else to 500 `INTERNAL_ERROR`, logged with the correlation id and never echoed.
-- **Request errors**: `InvalidModelStateResponseFactory` answers 400 `REQUEST_INVALID` with `errors: [{ path,
-  code, params }]`. The codes are `REQUIRED`, `TOO_LONG`, `OUT_OF_RANGE` and `MALFORMED`: validation attributes
-  carry the code as their message, and any message that is not one of the four (a binder's English sentence)
-  becomes `MALFORMED`. Bodies are capped at 1 MB.
+- **Request errors** (corrected by the contract diff of Phase 1): 400 `REQUEST_INVALID` with `errors: [{ path,
+  code, params }]`. `REQUIRED`, `TOO_LONG` (with `max`) and `OUT_OF_RANGE` (with `min` and `max`) come from one
+  explicit check per request (`RequestCheck`), because the contract counts characters after trimming and wants
+  the bounds as params, which a validation attribute's message cannot carry. A binder failure (a member of the
+  wrong JSON type, a query value that is not an integer, text that does not parse) goes through
+  `InvalidModelStateResponseFactory` and is always `MALFORMED`, at the JSON Pointer made from the binder's JSON
+  path or under the query parameter's name. Bodies are capped at 1 MB (413); a media type that is not JSON is
+  415; both are `REQUEST_INVALID` without `errors`.
 - **Correlation id**: `X-Correlation-Id` is taken when it matches `^[A-Za-z0-9._-]{1,64}$`, else a new GUID in
   `N` form. It is put on the response, in a log scope, in every problem and on every engine call.
 - **Language**: the primary subtag of the first range of `Accept-Language` when the glossary's `languages` list
@@ -429,8 +442,10 @@ One typed client, `EngineClient`: `GetHealthAsync`, `GetGlossaryAsync`, `Validat
 | anything else | 500 `INTERNAL_ERROR` | `failed`, `INTERNAL_ERROR` |
 
 - The breaker's state belongs to the host: a test that opens it uses a factory of its own.
-- `/health` asks the engine through the same client with a 2-second cancellation, which the pipeline neither
-  retries nor counts.
+- `/health` asks the engine through the same client with a 2-second cancellation. The call is marked as a
+  probe, and the pipeline neither retries nor counts a probe, whatever its outcome.
+- The body is read after the headers under a limit of its own, one more attempt timeout: the pipeline's limits
+  end when the headers arrive.
 
 ### F. Behaviour by module (what the contract's tables do not spell out)
 
@@ -463,8 +478,9 @@ with the `id` of the nearest enclosing node as `nodeId`. The engine is not calle
   description are trimmed and stored. Nothing changed: 200 with the row as it is and no write.
 - Archive: sets `is_active` to 0; 204 on a repeat; 404 for an unknown id.
 - List: `active=true` unless asked, `search` on the name, `rootEntity` exact, ordered by name then id; `lastRun`
-  from a correlated subquery (newest `started_at`, any status), served by the index on `(control_id,
-  started_at DESC)`.
+  (newest `started_at`, any status) from a second query restricted to the page's control ids, which is what
+  lets the index on `(control_id, started_at DESC)` serve it (corrected in the Phase 3 review: the correlated
+  subquery this line first asked for is translated to a ROW_NUMBER over the whole table).
 - Versions: newest first. `POST /controls/validate`: schema, then the engine's 200 body unchanged, or 422.
 
 **Runs.**
@@ -526,10 +542,11 @@ functions directly (the hasher, the three corrections of schema errors, the lang
    no `not`, `anyOf` or `oneOf`; one schema-layer fixture is an extra member; `nodeId` is the `id` of the nearest
    enclosing node; a `schemaVersion` other than 1 is `UNSUPPORTED_SCHEMA_VERSION` in both services.
 2. `concurrencyToken` is the base64 of the row version, opaque to the client.
-3. `GET /controls`: `active=true` by default; `search` is "name contains"; ordered by name, then id. The
-   versions list is newest first.
-4. A bad `page`, `pageSize`, `sort`, `dir` or `active` is 400 `REQUEST_INVALID`; a page past the end is 200 with
-   empty `items`.
+3. `GET /controls`: `active` is `true` (the default), `false` or `all`; `search` is "name contains"; ordered by
+   name, then id. The versions list is newest first.
+4. A bad `page`, `pageSize`, `sort`, `dir` or `active` is 400 `REQUEST_INVALID`: `OUT_OF_RANGE` for a number
+   outside its range (`page` 1 to 1,000,000, `pageSize` 1 to 200), `MALFORMED` for a value that is not an integer
+   or not one of the words. A page past the end is 200 with empty `items`.
 5. `REQUEST_INVALID.errors` items are `{ path, code, params }` with the codes `REQUIRED`, `TOO_LONG`,
    `OUT_OF_RANGE`, `MALFORMED`.
 6. Results: `sort=key` is the engine's key order (`seq`) and the default; `sort=display` is `display_text`, then

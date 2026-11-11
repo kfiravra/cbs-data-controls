@@ -1,0 +1,8 @@
+{
+  "type": "about:blank",
+  "title": "DATABASE_UNAVAILABLE",
+  "status": 503,
+  "code": "DATABASE_UNAVAILABLE",
+  "params": {},
+  "correlationId": "5f2c0d8e9a7b4c1d8e3f6a2b7c9d0e1f"
+}
