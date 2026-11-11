@@ -1,0 +1,20 @@
+# A1 verify, 2026-11-12 (the lane-A documents, written as built: lanes A and B ran back to back)
+
+$ uv run scripts/contracts-check.py
+contracts-check: ok, 5 checks passed (schema, glossary, agreement, examples, invalid fixtures)
+
+$ python3 dev/active/dc-delivery/tools/token-check.py
+507 backticked tokens in 2 documents; 6 occur nowhere in the sources:
+  1.1.0                              the version the worked example of glossary.md bumps to
+  const: 1                           the schema's `"const": 1` of schemaVersion, written without the quotes
+  contracts-check: ok, 5 checks ...  the check's own last line, assembled at run time (it printed exactly this)
+  department.manager                 the relationship the worked example adds
+  manager_employee_id INT NULL       the column of sql/20_hr_tables.sql, quoted with its type
+  web/src/assets/i18n/<lang>.json    a pattern: he.json is the one file that exists
+
+$ node --test .claude/hooks/tests/*.test.mjs
+# tests 227, pass 227, fail 0
+(the new test "every relative markdown link in README.md, docs/*.md, sql/README.md and web/README.md resolves"
+is among them)
+
+The worked example of docs/glossary.md was carried out: gates/glossary-walkthrough.txt.
