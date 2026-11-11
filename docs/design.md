@@ -714,16 +714,11 @@ The signature of the system.
   below and adds nothing to the height of the rule. So it reads everywhere a rule is shown: the bar of the
   editor, the top of the results, a suggestion card in the suggestions panel and in the row of a new control,
   the archived editor.
-- **The groups of a rule** are shown by the underline alone: no bracket character of the engine's sentence
-  stands on the screen, and a group has no tint, no line of its own and no step in. Inside a group, and inside
-  what a condition on related records holds, the joining words and the spaces beside them carry **the
-  thread**: a thin neutral line (1px, the text's own colour at 45%, so it holds on every ground and stays
-  quieter than the colours) at the foot of the coloured ones, from the end of one condition's words to the
-  start of the next. The group reads as one unbroken underlined run; the words of a condition on related
-  records are tied to what it holds the same way. The thread is never under a condition's own words: a
-  coloured line is that colour alone from end to end, and no line lies over another. The joining words of the
-  top level carry no line, so the run stops there. Every thread is the same, also in a group inside a group.
-  Only the engine's own group marks are read: the glossary's
+- **The groups of a rule** are not drawn: no bracket character of the engine's sentence stands on the screen,
+  and a group has no tint, no line of its own and no step in. Only a condition's own words are underlined; a
+  joining word (`וגם`, `או`) and the space beside it carry no line, inside a group as at the top level. The
+  sentence reads as the engine's words in their order, and which conditions a group holds is told by the
+  builder and by the copy that is read aloud. Only the engine's own group marks are read: the glossary's
   `groupOpen` and `groupClose`, in the engine's connecting text. A bracket in a value the user typed, in a
   field's label or in the name of a relationship is data and is written as it is. The engine's text is
   untouched: beside the drawing the plain sentence, brackets and all, is given to assistive technology, and

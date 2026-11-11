@@ -8,10 +8,12 @@ round). `/check all --tests` is green and the gate passed on the real stack, beh
 build the api hosts (`gates/phase-13.txt`).
 
 ## Next
-1. Kfir reads the rule in words at `http://localhost:5000`: one flowing sentence, groups tied by a thin
-   neutral line under their joining words, which lies over no coloured line (decision 114). One thing is his
-   to decide: the strength of the coloured lines (decision 103: faint at 50%, the review's one critical
-   point). The last commit had no gate run on the real stack (decision 116).
+1. Kfir reads the rule in words at `http://localhost:5000`: one flowing sentence, only the conditions
+   underlined, no line under a joining word (decision 117). The last commit is local: the push to the PR is
+   his word (decision 118). Two things are his to decide: the strength of the coloured lines (decision 103:
+   faint at 50%, the review's one critical point), and whether a group should be shown in the sentence in
+   some other way, now that nothing draws it. The commits after the reset had no gate run on the real stack
+   (decision 116).
    No new Hebrew text in phases 12 and 13. The texts of phase 10 are still to be read (`list.columns.run`,
    `list.sort.*`, `results.rule`, `results.archived`, `editor.conditions.waiting`, `editor.ideas.loading`
    and `.none`, `editor.add.advanced` and `.advancedHint`, `editor.toast.closed`).
@@ -444,6 +446,15 @@ Taken on 2026-11-11 in the morning (Kfir's second message: "no questions"):
     a gate run leaves 18 archived `e2e-` controls in it, and this message gives neither a reset nor a run
     against the live services. The client's checks and the mocked specs ran; the build is hosted by the api
     again so he reads it at the same address.
+117. Then he wrote: "there is a problem where the connection words get undderline line  וגם או and things
+    like that there underline also thiner what make everything ugly remove the underline from these
+    connection\operators words. we want only on the condition it self". The thread is removed altogether:
+    no joining word and no space carries a line, in a group or at the top level; only a condition's own
+    words are underlined. This takes back his own item 2 of phase 13 and what was left of decisions 110
+    and 114. What follows from it, and is his: a group is no longer drawn in the sentence at all (no
+    bracket, no tint, no line, no step in), so "A and (B or C)" and "(A and B) or C" read alike on the
+    screen; the builder and the copy that is read aloud still tell them apart.
+118. Not pushed: his message has no word for a push. The commit is local and the api hosts its build.
 
 ## Reconciliation with `contracts/` (phase 2, 2026-11-11)
 Read: `api.md`, `errors.md`, `glossary.json`, `control-definition.schema.json`, the six examples and the thirteen
@@ -1308,3 +1319,9 @@ rewrote. A review that found nothing, or did not run, is logged as that.
   Checks (`gates/phase-13.txt`, its last section): the client's type checks, lint, 390 unit tests in 37
   files, build and print guard green; `e2e/mocked` 221 passed, 5 skipped by project. No gate run on the real
   stack and no reset (decision 116); the api hosts the new build, and the store holds the six examples.
+- 2026-11-11, one more note from Kfir: the lines under the joining words made the sentence ugly, "we want
+  only on the condition it self". The neutral line is removed altogether (decision 117): only a condition's
+  own words are underlined, and a group is not drawn in the sentence. Checks (`gates/phase-13.txt`, its
+  last section): the client's type checks, lint, 390 unit tests in 37 files, build and print guard green;
+  `e2e/mocked` 221 passed, 5 skipped by project. No gate run on the real stack (decision 116). The api hosts
+  the build; the commit is local, since his message has no word for a push (decision 118).

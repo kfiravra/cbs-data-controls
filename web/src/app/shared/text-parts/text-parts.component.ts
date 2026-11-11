@@ -31,8 +31,6 @@ interface Lead {
   readonly text: string;
   /** The space between the word and the condition, as the engine wrote it: the line is not broken at it. */
   readonly glue: string;
-  /** It stands inside a group, or inside what a condition on related records holds: it carries the thread. */
-  readonly tied: boolean;
 }
 
 /** A condition with the joining word before it: one piece of the sentence, kept whole while it fits on a line. */
@@ -46,8 +44,6 @@ interface Unit {
 interface Gap {
   readonly kind: 'gap';
   readonly text: string;
-  /** A space inside a group: it carries the thread, as the joining word beside it does. */
-  readonly tied: boolean;
 }
 
 type FlowItem = Unit | Gap;
@@ -81,21 +77,20 @@ const ENDS = /^(\s*)([\s\S]*?)(\s*)$/;
  *
  * A rule (a text with `marks`) is one flowing sentence that wraps as text does: no line is forced and nothing
  * is set in. A condition and the joining word before it are one piece, kept whole while it fits on a line, so
- * a line never ends on a joining word and a condition's words stay together. The group marks of a rule are
- * not written (a reason, `markValues`, keeps its own brackets): a group, and what a condition on related
- * records holds, is shown by the underline alone. Inside it the joining words, and the spaces beside them,
- * carry a thin neutral line (the thread) between the coloured ones, so the group reads as one unbroken
- * underlined run; the joining words of the top level carry none. The thread is never drawn under a
- * condition's own words: a coloured line is that colour alone, from end to end. Only the engine's own marks are read (the glossary's, in its connecting text): a
- * bracket in a value or a label is data and is written as it is. The text itself stays the engine's, brackets
- * included, for assistive technology: beside a drawing that says something by a line or a colour the plain
- * sentence is given to be read, each condition named by its mark, and the drawing is hidden from it.
+ * a line never ends on a joining word and a condition's words stay together. Only a condition's own words
+ * are underlined: a joining word, and the space beside it, carries no line, in a group as at the top level.
+ * The group marks of a rule are not written (a reason, `markValues`, keeps its own brackets), and nothing
+ * else is drawn in their place. Only the engine's own marks are read (the glossary's, in its connecting
+ * text): a bracket in a value or a label is data and is written as it is. The text itself stays the
+ * engine's, brackets included, for assistive technology: beside a drawing that says something by a colour,
+ * or leaves a group mark out, the plain sentence is given to be read, each condition named by its mark, and
+ * the drawing is hidden from it.
  */
 @Component({
   selector: 'app-text-parts',
   imports: [NgTemplateOutlet, TranslatePipe, ValueComponent],
   // one line per block: white space between elements would add spaces the engine did not write
-  template: `@if (spoken(); as stretches) {<span class="sr-only plain-copy" data-testid="plain-text">@for (stretch of stretches; track $index) {@if (stretch.mark; as mark) {{{ 'common.condition' | translate: { mark } }} }{{ stretch.text }}}</span>}<span data-testid="drawn-text" [attr.aria-hidden]="spoken() ? 'true' : null">@if (drawing().flow; as flow) {@for (item of flow; track $index) {@if (item.kind === 'gap') {<span class="rule-gap" data-testid="rule-gap" [attr.data-thread]="item.tied ? '' : null">{{ item.text }}</span>} @else {<span class="rule-unit" data-testid="rule-unit">@if (item.lead; as lead) {<span class="rule-lead" data-testid="rule-lead" [attr.data-thread]="lead.tied ? '' : null">{{ lead.text }}<span class="nb">{{ lead.glue }}</span></span>}<ng-container *ngTemplateOutlet="words; context: { $implicit: item.clause }" /></span>}}} @else {@for (item of drawing().clauses; track $index) {<ng-container *ngTemplateOutlet="words; context: { $implicit: item }" />}}</span><ng-template #words let-item>@if (item.nodeId; as id) {<span class="clause" data-testid="clause" [class.clause--changed]="changed().has(id)" [attr.data-node]="id" [attr.data-tone]="item.tone">@for (piece of item.pieces; track $index) {@if (piece.value) {<app-value [text]="piece.text" />} @else if (piece.whole) {<span class="nb">{{ piece.text }}</span>} @else {{{ piece.text }}}}</span>} @else {@for (piece of item.pieces; track $index) {{{ piece.text }}}}</ng-template>`,
+  template: `@if (spoken(); as stretches) {<span class="sr-only plain-copy" data-testid="plain-text">@for (stretch of stretches; track $index) {@if (stretch.mark; as mark) {{{ 'common.condition' | translate: { mark } }} }{{ stretch.text }}}</span>}<span data-testid="drawn-text" [attr.aria-hidden]="spoken() ? 'true' : null">@if (drawing().flow; as flow) {@for (item of flow; track $index) {@if (item.kind === 'gap') {<span class="rule-gap" data-testid="rule-gap">{{ item.text }}</span>} @else {<span class="rule-unit" data-testid="rule-unit">@if (item.lead; as lead) {<span class="rule-lead" data-testid="rule-lead">{{ lead.text }}<span class="nb">{{ lead.glue }}</span></span>}<ng-container *ngTemplateOutlet="words; context: { $implicit: item.clause }" /></span>}}} @else {@for (item of drawing().clauses; track $index) {<ng-container *ngTemplateOutlet="words; context: { $implicit: item }" />}}</span><ng-template #words let-item>@if (item.nodeId; as id) {<span class="clause" data-testid="clause" [class.clause--changed]="changed().has(id)" [attr.data-node]="id" [attr.data-tone]="item.tone">@for (piece of item.pieces; track $index) {@if (piece.value) {<app-value [text]="piece.text" />} @else if (piece.whole) {<span class="nb">{{ piece.text }}</span>} @else {{{ piece.text }}}}</span>} @else {@for (piece of item.pieces; track $index) {{{ piece.text }}}}</ng-template>`,
   styles: `
     :host {
       display: inline;
@@ -161,58 +156,45 @@ export class TextPartsComponent {
 
   /**
    * The blocks of a rule as one flow. A joining word goes with the condition after it, into one piece; the
-   * space before it stays between the pieces, where a line may be broken. Inside a group (and inside what a
-   * condition on related records holds) the joining words and the spaces carry the thread that ties the
-   * group; the space between the words of a related node and what the node holds carries it too. Every
-   * character is the engine's, in its order: only the group marks are gone.
+   * space before it stays between the pieces, where a line may be broken. A group is only walked through:
+   * nothing is drawn for it. Every character is the engine's, in its order: only the group marks are gone.
    */
   private flow(blocks: readonly Block[]): FlowItem[] {
     const flow: FlowItem[] = [];
     // the joining word that waits for its condition: one at the most
     const waiting: Lead[] = [];
-    const gap = (text: string, tied: boolean) => {
+    const gap = (text: string) => {
       if (text !== '') {
-        flow.push({ kind: 'gap', text, tied });
+        flow.push({ kind: 'gap', text });
       }
     };
-    const walk = (children: readonly Block[], depth: number): void => {
-      children.forEach((child, index) => {
-        if (child.kind === 'group') {
-          walk(child.children, depth + 1);
-          return;
+    for (const clause of clausesIn(blocks)) {
+      if (clause.nodeId === undefined) {
+        const [, before, words, after] = ENDS.exec(plainText(clause.parts))!;
+        gap(before);
+        if (words !== '') {
+          waiting.push({ text: words, glue: after });
         }
-        const tied = depth > 0;
-        if (child.clause.nodeId === undefined) {
-          const [, before, words, after] = ENDS.exec(plainText(child.clause.parts))!;
-          gap(before, tied);
-          if (words !== '') {
-            waiting.push({ text: words, glue: after, tied });
-          }
-          return;
-        }
-        // the words of a related node stand before what the node holds: the space between the two is tied
-        const next = children.at(index + 1);
-        const holds = next?.kind === 'group' && !next.logical;
-        const view = this.view(child.clause);
-        const [first, last] = [view.pieces.at(0), view.pieces.at(-1)];
-        const before = first ? ENDS.exec(first.text)![1] : '';
-        const after = last ? ENDS.exec(last.text)![3] : '';
-        const pieces = view.pieces.map((piece, at) => ({
-          ...piece,
-          text: piece.text.slice(at === 0 ? before.length : 0, at === view.pieces.length - 1 ? piece.text.length - after.length : undefined),
-        }));
-        const lead = waiting.pop();
-        if (!lead) {
-          gap(before, tied);
-        }
-        flow.push({ kind: 'unit', lead: lead ? { ...lead, glue: lead.glue + before } : null, clause: { ...view, pieces } });
-        gap(after, tied || holds);
-      });
-    };
-    walk(blocks, 0);
+        continue;
+      }
+      const view = this.view(clause);
+      const [first, last] = [view.pieces.at(0), view.pieces.at(-1)];
+      const before = first ? ENDS.exec(first.text)![1] : '';
+      const after = last ? ENDS.exec(last.text)![3] : '';
+      const pieces = view.pieces.map((piece, at) => ({
+        ...piece,
+        text: piece.text.slice(at === 0 ? before.length : 0, at === view.pieces.length - 1 ? piece.text.length - after.length : undefined),
+      }));
+      const lead = waiting.pop();
+      if (!lead) {
+        gap(before);
+      }
+      flow.push({ kind: 'unit', lead: lead ? { ...lead, glue: lead.glue + before } : null, clause: { ...view, pieces } });
+      gap(after);
+    }
     // joining words that no condition follows are written as they came
     for (const left of waiting) {
-      gap(left.text + left.glue, false);
+      gap(left.text + left.glue);
     }
     return flow;
   }

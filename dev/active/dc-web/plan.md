@@ -503,6 +503,8 @@ Same branch, same PR, fast, no reviewer named. His word covers one database rese
 - [x] Last of all: the database reset from the main tree and the six examples (`gates/phase-13-reset.txt`).
 - [x] Sent after the push: the neutral line lies over no coloured line (under joining words and spaces only,
       one weight); the sparkle on the main page's suggestions button.
+- [x] Sent after that push: no line under a joining word, only under a condition's own words (decision
+      117). The client's checks and the mocked specs; the commit is local until he says push.
 - [x] The client's checks and the mocked specs for those two; the push. No gate run on the real stack and no
       reset: neither has his word for this change (decision 116).
 

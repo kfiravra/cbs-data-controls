@@ -35,8 +35,9 @@
 }
 
 // The rule in words is plain text: no letter in it and no ground under any word. It is one flowing sentence
-// that wraps as text does: no line is forced and nothing is set in. The words of a condition are underlined
-// in the condition's colour, and a group has no bracket and no tint: it is shown by the underline alone.
+// that wraps as text does: no line is forced and nothing is set in. Only the words of a condition are
+// underlined, in the condition's colour: a joining word carries no line, and a group has no bracket, no
+// tint and no line of its own.
 // The line is drawn, not a text decoration: it fades out towards both of its ends (over one em, or a
 // quarter of a short stretch), and where a condition's words run on to the next line each stretch has its
 // own line with its own two faded ends. It lies under the words; the words themselves stand on no ground.
@@ -67,22 +68,6 @@
 .rule-unit {
   display: inline-block;
   max-inline-size: 100%;
-}
-
-// The thread: inside a group, and inside what a condition on related records holds, the joining words and
-// the spaces beside them carry a thin neutral line at the foot of the coloured ones, from the end of one
-// condition's words to the start of the next. The group reads as one unbroken underlined run; the joining
-// words of the top level carry nothing. The thread is never under a condition's own words: a coloured line
-// is that colour alone from end to end, and no line lies over another. It is the text's own colour, thinned,
-// so it holds on every ground and stays quieter than the colours beside it.
-.rule-gap[data-thread],
-.rule-lead[data-thread] {
-  --thread: color-mix(in oklab, currentColor 45%, transparent);
-
-  background-image: linear-gradient(var(--thread), var(--thread));
-  background-repeat: no-repeat;
-  background-position: 0 calc(100% - 0.05em);
-  background-size: 100% 1px;
 }
 
 // the copy of a rule that is read aloud is not also taken when the rule is selected and copied

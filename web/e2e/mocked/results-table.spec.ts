@@ -149,7 +149,7 @@ test.describe('run results: the order of the records and the layout of the panel
     await shot(page, testInfo, 'results-foot');
   });
 
-  test('a rule with groups is one flowing sentence: no forced line and nothing set in, no line ends on a joining word, a condition stays whole, and a group is shown by the thread under its joining words, which lies over no coloured line', async ({ page, api }) => {
+  test('a rule with groups is one flowing sentence: no forced line and nothing set in, no line ends on a joining word, a condition stays whole, and only the conditions are underlined: no joining word carries a line', async ({ page, api }) => {
     // example 4: (one condition and (three joined by or)) or (two joined by and)
     const control = controlOf(api, 4);
     const stored = api.addRun(succeededRun(control, RUN));
@@ -183,35 +183,22 @@ test.describe('run results: the order of the records and the layout of the panel
     // so no line ends on one
     expect(await placed()).toEqual(Array.from({ length: 6 }, () => ({ whole: true, led: true })));
 
-    // the joining words in the order of the rule, and whether each carries the thread: the first group's
-    // own, the two of the group inside it, the one of the top level (none), the second group's own
-    expect(await leads.evaluateAll((all) => all.map((lead) => [lead.textContent?.trim(), lead.hasAttribute('data-thread')]))).toEqual([
-      [and, true],
-      [or, true],
-      [or, true],
-      [or, false],
-      [and, true],
-    ]);
-    // as painted: a thin line under a joining word inside a group, and nothing under the one of the top level
-    const lines = await leads.evaluateAll((all) =>
-      all.map((lead) => {
-        const style = getComputedStyle(lead);
-        return style.backgroundImage === 'none' ? null : style.backgroundSize;
-      }),
-    );
-    expect(lines).toEqual(['100% 1px', '100% 1px', '100% 1px', null, '100% 1px']);
-    // the thread is neutral: the same on every joining word, and none of the conditions' colours
-    const threads = await leads.evaluateAll((all) => [...new Set(all.map((lead) => getComputedStyle(lead).backgroundImage).filter((image) => image !== 'none'))]);
-    expect(threads).toHaveLength(1);
-    // no line lies over another: under a condition's words there is one line, of that condition's colour
-    // alone, and the thread is under joining words and spaces only
-    const under = await sentence.getByTestId('clause').evaluateAll((all) => all.map((clause) => getComputedStyle(clause).backgroundImage.split('linear-gradient').length - 1));
-    expect(under).toEqual([1, 1, 1, 1, 1, 1]);
+    // the joining words in the order of the rule: the first group's own, the two of the group inside it,
+    // the one of the top level, the second group's own
+    expect(await leads.evaluateAll((all) => all.map((lead) => lead.textContent?.trim()))).toEqual([and, or, or, or, and]);
+    // only a condition's own words are underlined: no joining word and no space carries a line, in a group
+    // or out of one, and under each condition there is one line, of that condition's colour alone
+    const drawnUnder = (testId: string) => sentence.getByTestId(testId).evaluateAll((all) => all.map((element) => getComputedStyle(element).backgroundImage.split('linear-gradient').length - 1));
+    expect(await drawnUnder('rule-lead')).toEqual([0, 0, 0, 0, 0]);
+    expect(new Set(await drawnUnder('rule-gap'))).toEqual(new Set([0]));
+    expect(await drawnUnder('clause')).toEqual([1, 1, 1, 1, 1, 1]);
+    expect(await sentence.locator('*').evaluateAll((all) => all.filter((element) => getComputedStyle(element).textDecorationLine !== 'none').length)).toBe(0);
     for (const clause of await sentence.getByTestId('clause').all()) {
-      expect(threads).not.toContain(await clause.evaluate((element) => getComputedStyle(element).backgroundImage));
       expect(strengthOf(await lineOf(clause))).toBeCloseTo(0.5, 1);
     }
-    await expect(sentence.locator('[data-testid="clause"][data-thread], [data-testid="clause"] [data-thread]')).toHaveCount(0);
+    // what carries a line at all, as painted: the six conditions and nothing else of the sentence
+    const painted = await drawn.locator('*').evaluateAll((all) => all.filter((element) => getComputedStyle(element).backgroundImage !== 'none').map((element) => element.getAttribute('data-testid')));
+    expect(painted).toEqual(['clause', 'clause', 'clause', 'clause', 'clause', 'clause']);
     // and no piece overlaps the next one: the lines stand side by side
     const overlap = await sentence.evaluate((element) => {
       const boxes = [...element.querySelectorAll('[data-testid="rule-unit"], [data-testid="rule-gap"]')].flatMap((piece) => [...piece.getClientRects()]);
