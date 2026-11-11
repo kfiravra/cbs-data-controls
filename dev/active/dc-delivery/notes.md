@@ -70,6 +70,11 @@ are named in the last Log lines.
     finding that is not critical to the limitations document. Adding it is one statement in
     `sql/50_indexes.sql`, one name in `scripts/db-check.sh` and a row in `sql/README.md`: Kfir's call.
 
+12. G5 found the open item `AllowedHosts: *` to reach further than the documents said (medium). It is NOT
+    closed: decision 13 of the plan, and a host list would answer a grader who reaches the app under another
+    name with a bare 400. The limitations document now states its true reach. The fix is one line in the `api`
+    service of `docker-compose.yml`: Kfir's call.
+
 ## Next
 1. The Gate: G1 on a fresh clone, G3 on it, G2 from a Windows folder, G5 the audit, G6, G8.
 
@@ -77,7 +82,7 @@ are named in the last Log lines.
 - None for the night. G2 and G7 are named in the brief.
 
 ## Last reviewed
-`b35d72a` (B1): `reviews/B1.md`.
+`0d9767f`: the documents (`reviews/docs.md`) and the security audit of the whole repository (`reviews/security.md`). Before it: `b35d72a` (B1), `reviews/B1.md`.
 
 ## As built
 (Phase B0, 2026-11-11; what was built wins over the names plan.md gave on 2026-11-10)
@@ -184,3 +189,22 @@ are named in the last Log lines.
 - 2026-11-12 03:10 change f done: `scripts/scale-test.sh` and `sql/scale/load_scale.sql`; the table is in
   architecture §11 and the finding in the limitations document (unattended decision 11). The scratch database
   and the second engine were removed after the run; `DataControls` was only read.
+- 2026-11-12 03:50 `/check all --tests`, first pass, before the gate: 15 checks green (db-check 27, contracts 5,
+  engine 521, api 389 with the 3 live tests skipped, client 390, harness 227).
+- 2026-11-12 04:00 review of the documents (`reviews/docs.md`): two opus `reviewer` agents on `5639436` and
+  `db92c3d`. Contract documents: 0 critical, 4 warnings, 4 info, all in `docs/glossary.md`'s "how to add"
+  recipes (the db-check lists and the live test's version assertion follow an addition; the order of a new
+  relationship; what a new computed kind really touches) and all fixed; nothing false in the tables. README and
+  the other documents: 1 critical, 5 warnings, 7 info. The critical (`README.md`: "each step was run as written
+  on Linux" was false for the host form of `db-init.sh`) is fixed: the sentence says which steps ran. Warnings
+  fixed: which of the three passwords is the server's own `sa`; the from-source publish without
+  warnings-as-errors; the audit's result stated before the audit had run; wrong evidence for "an edit creates
+  a version" in §18; and the unmeasured start times, replaced by G1's. Info fixed: all seven, among them the
+  two lines and the two §15 sentences that the "not trimmed" brief wanted kept, now back.
+- 2026-11-12 04:05 G5, the security audit of the whole repository (`reviews/security.md`): one opus
+  `security-auditor`. 0 critical, 0 high, 1 medium, 2 low, 3 info. Medium: `AllowedHosts: *`, an open item of
+  the api's audit, reaches further than the documents said (a rebinding page can create and run a control and
+  so read `hr`); the limitations document is corrected, the setting is left (unattended decision 12). Low: one
+  compose network for all five services (to the limitations); a second engine on 127.0.0.1:8009 seen during
+  the audit (this session's scale test, already removed). Info, for Kfir: his local `.env` is mode 0644;
+  `43745cc` with the three former passwords is only on the branch `feat/contracts`, not in main's history.

@@ -13,7 +13,7 @@ something only where a record says so.
 | Tool | Used for | How its output was checked |
 |---|---|---|
 | Claude Code (Anthropic's coding agent CLI) | All work inside the repository: the harness adaptation (`2303d2f`, 2026-11-09), the design record (`docs/PRODUCT.md`, `docs/design.md`), the five plans with their interviews, every line of SQL, contract, code, test and document, the commits, and the pushes and PRs on the developer's word. | The checks of every phase, saved under `gates/`; a review of every phase by separate read-only agents (section 4); the developer's reads of rendered output and of the running app where the records name them (section 6). |
-| The harness in `.claude/` | `CLAUDE.md`: the map, the verify matrix, the gotchas, the git policy (100 lines at most). `rules/`: conventions for C#, TypeScript, Python and T-SQL, loaded by path. Skills: `dc-sql`, `dc-engine`, `dc-api`, `dc-web` (repo facts per area, loaded by path); `task-plan` (the plan interview); `resume` and `handoff` (task state); `check` (the verify matrix for the touched parts); `phase-review` (review by area on two axes, standards and plan); `ship` (the pre-PR gate); `guard`; `diagnose`; `tdd`. Hooks: `git-guard.sh` blocks stash, hard reset, clean, restore and force-push, and asks before a push, a rebase, a PR or a container stop; `post-edit.sh` records touched files and formats them; `stop-check.sh` runs the checks of the touched parts at every stop; `print-guard.sh` and the git pre-commit refuse debug output; `session-start.sh` reports branch, guard and active tasks. Agents: `reviewer` and `security-auditor`, read-only, on opus. Plans with phases and gates under `dev/`. | Its own tests (`node --test .claude/hooks/tests/*.test.mjs`): 224 at dc-contracts phase 0, 226 at the end. It was adapted from the harness of an earlier project of the developer (`.claude/README.md`). |
+| The harness in `.claude/` | `CLAUDE.md`: the map, the verify matrix, the gotchas, the git policy (100 lines at most). `rules/`: conventions for C#, TypeScript, Python and T-SQL, loaded by path. Skills: `dc-sql`, `dc-engine`, `dc-api`, `dc-web` (repo facts per area, loaded by path); `task-plan` (the plan interview); `resume` and `handoff` (task state); `check` (the verify matrix for the touched parts); `phase-review` (review by area on two axes, standards and plan); `ship` (the pre-PR gate); `guard`; `diagnose`; `tdd`. Hooks: `git-guard.sh` blocks stash, hard reset, clean, restore and force-push, and asks before a push, a rebase, a PR or a container stop; `post-edit.sh` records touched files and formats them; `stop-check.sh` runs the checks of the touched parts at every stop; `print-guard.sh` and the git pre-commit refuse debug output; `session-start.sh` reports branch, guard and active tasks. Agents: `reviewer` and `security-auditor`, read-only, on opus. Plans with phases and gates under `dev/`. | Its own tests (`node --test .claude/hooks/tests/*.test.mjs`): 224 at dc-contracts phase 0, 226 at its end, 227 after dc-delivery. It was adapted from the harness of an earlier project of the developer (`.claude/README.md`). |
 | The claude.ai chat | Used throughout: for the architecture brainstorm, for the check against the assignment's requirements, and as a second reviewer of Claude Code's plans, interview answers and gate reports during the build. | Not recorded: no Log line records a finding relayed from the chat, although dc-web's plan (Design Q) asked for such lines. |
 | design-taste-frontend (third-party Claude Code skill) | Dealt the visual direction twice: the first (palette `cool-grey-cobalt`, IBM Plex, sharp corners) for `docs/design.md` on 2026-11-10; the second ("Frost and slate", palette `cool-white-slate`, Heebo for Hebrew) in dc-web phase 9. Its rules for a UI fragment shaped the list row in phase 10. | Its finish gate, checker and copy lint are made for company websites and were not run (dc-web decision 70). The look was checked by the repository's checks, the mocked specs at 390 and 1440, `/impeccable critique`, and the developer's reads of the running app (dc-web phases 9 to 13). |
 | impeccable 4.8.0 (third-party Claude Code skill) | `init` and `document` for `docs/PRODUCT.md` and `docs/design.md`. In dc-web: `audit`, three `critique` runs and `polish` (phase 8); `shape`, one `critique` and `polish` (phase 9); `typeset` and `polish` (phase 10); its `impeccable-documenter` agent brought `docs/design.md` in line with the code. | Its detector (62 rules) found nothing on the three screens at 390 and 1440. Critique scores: 28, 26 and 28 of 40 (phase 8), 29 of 40 (phase 9). What happened to each finding is in the dc-web Log (section 4). |
@@ -239,7 +239,50 @@ were dealt by the skill and taken by the session (decisions 69 to 71).
 
 ### dc-delivery
 
-(completed at the end of the task)
+**Generated.** The composed system (`docker-compose.yml` with the engine, the api and the example loader,
+`api/Dockerfile`, `.dockerignore`), the start scripts for bash and for Windows PowerShell, `scripts/examples.py`
+(load, verify and document the six examples through the api), `scripts/scale-test.sh`, the README, and the
+documents of the submission: this one, `summarize-architecture.md`, `control-definition.md`, `glossary.md`,
+`examples.md` (its tables generated from real runs), `assumptions-limitations-extensions.md`, the Hebrew cover
+page, the corrections of `architecture.md`, and the plan of the AI suggestions task. One unattended night
+(2026-11-11 to 12) on Fable 5.2, on a brief the developer pasted before going to sleep; one message from him
+during the night (to stop the `gh pr` prompts). Four drafting sub-agents on opus wrote the two contract
+documents, the first version of this document, the plan of dc-ai-suggestions, and the ticks that closed the four
+finished plans.
+
+**Checked.** Both paths were run from a fresh clone: Docker on WSL and from a Windows folder, and the
+from-source path on WSL (`gates/G1-docker-wsl.txt`, `G2-docker-windows.txt`, `G3-manual.txt` under
+`../dev/active/dc-delivery/`). The client's end-to-end specs ran against the composed system, 18 of 18. The
+worked example of `glossary.md` was carried out on a scratch stack before it was committed. Every backticked key,
+code and path of the two contract documents was checked against the tree by a script.
+
+**Reviews.** `reviewer` agents on opus, reports under `../dev/active/dc-delivery/reviews/`:
+
+- Compose, the api image and the scripts (two agents): 0 critical, 3 warnings, 11 info. The warnings: the api's
+  row cap and time zone did not follow the engine's settings under compose; `scripts/examples.py` named the six
+  example ids in code; a Hebrew literal in a tool. All three fixed, with eight of the info findings and one more
+  in part.
+- The documents (two agents): 1 critical, 9 warnings, 11 info. The critical: the README said that every
+  from-source step had been run as written, and one had not (the database script against a host server: the
+  machine has no `sqlcmd`). The sentence now says which steps ran. The warnings were gaps in the "how to add"
+  recipes of `glossary.md`, a password instruction that misled on a reader's own server, start times that no
+  run had measured, and a checklist item with the wrong evidence. All fixed.
+- The security audit of the whole composed system (one `security-auditor`): 0 critical, 0 high, 1 medium, 2 low,
+  3 info. The medium is an item the api's audit had left open (`AllowedHosts: *`), found to reach further than
+  the documents said; the limitations document was corrected and the setting was left for the developer, with
+  the one-line fix named.
+
+**The developer.** The thirteen decisions of the interview (2026-11-10), among them two changes of the
+recommended option: the early lane in the main tree with no fourth worktree, and the hybrid bundle, which his
+scope decision later removed. The night brief changed the plan in six places (its items a to f): a new short
+architecture document beside the long one, the AI task answered by a design and a plan, the open items of the
+other tasks listed as limitations, the four finished tasks closed, screenshots from a clean list, and the scale
+test. His read of this document, of the cover page and of the README's first screen is item G7 of the gate.
+
+**Taken alone.** The decisions of the night are listed in the delivery notes under "Decisions taken unattended".
+One of them left a finding open for him: the scale test showed that one example takes 9 seconds on 200,000
+employees and 36 ms with one more index, and the index was not added, because his brief asked that the seed and
+its checks stay untouched.
 
 ## 5. Decisions the developer made himself
 
@@ -279,8 +322,8 @@ were dealt by the skill and taken by the session (decisions 69 to 71).
 **Not in place, or not recorded.**
 
 - No Log or PR body records a read of the code or of a diff by the developer before any of the five merges.
-  The policy as it was written before the build (architecture §15, in its first version) said that all generated
-  code is reviewed by him before merge; the records do not show such a read.
+  The policy set before the build (architecture §15) is that all generated code is reviewed by him before merge;
+  the records do not show such a read.
 - PR #1 was merged one minute after its last commit (`46ecf63`, 23:55). PR #2 was merged while its body said "The
   Hebrew text has not been read by a person"; the developer read the Hebrew interface later that day (the
   delivery night brief), and no record says that he read the engine's golden text files themselves. The last

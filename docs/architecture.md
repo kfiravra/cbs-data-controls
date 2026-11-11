@@ -11,6 +11,11 @@ The short version, one to two pages with the controls mechanism and the design o
 [summarize-architecture.md](summarize-architecture.md). The visual design of the client is
 [design.md](design.md). The assignment itself is Appendix A.
 
+**Context.** A one-week take-home assignment from the Israel Central Bureau of Statistics (CBS, למ"ס): received
+8 Nov 2026, submitted by **15 Nov 2026**. Position: CBS tender 59-2026 (call 2000028645), software developer,
+Jerusalem. Stack of the position: .NET / .NET Core, Angular or React, REST API design, Python, databases, Git,
+cloud (GCP preferred).
+
 ---
 
 ## 1. What we are building
@@ -284,7 +289,7 @@ Design constraints:
 3. **Read-only execution.** The engine's login can only SELECT on `hr`. Even a compiler bug cannot modify data. Only a single SELECT statement is ever compiled; stacked statements are impossible by construction and additionally rejected.
 4. **Bounded execution.** Row cap, statement timeout, nesting and size limits, deterministic ordering.
 
-Additional: the .NET login cannot read `hr`; configuration and secrets come from environment variables, never from code; error responses never leak SQL or stack traces; CORS restricted; no authentication/authorization in v1 (internal tool; listed as an extension, along with audit of who ran what), which is why compose publishes the app, and the database, on 127.0.0.1 only and the engine on no host port at all. In compose each container receives only its own settings by name, so the engine never holds the `sa` or `dq_app` password and the api never holds the `sa` or `dq_engine_ro` one. Each service had a security audit, and the whole repository one more at the delivery gate; the findings left open, each a deployment decision, are listed in [assumptions-limitations-extensions.md](assumptions-limitations-extensions.md).
+Additional: the .NET login cannot read `hr`; configuration and secrets come from environment variables, never from code; error responses never leak SQL or stack traces; CORS restricted; no authentication/authorization in v1 (internal tool; listed as an extension, along with audit of who ran what), which is why compose publishes the app, and the database, on 127.0.0.1 only and the engine on no host port at all. In compose each container receives only its own settings by name, so the engine never holds the `sa` or `dq_app` password and the api never holds the `sa` or `dq_engine_ro` one. The engine and the api each had a security audit, and the whole repository one more at the delivery gate; the findings left open, each a deployment decision, are listed in [assumptions-limitations-extensions.md](assumptions-limitations-extensions.md).
 
 ---
 
@@ -343,7 +348,9 @@ Every error has a stable code, an HTTP status, parameters, and a translated mess
 
 ## 15. AI-assisted development policy (required by the assignment)
 
-AI coding tools were used throughout the build: Claude Code with a project harness (`CLAUDE.md`, skills, rules, hooks, task plans with gates and review passes), which lives in the repository (`.claude/`) and is part of the submission, the claude.ai chat as a second reviewer, and two third-party design skills. Runtime SQL generation is deterministic code, never an AI call, and no AI runs anywhere in the product.
+AI coding tools were used throughout the build, for scaffolding, code, tests, documentation drafts and refactoring: Claude Code with a project harness (`CLAUDE.md`, skills, rules, hooks, task plans with gates and review passes), which lives in the repository (`.claude/`) and is part of the submission, so the graders see how the work was organised; the claude.ai chat as a second reviewer; and two third-party design skills. Runtime SQL generation is deterministic code, never an AI call, and no AI runs anywhere in the product.
+
+The policy set before the build: all generated code is reviewed by the developer before merge, and the developer owns and must be able to explain every design decision in this document. What the records of the build show of those reviews, and where they show none, is stated in ai-usage.md, section 6.
 
 Which tool was used for what, how its output was checked, what the reviews found and what the developer decided himself are in [ai-usage.md](ai-usage.md).
 
@@ -404,7 +411,7 @@ Translated from the assignment; the original Hebrew is in the appendix. Every it
 
 **Control definition**
 - [x] A UI for a business user to create a new control, without knowing the database structure or writing SQL. *Evidence: the editor (README, "A walk through the system", step 3; `docs/screenshots/editor.png`).*
-- [x] Name and description; selection of the business data; logical conditions including combinations; save and edit; reuse. *Evidence: the editor's fields, the entity cards, the builder with "and", "or" and nested groups; edit creates a version; duplicate and run again from the list (`web/e2e/gate/examples.spec.ts`, `list.spec.ts`).*
+- [x] Name and description; selection of the business data; logical conditions including combinations; save and edit; reuse. *Evidence: the editor's fields, the entity cards, the builder with "and", "or" and nested groups; a change of the conditions creates a version (`ControlUpdateTests.cs` in the api's tests); create, save and run in the editor, and duplicate, run and archive from the list (`web/e2e/gate/examples.spec.ts`, `list.spec.ts`).*
 - [x] A friendly presentation of the data and the relationships in business terms. *Evidence: every picker is drawn from the glossary's Hebrew labels; fields of a related entity appear under the relationship's label; the entity chain in the editor.*
 
 **Query generation and execution**

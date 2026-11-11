@@ -125,7 +125,7 @@ are fixed in code: the loader refuses a key outside `OPERATOR_KEYS`, the compile
 | `type` | yes | `number`, `text`, `date`, `bool` or `enum` |
 | `column` | one of the two | the physical column |
 | `computed` | one of the two | `{ function, over }`: a function of the closed list (`age_years`) over the column of a stored field of this entity, of the type the function reads |
-| `nullable` | yes | false removes `is_null` and `is_not_null` from the field's operators; not compared with the database |
+| `nullable` | yes | false removes `is_null` and `is_not_null` from the operators the field's type gives (a field's own `operators` list is kept as written); not compared with the database |
 | `visible` | yes | false hides the field: left out of the public glossary, `UNKNOWN_FIELD` for a caller; still checked against the database |
 | `unit` | no | a text, on `number` only, written after every value with one space |
 | `enumValues` | on `enum`, and only there | `{ value, label }` items with distinct values |
@@ -222,7 +222,13 @@ table, column or join name leaves the engine, and a client tells a computed fiel
    database (`ENGINE_STARTUP_DB_WAIT_SECONDS`, 30 by default), but never for a mismatch. Under compose the engine has
    `restart: "no"` and stays stopped.
 5. **While running**, `GET /health` repeats the check at most once a minute (`HEALTH_RECHECK_SECONDS`) and answers
-   503 `GLOSSARY_MISMATCH` with `{ table, column }` of the first mismatch when the database no longer fits.
+   503 `GLOSSARY_MISMATCH` with `{ table, column }` of the first mismatch when the database no longer fits. The
+   body is a problem like every other error, for example with a column that was dropped:
+
+   ```json
+   { "type": "about:blank", "title": "GLOSSARY_MISMATCH", "status": 503, "code": "GLOSSARY_MISMATCH",
+     "params": { "table": "hr.Employee", "column": "salary" }, "correlationId": "4f0c..." }
+   ```
 
 Without a database, `uv run scripts/contracts-check.py` checks the schema's keyword subset, the glossary's integrity
 (every member, text, placeholder, reference and flag above), the agreement of the two (operator keys and arities,
@@ -236,10 +242,18 @@ Every addition ends the same way: bump `glossaryVersion`, run `uv run scripts/co
 engine. Keys are added, never renamed: a saved control whose key has gone fails its next run with
 `CONTROL_DEFINITION_OUTDATED`.
 
+No service code changes for a field, an entity or a relationship. Two checks of this repository pin the sample
+model as it is today and follow such a change, as any test of fixed data does: the engine's live test asserts the
+glossary version (`engine/tests/integration/test_examples_live.py`), and the `structure` section of
+`scripts/db-check.sh` asserts the exact lists of tables and indexes (`EXPECTED_TABLES`, `EXPECTED_INDEXES`), so a
+new table or index is added to those lists.
+
 **A field.** Add the object to the entity's `fields`, with `key`, `label`, `type`, `column`, `nullable` and
 `visible`, and the optional members it needs. On a column that does not exist yet, add the column in
 `sql/20_hr_tables.sql` first; its `CREATE TABLE` runs only when the table is missing, so an existing database gets
-the column through `scripts/db-init.sh --reset`. The startup check then confirms the column and its type. The editor
+the column through `scripts/db-init.sh --reset`, which drops the whole database, saved controls and runs
+included (on a database worth keeping, add the column with `ALTER TABLE`). The startup check then confirms the
+column and its type. The editor
 offers the field with its resolved operators, and the suggestions may use it: a `required` one in
 `missing_required`, a nullable stored one without `required` in `missing_optional`, a stored date in `date_order`.
 
@@ -251,8 +265,10 @@ while the glossary names a table or column the database lacks or types it wrongl
 null for a missing table), and once running, `GET /health` answers the same code when a database change takes away
 what the glossary names.
 
-**A relationship.** Add the object to `relationships`; both join columns must exist, and the startup check confirms
-it. A `many_to_one` or `one_to_one` relationship adds field groups to the editor; a `one_to_many` one adds an entry to
+**A relationship.** Add the object to `relationships`, after the existing ones; both join columns must exist, and
+the startup check confirms it. The order matters in one place: the editor's entity chain shows the first
+relationship that joins two neighbouring entities, so a second relationship between the same two goes after the
+first. A `many_to_one` or `one_to_one` relationship adds field groups to the editor; a `one_to_many` one adds an entry to
 the related-records picker. The walkthrough below is a complete case.
 
 **A computed-field kind.** The one case that needs engine code: the kinds are a closed list. `age_years` is
@@ -265,8 +281,10 @@ the key `age_years` of `COMPUTED`, as a `ComputedFunction` of `predicates` and `
 2. the field type of the column it reads to `COMPUTED_SOURCE_TYPES` in `engine/app/glossary/tables.py`;
 3. a `ComputedFunction` in `COMPUTED`: a predicate for every operator a field of the kind resolves to (`unsupported`
    refuses a gap at startup) and its value function. A predicate receives one binder, for "the run date minus N
-   years"; a kind that needs another run-dependent parameter also needs its own recipe in
-   `engine/app/compiler/plan.py` and its binder in `_condition` of `_Builder` (`engine/app/compiler/build.py`);
+   years". A kind that needs another run-dependent parameter is a larger change of the compiler: its own recipe
+   in `engine/app/compiler/plan.py` with a branch in `CompiledPlan.parameters` (which today takes every recipe
+   that is not a constant for `RunDateMinusYears`), a method of `_Binder` and its use in `_condition` of
+   `_Builder` (`engine/app/compiler/build.py`), and a wider `Predicate` signature in `computed.py`;
 4. the function and its source type to `COMPUTED_FUNCTIONS` in `scripts/contracts-check.py`;
 5. its rule beside Age in `contracts/errors.md`, which today names `age_years` as the one function.
 
@@ -290,7 +308,8 @@ The engine and the api follow `languages` with no code change.
 `hr.Department` already holds its manager: `manager_employee_id INT NULL`, with the foreign key
 `FK_Department_Employee` to `hr.Employee (id)` (`sql/20_hr_tables.sql`), and glossary 1.0.0 already reads the column
 as the field `manager_assignment`. The seed names a manager for every department except 204. Adding the relationship
-is a change to the glossary alone: no SQL, no engine, api or client code. On a scratch copy of the repository:
+is a change to the glossary alone: no SQL, no engine, api or client code (one test and one document quote the
+version number and follow the bump, step 2). On a scratch copy of the repository:
 
 1. Append this object as the last item of `relationships` in `contracts/glossary.json`, after
    `ministry.departments`:
@@ -390,7 +409,7 @@ Nothing else must change, as the code shows:
 |---|---|---|---|---|---|
 | a field on an existing column | the field | no | no | no | no |
 | a field on a new column | the field | the column | no | no | no |
-| an entity | the entity and its relationships | the table | no | no | no |
+| an entity | the entity and its relationships | the table (and its name in `db-check.sh`'s list) | no | no | no |
 | a relationship | the relationship | only a missing join column | no | no | no |
 | a computed-field kind | the field | no | the closed lists and `engine/app/compiler/computed.py` | no | no |
 | a language | every text, `languages`, `formats` | `CK_Run_language`, unless `he` or `en` | no | no | `LANGUAGES`, locale data, the translation file |

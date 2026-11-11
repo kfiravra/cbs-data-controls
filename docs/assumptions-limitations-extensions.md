@@ -114,22 +114,33 @@ short, in [summarize-architecture.md](summarize-architecture.md).
 - **A run that is still `running` when its page opens** shows a neutral state with a reload; the client does
   not poll.
 
-**Security: open items of the api's audit**
+**Security: open items of the audits**
 
-The security audits of the engine and of the api, and the one of the whole repository at this task's gate,
-found the core sound: no SQL text anywhere outside the engine's compiler, values always bound, each service on
-its own login, no connection string or driver text in a response or a log. Six findings of the api's audit were
-left open, because each is a decision about deployment and none is critical:
+Three audits ran: the engine alone, the api alone, and the whole composed system at the delivery gate. None left
+a critical or high finding open. They found the core sound: no SQL text anywhere outside the engine's compiler,
+identifiers only from the glossary and values always bound, exactly one SELECT per statement, each service on
+its own login with only its own password in its container, no connection string, SQL or driver text in a
+response or a log, and no `.env` in an image. Six findings of the api's audit were left open, because each is a
+decision about deployment:
 
-1. `AllowedHosts` is `*`. A page could rebind its host name to 127.0.0.1 and read the api of the machine it
-   runs on. A deployment sets the host names it serves.
+1. `AllowedHosts` is `*`. A web page open in a browser on the same machine could rebind its host name to
+   127.0.0.1 and call the api as if it were the app: read what is stored, and also create a control and run it,
+   which returns the records of `hr` that the control flags. The gate's audit rated this medium, the highest of
+   the open items. A deployment sets the host names it serves (`AllowedHosts`), and sign-in closes the rest.
 2. Nothing limits concurrent runs (above).
 3. An unsafe method is not checked for a cross-site origin. A page could start a run with a body-less POST; it
-   could not read the answer. Sign-in with anti-forgery closes it.
+   could not read the answer, but each such run stores a snapshot. Sign-in with anti-forgery closes it.
 4. An engine answer is read whole into memory, with no cap of its own beyond the row cap.
 5. The connection to SQL Server sets `TrustServerCertificate=true`, which fits the container's self-signed
    certificate and not a production server.
 6. The static files carry no `nosniff`, `Content-Security-Policy` or `frame-ancestors` header.
+
+From the gate's audit of the composed system, low and left open: all five containers share one compose network,
+so the one-shot loader of the examples could reach the engine and the database, which it never calls (an
+internal network for the database, the engine and the api is the fix, and part of the advisor's plan); and
+`scripts/db-check.sh permissions` proves eight grants and refusals, not every combination (a write by `dq_app`
+on `hr` and by `dq_engine_ro` on `dq` are covered by the explicit `DENY` of `sql/40_logins.sql` and are not
+probed).
 
 Smaller notes of the same audit, with nothing done: Swagger UI and the OpenAPI document are served in every
 environment, and the engine's error parameters are relayed to the client as they come. And in the database both

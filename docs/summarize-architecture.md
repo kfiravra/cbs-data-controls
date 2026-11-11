@@ -137,12 +137,13 @@ shown with its evidence; a person creates it or ignores it. On the sample data t
   (new, accepted, dismissed) that the interface shows. A person accepts; nothing becomes active by itself.
 - Scale and privacy: a prompt holds metadata and statistics for one entity, never record values. Retrieval is
   over the catalogue, not over records; statistics are precomputed, and sampled on large tables.
-- Safety: only this service has network egress; steps, tokens, time and cost have budgets; every run is logged
-  with its prompt version, tool calls and outcome. The model is hosted inside the organization's own cloud, and
+- Safety: this service is the only one given a route out of the system's network (the engine has none; a
+  deployment's firewall holds the rest); steps, tokens, time and cost have budgets; every run is logged with its
+  prompt version, tool calls and outcome. The model is hosted inside the organization's own cloud, and
   its address and key come from the environment. The service is an optional compose profile.
 - Today's heuristics stay as the deterministic baseline and the fallback. The evaluation: on the sample data
-  the advisor must rediscover the planted rules, example 1 included; its tests replay recorded model answers
-  and need no key.
+  the advisor must rediscover the planted rules, example 1 included (the plan says how each of the six examples
+  is judged); its tests replay recorded model answers and need no key.
 
 ## Where to read more
 

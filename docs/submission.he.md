@@ -22,7 +22,7 @@
 | Windows | <span dir="ltr">`start.cmd`</span> |
 | Linux, macOS, WSL | <span dir="ltr">`scripts/start.sh`</span> |
 
-בסיום נפתחת המערכת בכתובת <span dir="ltr">http://localhost:5000</span>, וברשימה שש בקרות לדוגמה מוכנות להרצה.
+בסיום ההרצה המערכת זמינה בדפדפן בכתובת <span dir="ltr">http://localhost:5000</span>, וברשימה שש בקרות לדוגמה מוכנות להרצה.
 
 הרצה בלי Docker, מול SQL Server מקומי, והוראות ההתקנה המלאות: [README](../README.md) (באנגלית).
 
@@ -53,8 +53,8 @@
 
 ## המשימה המתקדמת
 
-תכנון היכולת שבה AI מנתח את מבנה בסיס הנתונים ומציע בקרות באופן יזום מופיע בפרק האחרון של
-[summarize-architecture.md](summarize-architecture.md), ותוכנית העבודה למימוש נמצאת ב־
+תכנון היכולת שבה AI מנתח את מבנה בסיס הנתונים ומציע בקרות באופן יזום מופיע בפרק <span dir="ltr">"The optional task"</span> של המסמך
+[summarize-architecture.md](summarize-architecture.md). תוכנית העבודה למימוש:
 [dev/active/dc-ai-suggestions/plan.md](../dev/active/dc-ai-suggestions/plan.md). במערכת עצמה קיימות כבר היום הצעות
 לבקרות ללא מודל שפה: המנוע גוזר אותן ממילון המונחים ומפרופיל הנתונים.
 

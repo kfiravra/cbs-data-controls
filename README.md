@@ -117,17 +117,23 @@ For a machine with its own SQL Server. Needs:
   needs a restart of the service). The system keeps its two logins on purpose: one can only read the
   organization's data, the other can only write the controls store.
 - Microsoft ODBC Driver 18 for SQL Server (17 works too).
-- Python 3.12 or later, the .NET 10 SDK, and Node 22.
+- Python 3.12 or later, the .NET 10 SDK, and Node 22.12 or later.
 
 The steps below are written for bash (Linux, macOS, WSL, Git Bash); where PowerShell differs, its form follows.
-Each was run as written on Linux.
+Steps 3 to 5 were run as written on Linux. Step 2's host command was not: the development machine has no
+`sqlcmd`, and the same script ran there only inside its container.
 
-**1. Configuration.** Copy the example file and set the three passwords in it (8 or more characters with upper
-case, lower case and a digit; no spaces, quotes, `$`, `;` or backslash):
+**1. Configuration.** Copy the example file and set the three passwords in it:
 
 ```sh
 cp .env.example .env
 ```
+
+`DQ_APP_PASSWORD` and `DQ_ENGINE_RO_PASSWORD` are new passwords of your choice, for the two logins that step 2
+creates (8 or more characters with upper case, lower case and a digit; no spaces, quotes, `$`, `;` or
+backslash). `MSSQL_SA_PASSWORD` is the existing password of your server's `sa` login, which step 2 connects
+with; when `sa` is disabled, or its password holds one of those characters, use the SSMS route of step 2 with a
+Windows administrator login and leave this line as it is.
 
 In `.env`, point the two port lines at your server: `DB_PORT=1433` and `ENGINE_DB_PORT=1433` for a default
 instance. For a named instance, set `ENGINE_DB_HOST=.\SQLEXPRESS` and leave `ENGINE_DB_PORT=` empty.
@@ -160,9 +166,12 @@ api, and put the client's build inside the published folder, where the api serve
 
 ```sh
 (cd web && npm ci && npx ng build)
-dotnet publish api/src/DataControls.Api -c Release -o publish
+dotnet publish api/src/DataControls.Api -c Release -o publish -p:TreatWarningsAsErrors=false
 cp -r web/dist/web/browser publish/wwwroot
 ```
+
+(The repository's own build treats warnings as errors; the switch is off here so that a warning added by a
+later SDK than the one the code was built with does not stop the publish.)
 
 Start the api with its own settings. The published api reads no `.env`: it takes the password of its login from
 the environment.
@@ -231,7 +240,7 @@ Ctrl+C in the two terminals. To remove everything: drop the database and the two
 
    <img src="docs/screenshots/results-mobile.png" alt="The results on a phone" width="300">
 
-The screenshots were taken on the system as it starts, after one run of each example.
+The screenshots were taken on the system as it starts, after the six examples were run.
 
 ## Configuration
 

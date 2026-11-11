@@ -78,10 +78,6 @@ async function shoot(page, name) {
   await phone.getByTestId('panel').waitFor();
   await settle(phone);
   await shoot(phone, 'results-mobile.png');
-  await phone.goto('/');
-  await phone.getByTestId('tab-active').waitFor();
-  await settle(phone);
-  await shoot(phone, 'list-mobile.png');
   await mobile.close();
   await browser.close();
 })().catch((error) => {

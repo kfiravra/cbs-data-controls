@@ -376,8 +376,9 @@ text.
 - **One flag column per node that can be matched.** The inner select carries the real `WHERE` (the root group) and,
   per node, `CASE WHEN` its predicate `THEN 1 ELSE 0 END` as a `t` column (`t0` for the first). The outer statements
   derive an `m` column per node from those flags: the node's flag and every group above it (Semantics, above).
-- **A count and a capped, ordered page**, each a single SELECT over the same inner select (`CompiledPlan` in
-  `engine/app/compiler/plan.py`). The count returns `COUNT(*)` and, per node, the `SUM` of its `m` column. The page
+- **A count and a capped, ordered page**, each a single SELECT over an inner select with the same `FROM`, joins,
+  `WHERE` and flags (`CompiledPlan` in `engine/app/compiler/plan.py`); the count's inner select leaves out the
+  columns of the record's values, which only the page shows. The count returns `COUNT(*)` and, per node, the `SUM` of its `m` column. The page
   returns `TOP (cap)` rows ordered by the root key: the key, the identifying fields, the values the reasons need and
   the `m` columns.
 - **Run read-only and bounded.** `run_compiled` (`engine/app/executor/database.py`) runs the count, then the page, on
