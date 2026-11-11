@@ -2,7 +2,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { Control } from '../../src/app/core/api/api.types';
-import { Definition } from '../../src/app/core/definition/definition.types';
+import { Definition, DefinitionNode } from '../../src/app/core/definition/definition.types';
 import { CONTRACTS, glossary } from './glossary';
 
 export interface ExpectedViolation {
@@ -55,10 +55,36 @@ export function exampleById(id: string): Example {
   return example;
 }
 
-/** The example a definition was taken from, if any: a run of it flags the example's expected records. */
-export function exampleOf(definition: Definition): Example | undefined {
-  const wanted = JSON.stringify(definition);
-  return examples.find((example) => JSON.stringify(example.definition) === wanted);
+function markedIds(node: DefinitionNode): string[] {
+  if (node.type === 'group') {
+    return node.children.flatMap(markedIds);
+  }
+  return node.type === 'related' ? [node.id, ...markedIds(node.where)] : [node.id];
+}
+
+/** A definition as text, with its node ids replaced by their place: equal for two spellings of one rule. */
+function shape(definition: Definition): string {
+  const ids = markedIds(definition.where);
+  return JSON.stringify(definition, (key, value: unknown) => (key === 'id' ? ids.indexOf(String(value)) : value));
+}
+
+/**
+ * The records a run of a definition flags, when the definition is one of the examples node for node: the
+ * example's expected records, with the matched ids of the definition as it was given (a control built in
+ * the editor has ids of its own). Undefined for any other definition: the fake engine decides no violation.
+ */
+export function expectedFor(definition: Definition): ExpectedViolation[] | undefined {
+  const wanted = shape(definition);
+  const example = examples.find((candidate) => shape(candidate.definition) === wanted);
+  if (!example) {
+    return undefined;
+  }
+  const theirs = markedIds(example.definition.where);
+  const ours = markedIds(definition.where);
+  return example.expected.violations.map((violation) => ({
+    key: violation.key,
+    matched: violation.matched.map((id) => ours[theirs.indexOf(id)]),
+  }));
 }
 
 export function controlOf(example: Example, id: number): Control {

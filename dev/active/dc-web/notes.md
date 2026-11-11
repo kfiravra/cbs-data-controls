@@ -1,15 +1,17 @@
 # dc-web notes
 
 ## State
-Phase 6 done and committed (2026-11-11, unattended night run on Kfir's word): the four screens are built on
-the mocked api. The fixes of the phase 5 review are the next commit, then the phase 6 review runs in the
-background while the gate specs of phase 7 are written. The dev server runs on :4200.
+Phases 1 to 6 are done and committed; the gate specs of phase 7 are written and committed, and its four steps
+on the real stack wait for the api and the engine to reach main (2026-11-11, unattended night run on Kfir's
+word). The fixes of the phase 6 review are the next commit, then phase 8 on the mocked screens. The dev server
+runs on :4200.
 
 ## Next
-1. `fix(web): review fixes` for the phase 5 review (findings in the Log), then `/phase-review web` on phase 6.
-2. Phase 7: write `e2e/support/gate.ts` and the three gate specs. They run only when the api and the engine are
-   on main (`git log main`); tonight they are written and type-checked, not run.
-3. Phase 8: the design pass on the mocked screens, `web/README.md`, the hand-over.
+1. `fix(web): review fixes` for the phase 6 review (findings in the Log).
+2. Phase 8: `/impeccable audit`, `critique` and `polish` on the mocked screens, the keyboard pass,
+   `web/README.md`, the hand-over.
+3. When the api and the engine are on main: `git merge main`, then the four waiting steps of phase 7 (the gate
+   on the real stack, the fixes its payloads ask for, the pre-loaded list twice, the build the api hosts).
 
 ## Blockers
 - Phase 7 runs (the gate on the real stack, the pre-load, the hosted build): the api and the engine are not on
@@ -94,6 +96,14 @@ background while the gate specs of phase 7 are written. The dev server runs on :
 32. The dev server Playwright starts runs with `--prebundle=false`: with prebundling, the first time a lazy
     screen brings a dependency the server has not bundled, it reloads the page in the middle of a test (seen
     once here, on the first run after the suggestions dialog was added: four mobile tests lost their dialog).
+
+33. The gate specs were dry-run once on a stand-in, not on the real stack: a temporary script (never
+    committed, deleted after the run) served the in-memory api of the mocked specs over HTTP on :5000, behind
+    the dev server's proxy. It is not the gate: the stand-in renders with the fake engine and flags the
+    records each example expects. It checks the specs themselves (flow, locators, tags, teardown, the health
+    fixture), which nobody could otherwise run before dc-delivery.
+34. The list's name link has the test id `control-link`; `control-name` is the editor's name field alone. The
+    dry run found the clash: the gate's list spec read the list's link where it meant the editor's field.
 
 ## Reconciliation with `contracts/` (phase 2, 2026-11-11)
 Read: `api.md`, `errors.md`, `glossary.json`, `control-definition.schema.json`, the six examples and the thirteen
@@ -347,3 +357,15 @@ rewrote. A review that found nothing, or did not run, is logged as that.
   re-run is its own failure (a Warning banner for an archived control, else "try again" runs again) and
   design.md says that; not-found from the address is a `computed` in the results page and in the editor page;
   the summary stands for a clean run; `CountedService` is the one place for counted text. Eleven tests added.
+- 2026-11-11 phase 7 on Fable 5.2, the part that needs no service: `e2e/support/gate.ts` (the health check as
+  a worker fixture, a tag per test, the ids a test created, archive in the teardown) and `e2e/gate/`
+  `examples.spec.ts`, `list.spec.ts`, `suggestions.spec.ts`, written to Design O. Not run on the real stack:
+  `git log main` ends at `f9928bf`, the api and the engine are on `feat/api` and `feat/engine`, and nothing
+  listens on :5000 or :8000. Dry run on a stand-in (decision 33; cost line: about four minutes of Playwright,
+  started without waiting): first run 2 of 16 passed and showed two things, a test id shared by the list's
+  name link and the editor's name field (fixed, decision 34) and a fake that knew an example only by its exact
+  ids (the fixture now compares node for node, `expectedFor`); second run 16 of 16 on mobile and desktop with
+  one worker. After it the stand-in held 24 controls: the 6 untagged ones still active, never run and at
+  version 1, and 18 tagged ones, all archived. With no health answer the fixture stops every test with one
+  line ("the gate needs the api, the engine and the database: ... did not answer"). Waiting for the merge: the
+  gate on the real stack, fixes from real payloads, the pre-loaded list twice, the build the api hosts.

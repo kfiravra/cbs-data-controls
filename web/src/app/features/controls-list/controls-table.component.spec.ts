@@ -103,7 +103,7 @@ describe('ControlsTableComponent', () => {
   it('links the name to the editor and labels the root entity from the glossary', async () => {
     await draw([control(7, null)]);
 
-    const name = cell(rows()[0], 'control-name')!;
+    const name = cell(rows()[0], 'control-link')!;
     expect(name.getAttribute('href')).toBe('/controls/7');
     expect(name.querySelector('bdi')!.textContent).toBe('control 7');
     expect(rows()[0].textContent).toContain(SYNTHETIC_GLOSSARY.entities[0].label.plural['he']);

@@ -46,6 +46,18 @@ export interface Problem {
   readonly correlationId: string;
 }
 
+// ---------------------------------------------------------------- health
+
+export type HealthState = 'ok' | 'unavailable';
+
+/** `GET /api/v1/health`: always 200, also when the stack is degraded. */
+export interface Health {
+  readonly status: 'ok' | 'degraded';
+  readonly database: HealthState;
+  readonly engine: HealthState;
+  readonly version: string;
+}
+
 // ---------------------------------------------------------------- pages
 
 export interface Page<T> {

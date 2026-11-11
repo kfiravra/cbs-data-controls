@@ -39,7 +39,7 @@ test.describe('controls list', () => {
     await expect(rows(page)).toHaveCount(examples.length);
     await expect(page.getByTestId('page-meta')).toHaveText(counted('list.count.active', examples.length));
     const byName = [...api.controls].sort((a, b) => a.name.localeCompare(b.name, 'he') || a.id - b.id);
-    await expect(rows(page).getByTestId('control-name')).toHaveText(byName.map((control) => control.name));
+    await expect(rows(page).getByTestId('control-link')).toHaveText(byName.map((control) => control.name));
     await expect(rows(page).getByTestId('last-run')).toHaveText(byName.map(() => t('list.neverRun')));
     for (const row of await rows(page).all()) {
       await expect(row.getByTestId('result')).toHaveAttribute('data-result', 'never');

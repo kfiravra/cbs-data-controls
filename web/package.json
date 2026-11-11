@@ -9,7 +9,8 @@
     "lint": "ng lint",
     "typecheck:e2e": "tsc -p tsconfig.e2e.json",
     "e2e": "playwright test e2e/mocked",
-    "preview": "PREVIEW=1 playwright test e2e/preview.ts --project=desktop --headed"
+    "preview": "PREVIEW=1 playwright test e2e/preview.ts --project=desktop --headed",
+    "e2e:gate": "playwright test e2e/gate --project=mobile --project=desktop --workers=1"
   },
   "private": true,
   "packageManager": "npm@10.9.2",

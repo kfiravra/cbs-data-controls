@@ -1,7 +1,7 @@
 import { Control, ResultItem, Run, RunError } from '../../src/app/core/api/api.types';
 import { FakeEngine } from '../support/fake-engine';
 import { loadSeed } from '../support/seed';
-import { ExpectedViolation, exampleOf } from './examples';
+import { ExpectedViolation, expectedFor } from './examples';
 import { glossaryFile } from './glossary';
 
 export interface StoredRun {
@@ -50,7 +50,7 @@ export interface RunOptions {
 
 /** A finished run: the engine's sentence, a count per condition, and one stored row per flagged record. */
 export function succeededRun(control: Control, id: number, options: RunOptions = {}): StoredRun {
-  const expected = options.expected ?? exampleOf(control.definition)?.expected.violations ?? [];
+  const expected = options.expected ?? expectedFor(control.definition) ?? [];
   const rendered = engine.sentenceOf(control.definition);
   const results = expected.map((violation, index) => ({
     seq: index + 1,

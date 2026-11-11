@@ -328,17 +328,22 @@ Review: `/phase-review web`
 Commit: `feat(web): controls list and suggestions dialog`
 
 ### Phase 7: the real stack
+
+Status on 2026-11-11 (night run): the gate fixture and the three gate specs are written, type-checked, linted
+and dry-run on a stand-in (notes.md, Log). The four unticked steps need the api and the engine and wait for
+their merge to main, on Kfir's word for that night: no service is started from another worktree.
+
 - [ ] `git merge main` when the api and the engine are on it, or run them from their worktrees; the db runs from
       the main tree. Say what will run and for how long, and wait for the word. Port 8000: ask before stopping
       another project's container.
-- [ ] `e2e/support/gate.ts` per Design O: the health check, the tag, the ids a test created, the teardown.
-- [ ] `e2e/gate/examples.spec.ts` per Design O: the six examples built through the UI under tagged names, saved,
+- [x] `e2e/support/gate.ts` per Design O: the health check, the tag, the ids a test created, the teardown.
+- [x] `e2e/gate/examples.spec.ts` per Design O: the six examples built through the UI under tagged names, saved,
       run and read; example 4 leaves `gate-editor` and `gate-results`; one example reloads its results by URL.
-- [ ] `e2e/gate/list.spec.ts`, on a control of its own (example 4, created through the api): `gate-list` before it
+- [x] `e2e/gate/list.spec.ts`, on a control of its own (example 4, created through the api): `gate-list` before it
       creates anything; the row found by search and id; run from the row and the row's result; search and the
       condition filter on that run's results; duplicate, the copy saved and found by its own id; archive, after
       which no active row carries the test's tag.
-- [ ] `e2e/gate/suggestions.spec.ts` per Design O: the drafts as the engine's answer holds them,
+- [x] `e2e/gate/suggestions.spec.ts` per Design O: the drafts as the engine's answer holds them,
       `gate-suggestions`, one draft created under a tagged name and opened by its id.
 - [ ] Fix what the real payloads show. A difference from the contracts is one line to Kfir, never a silent adapter.
 - [ ] The pre-loaded list (decision 22). Save the "before" listing of Design O. If no control carries an example's

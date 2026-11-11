@@ -24,7 +24,7 @@
         @for (row of rows(); track row.control.id) {
           <tr data-testid="control-row" [attr.data-id]="row.control.id">
             <td class="cell-main">
-              <a class="cell-title" data-testid="control-name" [routerLink]="['/controls', row.control.id]">
+              <a class="cell-title" data-testid="control-link" [routerLink]="['/controls', row.control.id]">
                 <bdi>{{ row.control.name }}</bdi>
               </a>
               @if (!row.control.isActive) {
