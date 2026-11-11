@@ -290,7 +290,7 @@ describe('EditorStore', () => {
       ]);
       expect(store.treeErrors().map((error) => error.code)).toEqual(['TOO_DEEP']);
       expect(store.focus()).toEqual({ node: 'c1', input: 'value' });
-      expect([...store.openNodes()].sort()).toEqual(['c1', 'c2']);
+      expect([...store.messages().keys()].sort()).toEqual(['c1', 'c2']);
     });
 
     it('drops what the server said about a row when that row is edited, and keeps it for the others', async () => {

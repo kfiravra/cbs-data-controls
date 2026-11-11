@@ -25,7 +25,7 @@ test('the panel shows the drafts the engine proposes, and creates one as a contr
   for (const [index, item] of items.entries()) {
     const draft = drafts.nth(index);
     await expect(draft.getByTestId('suggestion-name')).toHaveText(item.name);
-    await expect(draft.getByTestId('suggestion-sentence').getByTestId('mark').first()).toBeVisible();
+    await expect(draft.getByTestId('suggestion-sentence').locator('[data-testid="clause"][data-tone="1"]').first()).toBeVisible();
     await expect(draft.getByRole('checkbox')).not.toBeChecked();
   }
   await shot(page, testInfo, 'gate-suggestions');

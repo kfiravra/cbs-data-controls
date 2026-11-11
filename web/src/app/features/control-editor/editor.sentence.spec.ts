@@ -120,7 +120,6 @@ describe('EditorStore: the validate loop', () => {
     expect(store.sentence().stale).toBe(true);
     expect(store.status()).toMatchObject({ kind: 'invalid', mark: letters[0] });
     expect(store.messages().size).toBe(0);
-    expect([...store.openNodes()]).toEqual([id]);
     expect(store.sentenceFailure()).toBeNull();
   });
 

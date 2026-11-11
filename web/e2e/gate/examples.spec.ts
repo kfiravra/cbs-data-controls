@@ -6,6 +6,7 @@ import { BuilderDriver } from '../support/builder-driver';
 import { controlIdOf, expect, test } from '../support/gate';
 import { t } from '../support/i18n';
 import { shot } from '../support/shots';
+import { ruleTones, tonesOf } from '../support/rule';
 
 const letters = t('common.markLetters').split(' ');
 const lang = glossary.defaultLanguage;
@@ -52,12 +53,11 @@ test.describe('the six examples on the real stack', () => {
       await page.getByTestId('control-description').fill(example.description[lang]);
       await new BuilderDriver(page).build(example.definition);
 
-      // the engine reads the control back: one mark per condition, and nothing left unfinished
+      // the engine reads the control back: one colour per condition, in their order, and nothing left unfinished
       const sentence = page.getByTestId('sentence');
       await expect(sentence).toHaveAttribute('data-stale', 'false');
-      await expect(sentence.getByTestId('mark')).toHaveText(
-        letters.slice(0, markedIds(example.definition.where).length),
-      );
+      await expect.poll(() => ruleTones(sentence)).toEqual(tonesOf(markedIds(example.definition.where).length));
+      await expect(sentence.getByTestId('mark')).toHaveCount(0);
       await expect(page.getByTestId('sentence-status')).toHaveCount(0);
       if (number === 4) {
         await shot(page, testInfo, 'gate-editor');

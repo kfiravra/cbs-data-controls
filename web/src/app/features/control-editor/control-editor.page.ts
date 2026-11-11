@@ -19,6 +19,7 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { SuggestionItem } from '../../core/api/api.types';
 import { DraftGroup } from '../../core/definition/draft';
 import { DraftEdit } from '../../core/definition/draft.edit';
+import { MarksService } from '../../core/definition/marks.service';
 import { GlossaryLabelsService } from '../../core/glossary/glossary-labels.service';
 import { fieldGroups, findEntity, relatedOptions } from '../../core/glossary/glossary.lookups';
 import { FormatService } from '../../core/i18n/format.service';
@@ -87,6 +88,7 @@ export class ControlEditorPage {
   private readonly toast = inject(ToastService);
   private readonly listChanges = inject(ListChanges);
   private readonly closedDrafts = inject(ClosedDrafts);
+  private readonly marksService = inject(MarksService);
   /** The address of the editor whose draft is on the screen (`/controls/new`, `/controls/12`). */
   private openPath: string | null = null;
   /** A changed draft that was left while its save was on its way: offered back if that save fails. */
@@ -205,8 +207,21 @@ export class ControlEditorPage {
 
   protected readonly busy = computed(() => this.store.saveState() !== 'idle');
 
-  /** Whether the suggestions for the choice are shown; closed until their row is pressed. */
+  /**
+   * Whether the user opened the suggestions. Closed until their row is pressed; it then stays open through
+   * every change of what to check, and closes when a suggestion is taken into the form.
+   */
   protected readonly ideasOpen = signal(false);
+
+  /** The list is on the screen: it was opened, and there is something to show or on its way. */
+  protected readonly ideasShown = computed(
+    () => this.ideasOpen() && (this.store.ideas.loading() || this.store.ideas.items().length > 0),
+  );
+
+  /** The marks of each suggestion's own conditions, for the colours of its rule in words. */
+  protected readonly ideaMarks = computed(() =>
+    this.store.ideas.items().map((idea) => this.marksService.of(idea.definition.where)),
+  );
 
   /** What the row of the suggestions says: that they are computed, that there are none, or that it can be opened. */
   protected readonly ideasLabel = computed(() => {
@@ -326,7 +341,7 @@ export class ControlEditorPage {
   }
 
   protected chooseRoot(key: string): void {
-    this.ideasOpen.set(false);
+    // an opened list of suggestions stays open: it then shows the suggestions for the new choice
     const undo = this.store.chooseRoot(key);
     if (undo) {
       this.offerBack('editor.toast.whatChanged', {}, undo);

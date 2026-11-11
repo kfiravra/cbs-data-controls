@@ -15,8 +15,11 @@ Every table is one design: a head of column names and a bubble per row (a card p
 the list has three parts: its details, which open the results of its last run wherever they are clicked, its
 run button and its actions. A column's name sorts by it, ascending and then descending; the order of the list
 is the server's (`sort` and `dir` in the address and in `GET /api/v1/controls`), and so is the order of a run's
-records, by any identifying field or by the reasons (`sort=field` with `field`, `sort=reasons`). The brackets
-of a rule in words are drawn as blocks and never written; a reason keeps its text as the engine wrote it. A status has one colour
+records, by any identifying field or by the reasons (`sort=field` with `field`, `sort=reasons`). A rule in
+words is plain text: each condition's words are underlined in that condition's colour (a fixed set of eight,
+in the order of the rule), which is also the ground of its letter in the builder, on the filter chips and
+beside each reason; its groups are lines of their own, with no bracket and no tint. A reason keeps its text as
+the engine wrote it. A status has one colour
 everywhere: violations red, a clean run green, a run that stopped amber, never ran and archived grey.
 Design: [docs/design.md](../docs/design.md); payloads: [contracts/api.md](../contracts/api.md); errors:
 [contracts/errors.md](../contracts/errors.md).

@@ -1,7 +1,7 @@
 <div class="group related" role="group" [attr.aria-label]="'common.condition' | translate: { mark: mark() }">
   <div class="group__head">
     <div class="group__how">
-      <app-mark [label]="mark()" [state]="markState()" />
+      <app-mark [label]="mark()" [state]="markState()" [tone]="tone()" />
       <mat-form-field class="field--sm group__pick" appearance="outline" subscriptSizing="dynamic">
         <mat-select
           data-testid="related-quantity"

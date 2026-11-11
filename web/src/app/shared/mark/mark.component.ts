@@ -4,9 +4,9 @@ export type MarkState = 'resting' | 'open';
 
 /**
  * The letter a condition carries wherever it is spoken of. Display only: derived from the order of the
- * definition, never stored. It is a badge and answers to nothing; the editor outlines the mark of an
- * unfinished condition (`open`). At the start of a row it is a small square; in a sentence it is smaller
- * still and sits at the top corner of its clause. Give it a `name` where nothing else names its condition;
+ * definition, never stored. It is a badge on a ground of its condition's colour and answers to nothing; the
+ * editor outlines the mark of an unfinished condition (`open`). It stands at the start of a row (the builder,
+ * the count by condition, a reason); the rule in words has no letters, only the colours. Give it a `name` where nothing else names its condition;
  * without one it is hidden from assistive technology.
  */
 @Component({
@@ -16,8 +16,8 @@ export type MarkState = 'resting' | 'open';
     class: 'mark',
     'data-testid': 'mark',
     '[class.mark--open]': 'state() === "open"',
-    '[class.mark--changed]': 'changed()',
     '[attr.data-state]': 'state()',
+    '[attr.data-tone]': 'tone()',
     '[attr.role]': 'name() ? "img" : null',
     '[attr.aria-label]': 'name() ?? null',
     '[attr.aria-hidden]': 'name() ? null : "true"',
@@ -28,6 +28,6 @@ export class MarkComponent {
   readonly label = input.required<string>();
   readonly state = input<MarkState>('resting');
   readonly name = input<string>();
-  /** Plays the settle once: the mark of a clause that was just rewritten fills and eases back. */
-  readonly changed = input(false);
+  /** The place of the condition's colour in the fixed set (`toneOf`); null for a mark with no colour of its own. */
+  readonly tone = input<number | null>(null);
 }

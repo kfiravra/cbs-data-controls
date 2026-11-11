@@ -6,6 +6,7 @@ import { MatTooltip } from '@angular/material/tooltip';
 import { TranslatePipe } from '@ngx-translate/core';
 
 import { DraftRelated } from '../../core/definition/draft';
+import { toneOf } from '../../core/definition/marks';
 import { DraftEdit } from '../../core/definition/draft.edit';
 import { findRelationship, relatedOptions } from '../../core/glossary/glossary.lookups';
 import { LanguageService } from '../../core/i18n/language.service';
@@ -59,6 +60,7 @@ export class RelatedNodeComponent {
   readonly edit = output<DraftEdit>();
 
   protected readonly mark = computed(() => this.view().marks.get(this.node().id) ?? '');
+  protected readonly tone = computed(() => toneOf(this.view().marks, this.node().id));
   protected readonly messages = computed(() => this.view().messages.get(this.node().id) ?? []);
   protected readonly invalid = computed(() => this.messages().some((message) => message.input === 'relationship'));
 

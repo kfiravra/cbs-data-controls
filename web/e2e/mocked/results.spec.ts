@@ -14,6 +14,7 @@ import { expect, test } from '../support/mocked';
 import { RUN, breakdown, controlOf, letters, open, rows, ui } from '../support/results-screen';
 import { problem } from '../support/routes';
 import { sheetInset, shot } from '../support/shots';
+import { ruleTones, tonesOf } from '../support/rule';
 
 test.describe('run results', () => {
   test('a run with violations shows the control in words, the summary, the breakdown and a reason for every record', async ({ page, api }, testInfo) => {
@@ -22,9 +23,8 @@ test.describe('run results', () => {
     await open(page, stored);
 
     await expect(ui(page).getByTestId('run-total')).toHaveText(String(example.expected.total));
-    await expect(ui(page).getByTestId('run-sentence').getByTestId('mark')).toHaveText(
-      letters.slice(0, stored.run.conditions!.length),
-    );
+    await expect.poll(() => ruleTones(ui(page).getByTestId('run-sentence'))).toEqual(tonesOf(stored.run.conditions!.length));
+    await expect(ui(page).getByTestId('run-sentence').getByTestId('mark')).toHaveCount(0);
     await expect(breakdown(page)).toHaveCount(stored.run.conditions!.length);
     await expect(rows(page)).toHaveCount(example.expected.total);
 
@@ -59,9 +59,10 @@ test.describe('run results', () => {
     await expect(rows(page)).toHaveCount(condition.count!);
     await expect(row).toHaveAttribute('aria-pressed', 'true');
     await expect(row.getByTestId('mark')).toHaveAttribute('data-state', 'resting');
-    await expect(ui(page).getByTestId('run-sentence').locator(`[data-node="${condition.id}"]`).getByTestId('mark')).toHaveAttribute(
-      'data-state',
-      'resting',
+    // the chip's letter and the condition's words in the rule above carry one colour
+    await expect(ui(page).getByTestId('run-sentence').locator(`[data-node="${condition.id}"]`).first()).toHaveAttribute(
+      'data-tone',
+      (await row.getByTestId('mark').getAttribute('data-tone'))!,
     );
 
     await ui(page).getByTestId('breakdown-all').click();
@@ -130,7 +131,8 @@ test.describe('run results', () => {
       );
     const resting = await looks();
     expect(resting.length).toBeGreaterThan(4);
-    expect(new Set(resting).size).toBe(1);
+    // one colour per condition: as many looks as the run has conditions with a letter on the screen
+    expect(new Set(resting).size).toBe(new Set(await marks.evaluateAll((all) => all.map((mark) => mark.getAttribute('data-tone')))).size);
 
     // looked at again after longer than any transition of the interface lasts: an effect that eases in
     // would have arrived
@@ -226,7 +228,7 @@ test.describe('run results', () => {
     await expect(ui(page).getByTestId('panel-title')).toHaveText(control.name);
     const state = ui(page).getByTestId('state-never-run');
     await expect(state).toContainText(t('results.never.title'));
-    await expect(ui(page).getByTestId('run-sentence').getByTestId('mark').first()).toHaveText(letters[0]);
+    await expect(ui(page).getByTestId('run-sentence').locator('[data-testid="clause"][data-tone="1"]').first()).toBeVisible();
     await expect(ui(page).getByTestId('rerun')).toHaveCount(0);
     await expect(ui(page).getByTestId('edit-control')).toHaveAttribute('href', `/controls/${control.id}`);
     await shot(page, testInfo, 'results-never-run');
@@ -352,7 +354,7 @@ test.describe('run results', () => {
     const panel = ui(page).getByTestId('state-timed-out');
     await expect(panel).toContainText(t('errors.QUERY_TIMEOUT.title', { timeoutSeconds: 30 }));
     // the rule that was running is still read back, so "narrow the conditions" has something to point at
-    await expect(ui(page).getByTestId('run-sentence').getByTestId('mark').first()).toHaveText(letters[0]);
+    await expect(ui(page).getByTestId('run-sentence').locator('[data-testid="clause"][data-tone="1"]').first()).toBeVisible();
     // the head offers the run again; the state does not repeat it
     await expect(ui(page).getByTestId('rerun')).toHaveCount(1);
     await expect(panel.getByRole('button')).toHaveCount(0);

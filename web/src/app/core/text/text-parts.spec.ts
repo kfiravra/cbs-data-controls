@@ -1,5 +1,5 @@
 import { TextPart } from '../api/api.types';
-import { Block, changedNodes, plainText, splitFirstWord, toBlocks, toClauses } from './text-parts';
+import { Block, changedNodes, plainText, toBlocks, toClauses } from './text-parts';
 
 // the sentence of contracts/api.md §5, as shapes: two clauses and their joining word
 const SENTENCE: TextPart[] = [
@@ -42,12 +42,6 @@ describe('text parts', () => {
       ['c2', true],
       ['r1', false],
     ]);
-  });
-
-  it('splits a text after its first word, keeping the space with the rest', () => {
-    expect(splitFirstWord('salary over')).toEqual(['salary', ' over']);
-    expect(splitFirstWord('salary')).toEqual(['salary', '']);
-    expect(splitFirstWord('')).toEqual(['', '']);
   });
 
   it('names the nodes whose clause text changed between two sentences, new nodes included', () => {

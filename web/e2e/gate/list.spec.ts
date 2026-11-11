@@ -33,7 +33,7 @@ test('a control of its own is found, opened, run, read in its panel, duplicated 
     await expect(page).toHaveURL(new RegExp(`/controls/${control.id}/runs$`));
     await expect(panel.getByTestId('state-never-run')).toContainText(t('results.never.title'));
     // the rule in words comes from the real engine
-    await expect(panel.getByTestId('run-sentence').getByTestId('mark').first()).toBeVisible();
+    await expect(panel.getByTestId('run-sentence').locator('[data-testid="clause"][data-tone="1"]').first()).toBeVisible();
     await page.keyboard.press('Escape');
     await expect(panel).toHaveCount(0);
     // the list kept its search under the panel, and has the focus back on the row

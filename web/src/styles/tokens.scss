@@ -37,6 +37,18 @@
   --color-success: #2d6a1e; // 6.2:1 on ground; a leaf green, away from the teal
   --color-success-tint: #2d6a1e1a;
   --color-success-line: #2d6a1e59;
+  // The colours of the conditions: a fixed set of light colours at half strength (50%), one per condition
+  // in the order of the rule, round again when the set ends. Each is the ground of a condition's letter (Ink
+  // on it is 9:1 at the least on a light ground) and the line under its words in the rule. Neighbours in
+  // the set are far apart in hue.
+  --color-tone-1: #f2c74480; // amber
+  --color-tone-2: #7fc0f580; // sky
+  --color-tone-3: #f59ab880; // rose
+  --color-tone-4: #8ed47c80; // green
+  --color-tone-5: #b9a6f280; // violet
+  --color-tone-6: #f5a46880; // orange
+  --color-tone-7: #5fd2c280; // mint
+  --color-tone-8: #e29aea80; // orchid
   --color-scrim: #1f303847; // 28% ink behind a panel or a dialog: the list stays readable under it
 
   // type: one family, five sizes and a figure, three weights, four line heights. A role is a size with its
@@ -49,7 +61,6 @@
   --text-page: 1.5rem; // 24: the title of the page and of a panel
   --text-figure: 2.25rem; // 36: the count of a run
   --text-mark: 0.75rem; // 12: the letter of a condition at the start of its row
-  --text-mark-corner: 0.625rem; // 10: the same letter as a superscript at the corner of its clause
   --weight-regular: 400; // what is read
   --weight-medium: 500; // labels, buttons, chips
   --weight-strong: 600; // titles, names, figures
@@ -80,7 +91,6 @@
   --size-control-sm: 36px;
   --size-icon: 20px;
   --size-mark: 18px; // the letter of a condition at the start of its row
-  --size-mark-corner: 13px; // the same letter as a superscript over the start of its clause
   --size-bar: 60px;
   --gutter: 16px; // 32 from 640, 48 from 1024
   --container: 1280px;

@@ -28,7 +28,8 @@ test.describe('suggestions panel', () => {
       const draft = drafts(page).nth(index);
       await expect(draft.getByTestId('suggestion-name')).toHaveText(item.name);
       await expect(draft).toContainText(item.rationale);
-      await expect(draft.getByTestId('suggestion-sentence').getByTestId('mark').first()).toBeVisible();
+      await expect(draft.getByTestId('suggestion-sentence').locator('[data-testid="clause"][data-tone="1"]').first()).toBeVisible();
+      await expect(draft.getByTestId('suggestion-sentence').getByTestId('mark')).toHaveCount(0);
       await expect(draft.getByTestId('evidence')).toHaveText(item.evidence.map((evidence) => evidence.text));
       await expect(draft.getByRole('checkbox')).not.toBeChecked();
     }
@@ -105,7 +106,7 @@ test.describe('suggestions panel', () => {
 
     await expect(page).toHaveURL(/\/controls\/new$/);
     await expect(page.getByTestId('control-name')).toHaveValue(item.name);
-    await expect(page.getByTestId('sentence').getByTestId('mark').first()).toBeVisible();
+    await expect(page.getByTestId('sentence').locator('[data-testid="clause"][data-tone="1"]').first()).toBeVisible();
     expect(api.callsTo('POST /suggestions/accept')).toHaveLength(0);
     expect(api.controls).toHaveLength(examples.length);
   });

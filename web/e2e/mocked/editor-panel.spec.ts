@@ -5,6 +5,7 @@ import { t } from '../support/i18n';
 import { expect, test } from '../support/mocked';
 import { problem } from '../support/routes';
 import { atRest, sheetInset, shot } from '../support/shots';
+import { ruleTones, tonesOf } from '../support/rule';
 
 test.describe('control editor: what to check, suggestions for it, and the bar', () => {
   test('a new control asks what to check: a card for each thing of the glossary, nothing chosen, and how they connect', async ({ page }, testInfo) => {
@@ -130,6 +131,39 @@ test.describe('control editor: what to check, suggestions for it, and the bar', 
     await page.getByRole('button', { name: t('editor.toast.restore'), exact: true }).click();
     await expect(page.getByTestId('control-name')).toHaveValue(offered[0].name);
     await expect(page.getByTestId('control-description')).toHaveValue(offered[0].description);
+  });
+
+  test('an opened list of suggestions stays open when what to check is changed, and closes when one is taken', async ({ page, api }) => {
+    const withIdeas = glossary.entities.find((candidate) => candidate.key === api.suggestions[0].definition.rootEntity)!;
+    const other = glossary.entities.find((candidate) => candidate.rootable && candidate.key !== withIdeas.key)!;
+    const offered = (entity: typeof withIdeas) => api.suggestions.filter((item) => item.definition.rootEntity === entity.key).slice(0, 3);
+    const choose = (entity: typeof withIdeas) => page.getByRole('radio', { name: label(entity.label.plural) }).click();
+    const ideas = page.getByTestId('idea');
+    await page.goto('/controls/new');
+
+    await choose(withIdeas);
+    await page.getByTestId('ideas-toggle').click();
+    await expect(ideas).toHaveCount(offered(withIdeas).length);
+
+    // another choice: the list was opened and stays so, now for the new choice (or with nothing, if it has none)
+    await choose(other);
+    await expect(page.getByTestId('root-entity').and(page.locator('[aria-checked="true"]'))).toHaveAttribute('data-key', other.key);
+    await expect(ideas).toHaveCount(offered(other).length);
+    if (offered(other).length > 0) {
+      await expect(page.getByTestId('ideas-toggle')).toHaveAttribute('aria-expanded', 'true');
+    }
+
+    // back again: open without another press
+    await choose(withIdeas);
+    await expect(ideas).toHaveCount(offered(withIdeas).length);
+    await expect(page.getByTestId('ideas-toggle')).toHaveAttribute('aria-expanded', 'true');
+    await expect(ideas.first()).toContainText(offered(withIdeas)[0].name);
+
+    // taking one into the form is what closes it
+    await ideas.first().click();
+    await expect(ideas).toHaveCount(0);
+    await expect(page.getByTestId('ideas-toggle')).toHaveAttribute('aria-expanded', 'false');
+    await expect(page.getByTestId('control-name')).toHaveValue(offered(withIdeas)[0].name);
   });
 
   test('under reduced motion the row of suggestions is there with the choice, without an entrance', async ({ page }) => {
@@ -261,7 +295,7 @@ test.describe('control editor: what to check, suggestions for it, and the bar', 
     expect(await bar.boundingBox()).toEqual(before);
     await shot(page, testInfo, 'editor-bar-status');
     await row(page, 1).getByTestId('remove-row').click();
-    await expect(sentence(page).getByTestId('mark')).toHaveCount(1);
+    await expect.poll(() => ruleTones(sentence(page))).toEqual(tonesOf(1));
     await expect(page.getByTestId('sentence-status')).toHaveCount(0);
     expect(await bar.boundingBox()).toEqual(before);
   });

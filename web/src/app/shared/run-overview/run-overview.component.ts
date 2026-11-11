@@ -3,6 +3,7 @@ import { RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 
 import { ConditionSummary } from '../../core/api/api.types';
+import { toneOf } from '../../core/definition/marks';
 import { CountedService } from '../../core/i18n/counted.service';
 import { FormatService } from '../../core/i18n/format.service';
 import { MarkComponent } from '../mark/mark.component';
@@ -88,7 +89,7 @@ interface Meter {
                 (click)="filter.emit(active() === meter.id ? null : meter.id)"
               >
                 @if (marks().get(meter.id); as mark) {
-                  <app-mark [label]="mark" [name]="'common.condition' | translate: { mark }" />
+                  <app-mark [label]="mark" [tone]="toneOf(meter.id)" [name]="'common.condition' | translate: { mark }" />
                 }
                 <span class="meter__clause"><app-text-parts [parts]="meter.parts" /></span>
                 <span class="meter__count" aria-hidden="true" data-testid="breakdown-count">{{ meter.count }}</span>
@@ -124,6 +125,11 @@ export class RunOverviewComponent {
   /** The condition the table is filtered by; null for all violations. */
   readonly active = input<string | null>(null);
   readonly filter = output<string | null>();
+
+  /** The place of a condition's colour, the same its words have in the rule above. */
+  protected toneOf(conditionId: string): number | null {
+    return toneOf(this.marks(), conditionId);
+  }
 
   protected readonly meters = computed<Meter[]>(() =>
     this.total() === 0

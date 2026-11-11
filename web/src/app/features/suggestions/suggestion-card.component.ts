@@ -26,7 +26,7 @@ import { TextPartsComponent } from '../../shared/text-parts/text-parts.component
         />
         <h2 class="suggestion__name" data-testid="suggestion-name"><bdi>{{ item().name }}</bdi></h2>
       </div>
-      <p class="sentence sentence--body" data-testid="suggestion-sentence">
+      <p class="sentence" data-testid="suggestion-sentence">
         <app-text-parts [parts]="item().sentenceParts" [marks]="marks()" />
       </p>
       <p class="suggestion__why">{{ item().rationale }}</p>

@@ -168,6 +168,19 @@ describe('ConditionBuilderComponent', () => {
       expect(all('[data-testid="related-node"] [data-testid="mark"]')[0].textContent).toBe('B');
     });
 
+    it('gives the letter of each row the colour of its place, the related node and the rows inside it too', async () => {
+      await click(adder('related'));
+      await click(adder('condition'));
+
+      const tones = all('[data-testid="mark"]').map((mark) => [mark.textContent, mark.getAttribute('data-tone')]);
+      expect(tones).toEqual([
+        ['A', '1'],
+        ['B', '2'],
+        ['C', '3'],
+        ['D', '4'],
+      ]);
+    });
+
     it('shows the joining word of the group between two rows, in the words of the glossary', async () => {
       await click(adder('condition'));
       expect(all('[data-testid="joiner"]').map((joiner) => joiner.textContent)).toEqual(['AND']);

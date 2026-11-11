@@ -350,6 +350,30 @@ Taken on 2026-11-11 in the morning (Kfir's second message: "no questions"):
     under the last row of a short list, not at the bottom, which is what he saw. Item 3: the results' search
     is given a column of 26rem; its placeholder is 215px in a field with 356px of room.
 
+### The rule in words (phase 12, 2026-11-11; Kfir's fourth read, and four notes he sent while it was built)
+97. The set is eight colours (`--color-tone-1` to `8`: amber, sky, rose, green, violet, orange, mint,
+    orchid), ordered so neighbours are far apart in hue, at half strength on his word ("make the color
+    opacity 50"). A node's colour is its place among the marks, round again after eight (`toneOf`), so a
+    related node has a colour of its own as it has a letter of its own. The page carries the place
+    (`data-tone`), the stylesheet the colour.
+98. The line under a condition's words is drawn (a gradient under the text that fades at both ends, his
+    "faded from the edges"), not a text decoration: a decoration cannot fade. Each stretch of a condition
+    that runs on to another line has its own line. No word has a ground colour.
+99. Lines: a group of the top level is a line led by its joining word; any group inside a group, and what a
+    condition on related records holds, is a line one step in, and what follows goes on from a new line at
+    the edge. The joining word before an inner group stays at the end of the line above it. A rule with no
+    group is one sentence, as before.
+100. The plain sentence is given to a screen reader wherever the drawing has colours or lines, each condition
+    named by its letter; the drawing is hidden from it. The letters are gone from every sentence, so the
+    outline of an unfinished condition's letter in the bar is gone with them; the bar's status line names
+    that condition, as before. The settle of a changed condition is the line under its words, heavy for a
+    moment.
+101. "Fix the sentence typography to look like a normal sentence": the rule is set as body text (400, 1.5)
+    and has no weight or line height of its own; the Read line height stays for a reason only.
+102. "When I open the suggestions in the create, make them stay open even when I change tables; close only
+    when it is taken into the form": the opened list survives a change of what to check (a bar holds the
+    place of the new ones while they are computed) and closes when a suggestion is applied.
+
 ## Reconciliation with `contracts/` (phase 2, 2026-11-11)
 Read: `api.md`, `errors.md`, `glossary.json`, `control-definition.schema.json`, the six examples and the thirteen
 invalid fixtures, as merged in `f9928bf`. Where they differ from Design E to M of the plan, the contracts were built:
@@ -1153,3 +1177,18 @@ rewrote. A review that found nothing, or did not run, is logged as that.
   (`phase-11-list-before-last.txt`, `phase-11-list-after-last.txt`). One style fix after that run (two lines
   of a rule scrolled the editor's bar by the 2px between them), with the client's checks and the mocked specs
   run again, green. Secrets: the diff holds no token and no password value.
+- 2026-11-11, last of all in phase 11, on Kfir's word for it: the dev database was reset from the main tree
+  (`scripts/db-init.sh --reset`, main at `612b2b7`), after the push. This worktree's engine and api were stopped
+  around it and started again; the database container was not stopped or recreated. `scripts/db-check.sh`
+  passed its 27 assertions. The store went from 56 controls to none, and the six examples were posted through
+  the api: ids 2 to 7, all active, none run (`gates/phase-11-reset.txt`). The api serves the branch's last
+  build at `http://localhost:5000`. This entry, the reset's output and the last tick of the plan are documents
+  alone and are not committed: they ride with the next code commit.
+- 2026-11-11, the rule in words (phase 12), from Kfir's fourth read, same branch and PR, fast, one reviewer;
+  his word for one database reset at the end. Six items: a colour per condition from a fixed set of tokens;
+  the rule as plain text with each condition's words underlined in its colour, no letters and no grounds;
+  groups as lines (top-level groups led by the joining word, an inner group one step in); everywhere a rule
+  is shown; the same colour on the letter in the builder, the filter and the reasons; the plain sentence
+  for a screen reader. Four notes arrived while it was built and are in it: an opened list of suggestions
+  stays open across choices, the colours at 50%, the sentence set as a normal sentence, the underlines
+  faded at their ends. Decisions 97 to 102.

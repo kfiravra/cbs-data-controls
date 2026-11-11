@@ -10,6 +10,7 @@ import { t } from '../support/i18n';
 import { expect, test } from '../support/mocked';
 import { problem } from '../support/routes';
 import { shot } from '../support/shots';
+import { ruleTones, tonesOf } from '../support/rule';
 
 test.describe('control editor', () => {
   test('a new control is built, read back as the engine sentence with a mark per clause, and saved', async ({ page, api }, testInfo) => {
@@ -22,7 +23,7 @@ test.describe('control editor', () => {
 
     const rendered = engine.sentenceOf(example.definition);
     await expect(sentence(page)).toHaveAttribute('data-stale', 'false');
-    await expect(sentence(page).getByTestId('mark')).toHaveText(letters.slice(0, rendered.conditions.length));
+    await expect.poll(() => ruleTones(sentence(page))).toEqual(tonesOf(rendered.conditions.length));
     await expect(sentence(page)).toContainText(rendered.conditions[1].sentence.split(' ').slice(1).join(' '));
     await expect(page.getByTestId('sentence-status')).toHaveCount(0);
     await shot(page, testInfo, 'editor-new');
@@ -45,7 +46,7 @@ test.describe('control editor', () => {
 
     await expect(page.getByTestId('control-description')).toHaveValue(control.description!);
     await expect(page.getByTestId('page-meta')).toContainText(String(control.version));
-    await expect(sentence(page).getByTestId('mark')).toHaveText(letters.slice(0, 2));
+    await expect.poll(() => ruleTones(sentence(page))).toEqual(tonesOf(2));
     for (const [index, child] of control.definition.where.children.entries()) {
       const field = glossary.entities
         .find((entity) => entity.key === control.rootEntity)!
@@ -85,7 +86,6 @@ test.describe('control editor', () => {
     await expect(page.getByTestId('sentence-status')).toHaveText(
       t('editor.status.incomplete', { mark: letters[1], reason: t('editor.issueWhat.missingValue') }),
     );
-    await expect(sentence(page).getByTestId('mark').nth(1)).toHaveAttribute('data-state', 'open');
     await expect(page.getByTestId('row-error')).toHaveCount(0);
 
     await page.getByTestId('save').click();
@@ -291,21 +291,34 @@ test.describe('control editor', () => {
     );
   });
 
-  test('a row and its clause answer nothing to the pointer: a mark is a badge here too', async ({ page, api }) => {
+  test('a condition has one colour: on its letter in the builder and under its words in the rule, and neither answers the pointer', async ({ page, api }) => {
     await openStored(page, stored(api));
-    const inSentence = sentence(page).getByTestId('mark');
-    const onRow = row(page, 0).getByTestId('mark');
-    const fill = (mark: typeof onRow) => mark.evaluate((element) => getComputedStyle(element).backgroundColor);
-    await expect(inSentence.nth(1)).toHaveAttribute('data-state', 'resting');
-    const resting = { sentence: await fill(inSentence.nth(1)), row: await fill(onRow) };
+    await expect(sentence(page)).toHaveAttribute('data-stale', 'false');
+    const letter = (index: number) => row(page, index).getByTestId('mark');
+    const words = (index: number) => sentence(page).getByTestId('clause').nth(index);
+    const ground = (index: number) => letter(index).evaluate((element) => getComputedStyle(element).getPropertyValue('--tone').trim());
+    // the line under the words is drawn in the condition's colour: the colour the element is given
+    const line = (index: number) => words(index).evaluate((element) => getComputedStyle(element).getPropertyValue('--tone').trim());
+
+    // the rule is plain text: no letter in it, and no ground under its words
+    await expect(sentence(page).getByTestId('mark')).toHaveCount(0);
+    expect(await words(0).evaluate((element) => getComputedStyle(element).backgroundColor)).toBe('rgba(0, 0, 0, 0)');
+    // the same colour on the letter and under the words, and another colour for the next condition
+    expect(await line(0)).toBe(await ground(0));
+    expect(await line(1)).toBe(await ground(1));
+    expect(await ground(0)).not.toBe(await ground(1));
+    expect(await ground(0)).toMatch(/^#[0-9a-f]{6}80$/);
+    // drawn under the words, fading at its ends, and not a decoration of the text
+    expect(await words(0).evaluate((element) => getComputedStyle(element).backgroundImage)).toContain('linear-gradient');
+    expect(await words(0).evaluate((element) => getComputedStyle(element).textDecorationLine)).toBe('none');
+    expect(await letter(0).evaluate((element) => getComputedStyle(element).backgroundColor)).not.toBe('rgba(0, 0, 0, 0)');
+    const resting = [await ground(0), await ground(1), await line(0), await line(1)];
 
     await row(page, 1).hover();
-    await expect(inSentence.nth(1)).toHaveAttribute('data-state', 'resting');
-    expect(await fill(inSentence.nth(1))).toBe(resting.sentence);
+    await words(0).hover();
+    await page.waitForTimeout(300);
 
-    await sentence(page).getByTestId('clause').first().hover();
-    await expect(onRow).toHaveAttribute('data-state', 'resting');
-    expect(await fill(onRow)).toBe(resting.row);
+    expect([await ground(0), await ground(1), await line(0), await line(1)]).toEqual(resting);
   });
 
   test('an archived control is read-only and can be duplicated into a new one', async ({ page, api }, testInfo) => {
@@ -317,7 +330,7 @@ test.describe('control editor', () => {
     await expect(banner).toContainText(t('errors.CONTROL_ARCHIVED.title'));
     await expect(page.getByTestId('archived-view')).toContainText(control.name);
     // it can be read: its rule is there in words, under its name
-    await expect(page.getByTestId('archived-view').getByTestId('mark')).toHaveText(letters.slice(0, 2));
+    await expect.poll(() => ruleTones(page.getByTestId('archived-view'))).toEqual(tonesOf(2));
     await expect(page.getByTestId('save')).toHaveCount(0);
     await expect(page.getByTestId('sentence-field')).toHaveCount(0);
     await expect(page.getByTestId('condition-builder')).toHaveCount(0);

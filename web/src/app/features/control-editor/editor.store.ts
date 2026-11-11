@@ -164,16 +164,6 @@ export class EditorStore {
       .map((entry) => entry.error),
   );
 
-  /** The nodes whose mark is open: unfinished, or refused by the server. */
-  readonly openNodes = computed<ReadonlySet<string>>(
-    () =>
-      new Set([
-        ...(this.check()?.issues.keys() ?? []),
-        ...this.messages().keys(),
-        ...this.liveErrors().flatMap((entry) => entry.location.nodeId ?? []),
-      ]),
-  );
-
   readonly status = computed<StatusLine | null>(() => {
     const check = this.check();
     return check

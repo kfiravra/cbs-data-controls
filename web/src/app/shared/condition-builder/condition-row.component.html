@@ -1,5 +1,5 @@
 <div class="cond" role="group" [attr.aria-labelledby]="'row-name-' + condition().id">
-  <app-mark [label]="mark()" [state]="markState()" />
+  <app-mark [label]="mark()" [state]="markState()" [tone]="tone()" />
   <span class="cond__name" [id]="'row-name-' + condition().id">{{ 'common.condition' | translate: { mark: mark() } }}</span>
   <app-field-picker
     class="cond__field"

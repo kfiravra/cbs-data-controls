@@ -8,8 +8,8 @@ import { TextPartsComponent } from '../text-parts/text-parts.component';
 const NONE: ReadonlySet<string> = new Set();
 
 /**
- * The control in words, as the bar at the foot of the editor's panel: the engine's sentence with a mark per
- * clause, one line of status when something is unfinished, and the actions beside them (projected). The bar
+ * The control in words, as the bar at the foot of the editor's panel: the engine's sentence with each
+ * condition's words underlined in its colour, one line of status when something is unfinished, and the actions beside them (projected). The bar
  * never changes its height: the sentence has a fixed room and scrolls inside it when it is longer, and the
  * status line keeps its place while it is empty, so nothing above the bar moves when the text changes.
  * While the draft is unfinished or invalid the last valid sentence stays, dimmed (`stale`); before any valid
@@ -28,7 +28,6 @@ const NONE: ReadonlySet<string> = new Set();
               <app-text-parts
                 [parts]="sentence"
                 [marks]="marks()"
-                [open]="open()"
                 [changed]="changed()"
               />
             </p>
@@ -60,8 +59,7 @@ export class SentenceFieldComponent {
   readonly stale = input(false);
   /** Marks of the current draft: ids are stable, and a clause whose node is gone has no mark. */
   readonly marks = input.required<ReadonlyMap<string, string>>();
-  readonly open = input<ReadonlySet<string>>(NONE);
-  /** The nodes whose clause was just rewritten: their marks play the settle once. */
+  /** The nodes whose clause was just rewritten: the line under their words plays the settle once. */
   readonly changed = input<ReadonlySet<string>>(NONE);
   /** The key of the line shown while there is no sentence: it differs by why there is none. */
   readonly hintKey = input('editor.sentence.hint');

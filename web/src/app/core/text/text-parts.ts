@@ -128,12 +128,6 @@ function blocksOf(frame: Frame, opened: Set<string>): Block[] {
   return blocks;
 }
 
-/** The first word of a text and the rest: a mark is bound to the first word, so no line ends on a mark. */
-export function splitFirstWord(text: string): [string, string] {
-  const end = text.search(/\s/);
-  return end === -1 ? [text, ''] : [text.slice(0, end), text.slice(end)];
-}
-
 function textByNode(parts: readonly TextPart[]): Map<string, string> {
   const texts = new Map<string, string>();
   for (const part of parts) {

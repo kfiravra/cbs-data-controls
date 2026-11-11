@@ -1,8 +1,10 @@
+import { examples } from '../fixtures/examples';
 import { glossary, label } from '../fixtures/glossary';
 import { manyViolations, succeededRun } from '../fixtures/runs';
 import { t } from '../support/i18n';
 import { expect, test } from '../support/mocked';
 import { RUN, controlOf, open, rows, ui } from '../support/results-screen';
+import { ruleTones, tonesOf } from '../support/rule';
 import { shot } from '../support/shots';
 
 test.describe('run results: the order of the records and the layout of the panel', () => {
@@ -114,19 +116,23 @@ test.describe('run results: the order of the records and the layout of the panel
     expect(Math.round(table.width)).toBe(Math.round(summary.width));
     expect(table.width).toBeGreaterThan(body.width * 0.85);
 
-    // the letters of the rule are small, and sit over the start of their clause
-    const mark = ui(page).getByTestId('run-sentence').getByTestId('mark').first();
-    const clause = ui(page).getByTestId('run-sentence').getByTestId('clause').first();
-    const [markBox, clauseBox] = [(await mark.boundingBox())!, (await clause.boundingBox())!];
-    const inReason = (await rows(page).first().getByTestId('mark').first().boundingBox())!;
-    expect(markBox.height).toBeLessThan(inReason.height);
-    expect(markBox.height).toBeLessThanOrEqual(13);
-    // a superscript: over the start corner of its clause, and out of the line (it takes no room in it)
-    expect(markBox.y).toBeLessThan(clauseBox.y + 2);
-    expect(Math.abs(markBox.x + markBox.width - (clauseBox.x + clauseBox.width))).toBeLessThanOrEqual(6);
-    expect(await mark.evaluate((element) => getComputedStyle(element).position)).toBe('absolute');
-    const word = ui(page).getByTestId('run-sentence').locator('.marked').first();
-    expect(Math.round((await word.boundingBox())!.x + (await word.boundingBox())!.width)).toBe(Math.round(clauseBox.x + clauseBox.width));
+    // the rule is plain text: no letter in it and no ground under a word; each condition's words carry the
+    // colour its letter has on its chip and beside its reasons
+    const sentence = ui(page).getByTestId('run-sentence');
+    await expect(sentence.getByTestId('mark')).toHaveCount(0);
+    const first = sentence.getByTestId('clause').first();
+    const node = (await first.getAttribute('data-node'))!;
+    expect(await first.evaluate((element) => getComputedStyle(element).backgroundColor)).toBe('rgba(0, 0, 0, 0)');
+    const tone = (element: Element) => getComputedStyle(element).getPropertyValue('--tone').trim();
+    const underline = await first.evaluate(tone);
+    const chip = ui(page).locator(`[data-testid="breakdown-row"][data-node="${node}"]`).getByTestId('mark');
+    const reason = ui(page).locator(`[data-testid="reason"][data-node="${node}"]`).first().getByTestId('mark');
+    expect(underline).toMatch(/^#[0-9a-f]{6}80$/);
+    expect(await chip.evaluate(tone)).toBe(underline);
+    expect(await reason.evaluate(tone)).toBe(underline);
+    // the line under the words is drawn (it fades at its ends), and the sentence is set as body text is
+    expect(await first.evaluate((element) => getComputedStyle(element).backgroundImage)).toContain('linear-gradient');
+    expect(await sentence.evaluate((element) => getComputedStyle(element).fontWeight)).toBe('400');
 
     // the count and the pager are in view however far the records are scrolled
     const viewport = page.viewportSize()!;
@@ -137,5 +143,38 @@ test.describe('run results: the order of the records and the layout of the panel
     await expect(ui(page).getByTestId('page-next')).toBeInViewport({ ratio: 1 });
     expect(await box('table-range')).toEqual(foot);
     await shot(page, testInfo, 'results-foot');
+  });
+
+  test('a rule with groups is drawn as lines: no bracket, no tint, a group inside a group one step in, and the plain sentence to be read', async ({ page, api }) => {
+    const nested = examples.find((example) => example.definition.where.children.some((child) => child.type === 'group'))!;
+    const control = api.controls.find((candidate) => JSON.stringify(candidate.definition) === JSON.stringify(nested.definition))!;
+    const stored = api.addRun(succeededRun(control, RUN));
+    await open(page, stored);
+    const sentence = ui(page).getByTestId('run-sentence');
+    const lines = sentence.getByTestId('rule-line');
+    const depths = await lines.evaluateAll((all) => all.map((line) => Number(line.getAttribute('data-depth'))));
+    const starts = await lines.evaluateAll((all) => all.map((line) => {
+      const range = document.createRange();
+      range.selectNodeContents(line);
+      const box = range.getBoundingClientRect();
+      return Math.round(box.x + box.width);
+    }));
+
+    // every group is a line of its own, and a line one step in starts further from the edge (the start edge is the right one here)
+    expect(depths.length).toBeGreaterThan(1);
+    expect(depths[0]).toBe(0);
+    const inner = depths.indexOf(1);
+    if (inner !== -1) {
+      expect(starts[inner]).toBeLessThan(starts[0]);
+    }
+    // what is drawn holds no bracket and no ground of its own; what is read holds the engine's sentence
+    const drawn = sentence.getByTestId('drawn-text');
+    expect(await drawn.innerText()).not.toMatch(/[()]/);
+    const grounds = await drawn.locator('*').evaluateAll((all) => [...new Set(all.map((element) => getComputedStyle(element).backgroundColor))]);
+    expect(grounds).toEqual(['rgba(0, 0, 0, 0)']);
+    expect(await sentence.getByTestId('plain-text').textContent()).toContain('(');
+    await expect(drawn).toHaveAttribute('aria-hidden', 'true');
+    // each condition's colour once, in the order of the rule
+    await expect.poll(() => ruleTones(sentence)).toEqual(tonesOf(stored.run.conditions!.length));
   });
 });

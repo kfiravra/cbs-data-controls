@@ -3,6 +3,7 @@ import { MatTooltip } from '@angular/material/tooltip';
 import { TranslatePipe } from '@ngx-translate/core';
 
 import { DraftCondition } from '../../core/definition/draft';
+import { toneOf } from '../../core/definition/marks';
 import { DraftEdit } from '../../core/definition/draft.edit';
 import {
   comparableFields,
@@ -58,6 +59,7 @@ export class ConditionRowComponent {
   private readonly glossary = computed(() => this.view().glossary);
 
   protected readonly mark = computed(() => this.view().marks.get(this.condition().id) ?? '');
+  protected readonly tone = computed(() => toneOf(this.view().marks, this.condition().id));
   protected readonly messages = computed(() => this.view().messages.get(this.condition().id) ?? []);
   protected readonly faults = computed<OperandFault[]>(() =>
     this.messages().flatMap((message) => (message.input ? [{ input: message.input, index: message.index }] : [])),

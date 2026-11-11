@@ -154,6 +154,20 @@ describe('ResultsTableComponent', () => {
     expect(states).toEqual(['resting', 'resting']);
   });
 
+  it('gives the letter beside each reason the colour of its condition, by the order of the marks', async () => {
+    await draw();
+
+    const reasonMarks = [...host().querySelectorAll<HTMLElement>('[data-testid="reason"]')].map((reason) => [
+      reason.getAttribute('data-node'),
+      reason.querySelector('[data-testid="mark"]')!.getAttribute('data-tone'),
+    ]);
+    const order = [...MARKS.keys()];
+    expect(reasonMarks.length).toBeGreaterThan(1);
+    expect(reasonMarks).toEqual(reasonMarks.map(([node]) => [node, String(order.indexOf(node!) + 1)]));
+    // the reason's own words carry no colour: its letter does
+    expect(host().querySelector('[data-testid="reason"] [data-tone]:not([data-testid="mark"])')).toBeNull();
+  });
+
   it('sorts by any column on a press of its name: ascending, descending, then the order of the run again', async () => {
     const asked: DisplaySort[] = [];
     fixture.componentInstance.sortChange.subscribe((sort) => asked.push(sort));

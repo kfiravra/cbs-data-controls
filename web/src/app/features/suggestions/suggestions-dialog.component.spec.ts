@@ -104,13 +104,15 @@ describe('SuggestionsDialogComponent', () => {
     expect(drafts()).toHaveLength(3);
   });
 
-  it('shows each draft with its name, its sentence under a mark, its rationale and its evidence, none ticked', async () => {
+  it('shows each draft with its name, its sentence in the colour of its condition, its rationale and its evidence, none ticked', async () => {
     await opened();
 
     const first = drafts()[0];
     expect(first.textContent).toContain('first');
     expect(first.querySelector('[data-testid="suggestion-sentence"]')!.textContent).toContain('first sentence');
-    expect(first.querySelectorAll('[data-testid="mark"]')).toHaveLength(1);
+    // no letter in the sentence: the one condition's words carry its colour
+    expect(first.querySelectorAll('[data-testid="mark"]')).toHaveLength(0);
+    expect(first.querySelectorAll('[data-testid="clause"][data-tone="1"]')).toHaveLength(1);
     expect(first.textContent).toContain('first rationale');
     expect(first.querySelector('[data-testid="evidence"]')!.textContent).toBe('first: 3 of 85');
     expect(host().querySelectorAll('input[type="checkbox"]:checked')).toHaveLength(0);

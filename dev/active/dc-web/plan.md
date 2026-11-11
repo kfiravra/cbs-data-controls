@@ -477,6 +477,18 @@ change of item 4 and one database reset at the very end. The seven items are in 
       name, description and conditions; the results' search shows its whole placeholder; the list's count in
       a bar fixed at the bottom of the window.
 - [x] Specs; the gate on the real stack; `/check all --tests`; one reviewer; the push.
+- [x] Last of all: the database reset from the main tree and the six examples.
+
+### Phase 12: the rule in words (Kfir's fourth read, 2026-11-11)
+Same branch, same PR, fast, one reviewer. His word covers one database reset at the very end.
+
+- [x] A colour per condition from a fixed set of tokens; the rule in words as plain text, each condition's
+      words underlined in its colour, no letters and no grounds; groups as lines; everywhere a rule is shown.
+- [x] The same colour on the letter in the builder rows, the filter chips and beside each reason.
+- [x] The plain sentence, each condition named, for a screen reader.
+- [x] Sent while it was built: the suggestions list stays open across choices; the colours at 50%; the
+      sentence set as a normal sentence; the underlines faded at their ends.
+- [ ] Specs; the gate on the real stack; `/check all --tests`; one reviewer; the push.
 - [ ] Last of all: the database reset from the main tree and the six examples.
 
 ### Gate

@@ -496,6 +496,12 @@ button.idea:hover {
   transition-duration: var(--duration-in);
 }
 
+// holds the place of the suggestions of a new choice while they are computed, in an opened list
+.idea--pending {
+  min-block-size: 5.5rem;
+  justify-items: stretch;
+}
+
 .idea__name {
   font-weight: var(--weight-strong);
   line-height: var(--leading-title);

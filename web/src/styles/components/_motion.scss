@@ -18,11 +18,10 @@
     background: var(--color-surface);
   }
 
-  // the settle stays off inside the sentence field too, where a second class names its keyframes
+  // no settle of a changed condition's underline either
   .skeleton,
   .spinner,
-  .mark--changed,
-  .rulebar .mark--changed {
+  .clause--changed {
     animation: none;
   }
 

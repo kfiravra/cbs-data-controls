@@ -78,6 +78,15 @@ describe('RunOverviewComponent', () => {
     expect(rows()[0].querySelector('.sr-only')!.textContent).toBe(t('results.violations.other', { count: 9 }));
   });
 
+  it('gives the letter on each chip the colour of its condition, by the order of the marks', async () => {
+    await draw();
+
+    // c3 carries no count and has no chip, yet keeps its place in the order: the colours do not shift
+    expect(rows().map((row) => row.querySelector('[data-testid="mark"]')!.getAttribute('data-tone'))).toEqual(['1', '2']);
+    await draw({ marks: new Map([['c0', 'A'], ['c1', 'B'], ['c2', 'C']]) });
+    expect(rows().map((row) => row.querySelector('[data-testid="mark"]')!.getAttribute('data-tone'))).toEqual(['2', '3']);
+  });
+
   it('draws no mark, and no empty box in its place, for a condition whose mark is not known', async () => {
     await draw({ marks: new Map([['c1', 'A']]) });
 

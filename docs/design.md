@@ -35,6 +35,14 @@ colors:
   success: "#2d6a1e"
   success-tint: "#2d6a1e1a"
   success-line: "#2d6a1e59"
+  tone-1: "#f2c74480"
+  tone-2: "#7fc0f580"
+  tone-3: "#f59ab880"
+  tone-4: "#8ed47c80"
+  tone-5: "#b9a6f280"
+  tone-6: "#f5a46880"
+  tone-7: "#5fd2c280"
+  tone-8: "#e29aea80"
   scrim: "#1f303847"
 typography:
   figure:
@@ -95,11 +103,6 @@ typography:
   mark:
     fontFamily: "Heebo, system-ui, sans-serif"
     fontSize: 0.75rem
-    fontWeight: 600
-    lineHeight: 1
-  mark-corner:
-    fontFamily: "Heebo, system-ui, sans-serif"
-    fontSize: 0.625rem
     fontWeight: 600
     lineHeight: 1
 rounded:
@@ -219,18 +222,11 @@ components:
     backgroundColor: "{colors.warning-tint}"
     textColor: "{colors.warning}"
   mark:
-    backgroundColor: "{colors.action-tint}"
-    textColor: "{colors.action-ink}"
+    backgroundColor: "{colors.tone-1}"
+    textColor: "{colors.ink}"
     typography: "{typography.mark}"
     rounded: "{rounded.chip}"
     size: 18px
-  mark-corner:
-    typography: "{typography.mark-corner}"
-    rounded: "{rounded.xs}"
-    size: 13px
-  mark-on-inverse:
-    backgroundColor: "{colors.on-inverse-tonal}"
-    textColor: "{colors.on-inverse}"
   value:
     backgroundColor: "{colors.action-tint}"
     textColor: "{colors.ink}"
@@ -499,16 +495,16 @@ figure 36.
   card of what to check and on an idea.
 - **Body** (400, 1rem, 1.5) and **Body strong** (500): running text and field text; buttons, a banner's title, the
   highlighted value, the sentence on the bar from 720px of panel width.
-- **Read** (500, 1rem, 1.7): the rule in words on a results panel and in the archived editor. A reason takes the
-  same line height at 400.
+- **The rule in words** is set as a sentence is: Body (400, 1rem, 1.5) on a results panel, on a suggestion and
+  in the archived editor, Small on a narrow bar. It has no weight or line height of its own. A reason takes the
+  Read line height (1.7), for the value it marks.
 - **Small** (400, 0.875rem, 1.5) and **Small strong** (500): descriptions, meta lines and notes; field labels,
   tabs, small buttons, the chips of the count by condition, an error under its field, the row of ideas, the
   sentence on the bar of a narrow panel.
 - **Label** (500, 0.8125rem, 1.35) and **Caption** (400, 1.5): chips, status chips, column heads, the joining word
   on the rail, the terms of the overview, the chain of what connects; hints under a field, the description on a
   card of what to check.
-- **Mark** (600, 0.75rem) and **Mark corner** (600, 0.625rem): the letter of a condition at the start of its row,
-  and as a superscript over the start corner of its clause in a sentence.
+- **Mark** (600, 0.75rem): the letter of a condition at the start of its row.
 
 ### Named Rules
 
@@ -706,20 +702,32 @@ what is outside it: Action on a resting segment, On inverse on the selected one.
 
 The signature of the system.
 
+- **The rule in words** is plain text with the engine's own spacing: no letter stands in it, and no word and
+  no group has a ground; the only ground is the container's. The words of each condition are underlined in that
+  condition's colour (The Condition Colours, below); the joining words between conditions are not. The line is
+  drawn under the words, 0.2em thick, and fades out towards both of its ends; where a condition's words run on
+  to another line, each stretch has its own line with its own faded ends. So it reads everywhere a rule is
+  shown: the bar of the editor, the top of the results, a suggestion card in the suggestions panel and in the
+  row of a new control, the archived editor.
 - **The groups of a rule** are drawn, not written: no bracket character of the engine's sentence stands on the
-  screen. What a pair of brackets holds is one soft block (Tonal on a light ground, On inverse tonal on the bar,
-  6px radius, 8px of room at its sides), and a block in a block is a shade deeper. Where the top level of a rule
-  joins groups, each stands on a line of its own, led by the word that joins it to the line before (Small,
-  Muted; Action ink on the rule's tint). Only the engine's own group marks are drawn this way: the glossary's
-  `groupOpen` and `groupClose`, read in the engine's connecting text. A bracket in a value the user typed, in a
-  field's label or in the name of a relationship is data and is written as it is. The engine's text is
-  untouched: beside a drawing that has blocks the plain sentence, brackets and all, with each condition named
-  by its letter, is given to assistive technology, and the drawing is hidden from it. A reason is not a rule:
-  its brackets are its own punctuation and are written as they came.
-- **Mark:** an 18px badge (wider for two letters), 6px radius, Action tint ground, Action ink letter (0.75rem,
-  600). In a sentence it is a superscript (13px, 0.625rem, 4px radius): placed over the start corner of its
-  clause, above the first word, and out of the line, so it takes no room in it and the words keep their own
-  spacing. Letters follow the order of the conditions in the definition, top to bottom, and are recomputed on every
+  screen, and a group has no tint. Every group of the top level stands on a line of its own, led by the word
+  that joins it to what stands before; a group inside a group, and what a condition on related records holds,
+  stands on a line of its own one step in (24px), and what follows it goes on from a new line at the edge it
+  left. Only the engine's own group marks are read: the glossary's `groupOpen` and `groupClose`, in the engine's
+  connecting text. A bracket in a value the user typed, in a field's label or in the name of a relationship is
+  data and is written as it is. The engine's text is untouched: beside the drawing the plain sentence, brackets
+  and all, with each condition named by its letter, is given to assistive technology, and the drawing is hidden
+  from it. A reason is not a rule: its brackets are its own punctuation and are written as they came.
+- **The Condition Colours.** A fixed set of eight light colours at half strength (`tone-1` to `tone-8`: amber,
+  sky, rose, green, violet, orange, mint, orchid), given to the conditions in the order of the rule and started
+  again when the set ends; neighbours in the set are far apart in hue. A condition's colour is the ground of
+  its letter wherever the letter stands (a row of the builder, a chip of the count by condition, beside a reason
+  in the records) and the line under its words in the rule. Ink on every one of them is 9:1 or more on a light
+  ground. The colour never stands alone where a condition must be told: the letter is there with it, and in the
+  rule the order of the words and the copy that is read aloud carry it.
+- **Mark:** an 18px badge (wider for two letters), 6px radius, the condition's colour as its ground, Ink letter
+  (0.75rem, 600). It stands at the start of a row: in the builder, on a chip of the count by condition, beside
+  a reason. The rule in words has no mark. Letters follow the order of the conditions in the definition, top to bottom, and are recomputed on every
   edit: Hebrew numerals (א to י, then יא, יב and on). A condition on related records has a letter of its own, given
   before the letters of the conditions inside it: a run matches that node as a whole, so its letter is the one a
   reason and the count by condition show. The mark is display only: it is derived from the order of the
@@ -787,7 +795,9 @@ tint (12px radius, 44px, Small strong in Action ink) with a sparkle, its words a
 count in a small Action chip and a chevron. The row comes in with the choice of what to check (a short rise and
 fade, none under reduced motion): the conditions come in with it, so it moves nothing that was read. Then it
 only changes its words, so nothing moves when the ideas arrive: while they are computed it says so, and when
-there are none it says that too; in those states it is not a button to press. Pressed, it opens (the chevron
+there are none it says that too; in those states it is not a button to press. Once opened it stays open while
+the choice of what to check changes (a bar holds the place of the new ideas while they are computed) and closes
+when an idea is taken into the form. Pressed, it opens (the chevron
 turns) and shows one line of hint and up to three ideas the engine computed for that choice from the data as
 they are now: each a white button card (8px radius, a Line edge, Raised under the pointer) with its name, its
 rule in words and its first piece of evidence as a chip. One press fills the conditions, and the name and the
@@ -1062,11 +1072,11 @@ two signs of waiting.
 Notes for the client task; the visual system above does not depend on them.
 
 - **Tokens.** One stylesheet (`web/src/styles/tokens.scss`) declares them on `:root` under the names used here:
-  `--color-*`, `--font-sans`, `--text-*` (`label`, `small`, `body`, `title`, `page`, `figure`, `mark`,
-  `mark-corner`), `--weight-regular`, `--weight-medium`, `--weight-strong`, `--leading-tight`, `--leading-title`,
+  `--color-*`, `--font-sans`, `--text-*` (`label`, `small`, `body`, `title`, `page`, `figure`, `mark`),
+  `--weight-regular`, `--weight-medium`, `--weight-strong`, `--leading-tight`, `--leading-title`,
   `--leading-body`, `--leading-read`, `--space-1` to `--space-8`, `--radius-xs`, `--radius-chip`, `--radius-sm`,
   `--radius-md`, `--radius-lg`, `--size-control` (44px), `--size-control-sm` (36px, 44px below 640px),
-  `--size-icon`, `--size-mark` (18px), `--size-mark-corner` (13px), `--size-bar`, `--gutter`, `--container`,
+  `--size-icon`, `--size-mark` (18px), `--size-bar`, `--gutter`, `--container`,
   `--sheet-inset`, `--sheet-width`, `--sheet-peek`, `--shadow-overlay`, `--shadow-raised`, `--ease-out` and the
   `--duration-*` set. Component styles read only these; the type roles of `base.scss` (`t-page`, `t-title`,
   `t-small`, `t-label`) set a size with its weight and line height. There is one theme: no second set of values

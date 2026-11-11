@@ -1,6 +1,7 @@
 import { join } from 'node:path';
 
 import { CONTRACTS_ROOT, WEB_ROOT, listFiles, readJson, readText } from '../testing/files';
+import { TONE_COUNT } from './core/definition/marks';
 
 const HEBREW = new RegExp('[\\u0590-\\u05FF]');
 const HEX_COLOUR = /#[0-9a-fA-F]{3,8}\b/;
@@ -74,6 +75,15 @@ describe('source rules', () => {
     const files = listFiles(join(WEB_ROOT, 'src/app'), ['.ts', '.html']);
     expect(files.length).toBeGreaterThan(0);
     expect(files.flatMap((file) => linesMatching(file, HEBREW))).toEqual([]);
+  });
+
+  it('holds as many condition colours in tokens.scss as the code gives out, each one once and at half strength, and a rule for each place', () => {
+    const tokens = readText(join(WEB_ROOT, 'src/styles/tokens.scss'));
+    const tones = [...tokens.matchAll(/--color-tone-(\d+): (#[0-9a-f]{6})80;/g)];
+
+    expect(tones.map((tone) => Number(tone[1]))).toEqual(Array.from({ length: TONE_COUNT }, (_, index) => index + 1));
+    expect(new Set(tones.map((tone) => tone[2])).size).toBe(TONE_COUNT);
+    expect(readText(join(WEB_ROOT, 'src/styles/components/_mark.scss'))).toContain(`@for $place from 1 through ${TONE_COUNT}`);
   });
 
   it('keeps colour literals in tokens.scss when a stylesheet needs a colour', () => {

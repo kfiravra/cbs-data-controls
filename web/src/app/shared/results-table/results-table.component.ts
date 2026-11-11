@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, inject, input, output } from '@angu
 import { TranslatePipe } from '@ngx-translate/core';
 
 import { GlossaryField, ResultItem, SortDirection } from '../../core/api/api.types';
+import { toneOf } from '../../core/definition/marks';
 import { FormatService } from '../../core/i18n/format.service';
 import { MarkComponent } from '../mark/mark.component';
 import { SkeletonComponent } from '../skeleton/skeleton.component';
@@ -71,6 +72,11 @@ export class ResultsTableComponent {
   }
 
   protected readonly reasons = REASONS_COLUMN;
+
+  /** The place of a condition's colour, the same its letter has in the builder and its words in the rule. */
+  protected toneOf(conditionId: string): number | null {
+    return toneOf(this.marks(), conditionId);
+  }
 
   protected sortedBy(column: string): SortDirection | null {
     const sort = this.sort();

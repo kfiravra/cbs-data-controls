@@ -184,8 +184,8 @@
                     class="ideas__row"
                     type="button"
                     data-testid="ideas-toggle"
-                    [attr.aria-controls]="ideasOpen() ? 'ideas-list' : null"
-                    [attr.aria-expanded]="ideasOpen()"
+                    [attr.aria-controls]="ideasShown() ? 'ideas-list' : null"
+                    [attr.aria-expanded]="ideasShown()"
                     [attr.aria-disabled]="store.ideas.items().length === 0 ? 'true' : null"
                     (click)="toggleIdeas()"
                   >
@@ -196,13 +196,23 @@
                       <app-icon class="ideas__chevron" name="expand_more" />
                     }
                   </button>
-                  @if (ideasOpen()) {
+                  <!-- once opened the list stays open while the choice of what to check changes (a bar holds
+                       its place while the new suggestions are computed); it closes when one is taken -->
+                  @if (ideasOpen() && (store.ideas.loading() || store.ideas.items().length > 0)) {
                     <div class="ideas__list" id="ideas-list">
                       <p class="muted t-small">{{ 'editor.ideas.hint' | translate }}</p>
+                      @if (store.ideas.loading()) {
+                        <div class="idea idea--pending" aria-hidden="true" data-testid="ideas-pending">
+                          <app-skeleton width="44%" />
+                          <app-skeleton width="78%" />
+                        </div>
+                      }
                       @for (idea of store.ideas.items(); track $index) {
                         <button class="idea" type="button" data-testid="idea" (click)="applyIdea(idea)">
                           <span class="idea__name"><bdi>{{ idea.name }}</bdi></span>
-                          <span class="idea__rule"><app-text-parts [parts]="idea.sentenceParts" /></span>
+                          <span class="idea__rule">
+                            <app-text-parts [parts]="idea.sentenceParts" [marks]="ideaMarks()[$index]" />
+                          </span>
                           @if (idea.evidence[0]; as evidence) {
                             <span class="chip num">{{ evidence.text }}</span>
                           }
@@ -257,7 +267,6 @@
         [parts]="store.sentence().parts"
         [stale]="store.sentence().stale"
         [marks]="store.marks()"
-        [open]="store.openNodes()"
         [changed]="store.settling()"
         [hintKey]="sentenceHint()"
         [status]="status()"

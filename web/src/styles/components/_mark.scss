@@ -1,6 +1,15 @@
-// Every condition carries one mark, a letter in document order. The same mark stands on its row in the
-// builder, on its clause in the sentence, on its line in the count by condition and on each reason it
-// explains. It is a badge: it names its condition and answers to nothing, here or in the editor.
+// Every condition carries one mark, a letter in document order, and one colour of the fixed set, in the same
+// order. The letter stands on its row in the builder, on its chip in the count by condition and beside each
+// reason it explains, on a ground of the condition's colour; in the rule in words there is no letter, and
+// the condition's words are underlined in that colour. A mark is a badge: it names its condition and
+// answers to nothing.
+
+// the place of a colour in the set, as the attribute says it (`toneOf` in core/definition/marks.ts)
+@for $place from 1 through 8 {
+  [data-tone='#{$place}'] {
+    --tone: var(--color-tone-#{$place});
+  }
+}
 
 .mark {
   display: inline-grid;
@@ -11,56 +20,45 @@
   block-size: var(--size-mark);
   padding-inline: 3px;
   border-radius: var(--radius-chip);
-  background: var(--color-action-tint);
-  color: var(--color-action-ink);
+  background: var(--color-tonal);
+  color: var(--color-ink);
   font-size: var(--text-mark);
   font-weight: var(--weight-strong);
   line-height: 1;
   font-style: normal;
 }
 
-// In a text the letter is a superscript: a tiny badge that sits at the start corner of its condition, over
-// the first word, and takes no room in the line, so the words keep their own spacing. It is placed, not
-// aligned: a raised box in the line would push that line apart from the others.
-.marked {
-  position: relative;
+.mark[data-tone] {
+  background: var(--tone);
 }
 
-.marked > .mark {
-  position: absolute;
-  inset-block-start: -0.62em;
-  inset-inline-start: -0.35em;
-  min-inline-size: var(--size-mark-corner);
-  block-size: var(--size-mark-corner);
-  padding-inline: 2px;
-  border-radius: var(--radius-xs);
-  font-size: var(--text-mark-corner);
-}
+// The rule in words is plain text: no letter in it and no ground under any word. The words of a condition
+// are underlined in the condition's colour, and the joining words between conditions are not. A group has
+// no bracket and no tint: it is a line of its own, and a group inside a group a line one step in.
+// The line is drawn, not a text decoration: it fades out towards both of its ends (over one em, or a
+// quarter of a short stretch), and where a condition's words run on to the next line each stretch has its
+// own line with its own two faded ends. It lies under the words; the words themselves stand on no ground.
+.clause[data-tone] {
+  --fade: min(1em, 25%);
 
-// The brackets of the engine's text are drawn and not written. What stands between a pair is one soft
-// block, a tint of the ink that deepens where a block lies in a block; where the top level of a rule joins
-// groups, each stands on a line of its own and the joining word on a short line between them.
-.rule-group {
-  display: inline-block;
-  max-inline-size: 100%;
-  padding-inline: var(--space-2);
-  border-radius: var(--radius-chip);
-  background: var(--color-tonal);
+  padding-block-end: 0.16em;
+  background-image: linear-gradient(
+    90deg,
+    transparent,
+    var(--tone) var(--fade),
+    var(--tone) calc(100% - var(--fade)),
+    transparent
+  );
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  background-size: 100% 0.2em;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
 }
 
 .rule-line {
   display: block;
-}
-
-.rule-line + .rule-line {
-  margin-block-start: 2px;
-}
-
-// the word that joins a line to the one before it leads the line, a step quieter than the rule
-.rule-joiner {
-  margin-inline-end: var(--space-2);
-  font-size: var(--text-small);
-  color: var(--color-muted);
+  padding-inline-start: calc(var(--indent, 0) * var(--space-5));
 }
 
 // the copy of a rule that is read aloud is not also taken when the rule is selected and copied
@@ -68,15 +66,14 @@
   user-select: none;
 }
 
-// the settle: when a condition changes, its mark in the sentence fills at once and eases back
-.mark--changed {
-  animation: mark-settle var(--duration-settle) var(--ease-out) both;
+// the settle: when a condition changes, the line under its words is heavy at once and eases back
+.clause--changed {
+  animation: clause-settle var(--duration-settle) var(--ease-out) both;
 }
 
-@keyframes mark-settle {
+@keyframes clause-settle {
   from {
-    background: var(--color-action);
-    color: var(--color-on-action);
+    background-size: 100% 0.5em;
   }
 }
 
@@ -101,17 +98,14 @@
   overflow-wrap: anywhere;
 }
 
-// the rule in words, for reading: its lines carry marks and values, and are set a little apart for them
+// the rule in words, for reading: its lines carry underlines and values, and are set a little apart for them
+// It is set as a sentence is: the body's size, weight and line height, nothing of its own.
 .sentence {
   font-size: var(--text-body);
-  font-weight: var(--weight-medium);
-  line-height: var(--leading-read);
+  font-weight: var(--weight-regular);
+  line-height: var(--leading-body);
   max-inline-size: 75ch;
   text-wrap: pretty;
-}
-
-.sentence--body {
-  font-weight: var(--weight-regular);
 }
 
 .clause {
@@ -135,35 +129,6 @@
   .sentence {
     max-inline-size: none;
     font-size: var(--text-small);
-    line-height: var(--leading-read);
-  }
-
-  .mark {
-    background: var(--color-on-inverse-tonal);
-    color: var(--color-on-inverse);
-  }
-
-  .mark--open {
-    background: none;
-    box-shadow: inset 0 0 0 1px currentColor;
-    color: var(--color-on-inverse);
-  }
-
-  .rule-group {
-    background: var(--color-on-inverse-tonal);
-  }
-
-  // two lines of a rule fill the bar's room exactly: no air between them, or the room would scroll by it
-  .rule-line + .rule-line {
-    margin-block-start: 0;
-  }
-
-  .rule-joiner {
-    color: var(--color-on-inverse-muted);
-  }
-
-  .mark--changed {
-    animation-name: mark-settle-on-inverse;
   }
 
   .btn[disabled],
@@ -177,13 +142,6 @@
   .sentence--stale {
     color: var(--color-on-inverse-muted);
     transition: color var(--duration-in) var(--ease-out);
-  }
-}
-
-@keyframes mark-settle-on-inverse {
-  from {
-    background: var(--color-on-inverse);
-    color: var(--color-inverse);
   }
 }
 
@@ -207,14 +165,10 @@
   color: var(--color-on-inverse-muted);
 }
 
-// the room of two lines, and above them the room of a letter: it sits over its line, and the first line's
-// would otherwise be cut by the edge of what scrolls
 .rulebar__sentence {
   --scroll-thumb: var(--color-scroll-on-inverse);
 
-  block-size: calc(2 * var(--leading-read) * var(--text-small) + var(--space-2));
-  padding-block-start: var(--space-2);
-  padding-inline-start: var(--space-1);
+  block-size: calc(2 * var(--leading-body) * var(--text-small));
   overflow-y: auto;
 }
 
@@ -272,7 +226,7 @@
   }
 
   .rulebar__sentence {
-    block-size: calc(2 * var(--leading-read) * var(--text-body) + var(--space-2));
+    block-size: calc(2 * var(--leading-body) * var(--text-body));
   }
 
   .rulebar__status {
