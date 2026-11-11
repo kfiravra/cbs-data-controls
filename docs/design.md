@@ -665,7 +665,8 @@ Every empty, waiting and failed state, and what it says. The error codes are tho
 
 | State | Where | Component | Says | Next step |
 |---|---|---|---|---|
-| No controls yet | Controls list | State panel, neutral | What a control is, with one example in the user's terms | New control (primary); suggestions (tonal) |
+| No controls yet | Controls list, in place of the toolbar and the table; the page head leaves its two actions to the panel | State panel, neutral | What a control is, in one sentence. No example: an example would name the entities of one glossary | New control (primary); suggestions (tonal) |
+| Every control archived | Controls list, under the toolbar | State panel, neutral, no icon | That no control is active and where the archived ones are | Show the archived controls |
 | Never run | A list row | Text | `טרם הורצה` as the last run; a dash as the result | Run |
 | Run in progress | List row, results | Disabled button with spinner; skeleton rows in the table | `ההרצה מתבצעת` | Wait |
 | No violations | Results | State panel, Success | That the control was checked against every record and none matched | Run again; back to the list |

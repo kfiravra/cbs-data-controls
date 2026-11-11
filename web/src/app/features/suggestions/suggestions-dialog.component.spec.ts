@@ -36,6 +36,7 @@ describe('SuggestionsDialogComponent', () => {
   let fixture: ComponentFixture<SuggestionsDialogComponent>;
   let http: HttpTestingController;
   let closed: SuggestionsOutcome[];
+  let ref: { disableClose: boolean; close: (outcome: SuggestionsOutcome) => void };
   const host = () => fixture.nativeElement as HTMLElement;
   const drafts = () => [...host().querySelectorAll<HTMLElement>('[data-testid="suggestion"]')];
   const createButton = () => host().querySelector<HTMLButtonElement>('[data-testid="suggestions-create"]')!;
@@ -73,6 +74,7 @@ describe('SuggestionsDialogComponent', () => {
 
   beforeEach(() => {
     closed = [];
+    ref = { disableClose: false, close: (outcome) => closed.push(outcome) };
     TestBed.configureTestingModule({
       imports: [SuggestionsDialogComponent],
       providers: [
@@ -80,7 +82,7 @@ describe('SuggestionsDialogComponent', () => {
         provideHttpClientTesting(),
         provideTestTranslations(),
         provideTestIcons(),
-        { provide: MatDialogRef, useValue: { close: (outcome: SuggestionsOutcome) => closed.push(outcome) } },
+        { provide: MatDialogRef, useFactory: () => ref },
       ],
     });
     http = TestBed.inject(HttpTestingController);
@@ -144,6 +146,32 @@ describe('SuggestionsDialogComponent', () => {
     await settled();
 
     expect(closed).toEqual([{ kind: 'created', count: 2 }]);
+  });
+
+  it('cannot be closed while the selection is being created, so its outcome is never lost', async () => {
+    await opened();
+    await tick(0);
+
+    createButton().click();
+    const request = await next('/api/v1/suggestions/accept');
+    await settled();
+    const closeButton = host().querySelector<HTMLButtonElement>('[data-testid="suggestions-close"]')!;
+    expect(ref.disableClose).toBe(true);
+    expect(closeButton.disabled).toBe(true);
+    expect(createButton().disabled).toBe(true);
+
+    request.flush({ items: [{ id: 1 }] }, { status: 201, statusText: 'Created' });
+    await settled();
+
+    expect(ref.disableClose).toBe(false);
+    expect(closed).toEqual([{ kind: 'created', count: 1 }]);
+  });
+
+  it('names the way to the editor by the draft it opens', async () => {
+    await opened();
+
+    const names = drafts().map((draft) => draft.querySelector('[data-testid="suggestion-edit"]')!.getAttribute('aria-label'));
+    expect(names).toEqual(ITEMS.map((item) => t('suggestions.openNamed', { name: item.name })));
   });
 
   it('marks the draft the server refused, counting among the ticked ones, and stays open', async () => {

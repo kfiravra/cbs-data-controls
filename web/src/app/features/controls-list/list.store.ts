@@ -38,10 +38,18 @@ export class ListStore {
   private last: ListView | null = null;
 
   readonly glossary = this.glossaryService.glossary;
+  readonly glossaryError = this.glossaryService.error;
   readonly page = signal<Page<ControlSummary> | null>(null);
   readonly loading = signal(true);
-  /** A list that could not be read, or a run that could not be started. */
+  /** A list that could not be read. */
   readonly failure = signal<ApiError | null>(null);
+  /** A run that could not be started. */
+  readonly runFailure = signal<ApiError | null>(null);
+  /**
+   * Whether any control exists at all, archived ones included: asked only when the active list comes back
+   * empty with nothing narrowing it, to tell a first use from a list whose controls are all archived.
+   */
+  readonly anyControl = signal<boolean | null>(null);
   /** The ids of the controls whose run is on its way. */
   readonly running = signal<ReadonlySet<number>>(new Set());
 
@@ -61,10 +69,31 @@ export class ListStore {
         this.loading.set(false);
         if ('page' in listed) {
           this.page.set(listed.page);
+          void this.learnWhetherAnyExists(listed.page);
         } else {
+          // the rows of an older question would stand under the new search and filters
+          this.page.set(null);
           this.failure.set(listed.failure);
         }
       });
+  }
+
+  private async learnWhetherAnyExists(page: Page<ControlSummary>): Promise<void> {
+    const view = this.last;
+    if (!view || page.total > 0 || view.search !== '' || view.entity !== null || view.state === 'archived') {
+      return;
+    }
+    if (view.state === 'all') {
+      this.anyControl.set(false);
+      return;
+    }
+    try {
+      const all = await firstValueFrom(this.controlsApi.list({ active: 'all', page: 1, pageSize: 1 }));
+      this.anyControl.set(all.total > 0);
+    } catch {
+      // not knowing is no failure of the list: the empty list stands without either explanation
+      this.anyControl.set(null);
+    }
   }
 
   /** Asks for the page a view describes. The glossary is read beside it, for the labels. */
@@ -72,6 +101,7 @@ export class ListStore {
     this.last = view;
     this.loading.set(true);
     this.failure.set(null);
+    this.anyControl.set(null);
     void this.glossaryService.load();
     this.asked.next({
       search: view.search,
@@ -95,7 +125,7 @@ export class ListStore {
       return;
     }
     this.running.update((ids) => new Set(ids).add(control.id));
-    this.failure.set(null);
+    this.runFailure.set(null);
     try {
       const run = await firstValueFrom(this.runsApi.start(control.id));
       const lastRun = { id: run.id, startedAt: run.startedAt, status: run.status, totalCount: run.totalCount };
@@ -104,7 +134,7 @@ export class ListStore {
           page && { ...page, items: page.items.map((item) => (item.id === control.id ? { ...item, lastRun } : item)) },
       );
     } catch (error) {
-      this.failure.set(toApiError(error));
+      this.runFailure.set(toApiError(error));
     } finally {
       this.running.update((ids) => new Set([...ids].filter((id) => id !== control.id)));
     }

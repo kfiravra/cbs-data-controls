@@ -81,6 +81,8 @@ export class SuggestionsDialogComponent implements OnInit {
       return;
     }
     this.creating.set(true);
+    // closed now, the controls would be created with no word of it and no reload of the list
+    this.ref.disableClose = true;
     this.failure.set(null);
     this.refused.set(null);
     try {
@@ -101,6 +103,7 @@ export class SuggestionsDialogComponent implements OnInit {
       }
     } finally {
       this.creating.set(false);
+      this.ref.disableClose = false;
     }
   }
 

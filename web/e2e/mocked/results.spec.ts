@@ -262,11 +262,11 @@ test.describe('run results', () => {
   test('a run that cannot be started again says why, and its "try again" tries the run again', async ({ page, api }) => {
     const control = controlOf(api, 1);
     const stored = api.addRun(succeededRun(control, RUN));
-    api.fail(`POST /controls/${control.id}/runs`, problem(503, 'ENGINE_UNAVAILABLE'));
+    api.fail(`POST /controls/${control.id}/runs`, problem(503, 'DATABASE_UNAVAILABLE'));
     await open(page, stored);
     await page.getByTestId('rerun').click();
     const banner = page.getByTestId('error-banner');
-    await expect(banner).toHaveAttribute('data-code', 'ENGINE_UNAVAILABLE');
+    await expect(banner).toHaveAttribute('data-code', 'DATABASE_UNAVAILABLE');
 
     api.heal(`POST /controls/${control.id}/runs`);
     await banner.getByRole('button', { name: t('common.retry'), exact: true }).click();

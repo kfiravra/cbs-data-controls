@@ -87,12 +87,20 @@ export class ControlsListPage {
 
   private readonly narrowed = computed(() => this.view().search !== '' || this.view().entity !== null);
 
-  /** No control at all: the first-use state. A list that is empty because of the search says so instead. */
-  protected readonly empty = computed<'first' | 'noMatch' | null>(() => {
+  /**
+   * Why the list is empty: no control exists at all (the first-use state), every control is archived, or
+   * the search and the filters match nothing. Null while the list has rows, is on its way, or while it is
+   * not yet known whether any control exists.
+   */
+  protected readonly empty = computed<'first' | 'noActive' | 'noMatch' | null>(() => {
     if (this.store.loading() || this.store.page()?.total !== 0) {
       return null;
     }
-    return this.narrowed() || this.view().state !== 'active' ? 'noMatch' : 'first';
+    if (this.narrowed() || this.view().state === 'archived') {
+      return 'noMatch';
+    }
+    const any = this.store.anyControl();
+    return any === null ? null : any ? 'noActive' : 'first';
   });
 
   constructor() {
@@ -121,9 +129,7 @@ export class ControlsListPage {
   protected async suggest(): Promise<void> {
     const outcome = await this.openSuggestions();
     if (outcome.kind === 'created') {
-      this.toast.show(outcome.count === 1 ? 'suggestions.toast.createdOne' : 'suggestions.toast.created', {
-        count: outcome.count,
-      });
+      this.toast.showCounted('suggestions.toast.created', outcome.count);
       this.store.reload();
     } else if (outcome.kind === 'edit') {
       await this.router.navigate(['/controls', 'new'], { state: { suggestion: outcome.item } });

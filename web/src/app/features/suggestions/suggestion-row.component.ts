@@ -23,7 +23,7 @@ import { TextPartsComponent } from '../../shared/text-parts/text-parts.component
         [aria-label]="'suggestions.select' | translate: { name: item().name }"
         (change)="selectedChange.emit($event.checked)"
       />
-      <span class="cell-title"><bdi>{{ item().name }}</bdi></span>
+      <span class="cell-title" data-testid="suggestion-name"><bdi>{{ item().name }}</bdi></span>
       <p class="sentence sentence--body" data-testid="suggestion-sentence">
         <app-text-parts [parts]="item().sentenceParts" [marks]="marks()" />
       </p>
@@ -32,7 +32,13 @@ import { TextPartsComponent } from '../../shared/text-parts/text-parts.component
         @for (evidence of item().evidence; track evidence.key) {
           <span class="chip num" data-testid="evidence">{{ evidence.text }}</span>
         }
-        <button class="btn btn--text btn--sm" type="button" data-testid="suggestion-edit" (click)="edit.emit()">
+        <button
+          class="btn btn--text btn--sm"
+          type="button"
+          data-testid="suggestion-edit"
+          [attr.aria-label]="'suggestions.openNamed' | translate: { name: item().name }"
+          (click)="edit.emit()"
+        >
           {{ 'suggestions.openInEditor' | translate }}
         </button>
       </span>

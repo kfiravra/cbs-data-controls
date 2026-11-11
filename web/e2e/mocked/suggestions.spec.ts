@@ -26,7 +26,7 @@ test.describe('suggestions dialog', () => {
     expect(api.suggestions.length).toBeGreaterThan(0);
     for (const [index, item] of api.suggestions.entries()) {
       const draft = drafts(page).nth(index);
-      await expect(draft).toContainText(item.name);
+      await expect(draft.getByTestId('suggestion-name')).toHaveText(item.name);
       await expect(draft).toContainText(item.rationale);
       await expect(draft.getByTestId('suggestion-sentence').getByTestId('mark').first()).toBeVisible();
       await expect(draft.getByTestId('evidence')).toHaveText(item.evidence.map((evidence) => evidence.text));
@@ -50,7 +50,7 @@ test.describe('suggestions dialog', () => {
     await create.click();
 
     await expect(dialog(page)).toHaveCount(0);
-    await expect(page.getByText(t('suggestions.toast.created', { count: 2 }), { exact: true })).toBeVisible();
+    await expect(page.getByText(t('suggestions.toast.created.two'), { exact: true })).toBeVisible();
     const [accepted] = api.callsTo('POST /suggestions/accept');
     expect((accepted.body as { items: { name: string }[] }).items.map((item) => item.name)).toEqual([
       api.suggestions[0].name,

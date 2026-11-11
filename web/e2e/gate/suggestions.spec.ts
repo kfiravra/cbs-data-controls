@@ -23,7 +23,7 @@ test('the dialog shows the drafts the engine proposes, and creates one as a cont
   await expect(drafts).toHaveCount(items.length);
   for (const [index, item] of items.entries()) {
     const draft = drafts.nth(index);
-    await expect(draft).toContainText(item.name);
+    await expect(draft.getByTestId('suggestion-name')).toHaveText(item.name);
     await expect(draft.getByTestId('suggestion-sentence').getByTestId('mark').first()).toBeVisible();
     await expect(draft.getByRole('checkbox')).not.toBeChecked();
   }

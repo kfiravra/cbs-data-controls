@@ -98,16 +98,59 @@ describe('ListStore', () => {
   });
 
   it('keeps the failure and stops waiting when the list cannot be read, and reads it again on reload', async () => {
-    store.show(VIEW);
+    await shown(VIEW, pageOf(1, 2));
+    store.show({ ...VIEW, search: 'pay' });
     (await next('/api/v1/controls')).error(new ProgressEvent('error'));
     expect(store.failure()?.code).toBe('NETWORK_ERROR');
     expect(store.loading()).toBe(false);
+    // the rows of the question before would stand under the new search
+    expect(store.page()).toBeNull();
 
     store.reload();
     (await next('/api/v1/controls')).flush(pageOf(1));
 
     expect(store.failure()).toBeNull();
     expect(store.page()?.total).toBe(1);
+  });
+
+  describe('an empty list', () => {
+    const answerAll = async (total: number) => {
+      const request = await next('/api/v1/controls');
+      expect(request.request.params.get('active')).toBe('all');
+      expect(request.request.params.get('pageSize')).toBe('1');
+      request.flush({ items: [], total, page: 1, pageSize: 1 });
+      await Promise.resolve();
+      await Promise.resolve();
+    };
+
+    it('is a first use when no control exists at all, archived ones included', async () => {
+      await shown(VIEW, pageOf());
+      await answerAll(0);
+
+      expect(store.anyControl()).toBe(false);
+    });
+
+    it('is a list whose controls are all archived when some control exists', async () => {
+      await shown(VIEW, pageOf());
+      await answerAll(4);
+
+      expect(store.anyControl()).toBe(true);
+    });
+
+    it('needs no second question when the view already holds archived and active controls', async () => {
+      await shown({ ...VIEW, state: 'all' }, pageOf());
+
+      expect(store.anyControl()).toBe(false);
+    });
+
+    it('is not asked about when a search or a filter narrows the list, or when the list has rows', async () => {
+      await shown({ ...VIEW, search: 'pay' }, pageOf());
+      await shown({ ...VIEW, entity: 'customer' }, pageOf());
+      await shown({ ...VIEW, state: 'archived' }, pageOf());
+      await shown(VIEW, pageOf(1));
+
+      expect(store.anyControl()).toBeNull();
+    });
   });
 
   describe('a run from the list', () => {
@@ -159,7 +202,8 @@ describe('ListStore', () => {
       );
       await running;
 
-      expect(store.failure()?.code).toBe('DATABASE_UNAVAILABLE');
+      expect(store.runFailure()?.code).toBe('DATABASE_UNAVAILABLE');
+      expect(store.failure()).toBeNull();
       expect(store.running().size).toBe(0);
       expect(store.page()!.items[0].lastRun).toBeNull();
     });

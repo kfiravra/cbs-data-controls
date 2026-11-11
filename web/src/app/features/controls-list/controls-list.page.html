@@ -2,17 +2,27 @@
   [title]="'list.title' | translate"
   [meta]="store.page() ? ('list.count.' + view().state | plural: store.page()!.total) : undefined"
 >
-  <button class="btn btn--tonal" type="button" data-testid="open-suggestions" (click)="suggest()">
-    <app-icon name="lightbulb" />{{ 'list.actions.suggestions' | translate }}
-  </button>
-  <a class="btn btn--primary" routerLink="/controls/new" data-testid="new-control">
-    <app-icon name="add" />{{ 'list.actions.new' | translate }}
-  </a>
+  <!-- in the first-use state the panel carries the two actions: one filled button in a view -->
+  @if (empty() !== 'first') {
+    <button class="btn btn--tonal" type="button" data-testid="open-suggestions" (click)="suggest()">
+      <app-icon name="lightbulb" />{{ 'list.actions.suggestions' | translate }}
+    </button>
+    <a class="btn btn--primary" routerLink="/controls/new" data-testid="new-control">
+      <app-icon name="add" />{{ 'list.actions.new' | translate }}
+    </a>
+  }
 </app-page-head>
 
 <div class="stack page-banners">
+  @if (store.glossaryError(); as error) {
+    <app-error-banner data-source="glossary" [error]="error" (retry)="store.reload()" />
+  }
   @if (store.failure(); as error) {
-    <app-error-banner [error]="error" (retry)="store.reload()" />
+    <app-error-banner data-source="read" [error]="error" (retry)="store.reload()" />
+  }
+  @if (store.runFailure(); as error) {
+    <!-- tried again with the row's own button -->
+    <app-error-banner data-source="run" [error]="error" [retryable]="false" />
   }
 </div>
 
@@ -22,7 +32,7 @@
     <a actions class="btn btn--primary" routerLink="/controls/new">
       <app-icon name="add" />{{ 'list.actions.new' | translate }}
     </a>
-    <button actions class="btn btn--tonal" type="button" (click)="suggest()">
+    <button actions class="btn btn--tonal" type="button" data-testid="open-suggestions" (click)="suggest()">
       <app-icon name="lightbulb" />{{ 'list.actions.suggestions' | translate }}
     </button>
   </app-state-panel>
@@ -69,7 +79,14 @@
     </mat-form-field>
   </app-toolbar>
 
-  @if (empty() === 'noMatch') {
+  @if (empty() === 'noActive') {
+    <app-state-panel data-testid="no-active" [title]="'list.noActive.title' | translate">
+      <p>{{ 'list.noActive.body' | translate }}</p>
+      <button actions class="btn btn--tonal" type="button" (click)="go({ state: 'archived' })">
+        {{ 'list.noActive.show' | translate }}
+      </button>
+    </app-state-panel>
+  } @else if (empty() === 'noMatch') {
     <app-state-panel
       data-testid="no-match"
       [title]="

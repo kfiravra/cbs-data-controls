@@ -125,7 +125,7 @@ invalid fixtures, as merged in `f9928bf`. Where they differ from Design E to M o
 - Nothing in `contracts/` looked wrong, and nothing blocks a screen: no line for Kfir from this step.
 
 ## Last reviewed
-3474145 (phase 5), fixed in the `fix(web): review fixes` commit after 383ec73. Phase 6 (383ec73) is under review.
+383ec73 (phase 6), fixed in the `fix(web): review fixes` commit after 44a7219. The gate specs (44a7219) are reviewed with phase 8.
 
 ## Hand-over to dc-delivery
 Read by its phase B0 (plan.md Design Q). Filled as the work goes and complete before `/ship`.
@@ -369,3 +369,24 @@ rewrote. A review that found nothing, or did not run, is logged as that.
   version 1, and 18 tagged ones, all archived. With no health answer the fixture stops every test with one
   line ("the gate needs the api, the engine and the database: ... did not answer"). Waiting for the merge: the
   gate on the real stack, fixes from real payloads, the pre-loaded list twice, the build the api hosts.
+- 2026-11-11 /phase-review web, phase 6 (one reviewer agent, opus; cost line: about 155k tokens, started without
+  waiting), diff dc6b420..383ec73: plan 1 critical, 4 warnings; standards 3 warnings, 3 info.
+  `controls-list.page.html`: the trimmed search was written back into the field (critical; the same defect the
+  phase 5 review found on the results screen, already fixed on both screens in 9137de9 before this review was
+  read). `controls-list.page.ts`: the first-use panel also showed when only archived controls existed and took
+  the toolbar away with it, and `state=all` with no control showed the no-match panel (warning).
+  `suggestions-dialog`: the dialog could be closed while the selection was being created, losing the toast and
+  the reload (warning). `list.store.ts`: after a failed load the rows of the question before stood under the
+  new search, with a count line that mixed the two (warning). `suggestions.spec.ts`: a name compared as a
+  substring (warning). `list.spec.ts`: a 503 `ENGINE_UNAVAILABLE` on `POST .../runs`, which that endpoint never
+  sends (warning). `controls-list.page.html`: the glossary failure was not shown (warning), and the first-use
+  view had two filled "new control" buttons (warning, One Cobalt). Info: the first-use text named an example of
+  the sample model; a hand-rolled plural for the created toast and a spec helper that recomputed plurals; every
+  "open in editor" button had the same name. Fixed in the review-fix commit: all of them. The store asks once
+  whether any control exists when the active list is empty with nothing narrowing it, and the page tells first
+  use, "every control archived" (with the way to the archive) and no match apart; a failed read clears the
+  rows and a failed run is its own banner; the dialog holds its close while it creates; names are compared
+  whole through `suggestion-name`; the run fixtures fail with `DATABASE_UNAVAILABLE`; the glossary banner
+  stands on the list; the head leaves its actions to the first-use panel; the first-use text has no example
+  and design.md says why; the toast counts through `CountedService`; "open in editor" is named by its draft.
+  Thirteen tests added or changed.

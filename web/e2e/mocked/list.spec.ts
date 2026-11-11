@@ -17,16 +17,6 @@ function controlOf(api: FakeApi, number: 1 | 2 | 3 | 4 | 5 | 6): Control {
   return api.controls.find((control) => JSON.stringify(control.definition) === wanted)!;
 }
 
-/** The counted form the app uses for a number of whole things. */
-function counted(baseKey: string, count: number): string {
-  const category = new Intl.PluralRules('he').select(count);
-  try {
-    return t(`${baseKey}.${category}`, { count });
-  } catch {
-    return t(`${baseKey}.other`, { count });
-  }
-}
-
 async function open(page: Page, query = ''): Promise<void> {
   await page.goto(`/${query}`);
   await expect(page.getByTestId('page-title')).toHaveText(t('list.title'));
@@ -37,7 +27,8 @@ test.describe('controls list', () => {
     await open(page);
 
     await expect(rows(page)).toHaveCount(examples.length);
-    await expect(page.getByTestId('page-meta')).toHaveText(counted('list.count.active', examples.length));
+    expect(examples.length).toBeGreaterThan(2);
+    await expect(page.getByTestId('page-meta')).toHaveText(t('list.count.active.other', { count: examples.length }));
     const byName = [...api.controls].sort((a, b) => a.name.localeCompare(b.name, 'he') || a.id - b.id);
     await expect(rows(page).getByTestId('control-link')).toHaveText(byName.map((control) => control.name));
     await expect(rows(page).getByTestId('last-run')).toHaveText(byName.map(() => t('list.neverRun')));
@@ -60,7 +51,8 @@ test.describe('controls list', () => {
     await expect(row.getByTestId('run')).toContainText(t('list.actions.running'));
 
     const link = row.getByTestId('result').getByRole('link');
-    await expect(link).toHaveText(counted('results.violations', example.expected.total));
+    expect(example.expected.total).toBeGreaterThan(2);
+    await expect(link).toHaveText(t('results.violations.other', { count: example.expected.total }));
     await expect(row.getByTestId('last-run')).toContainText(t('common.todayAt', { time: '' }).trim());
     await expect(page).toHaveURL(/\/$/);
     await expect(row.getByTestId('run')).toBeEnabled();
@@ -130,7 +122,7 @@ test.describe('controls list', () => {
     await expect(row.getByTestId('archived-chip')).toHaveText(t('list.archived'));
     await expect(row.getByTestId('run')).toHaveCount(0);
     await expect(row.getByTestId('duplicate')).toBeVisible();
-    await expect(page.getByTestId('page-meta')).toHaveText(counted('list.count.archived', 1));
+    await expect(page.getByTestId('page-meta')).toHaveText(t('list.count.archived.one'));
     await shot(page, testInfo, 'list-archived');
 
     await page.getByTestId('filter-state').click();
@@ -160,7 +152,31 @@ test.describe('controls list', () => {
     await expect(panel.getByRole('link', { name: t('list.actions.new') })).toHaveAttribute('href', '/controls/new');
     await expect(panel.getByRole('button', { name: t('list.actions.suggestions') })).toBeVisible();
     await expect(page.getByTestId('controls-table')).toHaveCount(0);
+    // one filled button in the view: the panel carries the actions, the head leaves them to it
+    await expect(page.getByRole('link', { name: t('list.actions.new') })).toHaveCount(1);
     await shot(page, testInfo, 'list-first-use');
+  });
+
+  test('a list whose controls are all archived says so and leads to them, and is no first use', async ({ page, api }) => {
+    api.controls = api.controls.map((control) => ({ ...control, isActive: false }));
+    await open(page);
+
+    const panel = page.getByTestId('no-active');
+    await expect(panel).toContainText(t('list.noActive.title'));
+    await expect(page.getByTestId('first-use')).toHaveCount(0);
+    await expect(page.getByTestId('toolbar-search')).toBeVisible();
+
+    await panel.getByRole('button', { name: t('list.noActive.show'), exact: true }).click();
+    await expect(page).toHaveURL(/state=archived/);
+    await expect(rows(page)).toHaveCount(examples.length);
+  });
+
+  test('a glossary that cannot be read is said, and the list stays readable', async ({ page, api }) => {
+    api.fail('GET /glossary', problem(503, 'ENGINE_UNAVAILABLE'));
+    await open(page);
+
+    await expect(page.getByTestId('error-banner')).toHaveAttribute('data-code', 'ENGINE_UNAVAILABLE');
+    await expect(rows(page)).toHaveCount(examples.length);
   });
 
   test('a long list pages, and the address keeps the page', async ({ page, api }) => {
@@ -190,7 +206,7 @@ test.describe('controls list', () => {
     await expect(rows(page)).toHaveCount(examples.length);
   });
 
-  test('a list that cannot be read, or a run that cannot be started, says why and offers to try again', async ({ page, api }) => {
+  test('a list that cannot be read offers to try again, and a run that cannot be started says why', async ({ page, api }) => {
     api.fail('GET /controls', problem(503, 'DATABASE_UNAVAILABLE'));
     await page.goto('/');
     const banner = page.getByTestId('error-banner');
@@ -201,10 +217,12 @@ test.describe('controls list', () => {
     await expect(rows(page)).toHaveCount(examples.length);
     await expect(banner).toHaveCount(0);
 
+    // an engine that fails is a failed run (201); the request itself fails when the api cannot write the run
     const control = controlOf(api, 1);
-    api.fail(`POST /controls/${control.id}/runs`, problem(503, 'ENGINE_UNAVAILABLE'));
+    api.fail(`POST /controls/${control.id}/runs`, problem(503, 'DATABASE_UNAVAILABLE'));
     await rowOf(page, control).getByTestId('run').click();
-    await expect(banner).toHaveAttribute('data-code', 'ENGINE_UNAVAILABLE');
+    await expect(banner).toHaveAttribute('data-code', 'DATABASE_UNAVAILABLE');
+    await expect(banner.getByRole('button')).toHaveCount(0);
     await expect(rowOf(page, control).getByTestId('run')).toBeEnabled();
     await expect(rowOf(page, control).getByTestId('result')).toHaveAttribute('data-result', 'never');
   });

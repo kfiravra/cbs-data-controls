@@ -9,6 +9,7 @@
       type="button"
       [attr.aria-label]="'common.close' | translate"
       [matTooltip]="'common.close' | translate"
+      [disabled]="creating()"
       (click)="close()"
     >
       <app-icon name="close" />
@@ -43,7 +44,7 @@
   </div>
 
   <div class="dialog__foot">
-    <button class="btn btn--tonal" type="button" data-testid="suggestions-close" (click)="close()">
+    <button class="btn btn--tonal" type="button" data-testid="suggestions-close" [disabled]="creating()" (click)="close()">
       {{ 'common.close' | translate }}
     </button>
     <button

@@ -27,6 +27,18 @@ describe('ToastService', () => {
     expect(config).toMatchObject({ direction: 'rtl', horizontalPosition: 'start', verticalPosition: 'bottom' });
   });
 
+  it('counts in the plural form of the language', () => {
+    const toast = TestBed.inject(ToastService);
+
+    toast.showCounted('results.violations', 1);
+    toast.showCounted('results.violations', 23);
+
+    expect(open.mock.calls.map(([message]) => message)).toEqual([
+      t('results.violations.one'),
+      t('results.violations.other', { count: 23 }),
+    ]);
+  });
+
   it('offers one text button and runs its action when the button is pressed', () => {
     let ran = 0;
     TestBed.inject(ToastService).show('app.name', {}, { labelKey: 'common.close', run: () => ran++ });
