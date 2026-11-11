@@ -1,28 +1,49 @@
 # dc-engine notes
 
 ## State
-Every phase is done on 2026-11-11 (1 to 5 and 7; 6 was removed by the scope decision; nothing was cut). Gates:
-`gates/phase-1.txt` to `gates/phase-5.txt`, `gates/readme-commands.txt`, `gates/image-smoke.txt`; 505 tests.
-Phases 1 to 5 are reviewed and their fixes committed; the gate is next. The run is unattended on Kfir's word of
-2026-11-11 (the night brief, see "Decisions taken unattended"): no questions, no stop at a phase gate, push and
-PR allowed once the gate passes, no merge.
+Done on 2026-11-11, in one unattended night (the night brief, see "Decisions taken unattended"): every phase
+(1 to 5 and 7; 6 was removed by the scope decision), nothing cut, and the gate passed except the two items that
+are Kfir's own (his read of the Hebrew text, and pasting the line for dc-api). The branch `feat/engine` is
+pushed and the PR opened right after the commit that holds this line; no merge. If no PR exists, the permission
+prompt for the push was not answered.
 
-What exists: the engine of architecture §6, all six endpoints, and its image. `engine/` holds
-`pyproject.toml`, `uv.lock`, `.python-version` (3.12), `requirements.txt` and `Dockerfile`; settings and the
-connection URL; problem details; the glossary package; the validator; the compiler and its cache; the
-executor; the explainer; the suggestions; `GET /health`, `GET /glossary`, `POST /validate`, `POST /run`,
-`POST /suggest`, `POST /debug/compile` (off by default). Start: `cd engine && .venv/bin/python -m uvicorn
-app.main:create_app --factory --host 127.0.0.1 --port 8000`. Image: `docker build -f engine/Dockerfile -t
-dc-engine .` from the repository root.
+What dc-delivery reads first (its phase B0):
 
-For Kfir's read at the gate: `engine/tests/golden/*.text.json` (six files: the rule sentence, a sentence per
-node, one reason per matched node, in Hebrew) and one `/suggest` answer, saved as `gates/suggest-answer.json`
-at the gate.
+- **What exists.** The engine of architecture §6: `GET /health`, `GET /glossary`, `POST /validate`,
+  `POST /run`, `POST /suggest`, `POST /debug/compile` (off unless `ENGINE_DEBUG_COMPILE=true`), exactly as
+  `contracts/api.md` §3; and its image.
+- **Start from source**, from `engine/`: `python3 -m venv .venv`, `.venv/bin/python -m pip install -r
+  requirements.txt`, `.venv/bin/python -m uvicorn app.main:create_app --factory --host 127.0.0.1 --port 8000`
+  (Windows: `py -m venv .venv`, then `.venv\Scripts\python`). With uv: `uv sync`, `uv run python -m uvicorn
+  ...`. Every command of the README's Engine section ran once in a scratch copy (`gates/readme-commands.txt`).
+- **Variables as built** (the engine block of `.env.example`, the table of the README's Engine section):
+  `DQ_ENGINE_RO_PASSWORD` (required), `ENGINE_DB_HOST` (default `localhost`; `127.0.0.1` in `.env.example`),
+  `ENGINE_DB_PORT` (empty: no port in `Server=`), `ENGINE_DB_NAME` (`DataControls`), `ENGINE_DB_DRIVER`
+  (empty: 18, else 17), `ENGINE_PORT` (8000; read by the start command only), `ENGINE_ROW_CAP` (5000),
+  `ENGINE_QUERY_TIMEOUT_SECONDS` (30), `ENGINE_STARTUP_DB_WAIT_SECONDS` (30), `ENGINE_TIME_ZONE`
+  (`Asia/Jerusalem`), `ENGINE_DEBUG_COMPILE` (`false`), `ENGINE_CONTRACTS_DIR` (empty: `contracts/` beside
+  `engine/`), `ENGINE_LOG_LEVEL` (`INFO`), `ENGINE_SUGGEST_MAX` (10). An empty value means the default; the
+  environment wins over `.env`; the login is always `dq_engine_ro`.
+- **Python versions.** Developed, linted and typed on 3.12.3. The whole suite (521 tests, the integration
+  tests against the seeded database included) also passes under 3.13.14 and 3.14.6 on Linux
+  (`gates/final.txt`). Every pin of `requirements.txt` has a win_amd64 wheel for 3.12, 3.13 and 3.14. Nothing
+  was run on Windows.
+- **Image.** `docker build -f engine/Dockerfile -t dc-engine .` from the repository root; Debian 13, ODBC
+  Driver 18, uid 10001, port 8000, 249 MB (`gates/image-smoke.txt`). The compose service is yours: see the
+  first image item under "Docs for dc-delivery".
+- **Phases cut.** None. Both first-cut items of phase 5 and the image are built.
+- **Documents this task made untrue or incomplete**: the list under "Docs for dc-delivery" below; it is also
+  the fifth section of the PR body.
+
+For Kfir's read (the open gate item): `engine/tests/golden/*.text.json` (six files: the rule sentence, a
+sentence per node and one reason per matched node of each example, in Hebrew) and
+`dev/active/dc-engine/gates/suggest-answer.json` (the seven proposals on the seed). A wording change is a
+glossary commit on main: the engine renders the templates as written.
 
 ## Next
-1. The gate: `/check all --tests`, the lock and its export, the wheel check, the suite under 3.13 and 3.14,
-   the §19 items test by test, the security auditor, the lines for dc-api and dc-delivery, `/ship`.
-2. Push and PR (Kfir's word is in the night brief). No merge.
+1. Kfir: read the Hebrew text and the `/suggest` answer; read "Decisions taken unattended" (25 items);
+   paste the line under "Lines for the other sessions" into the dc-api session; review and merge the PR.
+2. After the merge: `/ship`'s last step, moving this folder to `dev/completed/`.
 
 ## Blockers
 None. Steps that need another task's running service are listed under "Waiting for a merge" when they appear.
@@ -163,7 +184,23 @@ continue". He reads these first.
     refuses the first; the engine did not.
 
 ## Waiting for a merge
-(none yet)
+None. No step of this task needed another task's running service: the engine's only neighbours are the
+database, which runs, and `contracts/`, which is merged.
+
+## Lines for the other sessions
+To paste into the dc-api session (one line, as the kickoff asks):
+
+> dc-engine is on `feat/engine` (PR open). Nothing in `contracts/` differs from what you build against. The
+> statement timeout is 30 s per statement (`ENGINE_QUERY_TIMEOUT_SECONDS`) and `/run` sends two, so its worst
+> case is about 60 s plus a login timeout of 5 s: keep the attempt timeout above it (api.md's 75 s is right).
+> `/suggest` sends one statement per rootable entity and one per candidate, about ten on the seed, each under
+> that timeout. Where the contract is silent the engine does this: a body that is not JSON, by media type or
+> because it does not parse, is 415 `REQUEST_INVALID` with no `errors`, and one over 1 MiB is 413; a tree more
+> than eight times past a limit (33 nested groups, 241 nodes, 4,001 values) is 422 with that limit's error
+> alone, no schema errors beside it; a string holding half a surrogate pair is `VALUE_TYPE_MISMATCH`. From
+> source it listens on 127.0.0.1:8000, in its image on 0.0.0.0:8000, with no path prefix.
+
+To dc-delivery: nothing to paste; the State above and "Docs for dc-delivery" are written for it.
 
 ## Docs for dc-delivery
 One line per item, added in the step that makes it true (plan.md decision 24): the file and section, what it
@@ -417,3 +454,16 @@ phases 1 to 5 in `reviews/phase-1.md` to `phase-5.md`.
   `VALUE_TYPE_MISMATCH` (decision 24); `app/glossary/loader.py:199` a hidden identifying field would still
   be returned, now the loader refuses it (decision 25). Each with tests; all in the review-fix commit that
   follows this line.
+- 2026-11-11 the gate, unattended, `gates/final.txt` (run again on the tree after the gate reviews):
+  `/check all --tests` green (db-check 27 of 27, contracts-check 5 of 5, ruff, pyright, 521 tests with none
+  skipped or deselected, print guard, hook tests 226 of 226); `uv lock --check` and the export equal to
+  `requirements.txt`; the wheel check `exit=0` for 3.12, 3.13 and 3.14; the suite 521 of 521 under 3.13.14
+  and under 3.14.6; the five items of architecture §19 mapped to their tests in the same file. Secrets: none
+  of the three passwords of `.env` is in the diff or in a tracked file; the two pattern hits are fabricated
+  values in `tests/unit/test_settings.py`. Docs drift: this task's own files are current (the README's Engine
+  section, the engine block of `.env.example`, the `dc-engine` skill, the security-auditor brief); everything
+  else is under "Docs for dc-delivery". Open, and not this session's to close: Kfir's read of
+  `tests/golden/*.text.json` and of `gates/suggest-answer.json` (nothing was changed or rejected yet, because
+  nobody has read them), and the line for dc-api, written above and not pasted. Reviews of the night: seven
+  agents on opus (five phase reviews, the image review, the security audit), 3 critical or high findings in
+  all (a recursion crash, a parameter-count crash, a quadratic check), each fixed with tests the same night.

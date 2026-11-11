@@ -1,4 +1,4 @@
-# /check --tests, final gate (all), 2026-11-11T01:39:38+02:00
+# /check --tests, final gate (all), on the tree after the gate reviews, 2026-11-11T02:05:03+02:00
 == skip (.): sql-init runs from the main tree only (one SQL Server container per machine); this worktree uses the running one
 == sql-check (.): scripts/db-check.sh
        1088   רבקה מימון  [c5,c6]
@@ -11,7 +11,6 @@ PASS examples: termination-before-hire on 2026-11-01: 3 records, keys and matche
 db-check: 27 passed, 0 failed (structure permissions glossary hebrew examples)
 exit=0
 == contracts-check (.): uv run scripts/contracts-check.py
-Installed 5 packages in 8ms
 contracts-check: ok, 5 checks passed (schema, glossary, agreement, examples, invalid fixtures)
 exit=0
 == engine-ruff (engine): /home/kfir/projects/cbs-engine/engine/.venv/bin/ruff check .
@@ -21,14 +20,14 @@ exit=0
 0 errors, 0 warnings, 0 informations
 exit=0
 == engine-test (engine): .venv/bin/python -m pytest
-tests/unit/test_settings.py .......................                      [ 71%]
-tests/unit/test_startup.py ...........................                   [ 76%]
-tests/unit/test_suggestions.py ........................                  [ 81%]
-tests/unit/test_validator.py ........................................... [ 89%]
-....................                                                     [ 93%]
-tests/unit/test_validator_operands.py ...............................    [100%]
+tests/unit/test_suggestions.py ........................                  [ 79%]
+tests/unit/test_validator.py ........................................... [ 88%]
+...........                                                              [ 90%]
+tests/unit/test_validator_bounds.py .............                        [ 92%]
+tests/unit/test_validator_operands.py .................................. [ 99%]
+....                                                                     [100%]
 
-============================= 505 passed in 23.95s =============================
+============================= 521 passed in 24.02s =============================
 exit=0
 == print-guard (.): bash /home/kfir/projects/cbs-engine/.claude/hooks/print-guard.sh --all
 exit=0
@@ -40,15 +39,15 @@ exit=0
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 5620.182971
+# duration_ms 5768.933166
 exit=0
 == print-guard --all
 exit=0
 # result: green
 
-# the lock and its export, 2026-11-11T01:40:30+02:00
+# the lock and its export, 2026-11-11T02:07:43+02:00
 $ uv lock --check
-Resolved 39 packages in 4ms
+Resolved 39 packages in 1ms
 exit=0
 $ uv export --no-dev --format requirements-txt | diff - requirements.txt
 exit=0
@@ -57,19 +56,17 @@ exit=0
 3.13 exit=0
 3.14 exit=0
 
-# the suite under the other Pythons the engine must start on
+# the suite under the other Pythons the engine must start on (3.12 is the run above)
 $ uv run --isolated --locked --python 3.13 python -m pytest
-.                                                                        [100%]
-505 passed in 23.59s
+521 passed in 34.55s
 exit=0
   ran on 3.13.14 pyodbc 5.5.0 sqlalchemy 2.0.57 pydantic 2.14.3
 $ uv run --isolated --locked --python 3.14 python -m pytest
-.                                                                        [100%]
-505 passed in 24.11s
+521 passed in 23.69s
 exit=0
   ran on 3.14.6 pyodbc 5.5.0 sqlalchemy 2.0.57 pydantic 2.14.3
 
-# the gate of architecture §19 for dc-engine, item by item, with the tests that prove it (all in the 505 above)
+# the gate of architecture §19 for dc-engine, item by item, with the tests that prove it (all in the 521 above)
 golden tests for the six examples (SQL and parameters)
     tests/golden/test_goldens.py
     -> 6 tests
@@ -81,7 +78,7 @@ every rejection path: the thirteen invalid fixtures, by code and path
     -> 13 tests
 every rejection path: every other code of the catalogue, every limit exceeded by one, the order of errors
     tests/unit/test_validator.py tests/unit/test_validator_operands.py
-    -> 94 tests
+    -> 92 tests
 every rejection path, over HTTP: 422 on /validate and /run for each fixture
     tests/integration/test_examples_live.py::test_invalid_fixture_is_a_definition_problem_on_both_endpoints
     -> 26 tests
