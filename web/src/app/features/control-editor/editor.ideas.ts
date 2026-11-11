@@ -1,5 +1,5 @@
 import { signal } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
+import { catchError, firstValueFrom, map, of } from 'rxjs';
 
 import { SuggestionItem } from '../../core/api/api.types';
 import { SuggestionsApi } from '../../core/api/suggestions.api';
@@ -33,12 +33,14 @@ export class EditorIdeas {
     this.asked = rootEntity;
     this.items.set([]);
     this.loading.set(true);
-    let items: readonly SuggestionItem[] = [];
-    try {
-      items = (await firstValueFrom(this.api.request({ rootEntity, max: IDEAS_MAX }))).items;
-    } catch {
-      // the suggestions are an offer: the editor stands without them
-    }
+    // the suggestions are an offer: an engine that does not answer offers none, and the editor stands
+    const none: readonly SuggestionItem[] = [];
+    const items = await firstValueFrom(
+      this.api.request({ rootEntity, max: IDEAS_MAX }).pipe(
+        map((answer) => answer.items),
+        catchError(() => of(none)),
+      ),
+    );
     if (this.asked === rootEntity) {
       this.set(items.slice(0, IDEAS_MAX));
     }

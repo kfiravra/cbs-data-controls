@@ -805,7 +805,9 @@ a choice will stand.
   an open select takes Esc for itself first. Closing returns to the list as it was (its search, tab and page) and
   puts the focus back on the element that opened the panel, else on the row of the panel's control, else on the
   list's title. The browser's Back closes it too: a panel is an address. The list is read again when a panel
-  closes and when the panel moves on (a save, a run), so it never shows a stale row.
+  closes and when the panel moves on (a save, a run), so it never shows a stale row; opening a panel reads
+  nothing again. A save or a run that lands after its panel was closed does not open the panel again: it says
+  what it did in a toast, and the list reads the row it changed.
 - **Suggestions panel:** the same card, opened from the list's head. A head with the title, one line that says
   where the suggestions come from (they are computed from the data as they are now, on every opening and every
   refresh, and nothing is saved or run without a choice) and a refresh button; a body of cards, one for each
@@ -901,7 +903,8 @@ Notes for the client task; the visual system above does not depend on them.
   `--color-*`, `--text-*` (`label`, `small`, `body`, `title`, `page`, `figure`), `--space-1` to `--space-8`,
   `--radius-xs`, `--radius-chip`, `--radius-sm`, `--radius-md`, `--radius-lg`, `--size-control` (44px),
   `--size-control-sm` (36px, 44px below 640px), `--size-icon`, `--size-mark`, `--size-bar`, `--gutter`,
-  `--container`, `--sheet-inset`, `--shadow-overlay`, `--shadow-raised`, `--ease-out` and the `--duration-*` set.
+  `--container`, `--sheet-inset`, `--sheet-width`, `--sheet-peek`, `--size-aside`, `--shadow-overlay`,
+  `--shadow-raised`, `--ease-out` and the `--duration-*` set.
   Component styles read only these. There is one theme: no second set of values and no switch.
 - **Angular Material.** One light theme through `mat.theme`, then Material's system tokens are pointed at these
   values with the mixin's `$overrides` map: primary to Action, the surfaces to Card and Surface, on-surface to

@@ -293,15 +293,19 @@ export class ResultsStore {
     }
   }
 
-  /** Asks the engine for a definition's sentence; `current` says whether the answer is still wanted. */
+  /**
+   * Asks the engine for a definition's sentence; `current` says whether the answer is still wanted. The rule
+   * in words is the engine's: when it does not say, the name and the state stand without it.
+   */
   private async readSentence(current: () => boolean, definition: Definition): Promise<void> {
-    try {
-      const answer = await firstValueFrom(this.controlsApi.validate(definition));
-      if (current()) {
-        this.controlSentence.set(answer.sentenceParts);
-      }
-    } catch {
-      // the rule in words is the engine's: without it the name and the state still stand
+    const parts = await firstValueFrom(
+      this.controlsApi.validate(definition).pipe(
+        map((answer): readonly TextPart[] | null => answer.sentenceParts),
+        catchError(() => of(null)),
+      ),
+    );
+    if (parts !== null && current()) {
+      this.controlSentence.set(parts);
     }
   }
 }

@@ -286,9 +286,14 @@ export class EditorStore {
   }
 
   private load(definition: Definition): void {
-    this.ids = new IdSource(highestId(definition.where));
     this.rootEntity.set(definition.rootEntity);
-    this.draft.set(fromDefinition(definition, this.ids));
+    this.draft.set(this.draftOf(definition));
+  }
+
+  /** A definition as a draft: its nodes keep their ids, and no id given after it repeats one of them. */
+  private draftOf(definition: Definition): DraftGroup {
+    this.ids.reserve(highestId(definition.where));
+    return fromDefinition(definition, this.ids);
   }
 
   // ---------------------------------------------------------------- editing
@@ -346,9 +351,8 @@ export class EditorStore {
    * Answers a way back to what was there, for the toast's undo.
    */
   applyIdea(idea: SuggestionItem): () => void {
-    const before = { ids: this.ids, draft: this.draft(), name: this.name(), description: this.description() };
-    this.ids = new IdSource(highestId(idea.definition.where));
-    const filled = fromDefinition(idea.definition, this.ids);
+    const before = { draft: this.draft(), name: this.name(), description: this.description() };
+    const filled = this.draftOf(idea.definition);
     this.draft.set(filled);
     if (before.name.trim() === '') {
       this.setName(idea.name);
@@ -365,7 +369,6 @@ export class EditorStore {
       if (this.draft() !== filled) {
         return;
       }
-      this.ids = before.ids;
       this.draft.set(before.draft);
       if (this.name() === idea.name) {
         this.name.set(before.name);
@@ -562,6 +565,9 @@ export class EditorStore {
 
   private onSaved(saved: Control, sent: Sent): void {
     this.control.set(saved);
+    // it no longer starts from nothing: the suggestions were for a control that did
+    this.blank = false;
+    this.ideas.set();
     // what was edited while the request was on its way is still unsaved, and stays as typed
     const untouched =
       this.name() === sent.name &&

@@ -30,6 +30,7 @@ import { rootEntities } from '../../core/glossary/glossary.lookups';
 import { CountedService } from '../../core/i18n/counted.service';
 import { FormatService } from '../../core/i18n/format.service';
 import { LanguageService } from '../../core/i18n/language.service';
+import { ListChanges } from '../../core/list/list-changes';
 import { SUGGESTIONS_OPENER } from '../../core/suggestions/suggestions-opener';
 import { ErrorBannerComponent } from '../../shared/banner/error-banner.component';
 import { confirm } from '../../shared/confirm-dialog/confirm-dialog.component';
@@ -40,20 +41,11 @@ import { TableFootComponent } from '../../shared/table-foot/table-foot.component
 import { ToastService } from '../../shared/toast/toast.service';
 import { ToolbarComponent } from '../../shared/toolbar/toolbar.component';
 import { ControlsTableComponent } from './controls-table.component';
-import { ListState, ListStore, ListView } from './list.store';
+import { Address, DEFAULT_VIEW, LIST_STATES, addressOf, queryOf, sameView } from './list.address';
+import { ListStore, ListView } from './list.store';
 import { resultOf } from './run-result';
 
-const STATES: readonly ListState[] = ['active', 'archived'];
 const ALL = '';
-const DEFAULT_VIEW: ListView = { search: '', entity: null, state: 'active', page: 1 };
-
-/** What the address shows: the list alone with its view, or a panel over it. */
-interface Address {
-  /** The path of the open panel (`runs/12`, `controls/new`); null when the list stands alone. */
-  readonly panel: string | null;
-  /** The list's view as the address describes it; null under a panel, whose query is its own. */
-  readonly own: ListView | null;
-}
 
 /** A screen shown in the panel says which control it is about, so a closing panel can find that control's row. */
 interface PanelScreen {
@@ -64,11 +56,11 @@ function isPanelScreen(screen: unknown): screen is PanelScreen {
   return typeof (screen as Partial<PanelScreen> | null)?.panelControl === 'function';
 }
 
-/** Where the focus goes once the list has been read again. */
-type FocusWish = { readonly row: number } | { readonly rowAt: number };
-
-const sameView = (a: ListView, b: ListView) =>
-  a.search === b.search && a.entity === b.entity && a.state === b.state && a.page === b.page;
+/**
+ * Where the focus goes once the list has been read again: the row of a control (the title, when the panel
+ * was about none or the list does not hold it), or the row at a place in the list.
+ */
+type FocusWish = { readonly control: number | null } | { readonly rowAt: number };
 
 /**
  * The one page of the product: the list of controls, each with its last run and its result, under two tabs
@@ -113,21 +105,22 @@ export class ControlsListPage {
   private readonly openSuggestions = inject(SUGGESTIONS_OPENER);
   private readonly document = inject(DOCUMENT);
   private readonly injector = inject(Injector);
+  private readonly changes = inject(ListChanges);
   /** Holds the page still behind an open panel, as it is held behind a dialog: the scrollbar keeps its place. */
   private readonly scrollBlock = inject(Overlay).scrollStrategies.block();
 
   private readonly listing = viewChild.required<ElementRef<HTMLElement>>('listing');
   private readonly sheet = viewChild<ElementRef<HTMLElement>>('sheet');
 
-  protected readonly states = STATES;
+  protected readonly states = LIST_STATES;
   protected readonly all = ALL;
 
   private readonly address = toSignal(
     this.router.events.pipe(
       filter((event) => event instanceof NavigationEnd),
-      map(() => this.readAddress()),
+      map(() => addressOf(this.route.snapshot)),
     ),
-    { initialValue: this.readAddress() },
+    { initialValue: addressOf(this.route.snapshot) },
   );
 
   /**
@@ -193,33 +186,71 @@ export class ControlsListPage {
   /** Where the focus goes once the list has been read again. */
   private readonly focusWish = signal<FocusWish | null>(null);
 
+  /** The panel the address showed last; undefined before the first look. */
+  private lastPanel: string | null | undefined;
+  /** The late changes already answered with a read of the list. */
+  private seenChanges = inject(ListChanges).reported();
+
   constructor() {
-    // the list follows its view
+    this.followView();
+    this.followPanel();
+    this.followLateChanges();
+    this.holdPageUnderPanel();
+    this.rememberOpener();
+    this.closeOnEscape();
+    this.focusWhenRead();
+  }
+
+  /** The list follows its view. */
+  private followView(): void {
     effect(() => {
       const view = this.view();
       untracked(() => this.store.show(view));
     });
+  }
 
-    // a panel that opens, changes its address (a save, a run) or closes leaves the list behind it out of
-    // date: it is read again, and a closing panel gives the focus back
-    let shown: string | null | undefined;
+  /**
+   * A panel that closes, or moves on to another address (a save, a run), leaves the list behind it out of
+   * date: the list is read again, and a closing panel gives the focus back. A panel that opens changes nothing.
+   */
+  private followPanel(): void {
     effect(() => {
       const panel = this.address().panel;
       untracked(() => {
-        if (shown !== undefined && shown !== panel) {
-          this.store.reload();
-          if (panel === null) {
-            this.returnFocus();
-          }
+        const before = this.lastPanel;
+        this.lastPanel = panel;
+        if (before === undefined || before === null || before === panel) {
+          return;
         }
-        shown = panel;
+        this.store.reload();
+        if (panel === null) {
+          this.returnFocus();
+        }
       });
     });
+  }
 
-    // the page behind an open panel does not scroll
+  /** A save or a run that landed after its panel was closed: the row it changed is read again. */
+  private followLateChanges(): void {
+    effect(() => {
+      const reported = this.changes.reported();
+      untracked(() => {
+        if (reported > this.seenChanges) {
+          this.store.reload();
+        }
+        this.seenChanges = reported;
+      });
+    });
+  }
+
+  /** The page behind an open panel does not scroll. */
+  private holdPageUnderPanel(): void {
     effect(() => (this.panelOpen() ? this.scrollBlock.enable() : this.scrollBlock.disable()));
     inject(DestroyRef).onDestroy(() => this.scrollBlock.disable());
+  }
 
+  /** What had the focus in the list when a panel was asked for is where the focus returns to. */
+  private rememberOpener(): void {
     this.router.events
       .pipe(
         filter((event) => event instanceof NavigationStart),
@@ -231,14 +262,20 @@ export class ControlsListPage {
           this.opener = active instanceof HTMLElement && this.listing().nativeElement.contains(active) ? active : null;
         }
       });
+  }
 
-    // Esc closes the panel. It is heard before anything on the page handles it (the capturing phase), so
-    // what is open over the panel is still as it was: an open select keeps the key and closes itself
+  /**
+   * Esc closes the panel. It is heard before anything on the page handles it (the capturing phase), so what
+   * is open over the panel is still as it was: an open select keeps the key and closes itself.
+   */
+  private closeOnEscape(): void {
     fromEvent<KeyboardEvent>(this.document, 'keydown', { capture: true })
       .pipe(takeUntilDestroyed())
       .subscribe((event) => this.onKey(event));
+  }
 
-    // a row to focus that the list did not hold yet: it is looked for when the list has been read
+  /** A row to focus that the list did not hold yet is looked for when the list has been read. */
+  private focusWhenRead(): void {
     effect(() => {
       const wish = this.focusWish();
       if (wish === null || this.store.loading()) {
@@ -251,36 +288,10 @@ export class ControlsListPage {
     });
   }
 
-  private readAddress(): Address {
-    const snapshot = this.route.snapshot;
-    const child = snapshot.firstChild;
-    if (child) {
-      return { panel: child.url.map((segment) => segment.path).join('/'), own: null };
-    }
-    const query = snapshot.queryParamMap;
-    const state = query.get('state');
-    const page = query.get('page');
-    return {
-      panel: null,
-      own: {
-        search: query.get('search') ?? '',
-        entity: query.get('entity') || null,
-        state: STATES.find((candidate) => candidate === state) ?? 'active',
-        page: page && /^[1-9]\d*$/.test(page) ? Number(page) : 1,
-      },
-    };
-  }
-
-  /** The query parameters of a view: what is the default is left out of the address. */
-  private queryOf(view: ListView): Record<string, string | number | null> {
-    const entries = Object.entries(view) as [keyof ListView, string | number | null][];
-    return Object.fromEntries(entries.map(([name, value]) => [name, value === DEFAULT_VIEW[name] ? null : value]));
-  }
-
   /** Changes the address; the view and the list follow it. A change of what is shown goes back to page 1. */
   protected go(change: Partial<ListView>): void {
     const next: ListView = { ...this.view(), ...('page' in change ? {} : { page: 1 }), ...change };
-    void this.router.navigate(['/'], { queryParams: this.queryOf(next), replaceUrl: 'search' in change });
+    void this.router.navigate(['/'], { queryParams: queryOf(next), replaceUrl: 'search' in change });
   }
 
   /** The two tabs are one stop of the keyboard: an arrow, Home or End moves between them and chooses. */
@@ -289,7 +300,7 @@ export class ControlsListPage {
       return;
     }
     event.preventDefault();
-    const other = event.key === 'Home' ? STATES[0] : event.key === 'End' ? STATES[1] : this.view().state === 'active' ? 'archived' : 'active';
+    const other = event.key === 'Home' ? LIST_STATES[0] : event.key === 'End' ? LIST_STATES[1] : this.view().state === 'active' ? 'archived' : 'active';
     this.go({ state: other });
     this.listing().nativeElement.querySelector<HTMLElement>(`#tab-${other}`)?.focus();
   }
@@ -298,7 +309,7 @@ export class ControlsListPage {
 
   /** Closes the panel: the address is the list's again, with the view the list kept. A changed draft asks first. */
   protected closePanel(): void {
-    void this.router.navigate(['/'], { queryParams: this.queryOf(this.view()) });
+    void this.router.navigate(['/'], { queryParams: queryOf(this.view()) });
   }
 
   private onKey(event: KeyboardEvent): void {
@@ -331,16 +342,17 @@ export class ControlsListPage {
       // after the render: the list is inert until the panel is out of the page
       afterNextRender(() => opener.focus(), { injector: this.injector });
     } else {
-      this.focusWish.set({ row: this.leftControl ?? 0 });
+      this.focusWish.set({ control: this.leftControl });
     }
   }
 
+  /** A row is found by the name of its control, which carries the control's id (`control-<id>`). */
   private focusRow(wish: FocusWish): void {
     const list = this.listing().nativeElement;
-    const names = [...list.querySelectorAll<HTMLElement>('[data-testid="control-link"]')];
+    const names = [...list.querySelectorAll<HTMLElement>('a[id^="control-"]')];
     const row =
-      'row' in wish
-        ? names.find((name) => name.id === `control-${wish.row}`)
+      'control' in wish
+        ? names.find((name) => name.id === `control-${wish.control}`)
         : names[Math.min(wish.rowAt, names.length - 1)];
     (row ?? list.querySelector<HTMLElement>('h1'))?.focus();
   }

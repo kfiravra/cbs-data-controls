@@ -105,27 +105,22 @@ describe('glossary lookups over the contract glossary', () => {
     expect(valueLabel(textField, 'anything')).toBeUndefined();
   });
 
-  it('draws the chain with every rootable entity, and between two neighbours which holds many of the other', () => {
+  it('draws the chain with every rootable entity in glossary order, whatever is chosen, and marks the chosen one', () => {
     for (const root of [...rootEntities(glossary).map((entity) => entity.key), null]) {
       const chain = chainFor(glossary, root);
       expect(chain.entities.map((entry) => entry.entity.key)).toEqual(rootEntities(glossary).map((e) => e.key));
       expect(chain.entities.filter((entry) => entry.selected).map((entry) => entry.entity.key)).toEqual(root ? [root] : []);
       expect(chain.links).toHaveLength(chain.entities.length - 1);
-      chain.links.forEach((link, index) => {
-        const pair = [chain.entities[index].entity.key, chain.entities[index + 1].entity.key];
-        const joining = glossary.relationships.filter(
-          (r) => pair.includes(r.from) && pair.includes(r.to) && r.from !== r.to && r.cardinality !== 'one_to_one',
-        );
-        expect(link !== null).toBe(joining.length > 0);
-        if (link) {
-          // the glossary says it from either side: many of `many` point at one `one`
-          expect(joining.map((r) => (r.cardinality === 'many_to_one' ? [r.to, r.from] : [r.from, r.to]))).toContainEqual([
-            link.one.key,
-            link.many.key,
-          ]);
-        }
-      });
     }
+  });
+
+  it('says of the sample organization that a department holds many employees and a ministry many departments', () => {
+    // the contract glossary lists employee, department, ministry: the pairs are written out, not derived
+    expect(rootEntities(glossary).map((entity) => entity.key)).toEqual(['employee', 'department', 'ministry']);
+    expect(chainFor(glossary, null).links.map((link) => link && [link.one.key, link.many.key])).toEqual([
+      ['department', 'employee'],
+      ['ministry', 'department'],
+    ]);
   });
 });
 

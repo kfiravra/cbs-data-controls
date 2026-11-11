@@ -73,6 +73,9 @@
   --gutter: 16px; // 32 from 640, 48 from 1024
   --container: 1280px;
   --sheet-inset: 0px; // the room around the panel: 12px from 640, where it floats over the list
+  --sheet-width: 1120px; // the panel at its widest
+  --sheet-peek: clamp(48px, 22vw, 320px); // how much of the list stays in view beside the panel
+  --size-aside: 340px; // the breakdown beside the records
 
   // depth: the page is flat; a shadow belongs to what floats over it, and to a card that is about to be pressed
   --shadow-overlay: 0 24px 48px -12px #1f303829, 0 2px 8px #1f303814;

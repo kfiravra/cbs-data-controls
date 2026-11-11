@@ -411,14 +411,15 @@ being built: no three directions and no stop; one direction, and straight on to 
 
 Part 3:
 - [x] `/impeccable critique` and `/impeccable polish`, once each; `docs/design.md` in line with what is built.
-- [ ] The mocked specs and the gate specs updated; the gate on the real stack (dev server and hosted build);
+- [x] The mocked specs and the gate specs updated; the gate on the real stack (dev server and hosted build);
       `/check all --tests`; output in `gates/phase-9.txt`, screenshots in `screenshots/phase-9/`.
-- [ ] `/phase-review web`, one `fix(web): review fixes` commit, the Log lines.
-- [ ] Push and the PR, on Kfir's word of 2026-11-11 for this pass. No merge. The stack is left running.
+- [x] `/phase-review web`, one `fix(web): review fixes` commit, the Log lines.
+- [x] Push and the PR, on Kfir's word of 2026-11-11 for this pass. No merge. The stack is left running.
 
 Verify: `/check all --tests` · `cd web && npx playwright test e2e/mocked` · the gate command of Design O
 Review: `/phase-review web`
-Commit: `feat(web): one page, with the editor and the results in a panel` · `feat(web): the new look` · `fix(web): review fixes`
+Commit: `feat(web): one page, with the editor and the results in a panel` · `feat(web): the new look` ·
+`fix(web): design critique and polish` · `fix(web): review fixes`
 
 ### Gate
 Status, 2026-11-11: `gates/final.txt` holds `/check all --tests` (the engine and the api among its parts now),
@@ -866,7 +867,8 @@ each reading of them that he did not spell out is a numbered decision in `notes.
 - **Closing.** The X of the sheet, Esc (after an open select or dialog took its own Esc) and a click on the
   scrim navigate to `/` with the list's held query; a changed draft still asks (decision 38). The focus goes to
   the element of the list that opened the panel, else to the row of the panel's control, else to the list's
-  title. The list is read again when a panel closes and when the panel's address changes (a save, a run).
+  title. The list is read again when a panel closes and when the panel's address changes (a save, a run), not
+  when one opens; and when a save or a run lands after its panel was closed, which then stays closed.
 - **Sheet anatomy.** Head (title, one meta line or the run picker, the actions; the X stands at its end),
   body (scrolls), foot (the editor's bar). Layout inside answers to the sheet's width (container queries), not
   the window's.

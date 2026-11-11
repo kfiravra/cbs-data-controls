@@ -92,6 +92,9 @@ playwright install --with-deps chromium` needs sudo on WSL: ask the user to run 
   own view (search, filter, tab, page) from the address only when no child is active and keeps it in memory under
   a panel: the panel's query (`page`, `search`) would otherwise be read as the list's. Never bind the list's view
   through `withComponentInputBinding`.
+- A screen in the panel must not navigate after an `await` once it was left (`left`, set on destroy): a run or
+  a save that lands late would open the panel again. It reports to `ListChanges` instead, and the list reads
+  itself again.
 - Layout inside the panel answers to the panel's width: `@container sheet (min-width: …)`, not `@media`. A screen
   in the panel is `.sheet__screen` with `.sheet__head`, `.sheet__body` (the one scroller) and `.sheet__foot`.
 - Test ids are shared between the list and what stands in the panel (`toolbar-search`, `table-range`,

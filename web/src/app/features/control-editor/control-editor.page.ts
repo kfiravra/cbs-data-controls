@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   ElementRef,
   computed,
   effect,
@@ -21,6 +22,7 @@ import { GlossaryLabelsService } from '../../core/glossary/glossary-labels.servi
 import { fieldGroups, findEntity, relatedOptions } from '../../core/glossary/glossary.lookups';
 import { FormatService } from '../../core/i18n/format.service';
 import { LanguageService } from '../../core/i18n/language.service';
+import { ListChanges } from '../../core/list/list-changes';
 import { BannerComponent } from '../../shared/banner/banner.component';
 import { ErrorBannerComponent } from '../../shared/banner/error-banner.component';
 import { ConditionBuilderComponent } from '../../shared/condition-builder/condition-builder.component';
@@ -79,6 +81,7 @@ export class ControlEditorPage {
   private readonly translate = inject(TranslateService);
   private readonly router = inject(Router);
   private readonly toast = inject(ToastService);
+  private readonly listChanges = inject(ListChanges);
   /**
    * The toast that offers a way back (from a removal, another choice of what to check, or a suggestion that
    * filled the conditions) and the draft that way back starts from. The offer stands only while that draft
@@ -88,6 +91,12 @@ export class ControlEditorPage {
   private readonly nameInput = viewChild<ElementRef<HTMLInputElement>>('nameInput');
   private readonly descriptionInput = viewChild<ElementRef<HTMLTextAreaElement>>('descriptionInput');
   private readonly cards = viewChild(EntityCardsComponent);
+
+  /**
+   * True once the panel was left. A save or a run that lands after that still says what it did, and moves
+   * nowhere: its address would open the panel again.
+   */
+  private left = false;
 
   protected readonly nameMax = NAME_MAX;
   protected readonly descriptionMax = DESCRIPTION_MAX;
@@ -193,6 +202,7 @@ export class ControlEditorPage {
   );
 
   constructor() {
+    inject(DestroyRef).onDestroy(() => (this.left = true));
     effect(() => {
       const target = this.target(this.id(), this.from());
       if (target) {
@@ -302,6 +312,14 @@ export class ControlEditorPage {
     }
     // a first save gives the control its address, before anything else: the address of an unsaved control
     // (with its `from` or its suggestion) must not stay in the history, where Back would build a second copy
+    if (this.left) {
+      // the panel is gone: the list is told, so the control's row shows what was saved and what ran
+      // (also after a save whose run then failed to start: the save itself stands)
+      if (outcome.kind !== 'invalid') {
+        this.listChanges.report();
+      }
+      return;
+    }
     const saved = this.store.control();
     if (saved && this.id() === NEW) {
       await this.router.navigate(['/controls', saved.id], { replaceUrl: true });

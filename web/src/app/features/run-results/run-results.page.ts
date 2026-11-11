@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, input, untracked } from '@angular/core';
 import { MatFormField } from '@angular/material/form-field';
 import { MatOption, MatSelect, MatSelectTrigger } from '@angular/material/select';
 import { Router, RouterLink } from '@angular/router';
@@ -9,6 +9,7 @@ import { findEntity } from '../../core/glossary/glossary.lookups';
 import { CountedService } from '../../core/i18n/counted.service';
 import { FormatService } from '../../core/i18n/format.service';
 import { LanguageService } from '../../core/i18n/language.service';
+import { ListChanges } from '../../core/list/list-changes';
 import { BannerComponent } from '../../shared/banner/banner.component';
 import { ErrorBannerComponent } from '../../shared/banner/error-banner.component';
 import { BreakdownComponent } from '../../shared/breakdown/breakdown.component';
@@ -75,8 +76,14 @@ export class RunResultsPage {
   private readonly format = inject(FormatService);
   private readonly language = inject(LanguageService);
   private readonly countedText = inject(CountedService);
+  private readonly listChanges = inject(ListChanges);
 
   protected readonly pageSizes = PAGE_SIZES;
+  /**
+   * True once the panel was left (its X, Esc, another address). An answer that lands after that (a run that
+   * was on its way, the newest run of a control) must not navigate: it would open the panel again.
+   */
+  private left = false;
 
   /** The run's id, on the address of a run. */
   readonly id = input<string>();
@@ -249,6 +256,7 @@ export class RunResultsPage {
   });
 
   constructor() {
+    inject(DestroyRef).onDestroy(() => (this.left = true));
     effect(() => {
       const target = this.target();
       if (target) {
@@ -276,7 +284,7 @@ export class RunResultsPage {
     }
     // a control with runs is shown by its newest one, at that run's own address
     const newest = await this.store.openControl(target.control);
-    if (newest !== null) {
+    if (newest !== null && !this.left) {
       await this.router.navigate(['/runs', newest], { replaceUrl: true });
     }
   }
@@ -338,7 +346,11 @@ export class RunResultsPage {
   protected async rerun(): Promise<void> {
     const first = this.store.run() === null;
     const run = await this.store.rerun();
-    if (run) {
+    if (run && this.left) {
+      // the panel is gone: the list is told, so the control's row shows this run
+      this.listChanges.report();
+    }
+    if (run && !this.left) {
       // the address of a control with no run does not stay in the history: Back would find a run there
       await this.router.navigate(['/runs', run.id], { replaceUrl: first });
     }

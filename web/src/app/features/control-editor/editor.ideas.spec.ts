@@ -1,7 +1,10 @@
 import { STORED, SUGGEST, control, editorHarness, sentenceOf } from '../../../testing/editor-store';
 import { SuggestionItem } from '../../core/api/api.types';
-import { DraftCondition } from '../../core/definition/draft';
+import { DraftCondition, DraftGroup } from '../../core/definition/draft';
 import { IDEAS_MAX } from './editor.ideas';
+
+const numberOf = (id: string) => Number(id.slice(1));
+const idsOf = (draft: DraftGroup) => draft.children.map((child) => (child as DraftCondition).id);
 
 describe('EditorStore: suggestions for the choice', () => {
   let h: ReturnType<typeof editorHarness>;
@@ -102,9 +105,11 @@ describe('EditorStore: suggestions for the choice', () => {
     expect(store.dirty()).toBe(true);
     answerValidate([]);
 
-    // a row added after the suggestion gets an id of its own, above the ids the suggestion came with
+    // a row added after the suggestion gets an id above every id of the session: the suggestion's two, and
+    // the ones the empty draft before it was given
     store.apply({ kind: 'addCondition', group: store.draft().key });
-    expect(['c1', 'c2']).not.toContain((store.draft().children[2] as DraftCondition).id);
+    const added = (store.draft().children[2] as DraftCondition).id;
+    expect(numberOf(added)).toBeGreaterThan(Math.max(2, ...idsOf(before).map(numberOf)));
 
     // the way back is from the suggestion's conditions as they were: these were built on, and stay
     undo();
@@ -123,9 +128,27 @@ describe('EditorStore: suggestions for the choice', () => {
     undo();
     expect(store.draft()).toBe(before);
     expect([store.name(), store.description()]).toEqual(['my own name', '']);
-    // the ids go on from where the conditions before the suggestion left them
+    // an id is given once in a session: the next row repeats neither a row that came back nor one of the
+    // suggestion's, which may yet come back with another press
     store.apply({ kind: 'addCondition', group: store.draft().key });
-    const ids = store.draft().children.map((child) => (child as DraftCondition).id);
-    expect(new Set(ids).size).toBe(ids.length);
+    const added = (store.draft().children.at(-1) as DraftCondition).id;
+    expect(numberOf(added)).toBeGreaterThan(Math.max(2, ...idsOf(before).map(numberOf)));
+  });
+
+  it('are no longer asked for once the control was saved: it is a stored control now', async () => {
+    await open({ id: null });
+    await h.choose('order', [idea('late orders')]);
+    store.applyIdea(store.ideas.items()[0]);
+    answerValidate([]);
+
+    const saving = store.save();
+    (await next('/api/v1/controls')).flush({ ...control(), id: 31 });
+    await saving;
+    expect(store.ideas.items()).toEqual([]);
+
+    store.chooseRoot('customer');
+
+    http.expectNone(SUGGEST);
+    expect(store.ideas.loading()).toBe(false);
   });
 });

@@ -337,7 +337,7 @@
 
 @media (min-width: 640px) {
   .sheet {
-    inline-size: min(1120px, 100% - clamp(48px, 22vw, 320px));
+    inline-size: min(var(--sheet-width), 100% - var(--sheet-peek));
   }
 
   // the actions stand at the end of the title's row: the whole head gives way to the close button

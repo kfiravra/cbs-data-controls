@@ -263,23 +263,36 @@ test.describe('controls list', () => {
 
   test('the list keeps its search, its tab and its page under a panel, and has them back when the panel closes', async ({ page, api }) => {
     const base = api.controls[0];
-    api.controls = Array.from({ length: 30 }, (_, index) => ({ ...base, id: 100 + index, name: `${base.name} ${String(index).padStart(2, '0')}` }));
-    await open(page, `?search=${encodeURIComponent(base.name)}&page=2`);
+    // thirty archived controls of one name: the archive tab, searched, on its second page
+    api.controls = Array.from({ length: 30 }, (_, index) => ({
+      ...base,
+      id: 100 + index,
+      isActive: false,
+      name: `${base.name} ${String(index).padStart(2, '0')}`,
+    }));
+    await open(page, `?state=archived&search=${encodeURIComponent(base.name)}&page=2`);
+    await expect(page.getByTestId('tab-archived')).toHaveAttribute('aria-selected', 'true');
     await expect(rows(page)).toHaveCount(5);
     const first = rows(page).first();
     const id = await first.getAttribute('data-id');
 
-    await first.getByTestId('edit').click();
-    await expect(page).toHaveURL(new RegExp(`/controls/${id}$`));
-    // the panel's address says nothing of the list: the list behind it is still the one that was searched
+    await first.getByTestId('control-link').click();
+    await expect(page).toHaveURL(new RegExp(`/controls/${id}/runs$`));
+    // the panel's address says nothing of the list: the list behind it is still the tab that was searched
     await expect(rows(page)).toHaveCount(5);
+    await expect(page.getByTestId('tab-archived')).toHaveAttribute('aria-selected', 'true');
     await expect(page.getByTestId('listing').getByTestId('toolbar-search')).toHaveValue(base.name);
+    // opening a panel reads nothing of the list again: it changed nothing
+    const reads = api.callsTo('GET /controls').length;
+    await expect(page.getByTestId('panel').getByTestId('state-never-run')).toBeVisible();
+    expect(api.callsTo('GET /controls')).toHaveLength(reads);
 
     await page.getByTestId('panel-close').click();
+    await expect(page).toHaveURL(/state=archived/);
     await expect(page).toHaveURL(/search=/);
     await expect(page).toHaveURL(/page=2/);
     await expect(rows(page)).toHaveCount(5);
-    await expect(first.getByTestId('edit')).toBeFocused();
+    await expect(first.getByTestId('control-link')).toBeFocused();
   });
 
   test('a list with no control at all explains what a control is and offers the two ways to start', async ({ page, api }, testInfo) => {

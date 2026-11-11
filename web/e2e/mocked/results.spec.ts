@@ -199,12 +199,40 @@ test.describe('run results', () => {
     expect(resting.length).toBeGreaterThan(4);
     expect(new Set(resting).size).toBe(1);
 
+    // looked at again after longer than any transition of the interface lasts: an effect that eases in
+    // would have arrived
+    const settled = () => page.waitForTimeout(400);
     for (const place of ['breakdown-row', 'reason', 'clause']) {
       await ui(page).locator(`[data-testid="${place}"][data-node="${id}"]`).first().hover();
+      await settled();
       expect(await looks()).toEqual(resting);
     }
     await ui(page).locator(`[data-testid="breakdown-row"][data-node="${id}"]`).focus();
+    await settled();
     expect(await looks()).toEqual(resting);
+  });
+
+  test('a panel that was closed while a run was on its way stays closed when the run ends', async ({ page, api }) => {
+    const control = controlOf(api, 4);
+    const stored = api.addRun(succeededRun(control, RUN));
+    api.delay(`POST /controls/${control.id}/runs`, 700);
+    await page.goto('/');
+    await page.locator(`[data-testid="control-row"][data-id="${control.id}"]`).getByTestId('control-link').click();
+    await expect(rows(page)).toHaveCount(stored.run.totalCount!);
+
+    await ui(page).getByTestId('rerun').click();
+    await expect(ui(page).getByTestId('rerun')).toBeDisabled();
+    await page.keyboard.press('Escape');
+    await expect(ui(page)).toHaveCount(0);
+
+    // the run ends, and is the row's last run; the panel does not come back with it
+    await expect.poll(() => api.runs.length).toBe(2);
+    await expect(page.locator(`[data-testid="control-row"][data-id="${control.id}"]`).getByTestId('control-link')).toHaveAttribute(
+      'href',
+      `/runs/${api.runs.at(-1)!.run.id}`,
+    );
+    await expect(ui(page)).toHaveCount(0);
+    await expect(page).toHaveURL(/\/$/);
   });
 
   test('the picker lists the runs of the control, newest first, and choosing one shows that run', async ({ page, api }, testInfo) => {

@@ -1,21 +1,20 @@
 # dc-web notes
 
 ## State
-Phase 9, the UX pass, is in work on branch `feat/web-ux` (cut from `origin/main` at `612b2b7` on 2026-11-11;
-PR #4 is merged). Parts 1 and 2 are built and committed: the one-page structure (`22c64f1`) and the new look
-(`3762765`), one direction and one theme, as Kfir changed part 2 (decisions 53 to 71). Part 3 is in work: the
-critique and the polish, then the gate on the real stack, `/check all --tests`, the phase review, the push and
-the PR.
+Phase 9, the UX pass, is done on branch `feat/web-ux` (cut from `origin/main` at `612b2b7` on 2026-11-11): the
+one-page structure (`22c64f1`), the new look as the only theme (`3762765`), the critique's fixes (`3b4013b`)
+and the review's fixes. The gate ran on the real stack and `/check all --tests` is green
+(`gates/phase-9.txt`). The branch is pushed and its PR is open on Kfir's word of 2026-11-11; it is not merged.
+The engine (8000) and the api (5000, serving this branch's build) are left running for his reading.
 
 ## Next
-1. Part 3: `/impeccable critique` (two sub-agents) and polish, once each; then the gate on the real stack
-   (dev server and hosted build), `/check all --tests` into `gates/phase-9.txt`, `/phase-review web` and one
-   `fix(web): review fixes` commit; push and PR on Kfir's word of 2026-11-11. No merge; the stack is left
-   running at `http://localhost:5000`.
-2. Kfir reads the new interface and its new Hebrew texts (decision 63 and the keys under `list.tabs`,
-   `list.archiveNote`, `list.noArchived`, `editor.what`, `editor.ideas`, `results.picker`, `results.never`,
-   `suggestions.note`).
-3. Still open from the first gate, for dc-delivery (limitations, on Kfir's word): the phone results layout
+1. Kfir reads the new interface at `http://localhost:5000` and its new Hebrew texts (decision 63 and the keys
+   under `list.tabs`, `list.archiveNote`, `list.noArchived`, `list.actions.openResults` and `openControl`,
+   `editor.what`, `editor.ideas`, `results.picker`, `results.never`, `suggestions.note`).
+2. The merge of the PR is his.
+3. For him to decide, from the critique: whether the editor's link between a row and its clause should go too
+   (decision 59); a findings summary above the list; shortcuts and bulk actions.
+4. Still open from the first gate, for dc-delivery (limitations, on Kfir's word): the phone results layout
    (the breakdown stands before the records), nested groups unnamed for a screen reader, a conflict that
    discards the draft, a list row's count that may belong to an older version of the rule.
 
@@ -267,11 +266,25 @@ invalid fixtures, as merged in `f9928bf`. Where they differ from Design E to M o
 - Nothing in `contracts/` looked wrong, and nothing blocks a screen: no line for Kfir from this step.
 
 ## Last reviewed
-8be9e82 (phase 7 on the real stack), fixed in the `fix(web): review fixes` commit that follows it. Before it:
-fcf0036 (phase 8) together with 44a7219 (the gate specs), fixed in 50a4e1d. The fix commits are not reviewed.
+3b4013b (phase 9, the UX pass: `612b2b7..3b4013b`), fixed in the `fix(web): review fixes` commit that follows it.
+Before it: 8be9e82 (phase 7 on the real stack), and fcf0036 (phase 8) together with 44a7219 (the gate specs).
+The fix commits are not reviewed.
 
 ## Hand-over to dc-delivery
 Read by its phase B0 (plan.md Design Q). Complete: phase 7 ran on the real stack on 2026-11-11.
+
+**After the UX pass (phase 9, 2026-11-11), these lines of "As built" below read differently:**
+- The gate is 9 tests in each project, not 8: the six examples, the one page (a control of its own found,
+  opened, run, read, its runs picked, duplicated and archived from its row), the suggestions panel, and a new
+  control filled from the engine's suggestions for its choice (it saves nothing). It still leaves 18 archived
+  `e2e-` controls a run.
+- The screenshots are five names: `gate-list`, `gate-editor`, `gate-results`, `gate-panel`, `gate-suggestions`;
+  one with a panel open is of the window. Every image of the first delivery shows the old look.
+- The build is 556 kB initial and 139 kB estimated transfer.
+- The gate ran on this branch's last state on the real stack, on the build the api hosts: 18 of 18, with the
+  listing of the 12 controls without a tag equal before and after (`gates/phase-9.txt`, its last section).
+- The dev `dq` holds 246 controls on 2026-11-11: 12 without a tag (the six examples and what Kfir made by
+  hand), the rest archived `e2e-` controls of the gate runs (144 of the first delivery, 90 of this pass).
 
 - Its asks of 2026-11-10. (1) Built: the gate specs run at `E2E_BASE_URL=http://localhost:5000` as well as behind
   the dev server, on any list; no spec assumes an empty list, counts or orders the list as a whole, or finds a
@@ -862,4 +875,42 @@ rewrote. A review that found nothing, or did not run, is logged as that.
   byte for byte (`phase-9-list-before.txt`, `phase-9-list-after.txt`); the store went from 210 controls to 228.
   The two gate runs inside the script have no listing. Four gate runs today on this branch left 72 archived
   `e2e-` controls in the dev `dq`. Screenshots: `screenshots/phase-9/` (ignored by git).
+- 2026-11-11 phase 9, `/phase-review web`: one opus `reviewer` over `612b2b7..3b4013b` (98 files; 234k
+  tokens, about 10 minutes), said here and not waited for. Standards: 2 hard warnings, 1 judgment warning, 3
+  info. Plan: 2 warnings, 3 info. No critical finding. What happened to each:
+  - Warning, two `catch` blocks holding only a comment (the editor's suggestions, the rule of a stopped run):
+    fixed. The failure is a value now (`catchError` to an empty list, to null).
+  - Warning, the chain's contract test derived its expected pairs the way the code does: fixed. The pairs of
+    the sample organization are written out.
+  - Warning (judgment), the list's page did six things in one 57-line constructor, kept the last panel in a
+    closure, found rows by a test id and used row 0 for "no control": fixed. The address is a tested module
+    (`list.address.ts`), the constructor is six named steps, rows are found by the id of the control's name,
+    and "no control" is null.
+  - Warning (plan), a panel closed while a run, a save or the look-up of a control's newest run was on its way
+    opened again when the answer landed: fixed. A screen that was left does not navigate; it reports the change
+    and the list reads itself again, so the row is not stale either (two mocked specs, written first, red).
+  - Warning (plan), a control saved for the first time still asked for suggestions on a new choice (hidden by
+    the template): fixed, with a store spec.
+  - Info, `applyIdea` restarted the id source and its undo put the old one back, so an id could be given
+    twice in a session: fixed. The source only moves forward (`reserve`), and loading a definition and filling
+    from a suggestion share one step.
+  - Info, literal sizes in component styles (340px, 10px, 3px, 2px) and the panel's width written twice
+    (1120 and 1144): fixed. `--sheet-width`, `--sheet-peek`, `--size-aside` are tokens; the others use steps.
+  - Info, the list was read again when a panel opened and on every change of the picker: opening reads nothing
+    now. A change of the picker still reads the list (the address cannot tell it from a run): left.
+  - Info, three tests asserted less than their names said: the list's test now changes the tab; the ids test
+    checks that a new id is above every id of the session; the badge test looks again after 400ms.
+  - Info, no previous and next on a single page is not one of the ten items: kept. It came from the critique
+    and is in the design document.
+  After the fixes: 338 unit tests in 34 files, lint and both type checks clean; the mocked specs and the gate
+  on the hosted build ran again (the line below).
+- 2026-11-11 phase 9, after the review fixes (`gates/phase-9.txt`, last section): ngc, lint, the e2e type
+  check, 338 unit tests in 34 files, the build (556 kB initial, 139 kB transfer), the print guard, `e2e/mocked`
+  192 passed and 2 skipped by project; the api stopped, the new build copied into its `wwwroot`, started again
+  (the page it serves names the build's main script); the gate on that hosted build 18 of 18; the listing of
+  the 12 controls without a tag equal before and after, the store from 228 controls to 246. The sql, contracts,
+  engine and api checks were not repeated: no file of theirs changed since the run before. Secrets: the branch
+  diff and the gate files hold no token and no password value. The steps of `/ship` were done by hand, as for
+  the first PR (decision 51 holds: the folder stays in `dev/active/`). The stack is left running: stop it with
+  `pkill -f DataControls.Api` and `pkill -f "uvicorn app.main"`.
 

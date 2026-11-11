@@ -325,6 +325,7 @@ mat-button-toggle-group button:is([aria-checked='true'], [aria-pressed='true']):
 
 @media (min-width: 640px) {
   .app-sheet {
-    inline-size: min(1144px, 100vw - clamp(48px, 22vw, 320px));
+    // the dialog's pane holds the panel and the room around it
+    inline-size: min(calc(var(--sheet-width) + 2 * var(--sheet-inset)), 100vw - var(--sheet-peek) + 2 * var(--sheet-inset));
   }
 }
