@@ -60,8 +60,15 @@ cd api && dotnet build -warnaserror && dotnet format --verify-no-changes && dotn
   builds from the repo root: it needs `contracts/` and the web build.
 - Tests: .NET 10 generates `public partial class Program` for top-level statements; do not declare it (ASP0027).
   Swap the engine for a stub `HttpMessageHandler` in `ConfigureTestServices`. The EF in-memory provider has no
-  rowversion, no collation and no SQL translation, so persistence tests run against the shared SQL Server (a test
-  database of their own or a rolled-back transaction; the task plan picks).
+  rowversion, no collation and no SQL translation, so persistence tests run against the shared `DataControls`
+  database as `dq_app`, through the real app. Every control a test creates is named with the marker
+  `zz-dc-api-test-`, and the suite deletes marked controls with their versions and runs before the first test and
+  after the last. With SQL Server down the tests fail with one sentence; they never skip.
+- Packages are pinned in `api/Directory.Packages.props` and nowhere else. Microsoft packages stay on 10.0.x (a bare
+  `dotnet add package` takes 11.x); `Microsoft.Extensions.Http.Resilience` is 10.11.0 (versioned apart from the
+  runtime); `JsonSchema.Net` is 8.0.5 exactly, the last MIT release, with `JsonPointer.Net` 6.0.1 and
+  `Json.More.Net` 2.2.0 (do not raise any of the three); `Swashbuckle.AspNetCore.SwaggerUI` 10.3.1 is the UI
+  alone; xunit is 2.9.3.
 
 ## Read before changing
 

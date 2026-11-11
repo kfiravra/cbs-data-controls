@@ -54,3 +54,29 @@ A `false` subschema is reported at the object, not at the member: `descend` retu
 4. Each list comes in the validator's own traversal order, which the probe did not compare with the document's.
    H4a asks for document order, so both sides sort.
 5. The package restores and runs on the local SDK (10.0.114) with JsonPointer.Net 6.0.1 and Json.More.Net 2.2.0.
+
+## Repeated on the real schema (2026-11-11, Phase 2)
+
+How: JsonSchema.Net 8.0.5 on net10.0 against `contracts/control-definition.schema.json` as merged, the six
+examples, the thirteen fixtures of `contracts/examples/invalid/` and fifteen extra documents (scratch project
+outside the repository, not kept). Python's side was not re-run here: the fixtures' `expected.path` is what the
+engine's validator must report, and `scripts/contracts-check.py` checks them on the contracts side.
+
+- The schema uses no `not`, `anyOf` or `oneOf`; `allOf` holds only `if`/`then` pairs. Design I1 holds.
+- Every document, valid ones included, lists the `if` tests that did not match as errors (`const` and `enum` on
+  `type` and `operator`, `required` on the node). With the units whose evaluation path has an `if` segment
+  dropped, the six examples leave no error unit.
+- A `false` subschema is reported at the member with an empty error key: `/where/children/0/value` for
+  `value-with-is-null.json` (expected `/where/children/0`), `/extra` for an extra root member, `/where/id` for
+  an `id` on a group, `/where/children/0/left/oops` for an extra member of a field reference. Lifted to the
+  parent, each is where the contract puts it.
+- After the two corrections the five schema-layer fixtures land on their `expected.path`, one unit each:
+  `between-with-one-value` `/where/children/0/values` [minItems], `condition-without-operator`
+  `/where/children/0` [required], `path-of-three-hops` `/where/children/0/left/path` [maxItems],
+  `unknown-node-type` `/where/children/0/type` [enum], `value-with-is-null` `/where/children/0` [false].
+- The eight semantic-layer fixtures are schema-valid, as they must be for the engine to see them.
+- Other shapes: a missing `where` is at `""`; a wrong root node type at `/where/type` [const]; an arity-1
+  condition with neither `value` nor `right` at the node [required]; `value` beside `right` at the node (lifted);
+  empty `children` at `/where/children`; duplicate `in` values at `…/values` [uniqueItems]; `"value": null` at
+  `…/value` [type]; a fault inside a related node's `where` at its own node; two faults give two units.
+- `schemaVersion: 1.0` passes `const: 1`, so the api's own check treats any number equal to 1 as version 1.

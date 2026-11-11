@@ -1,0 +1,105 @@
+# final gate: /check all --tests (2026-11-11T09:03+0200, branch feat/api, head f3f0335 plus the working tree)
+
+## note: run with ENGINE_DB_HOST=127.0.0.1 ENGINE_DB_PORT=1433 in the environment (the values of .env.example) for the engine's tests,
+## because this worktree's .env has no engine block and localhost resolves to ::1 first on this machine.
+
+## skip: sql-init runs from the main tree only (one SQL Server container per machine); this worktree uses the running one
+
+## sql-check: (cd . && scripts/db-check.sh)
+       1082   מורן אלבז  [c1,c2]
+       1083   אופיר דיין  [c1,c2]
+       1084   שני וולך  [c1,c3]
+       1085   ברק יעקב  [c1,c4]
+       1086   אחינועם לביא  [c1,c2,c3]
+       1087   צחי אפריים  [c5,c6]
+       1088   רבקה מימון  [c5,c6]
+       1115   אביב קדוש  [c1,c3]
+PASS examples: missing-mandatory-data on 2026-11-01: 10 records, keys and matched ids as the example expects
+       1061   אסף גרינברג  [c1]
+       1062   סיגל חזן  [c1]
+       1063   אסתר וקנין  [c1]
+PASS examples: termination-before-hire on 2026-11-01: 3 records, keys and matched ids as the example expects
+db-check: 27 passed, 0 failed (structure permissions glossary hebrew examples)
+exit=0
+
+## contracts-check: (cd . && uv run scripts/contracts-check.py)
+contracts-check: ok, 5 checks passed (schema, glossary, agreement, examples, invalid fixtures)
+exit=0
+
+## engine-ruff: (cd engine && /home/kfir/projects/cbs-api/engine/.venv/bin/ruff check .)
+All checks passed!
+exit=0
+
+## engine-pyright: (cd engine && /home/kfir/projects/cbs-api/engine/.venv/bin/pyright)
+0 errors, 0 warnings, 0 informations
+exit=0
+
+## engine-test: (cd engine && .venv/bin/python -m pytest)
+tests/unit/test_debug_compile.py ......                                  [ 39%]
+tests/unit/test_explainer.py ......................................      [ 47%]
+tests/unit/test_glossary.py ....................................         [ 54%]
+tests/unit/test_http.py ................................................ [ 63%]
+............                                                             [ 65%]
+tests/unit/test_settings.py .......................                      [ 70%]
+tests/unit/test_startup.py ...........................                   [ 75%]
+tests/unit/test_suggestions.py ........................                  [ 79%]
+tests/unit/test_validator.py ........................................... [ 88%]
+...........                                                              [ 90%]
+tests/unit/test_validator_bounds.py .............                        [ 92%]
+tests/unit/test_validator_operands.py .................................. [ 99%]
+....                                                                     [100%]
+============================= 521 passed in 25.26s =============================
+exit=0
+
+## api-build: (cd api && dotnet build -warnaserror)
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  DataControls.Api -> api/src/DataControls.Api/bin/Debug/net10.0/DataControls.Api.dll
+  DataControls.Api.Tests -> api/tests/DataControls.Api.Tests/bin/Debug/net10.0/DataControls.Api.Tests.dll
+Build succeeded.
+    0 Warning(s)
+    0 Error(s)
+Time Elapsed 00:00:02.27
+exit=0
+
+## api-format: (cd api && dotnet format --verify-no-changes)
+exit=0
+
+## api-test: (cd api && dotnet test)
+  All projects are up-to-date for restore.
+  DataControls.Api -> api/src/DataControls.Api/bin/Debug/net10.0/DataControls.Api.dll
+  DataControls.Api.Tests -> api/tests/DataControls.Api.Tests/bin/Debug/net10.0/DataControls.Api.Tests.dll
+Test run for api/tests/DataControls.Api.Tests/bin/Debug/net10.0/DataControls.Api.Tests.dll (.NETCoreApp,Version=v10.0)
+VSTest version 18.0.2 (x64)
+Starting test execution, please wait...
+A total of 1 test files matched the specified pattern.
+[xUnit.net 00:00:16.58]     DataControls.Api.Tests.Live.LiveEngineTests.Every_example_flags_the_expected_records_on_its_run_date_and_on_its_alternate_dates [SKIP]
+[xUnit.net 00:00:16.58]     DataControls.Api.Tests.Live.LiveEngineTests.Glossary_is_served_from_the_engine [SKIP]
+[xUnit.net 00:00:16.58]     DataControls.Api.Tests.Live.LiveEngineTests.Every_semantic_fixture_is_rejected_by_the_engine_with_its_code_and_path [SKIP]
+  Skipped DataControls.Api.Tests.Live.LiveEngineTests.Every_example_flags_the_expected_records_on_its_run_date_and_on_its_alternate_dates [1 ms]
+  Skipped DataControls.Api.Tests.Live.LiveEngineTests.Glossary_is_served_from_the_engine [1 ms]
+  Skipped DataControls.Api.Tests.Live.LiveEngineTests.Every_semantic_fixture_is_rejected_by_the_engine_with_its_code_and_path [1 ms]
+Passed!  - Failed:     0, Passed:   370, Skipped:     3, Total:   373, Duration: 24 s - DataControls.Api.Tests.dll (net10.0)
+exit=0
+
+## print-guard: (cd . && bash /home/kfir/projects/cbs-api/.claude/hooks/print-guard.sh --all <the touched .cs files>)
+exit=0
+
+## hooks: (cd . && node --test /home/kfir/projects/cbs-api/.claude/hooks/tests/*.test.mjs)
+ok 36 - stop-check without jq reports and exits 0 (2026-11-01 fail-open)
+  ---
+  duration_ms: 67.303764
+  type: 'suite'
+  ...
+1..36
+# tests 226
+# suites 36
+# pass 226
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 6209.38314
+exit=0
+
+RESULT: green

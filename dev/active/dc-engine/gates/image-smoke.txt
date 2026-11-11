@@ -1,0 +1,21 @@
+# engine image smoke, 2026-11-11T02:03:04+02:00
+# base image python:3.12-slim-trixie (Debian 13), msodbcsql18 from packages.microsoft.com/debian/13
+# first build about 4.5 minutes on this machine (the base image, the driver, 25 packages)
+$ docker build -f engine/Dockerfile -t dc-engine .
+$ docker run --rm --name dc-engine-smoke --network data-controls_default -e DQ_ENGINE_RO_PASSWORD -e ENGINE_DB_HOST=db \
+    -e ENGINE_DB_PORT=1433 -e ENGINE_DB_NAME=DataControls -p 127.0.0.1:8011:8000 dc-engine \
+    timeout 25 python -m uvicorn app.main:create_app --factory --host 0.0.0.0 --port 8000
+#   (the password by name from the environment, never the whole .env; the timeout ends the smoke by itself)
+$ curl -s 127.0.0.1:8011/health
+{"status":"ok","database":"ok","glossaryVersion":"1.0.0","engineVersion":"0.1.0"}   [HTTP 200]
+$ POST /run minor-high-salary on 2026-11-01 | jq .totalCount, [.violations[].key]
+3
+["1051","1052","1053"]
+$ POST /suggest | jq [.items[].definition.rootEntity]
+["employee","employee","employee","employee","department","department","department"]
+$ docker exec dc-engine-smoke sh -c "id; odbcinst -q -d; grep PRETTY_NAME /etc/os-release; env | grep -c PASSWORD"
+uid=10001(engine) gid=999(engine) groups=999(engine)
+[ODBC Driver 18 for SQL Server]
+PRETTY_NAME="Debian GNU/Linux 13 (trixie)"
+1
+# image size: 249 MB
