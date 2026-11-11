@@ -101,9 +101,13 @@ and so on for each script in order.
 more than `KEEP_DAYS` days ago; their results go with them. Both values must be 1 or more. Run it as `dq_app`:
 
 ```sh
-sqlcmd -S localhost,1433 -U dq_app -d DataControls -C -b -f 65001 \
+sqlcmd -S 127.0.0.1,14330 -U dq_app -d DataControls -C -b -f 65001 \
   -v KEEP_LAST_RUNS=20 -v KEEP_DAYS=90 -i sql/cleanup_runs.sql
 ```
+
+14330 is the host port of the compose database (`DB_PORT` in `.env`; this repository's own development setup
+keeps 1433). From SSMS the server name is `127.0.0.1,14330`, with the login `sa`, `dq_app` or `dq_engine_ro` and
+its password from `.env`.
 
 Without a local sqlcmd, through the container (the password is read from the environment, not the command line):
 

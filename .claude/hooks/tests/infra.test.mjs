@@ -227,6 +227,24 @@ describe('doc links resolve', () => {
     }
     assert.deepEqual(broken, []);
   });
+  // The documents of the submission link to each other and into the tree; a renamed file must not leave a
+  // dead link in what the graders read first.
+  test('every relative markdown link in README.md, docs/*.md, sql/README.md and web/README.md resolves', () => {
+    const root = path.join(INFRA_DIR, '..');
+    const docs = fs.readdirSync(path.join(root, 'docs')).filter((n) => n.endsWith('.md')).map((n) => path.join('docs', n));
+    const files = ['README.md', ...docs, path.join('sql', 'README.md'), path.join('web', 'README.md')];
+    const broken = [];
+    for (const f of files) {
+      const full = path.join(root, f);
+      const text = fs.readFileSync(full, 'utf8');
+      for (const m of text.matchAll(/\]\(([^)\s#]+)(?:#[^)]*)?\)/g)) {
+        const target = m[1];
+        if (/^[a-z]+:/.test(target)) continue;
+        if (!fs.existsSync(path.resolve(path.dirname(full), target))) broken.push(`${f} -> ${target}`);
+      }
+    }
+    assert.deepEqual(broken, []);
+  });
   test('CLAUDE.md "Where to read" rows are links into the docs, not bare paths', () => {
     const section = claudeMd.slice(claudeMd.indexOf('## Where to read'), claudeMd.indexOf('## Skills'));
     const rows = section.split('\n').filter((l) => l.startsWith('| ') && !l.startsWith('| Topic'));

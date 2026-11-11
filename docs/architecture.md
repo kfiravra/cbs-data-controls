@@ -1,9 +1,15 @@
-# Dynamic Data Controls System — Architecture & Work Plan
+# Dynamic Data Controls System: architecture
 
-**Purpose of this document.** This is the master architecture document for a one-week take-home assignment from the Israel Central Bureau of Statistics (CBS, למ"ס). It defines what we build, why, the responsibilities and boundaries of every component, the contracts between them, and the deliverables. It is written for Claude Code sessions that will break it into tasks and implement it. It deliberately avoids implementation syntax; the technical details are decided during implementation, within the boundaries set here. The visual design is decided in a separate design document (`docs/design.md`) that drives the client task.
+**Purpose of this document.** This is the long reference of the system: what it is, the responsibilities and
+boundaries of every component, the contracts between them, the decisions and the reasons for them, and the
+assignment's checklist with the evidence for each item (§18). It was written before the build, as the master
+plan that five tasks were cut from, and corrected after the build to what was built; §19 keeps the plan of
+those tasks and adds what each one delivered. It avoids implementation syntax: paths, payloads and codes are in
+`contracts/`, and commands are in the [README](../README.md).
 
-**Deadline:** received 8 Nov 2026, submit by **15 Nov 2026**.
-**Position:** CBS tender 59-2026 (call 2000028645), software developer, Jerusalem. Stack of the position: .NET / .NET Core, Angular or React, REST API design, Python, databases, Git, cloud (GCP preferred).
+The short version, one to two pages with the controls mechanism and the design of the AI suggestions, is
+[summarize-architecture.md](summarize-architecture.md). The visual design of the client is
+[design.md](design.md). The assignment itself is Appendix A.
 
 ---
 
@@ -63,16 +69,16 @@ SQL Server 2022
    └─ schema dq : controls, control versions, runs, run results
 ```
 
-The **business glossary** is a versioned JSON file inside the Python service (not a database table). It is loaded at startup, validated against the real database structure, and served to the .NET API through an endpoint.
+The **business glossary** is a versioned JSON file, `contracts/glossary.json` (not a database table). The Python service loads it at startup, validates it against the real database structure, and serves its public form (no table or column names) to the .NET API through an endpoint.
 
 The three services agree on their shared shapes through one folder, `contracts/` (§5.1), written first and changed only deliberately.
 
 ### 3.1 Responsibilities and prohibitions per component
 
 **Angular client**
-- Owns: the three screens (controls list, control editor, run results) and the suggestions dialog; building the control definition JSON from user choices; presenting results, reasons and errors through the translation service; responsive layout, mobile first.
+- Owns: one page, the controls list, with the control editor, the run results and the suggestions opening in a panel over it; building the control definition JSON from user choices; presenting results, reasons and errors; responsive layout, mobile first.
 - Receives the glossary from the API and renders all pickers from it, using the glossary's labels in the active language.
-- Must never: contain field or table names in code; contain Hebrew strings in code (only keys resolved from `i18n/*.json`); send SQL; be trusted for validation (its validation is UX only).
+- Must never: contain field or table names in code; contain Hebrew strings in code (only keys resolved from `i18n/*.json`); send SQL; render a rule sentence or a reason itself (they arrive rendered by the engine, as text and as parts); be trusted for validation (its validation is UX only).
 
 **.NET 10 (LTS) Web API (application layer)**
 - Owns: control lifecycle (create, read, update, delete/archive, versions, optimistic concurrency); structural validation of definitions; orchestration of runs; persistence of runs and result snapshots; paging, filtering, sorting and search over stored results; the suggestions approval flow; uniform error responses (code + parameters, no prose); OpenAPI; serving the built Angular app.
@@ -95,6 +101,13 @@ The three services agree on their shared shapes through one folder, `contracts/`
 - Alternatives rejected: (a) .NET does everything and Python only serves the optional AI feature — Python becomes optional and looks bolted on; (b) Python compiles SQL and .NET executes it — executable SQL would travel between services and .NET would become a "run this SQL" endpoint, which is exactly what a security reviewer will attack; (c) .NET as a thin gateway with Python owning CRUD — .NET shows nothing gradeable, and dynamic SQL would sit in the same process as write permissions.
 - One Python service with two internally separated modules (engine, suggestions) rather than two services: they share the glossary and the compiler (suggestions are validated through the compiler), and a second deployable adds operational risk for the graders without adding architectural value. Splitting later is a packaging change, not a code change.
 
+Four more decisions that shape the system:
+
+- **The glossary is a file, not a table.** It is reviewed and versioned with the code that depends on it, it is the same file in every environment, and the engine can refuse to start when it disagrees with the database. A table would need an administration screen, migrations and its own validation, and would let the vocabulary drift from the contracts. The cost is a restart of the engine for every change; a database-backed glossary is an extension (§20).
+- **Results are a snapshot, and paging is served from it.** A run stores its count, its sentences and every flagged record with its reasons. Paging, search, filtering and sorting read the snapshot, so the organization's data is touched once per run, the pages of one run agree with each other while the data changes, and a run can be read again later, next to the version of the rule that produced it. Paging by running the query again was rejected: it reads `hr` on every click and gives pages that do not belong to the same moment.
+- **No SQL crosses a service boundary.** The api sends a definition and receives records and reasons. It never receives SQL to execute, and the engine never accepts SQL or identifiers. This removes the endpoint a security reviewer would attack first ("run this SQL"), and it keeps dynamic SQL in exactly one process, whose login can only read. The one place SQL text leaves the engine is the developer endpoint `/debug/compile`, off by default and not exposed by the api.
+- **English code, Hebrew from data.** Code, keys, logs and tests are English; every Hebrew word is data, in two kinds of files (the client's translation file and the glossary). Everything that crosses a boundary is a key with parameters, and text is rendered at the edge. A second language is then a translation file and one more value under each text of the glossary, with no code change; and no service can drift from another in wording, because only one of them, the engine, renders sentences and reasons.
+
 ---
 
 ## 4. Data model
@@ -105,7 +118,7 @@ Three related tables so that relationships of two hops can be demonstrated: **Mi
 - Department: id, ministry_id (FK), name, is_active, manager_employee_id (nullable).
 - Employee: id, department_id (FK), national_id, first_name, last_name, email, birth_date, hire_date, termination_date (nullable), salary, status (active/inactive).
 - Text columns are `NVARCHAR` (Unicode); the database collation is `Hebrew_CI_AS`. Seed values are Hebrew where a real CBS user would expect Hebrew (ministry and department names, people's names); column and table names are English.
-- Seed data: ~5 ministries, ~15 departments, ~60–100 employees. For every example control there are several rows that pass and several that fail, each planted violation marked with a comment in the seed script. Include boundary cases (an employee who turns 18 on the run date, NULL salaries, NULL termination dates, an employee with no department, an active employee with an empty email, an inactive employee with no termination date).
+- Seed data: 5 ministries, 16 departments and 85 employees, all invented. For every example control there are several rows that pass and several that fail, each planted violation marked with a comment in the seed script. Include boundary cases (an employee who turns 18 on the run date, NULL salaries, NULL termination dates, an employee with no department, an active employee with an empty email, an inactive employee with no termination date).
 - Indexes: on every FK column and on the columns the example controls filter by (birth_date, status, salary).
 
 ### 4.2 Schema `dq` — controls store (written only by .NET)
@@ -115,7 +128,7 @@ Three related tables so that relationships of two hops can be demonstrated: **Mi
 - **RunResult**: run_id, a sequence number (the stable page order), record key (a string, so a non-integer key needs no contract change), record display fields (JSON), display text (the identifying values joined by a space, for search and sort), matched condition ids, structured reasons (JSON: reason key, parameters and rendered text per matched condition), rendered reason text in the run's language (`NVARCHAR`, searchable). One row per stored violation. Indexed by run_id.
 - Retention policy (configurable): keep the last N runs per control or the last X days; implemented as a cleanup command, documented.
 
-### 4.3 Business glossary — a versioned JSON file in the Python service
+### 4.3 Business glossary — a versioned JSON file, loaded by the engine
 Describes `hr` in business language. Contents:
 - **Entities**: key (e.g. `employee`), physical table, key column, display names (one text per language, singular and plural), description, which fields identify a record in result tables (e.g. first name + last name + employee number), whether it may be a root entity, visibility, and optionally a `lifecycle`: the field that says a record is active and the value that means it.
 - **Fields** per entity: key, display name per language, description, data type (number, text, date, bool, enum), physical column **or** a computed kind from a closed whitelist implemented in the engine (e.g. `age_years` derived from birth_date), nullable, visible (technical columns such as surrogate keys are hidden), allowed operators (derived from type unless overridden), unit, enum values with labels per language, `required` (always, while active or while inactive: what the suggestion heuristics read) and `comparable` (false for a computed field and for a field that only says whether a link exists; such a field is never a side of a field-to-field comparison) and `identifier` (a number that names a record, such as an employee number, is written digit for digit and never with a thousands separator).
@@ -164,7 +177,7 @@ Semantics and limits:
 
 Validation layers, each with a different job:
 1. **Angular**: user convenience — required fields, type-appropriate inputs. Not trusted.
-2. **.NET**: structural — JSON Schema conformance, size limits. The system boundary.
+2. **.NET**: structural — JSON Schema conformance, size limits. The system boundary. Its schema layer evaluates a tree of at most 240 nodes and 10,000 JSON values; anything larger is answered by the engine alone, with the error of the limit it breaks. A body with a string that is not Unicode text is refused before any layer, and a definition reaches the engine and the store as the text it was sent in.
 3. **Python**: semantic and authoritative — field exists and is visible, operator allowed for the type, value type matches, relationship path reachable, enum values exist. Runs on every compile. On save, .NET calls the engine's validate endpoint (a dry compile) so semantic errors are caught before persisting. Validation errors are returned as a code, a JSON path and parameters; never as prose.
 
 ### 5.1 The `contracts/` folder — the only channel between the services
@@ -188,11 +201,11 @@ A change to any of these after the parallel tasks have started is one commit to 
 Modules (one service, clear internal boundaries):
 - **glossary**: loads the JSON file, exposes typed lookups, performs the startup check against the database.
 - **validator**: validates a definition against the schema and the glossary; returns errors as code + JSON path + parameters.
-- **compiler**: turns a validated definition into a parameterized SELECT using a SQL builder library (identifiers only from the glossary, values only as bound parameters); resolves relationship paths into joins (many-to-one) or EXISTS / NOT EXISTS sub-queries (one-to-many); emits one computed flag per condition for reasons; rewrites computed fields into index-friendly predicates (e.g. age thresholds become birth-date ranges based on the run date).
+- **compiler**: turns a validated definition into a parameterized SELECT using a SQL builder library (identifiers only from the glossary, values only as bound parameters); resolves relationship paths into joins (many-to-one) or EXISTS / NOT EXISTS sub-queries (one-to-many); emits one flag column per node that can be a reason (a condition outside a related node, and a related node itself), with "matched" computed from the flags in the outer statement; rewrites computed fields into index-friendly predicates (e.g. age thresholds become birth-date ranges based on the run date).
 - **executor**: runs two statements under the read-only login — an exact count and a capped, deterministically ordered page of rows — with a per-statement timeout.
 - **explainer**: produces the rule sentence and, per violation, the structured reasons (reason key + parameters per matched condition) and the rendered reason text in the requested language, from the glossary's templates and labels and the actual values. A condition is matched for a record when it is true and every group above it up to the root is true, so a true condition on a failed branch is not a reason. Every rendered text also comes as parts that carry the node id and the role of each piece (field, value, actual value), so a client can mark the conditions without rendering anything itself: the engine is the only renderer.
 - **cache**: in-memory map from hash(definition JSON + glossary version + engine version) to the compiled statement. Saves validation and compilation for unchanged definitions. It never caches results; every run queries the database.
-- **suggestions**: computes aggregate statistics on `hr` (null rates, ranges, distinct counts, FK orphans, date-pair sanity), derives heuristic control suggestions, validates every suggestion through the validator and compiler, and returns suggestions as control definitions with name, description, rationale and evidence in the requested language. Built from the start, inside the engine task. **Designed and not built in v1**: an optional LLM step after the heuristics, for rules that need business knowledge (the thresholds of the first assignment example). It would receive only the glossary and the aggregates, never row values, and its proposals would pass the same validator and compiler before anything is shown.
+- **suggestions**: profiles each rootable entity with one aggregate SELECT (the row count, the missing count of each optional field, the order of each pair of date fields), derives heuristic control suggestions with five generators (`missing_required`, `date_order`, `active_under_inactive` over one and two hops, `active_without_active_children`, `missing_optional`), validates every suggestion through the validator and compiler, counts it on today's date, drops one that flags nothing, and returns the rest as control definitions with name, description, rationale and evidence in the requested language. No generator writes a number into a definition, so the first assignment example (its thresholds are business knowledge) is never proposed. **Designed and not built**: a separate advisor service in which a language model proposes such rules through the same validator and compiler, with no database access and no record values in a prompt. The design is in [summarize-architecture.md](summarize-architecture.md#the-optional-task-ai-that-proposes-controls) and the plan in `dev/active/dc-ai-suggestions/plan.md`.
 
 Endpoints (all JSON, errors as problem details with stable codes; the language comes from `Accept-Language`, default `he`):
 - `GET /health` — service and database connectivity.
@@ -210,20 +223,20 @@ Engine error codes (mapped by .NET to HTTP statuses; text comes from the client'
 
 Modules:
 - **Glossary**: fetches from the engine at startup and on demand, caches in memory, exposes it to the client.
-- **Controls**: CRUD with versions. Create and update validate structurally, then call the engine's validate endpoint, then persist a new immutable version when the definition changed. Delete archives (soft delete); an archived control is read-only. Optimistic concurrency returns a conflict on stale edits.
-- **Runs**: starts a run record, loads the current definition version, calls the engine `run` with the client's language, persists the snapshot (count, the summary with the rule sentence and the per-condition counts, rows, structured reasons, rendered text), closes the run with status and duration. Serves run history per control and the paged, filterable, searchable, sortable results of a run from the snapshot. Never calls the engine for paging.
+- **Controls**: CRUD with versions. Create and update validate structurally, then call the engine's validate endpoint, then persist a new immutable version when the definition changed. Delete archives (soft delete); an archived control is read-only, and there is no un-archive. Optimistic concurrency returns a conflict on stale edits: two saves that race are a 409 whether the row version or the version number collides, and an archive that meets a concurrent save is applied to the row as it is then. The list reads each control's last run in a second query for the page's controls, and sorts by name, root entity, last run or last count on the server.
+- **Runs**: starts a run record, loads the current definition version, calls the engine `run` with the client's language, persists the snapshot (count, the summary with the rule sentence and the per-condition counts, rows, structured reasons, rendered text), closes the run with status and duration. Once the control is found, nothing listens to the client: the run row is opened and closed without a cancellation token, and the snapshot and the closed run are stored in one save. A host that stops during the engine call, and a snapshot that cannot be stored, both close the run `failed` with `INTERNAL_ERROR`. Serves run history per control and the paged, filterable, searchable, sortable results of a run from the snapshot (by key, by the identifying text, by any identifying field, or by the number of reasons). Never calls the engine for paging.
 - **Suggestions**: proxies the engine's suggestions to the client; an "accept" creates ordinary controls through the Controls module.
-- **EngineClient**: typed HTTP client with timeouts longer than the engine's query timeout, a single retry (runs are read-only, so retry is safe), a circuit breaker, a correlation id and the language forwarded on every call, and mapping of engine error codes to application errors.
+- **EngineClient**: typed HTTP client with an attempt timeout (75 s) longer than the engine's worst case for a run (two statements of 30 s), a single retry after 500 ms (runs are read-only, so retry is safe) only for a connection error or a 408, 429, 502 or 503 and never for a health probe, a circuit breaker, a correlation id and the language forwarded on every call, and mapping of engine error codes to application errors. The breaker opens at 5 calls with half of them failed inside two attempt timeouts; it counts a refused connection, an attempt timeout, a 502 and a 503 that is not a problem document, and does not count a 504, the engine's own 503 problem (its database is down) or a health probe. After a failed glossary refresh the engine is not asked again for 30 seconds.
 - **Error handling**: one uniform problem-details response shape for all errors, with a stable code, parameters, and a JSON path for validation errors so the editor can highlight the offending condition. No user-facing prose in the API; the client renders the code through its translation files. Internal details (stack traces, SQL) never reach the client.
 - **OpenAPI** documentation for all endpoints.
-- **Static hosting** of the Angular production build, so graders run one web process.
+- **Static hosting** of the Angular production build, so graders run one web process. The api serves the `wwwroot` beside the published app, which must be there before the start; a path with a file extension that names no file is a 404 problem, and every other path outside `/api` is `index.html`, served with `Cache-Control: no-cache`. Swagger UI is at `/api/docs` over `/openapi/v1.json`, in every environment.
 
 API surface (resource-oriented, versioned under `/api/v1`):
 - glossary: read.
-- controls: list (filter by name, entity, active), create, read, update, archive, versions.
+- controls: list (filter by name, entity, active; sort by name, root entity, last run or violations), create, read, update, archive, versions.
 - controls/validate — dry validation with preview (no id in the path: a new control has none yet).
 - controls/{id}/runs — start a run (the answer is the run, also when it failed: the failure is its status and error); list runs.
-- runs/{id} — summary; runs/{id}/results — paged, filtered, searched, sorted snapshot.
+- runs/{id} — summary; runs/{id}/results — paged, filtered (by condition), searched, sorted snapshot.
 - suggestions — request; suggestions/accept — create controls from accepted suggestions.
 - health.
 
@@ -231,19 +244,20 @@ API surface (resource-oriented, versioned under `/api/v1`):
 
 ## 8. Angular client — internal design
 
-Screens:
-1. **Controls list** (home): name, description, root entity, last run time, last violation count, actions (run, edit, duplicate). Search and filter. No separate dashboard.
-2. **Control editor**: name, description, root entity picker with a small relationship map (Ministry → Department → Employee as labelled chips, fed from the glossary), recursive condition builder (groups with AND/OR, condition rows with field picker grouped by entity and relationship label, operator picker filtered by type, value input by type including "compare to another field", quantified related-records node), live sentence preview, validation messages attached to the offending row, save / save-and-run.
-3. **Run results**: summary (total violations, scanned entity, duration, previous run count), per-condition breakdown, violations table with reason column and highlighted offending values, search, filter, sort, paging served from the snapshot; clear messages for zero violations, cap exceeded, timeout, and definitions referencing glossary fields that no longer exist.
-4. **Suggestions dialog**: list of suggested controls with rationale and evidence, select, open in editor, create selected.
+The client is one page. The controls list is the parent route, and the editor, the results and the suggestions open in a panel over it (`/`, `/controls/<id>` with `new` for a control not saved yet, `/runs/<id>`, `/controls/<id>/runs`). Closing the panel returns to the list with its search, tab, order and page as they were.
+
+1. **Controls list** (home): name, description, root entity, last run time, last violation count, and the actions run, edit, duplicate and archive. Search by name, a filter by root entity, two tabs with counts (active, archive), and a sort by any column, done by the server. The details of a row open the results of its last run (or its state before a first run). No separate dashboard.
+2. **Control editor**: name, description, and the root entity chosen as the answer to "what to check" from one card per entity, with a chain that shows how the entities connect (fed from the glossary). The condition builder is a flat list with one "all / at least one" switch; nested groups and conditions on related records are behind "advanced". A condition row has a field picker grouped by entity and relationship label, an operator picker filtered by type, and a value input by type, including "compare to another field". The rule in words is the engine's sentence from `POST /controls/validate`, asked 400 ms after the last edit; the last valid sentence stays, dimmed, while a row is incomplete. Validation messages are attached to the offending row. A new control is offered up to three of the engine's suggestions for the chosen entity. Save, or save and run.
+3. **Run results**: the rule in words, then one block with the total, the run's facts (entity, duration, the previous run's count) and the count per condition, which is also the filter; then the violations table with a reason per matched condition and the offending values marked, search, sort by any column, and paging, all served from the snapshot. A picker moves between the control's runs (the 50 newest). Clear states for zero violations, cap exceeded, timeout, a failed run, and a definition that no longer fits the glossary (the run error `CONTROL_DEFINITION_OUTDATED`, with the condition named). An archived control's runs are read the same way, with no run and no edit.
+4. **Suggestions**: the engine's proposals with rationale and evidence; select, open in editor, create selected.
 
 Design constraints:
-- **i18n**: a translation service with JSON files (`he.json`; the service is keyed by language, v1 ships Hebrew alone and has no language switch); every user-facing string is `t('key')`; glossary labels are read from the glossary in the active language; error codes from the APIs resolve to text here. Rule sentences, reasons and suggestion texts arrive rendered by the engine, as text and as parts, and the client only draws them. No Hebrew literal anywhere in code or templates.
+- **i18n**: a translation service with JSON files (`he.json`; the service is keyed by language, v1 ships Hebrew alone and has no language switch); every user-facing string is `t('key')`; glossary labels are read from the glossary in the active language; error codes from the APIs resolve to text here. Rule sentences, reasons and suggestion texts arrive rendered by the engine, as text and as parts, and the client only draws them: it has no sentence renderer. No Hebrew literal anywhere in code or templates.
 - **RTL**: document direction follows the language (`dir="rtl"` for Hebrew), logical CSS properties only, Hebrew locale for dates and numbers.
-- **Responsive, mobile first**: the three screens work from 390 px (results table as card rows, editor stacked) up to 1440. Verified by screenshots at 390 and 1440 at every gate.
+- **Responsive, mobile first**: every screen works from 390 px (table rows as cards, editor stacked) up to 1440. Verified by screenshots at 390 and 1440 at every gate.
 - Visual design (palette, type, components, motion) comes from `docs/design.md`, produced before the client task with the design skills; this document does not decide it.
 - State: signals for editor and screen state; services for server communication and glossary caching. No global state library.
-- Reusable components: condition group (recursive), condition row, field picker, operator picker, value input, related-records node, rule sentence preview, relationship map, results table, run summary, error banner, confirm dialog. The editor and the suggestions dialog reuse the same components.
+- Reusable components: condition group (recursive), condition row, field picker, operator picker, value input, related-records node, the rule in words (drawn from the engine's parts), entity cards and entity chain, results table, run overview (the summary and the count per condition), sort header, the panel, error banner, confirm dialog. Every table is one design, and a status has one colour everywhere (violations red, clean green, stopped amber, never ran and archived grey). The editor and the suggestions reuse the same components.
 - Errors: an interceptor converts problem-details responses (code + parameters) into translated messages; validation errors map to editor rows by JSON path.
 - Accessibility basics: labels, keyboard navigation, focus states, sufficient contrast.
 
@@ -253,7 +267,7 @@ Design constraints:
 
 **Save a control.** Client builds the definition JSON → .NET validates structure → .NET asks the engine to validate (dry compile) → .NET persists a new immutable version → client shows the preview sentence.
 
-**Run a control.** Client requests a run → .NET loads the current version and opens a run record → .NET sends the full definition JSON, the run date and the language to the engine → engine validates, hits or fills the compile cache, compiles, executes count + capped page under the read-only login → engine returns violations, matched condition ids, structured and rendered reasons, and the total → .NET stores the snapshot and closes the run → client shows the summary; all subsequent paging, search and filtering are served from the snapshot by .NET. Organization data is touched exactly once per run.
+**Run a control.** Client requests a run (synchronous: the request answers when the run has finished) → .NET loads the current version and opens a run record → .NET sends the full definition JSON, the run date and the language to the engine → engine validates, hits or fills the compile cache, compiles, executes count + capped page under the read-only login → engine returns violations, matched condition ids, structured and rendered reasons, and the total → .NET stores the snapshot and closes the run → client shows the summary; all subsequent paging, search and filtering are served from the snapshot by .NET. Organization data is touched exactly once per run.
 
 **View results.** Every page, filter and search is a query on `dq.RunResult` for that run. Python is not involved.
 
@@ -270,7 +284,7 @@ Design constraints:
 3. **Read-only execution.** The engine's login can only SELECT on `hr`. Even a compiler bug cannot modify data. Only a single SELECT statement is ever compiled; stacked statements are impossible by construction and additionally rejected.
 4. **Bounded execution.** Row cap, statement timeout, nesting and size limits, deterministic ordering.
 
-Additional: the .NET login cannot read `hr`; configuration and secrets come from environment variables, never from code; error responses never leak SQL or stack traces; CORS restricted; no authentication/authorization in v1 (internal tool; listed as an extension, along with audit of who ran what).
+Additional: the .NET login cannot read `hr`; configuration and secrets come from environment variables, never from code; error responses never leak SQL or stack traces; CORS restricted; no authentication/authorization in v1 (internal tool; listed as an extension, along with audit of who ran what), which is why compose publishes the app, and the database, on 127.0.0.1 only and the engine on no host port at all. In compose each container receives only its own settings by name, so the engine never holds the `sa` or `dq_app` password and the api never holds the `sa` or `dq_engine_ro` one. Each service had a security audit, and the whole repository one more at the delivery gate; the findings left open, each a deployment decision, are listed in [assumptions-limitations-extensions.md](assumptions-limitations-extensions.md).
 
 ---
 
@@ -288,33 +302,37 @@ Additional: the .NET login cannot read `hr`; configuration and secrets come from
 
 ## 12. Error handling (what the business user sees)
 
-Every error has a stable code, an HTTP status, parameters, and a translated message written for a non-technical user, for example: definition invalid (highlight the row, say what to fix), control references a field that no longer exists in the glossary (edit the control), query timed out (narrow the conditions or contact the administrator), engine unavailable (try again later), no violations (positive confirmation, not an empty table), cap exceeded (how many were found, how many are shown). The codes live in `contracts/errors.md`; the text lives in the client's translation files. Technical details are logged with the correlation id and never shown.
+Every error has a stable code, an HTTP status, parameters, and a translated message written for a non-technical user, for example: definition invalid (highlight the row, say what to fix), control references a field that no longer exists in the glossary (edit the control), query timed out (narrow the conditions or contact the administrator), engine unavailable (try again later), no violations (positive confirmation, not an empty table), cap exceeded (how many were found, how many are shown). The codes live in `contracts/errors.md`; the text lives in the client's translation files. Technical details are logged with the correlation id and never shown. One difference between the two services, where the contract has one sentence: a body sent as JSON that does not parse is 400 `REQUEST_INVALID` in the api (415 there is a media type that is not JSON) and 415 in the engine.
 
 ---
 
 ## 13. Testing strategy (proportional to one week)
 
-- **Engine (highest value)**: golden tests — each example definition produces the expected SQL shape and parameters; validation tests for every rejection path (unknown field, wrong operator for type, type mismatch, unreachable path, depth and size limits); injection attempts as values are bound and return nothing; NULL semantics; integration tests against the seeded database asserting the exact violating record ids for each example in `contracts/examples/`, including boundary rows.
-- **.NET**: structural validation, controller status codes, concurrency conflict, engine client behaviour for timeout and unavailability, snapshot paging and filtering.
-- **Angular**: a few focused tests — adding/removing conditions and groups, preview sentence, mapping of validation errors to rows; Playwright e2e through the six examples with screenshots at 390 and 1440.
-- Each task carries its own tests and gate; the delivery task runs the whole system from a clean clone.
+- **Engine (highest value)**: golden tests — each example definition produces the expected SQL and parameters (`engine/tests/golden/*.sql`, `*.params.json`) and the expected Hebrew text (`*.text.json`); validation tests for every rejection path (unknown field, wrong operator for type, type mismatch, unreachable path, depth and size limits); injection attempts as values are bound and return nothing; NULL semantics; integration tests against the seeded database asserting the exact violating record ids for each example in `contracts/examples/`, including boundary rows; `/suggest` against the examples marked `heuristic`. 521 tests, also run under Python 3.13 and 3.14.
+- **.NET**: the real app against the shared database as `dq_app`, with its rows marked and removed before and after; the engine is a stub at the HTTP handler whose fixtures are generated from `contracts/`. Structural validation, status codes, the concurrency conflict, engine client behaviour for timeout and unavailability, snapshot paging and filtering, and a test that the app answers every row of `contracts/api.md`. Three tests against the real engine are opt-in (`DC_LIVE=1`).
+- **Angular**: focused unit tests (adding and removing conditions and groups, the validate loop behind the rule in words, mapping of validation errors to rows), and Playwright in two folders: `e2e/mocked` on route fixtures with no service, and `e2e/gate` on the real stack, which builds each of the six examples in the editor, saves, runs and reads it, with screenshots at 390 and 1440.
+- **Database and contracts**: `scripts/db-check.sh` (structure, the permissions of the two logins, the glossary against the tables, Hebrew, each example by a hand-written query) and `scripts/contracts-check.py` (the schema, the glossary, the examples and the invalid fixtures agree).
+- **The whole system**: `scripts/examples.py verify` runs the six examples through the running app and compares the flagged records and matched conditions with the example files. The delivery task ran both paths from a clean clone.
 - All tests runnable with one command per project, documented in the README.
 
 ---
 
 ## 14. Deployment and running
 
-- **Docker Compose**: SQL Server 2022, a one-shot init container running the SQL scripts, the Python engine, the .NET API serving the built Angular app. Health checks and startup ordering.
-- **Manual path (no Docker)**: short from-source instructions in the README. Run the SQL scripts in SSMS or sqlcmd on a local SQL Server; install the engine's locked dependencies into a local Python environment and start it; build the Angular app and start the .NET API, which serves it. No bundle and no prebuilt binaries.
-- Configuration by environment variables: connection strings for the two logins, engine URL, row cap, timeouts, default language, time zone (Asia/Jerusalem), debug endpoint flag. Example env files provided; no secrets committed.
+- **Docker Compose**: SQL Server 2022 (`db`), a one-shot init container running the SQL scripts (`db-init`), the Python engine (`engine`, no host port), the .NET API serving the built Angular app (`api`, 127.0.0.1:5000), and a one-shot loader that posts the six example controls through the api (`examples`). Health checks and startup ordering: the engine starts after the init has completed, the api after the engine is healthy, the loader after the api is healthy. No service restarts on its own, so an engine that refuses a glossary mismatch stays visibly stopped. `scripts/start.sh` and `start.cmd` create `.env` with random passwords when there is none, start everything and wait.
+- **Manual path (no Docker)**: short from-source instructions in the README. Run the SQL scripts in SSMS or sqlcmd on a local SQL Server; install the engine's locked dependencies into a local Python environment and start it; build the Angular app, publish the .NET API with the build as its `wwwroot`, and start it. No bundle and no prebuilt binaries.
+- Configuration by environment variables, listed in `.env.example` one block per component. The engine takes no connection string: it reads `ENGINE_DB_HOST`, `ENGINE_DB_PORT`, `ENGINE_DB_NAME`, `ENGINE_DB_DRIVER` and `DQ_ENGINE_RO_PASSWORD`. The api builds its connection string from `DB_HOST`, `DB_PORT` and `DQ_APP_PASSWORD` unless `ConnectionStrings__Dq` replaces it whole; in Development it reads only its own keys from `.env`, and the published app reads no `.env`. Also: the engine URL, row cap, timeouts, default language, time zone (Asia/Jerusalem), the debug endpoint flag. No secrets are committed: the example file holds no password.
 - The suggestions feature is heuristics alone: it needs no key and makes no call outside the system.
 - The SQL Server 2022 image is x86-64 only; on Apple Silicon it runs under Docker Desktop's Rosetta emulation, and the manual path is the fallback. Stated in the README.
+- Commands, ports and troubleshooting: the [README](../README.md).
 
 ---
 
 ## 15. AI-assisted development policy (required by the assignment)
 
-AI coding tools (Claude Code with a project harness: `CLAUDE.md`, skills, rules, hooks, task plans with gates and review passes) are used for scaffolding, boilerplate, tests, documentation drafts and refactoring. The harness lives in the repository (`.claude/`) and is part of the submission, so the graders see how the work was organised. All generated code is reviewed by the developer before merge. The developer owns and must be able to explain every design decision in this document. Runtime SQL generation is deterministic code, never an AI call. This is documented in `docs/ai-usage.md` with tool, purpose and what was reviewed or rewritten.
+AI coding tools were used throughout the build: Claude Code with a project harness (`CLAUDE.md`, skills, rules, hooks, task plans with gates and review passes), which lives in the repository (`.claude/`) and is part of the submission, the claude.ai chat as a second reviewer, and two third-party design skills. Runtime SQL generation is deterministic code, never an AI call, and no AI runs anywhere in the product.
+
+Which tool was used for what, how its output was checked, what the reviews found and what the developer decided himself are in [ai-usage.md](ai-usage.md).
 
 ---
 
@@ -323,15 +341,18 @@ AI coding tools (Claude Code with a project harness: `CLAUDE.md`, skills, rules,
 ```
 data-controls/
   README.md
-  .claude/        Claude Code harness: CLAUDE.md, skills, rules, hooks (committed)
-  docs/           architecture, design, control-definition, glossary, examples, assumptions, ai-usage
-  contracts/      control-definition.schema.json, glossary.json, examples/, api.md, errors.md
-  sql/            schema, security (logins), seed data, indexes, cleanup
-  engine/         Python FastAPI service (loads contracts/glossary.json)
-  api/            .NET 10 (LTS) Web API
-  web/            Angular app (src/assets/i18n/he.json)
-  docker-compose.yml
-  scripts/        database init and checks, the contracts check, the start script of the Docker path
+  start.cmd             the Docker path on Windows
+  docker-compose.yml    db, db-init, engine, api, examples
+  .env.example          configuration template; no password in it
+  contracts/            control-definition.schema.json, glossary.json, examples/ (and invalid/), api.md, errors.md
+  sql/                  schema, logins, indexes, seed data, checks, cleanup
+  engine/               Python FastAPI service (app/: glossary, validator, compiler, executor, explainer, cache, suggestions)
+  api/                  .NET 10 Web API (src/DataControls.Api, tests/DataControls.Api.Tests)
+  web/                  Angular app (src/app, src/assets/i18n/he.json, e2e/mocked, e2e/gate)
+  scripts/              start.sh and start.ps1, db-init.sh, db-check.sh, examples.py, contracts-check.py
+  docs/                 the documents of §17, and screenshots/
+  .claude/              Claude Code harness: CLAUDE.md, skills, rules, hooks, agents (committed)
+  dev/                  briefs, and the plan and notes of every task (completed/, active/)
 ```
 
 ---
@@ -340,87 +361,103 @@ data-controls/
 
 | File | Content |
 |---|---|
-| `README.md` | What the system is (3 paragraphs), architecture diagram, quick start with Docker, manual run path, configuration, how to run tests, demo walkthrough (create a control, run, read results, try suggestions), links to the docs below |
-| `docs/architecture.md` | Components and responsibilities, boundaries and prohibitions, data model, flows, security layers, performance decisions, decision record (why this split, why glossary as file, why snapshot paging, why no SQL over the wire, why English code with Hebrew from data) |
-| `docs/design.md` | The visual design decisions for the client (direction, tokens, components, responsive rules), produced before the client task |
-| `docs/control-definition.md` | The JSON contract: structure, node types, operators per type, NULL semantics, limits, versioning, validation layers |
-| `docs/glossary.md` | How the business glossary is structured, how to add an entity, field, relationship, computed field or language, startup validation |
-| `docs/examples.md` | The four assignment controls plus at least two more, each with its Hebrew description, its JSON definition, the records it flags in the seed data and why |
-| `docs/assumptions-limitations-extensions.md` | Assumptions (violation semantics, single root entity, two-hop paths, synchronous runs), limitations (row cap, glossary redeploy, no auth), extensions (async runs, scheduling, export, glossary admin UI, authentication and audit, rule-must-hold mode, templated controls across entities) |
-| `docs/ai-usage.md` | AI tools used in development, the harness, for what, and the review policy |
-| `sql/README.md` | Order of scripts, what each creates, the planted violations and the expected results per example control |
+| [`README.md`](../README.md) | What the system is, the architecture diagram, running with Docker, running from source, a walk through the system, configuration, tests, operations, links to the documents below |
+| [`docs/submission.he.md`](submission.he.md) | The cover page in Hebrew: the assignment's deliverables in its own words and where each one is |
+| [`docs/summarize-architecture.md`](summarize-architecture.md) | The short document the assignment asks for: the architecture and the controls mechanism (definition, validation, one parameterized SELECT, reasons), and the design of the AI suggestions |
+| [`docs/architecture.md`](architecture.md) | This document: components and responsibilities, boundaries and prohibitions, data model, flows, security layers, performance decisions, decision record, the assignment checklist |
+| [`docs/design.md`](design.md) | The visual design decisions for the client (direction, tokens, components, responsive rules) |
+| [`docs/control-definition.md`](control-definition.md) | The JSON contract: structure, node types, operators per type, NULL semantics, limits, versioning, validation layers, error codes |
+| [`docs/glossary.md`](glossary.md) | How the business glossary is structured, how to add an entity, field, relationship, computed field or language, startup validation |
+| [`docs/examples.md`](examples.md) | The four assignment controls plus two more, each with its Hebrew description, its JSON definition, the records it flags in the seed data and why |
+| [`docs/assumptions-limitations-extensions.md`](assumptions-limitations-extensions.md) | Assumptions, limitations (the open items of the reviews and audits among them), what was not proven, extensions |
+| [`docs/ai-usage.md`](ai-usage.md) | AI tools used in development, the harness, for what, and the review policy |
+| [`sql/README.md`](../sql/README.md) | Order of scripts, what each creates, the planted violations and the expected results per example control |
+| [`contracts/api.md`](../contracts/api.md), [`contracts/errors.md`](../contracts/errors.md) | Both HTTP APIs, and the closed lists of codes and keys |
+| [`web/README.md`](../web/README.md) | The client: structure, commands, the end-to-end specs |
 
 ---
 
 ## 18. Assignment requirements — complete checklist
 
-Translated from the assignment; the original Hebrew is in the appendix. Every item must be satisfied and demonstrable.
+Translated from the assignment; the original Hebrew is in the appendix. Every item is ticked with one piece of evidence: a file, a test, a screen or a README step.
 
 **General**
-- Done independently. AI tools must be used during development, and the submission must state which tools and for what purposes. The candidate must understand the solution and be able to explain design and implementation decisions.
+- [x] Done independently, with AI tools, and the submission states which tools and for what purposes. *Evidence: [ai-usage.md](ai-usage.md).*
+- [x] The candidate understands the solution and can explain the decisions. *Evidence: the decision records of §3.2, and the Decisions section of each task plan under `dev/`.*
 
 **Data structure**
-- A sample database with several related tables, filled with valid and invalid sample data.
-- The controls mechanism works generically on the data structure; it must not rely on field and table names fixed in code.
+- [x] A sample database with several related tables, filled with valid and invalid sample data. *Evidence: `sql/20_hr_tables.sql`, `sql/60_seed_hr.sql` (5 ministries, 16 departments, 85 employees; every planted row is marked), [sql/README.md](../sql/README.md).*
+- [x] The mechanism works generically on the data structure and does not rely on field and table names fixed in code. *Evidence: table and column names appear only in `contracts/glossary.json`; the engine's tests include a synthetic glossary with other names; [glossary.md](glossary.md) adds a relationship without a code change.*
 
 **Control definition**
-- A UI for a business user to create a new control, without knowing the database structure or writing SQL.
-- Name and description; selection of the business data the control applies to; logical conditions including combinations of several conditions; save and edit; reuse of created controls.
-- A friendly way to present the data and the relationships between them in business terms, not technical table and field names.
+- [x] A UI for a business user to create a new control, without knowing the database structure or writing SQL. *Evidence: the editor (README, "A walk through the system", step 3; `docs/screenshots/editor.png`).*
+- [x] Name and description; selection of the business data; logical conditions including combinations; save and edit; reuse. *Evidence: the editor's fields, the entity cards, the builder with "and", "or" and nested groups; edit creates a version; duplicate and run again from the list (`web/e2e/gate/examples.spec.ts`, `list.spec.ts`).*
+- [x] A friendly presentation of the data and the relationships in business terms. *Evidence: every picker is drawn from the glossary's Hebrew labels; fields of a related entity appear under the relationship's label; the entity chain in the editor.*
 
 **Query generation and execution**
-- A generic mechanism translating the control definition into a suitable SQL query.
-- Running a control over all relevant data and receiving the records that do not satisfy the control (the violations).
-- Dynamic query generation; support for complex conditions and relationships between tables; separation between control definition and query implementation; prevention of dangerous commands or data modification; error handling with appropriate messages.
-- No fixed query per control.
+- [x] A generic mechanism translating the definition into SQL. *Evidence: `engine/app/compiler/`; the golden SQL per example in `engine/tests/golden/`.*
+- [x] Running a control over all relevant data and receiving the violating records. *Evidence: `POST /api/v1/controls/{id}/runs`; `python3 scripts/examples.py verify` (six examples, exact keys).*
+- [x] Dynamic query generation. *Evidence: one statement is compiled per definition at run time; nothing is stored (§2 principle 2).*
+- [x] Complex conditions and relationships between tables. *Evidence: examples 4 (nested groups), 3 and 6 (one and two hops), 5 (`NOT EXISTS` over a one-to-many relationship) in [examples.md](examples.md).*
+- [x] Separation between control definition and query implementation. *Evidence: the api stores JSON and cannot read `hr`; the engine compiles and cannot write (§3.1, `sql/40_logins.sql`, `scripts/db-check.sh permissions`).*
+- [x] Prevention of dangerous commands or data modification. *Evidence: §10; the engine's injection tests; the read-only login proven by `db-check.sh` (a denied write fails with error 229).*
+- [x] Error handling with appropriate messages. *Evidence: `contracts/errors.md`; the Hebrew texts of every code in `web/src/assets/i18n/he.json`; a validation error marks its row.*
+- [x] No fixed query per control. *Evidence: no SQL text outside `engine/app/compiler/` and `sql/`; the examples are data files.*
 
 **Results display**
-- A screen with: the list of defined controls; running a control from the list; the number of violating records; the violating records in a table; the reason each record failed; filtering and search in results.
-- Clear, convenient, responsive UI.
+- [x] The list of defined controls; running a control from the list; the number of violating records; the records in a table; the reason per record; filtering and search. *Evidence: the list and the results panel (`docs/screenshots/list.png`, `results.png`; `web/e2e/gate/`).*
+- [x] Clear, convenient, responsive UI. *Evidence: [design.md](design.md); screenshots at 390 and 1440 from every gate (`docs/screenshots/results-mobile.png`).*
 
 **Advanced (optional)**
-- A capability where AI analyzes the database structure and proactively proposes relevant data-quality controls.
+- [x] A design of a capability where AI analyzes the database structure and proactively proposes controls. *Evidence: the design in [summarize-architecture.md](summarize-architecture.md#the-optional-task-ai-that-proposes-controls) and the plan in `dev/active/dc-ai-suggestions/plan.md`. Built today, without a model: heuristic suggestions from the glossary and a data profile (`engine/app/suggestions/`).*
 
 **Technology — Backend**
-- .NET Web API; Python; orderly architecture with separation of responsibilities between components; SQL Server; appropriate mechanisms for secure dynamic SQL generation.
+- [x] .NET Web API. *Evidence: `api/` (.NET 10).*
+- [x] Python. *Evidence: `engine/` (FastAPI).*
+- [x] Orderly architecture with separation of responsibilities. *Evidence: §3; `contracts/` as the only shared thing.*
+- [x] SQL Server. *Evidence: `sql/`, `docker-compose.yml`.*
+- [x] Appropriate mechanisms for secure dynamic SQL. *Evidence: §10: SQLAlchemy Core as the only builder, bound parameters, identifiers from the glossary, a read-only login, limits.*
 
 **Technology — Frontend**
-- Angular; Hebrew UI with RTL direction; reusable components; UX suited to business users.
+- [x] Angular. *Evidence: `web/` (Angular 21).*
+- [x] Hebrew UI with RTL direction. *Evidence: `dir="rtl"`, logical CSS only, `he.json`.*
+- [x] Reusable components. *Evidence: §8; `web/src/app/shared/` and the builder's components.*
+- [x] UX suited to business users. *Evidence: [design.md](design.md), `docs/PRODUCT.md`; the rule in words under every rule.*
 
 **Technology — Database**
-- SQL Server; sample data tables; a mechanism for storing control definitions; data demonstrating success and failure cases.
+- [x] SQL Server; sample data tables; a mechanism for storing control definitions; data demonstrating success and failure cases. *Evidence: schema `hr` and schema `dq` (`sql/30_dq_tables.sql`); the planted and boundary rows per example in [sql/README.md](../sql/README.md).*
 
 **Deliverables**
-- Full source code of client and server.
-- Scripts to create the database and load sample data.
-- Installation and run instructions.
-- A short document describing the architecture and the controls mechanism.
-- Examples of controls that can be defined and run.
-- A short description of working assumptions, limitations and possible extensions.
-- A description of the AI tools used and the purpose of each.
+- [x] Full source code of client and server. *Evidence: `web/`, `api/`, `engine/`.*
+- [x] Scripts to create the database and load sample data. *Evidence: `sql/`, `scripts/db-init.sh`.*
+- [x] Installation and run instructions. *Evidence: [README](../README.md), "Run with Docker" and "Run from source, without Docker".*
+- [x] A short document describing the architecture and the controls mechanism. *Evidence: [summarize-architecture.md](summarize-architecture.md).*
+- [x] Examples of controls that can be defined and run. *Evidence: `contracts/examples/`, loaded into the list at the first start; [examples.md](examples.md).*
+- [x] A short description of working assumptions, limitations and possible extensions. *Evidence: [assumptions-limitations-extensions.md](assumptions-limitations-extensions.md).*
+- [x] A description of the AI tools used and the purpose of each. *Evidence: [ai-usage.md](ai-usage.md).*
 
 **Evaluation focus (what graders look at)**
-- Genericity: how far new controls can be added without code changes.
-- Architectural thinking: correct separation between control definition, translation to query, and execution.
-- Business thinking and UX: accessibility of the solution to a non-technical user.
-- Backend quality: API design, code structure, security, error handling.
-- Frontend quality: component organization, state management, user experience.
-- SQL: handling data, relationships between tables, performance.
-- Code quality: readability, maintainability, tests, edge cases.
+- Genericity: how far new controls can be added without code changes. *See §2 principle 1, [glossary.md](glossary.md).*
+- Architectural thinking: correct separation between control definition, translation to query, and execution. *See §3, §9.*
+- Business thinking and UX: accessibility of the solution to a non-technical user. *See §8, [design.md](design.md).*
+- Backend quality: API design, code structure, security, error handling. *See `contracts/api.md`, §6, §7, §10, §12.*
+- Frontend quality: component organization, state management, user experience. *See §8, [web/README.md](../web/README.md).*
+- SQL: handling data, relationships between tables, performance. *See §4, §11, `sql/50_indexes.sql`.*
+- Code quality: readability, maintainability, tests, edge cases. *See §13.*
 
 ---
 
 ## 19. Work plan — five tasks, three of them in parallel
 
-Each task is its own `/task-plan` with a plan, gates and a review pass; Fable plans, Opus executes.
+The plan as it was written before the build, with what each task delivered. Each task had its own plan, gates and review passes; the plan and the notes of each are under `dev/completed/` and `dev/active/`.
 
-| Task | Ships | Gate | Runs |
-|---|---|---|---|
-| **1 `dc-contracts`** | repository skeleton, harness, Docker Compose with SQL Server + init container, `sql/` (hr, dq, two logins, Hebrew seed with planted violations, indexes), the whole `contracts/` folder (§5.1), `docs/architecture.md` (this document, trimmed), README skeleton | `docker compose up db` + init on a clean container; a check script prints the expected violating records per example; the schema validates all six examples | first, alone; nothing else starts before its gate |
-| **2 `dc-engine`** | glossary loader + startup check, validator, compiler, executor, explainer, cache, suggestions (heuristics), all endpoints | golden tests for the six examples; every rejection path; injection values bound; integration against the seed returns the exact planted ids; `/suggest` yields the examples marked `heuristic` (2 to 5) from the seed | parallel, own worktree |
-| **3 `dc-api`** | glossary cache, controls + versions + concurrency, runs + snapshot, paging/filter/search/sort, suggestions proxy + accept, engine client with resilience and error mapping, problem details, OpenAPI, static hosting | tests for validation, status codes, conflict, timeout/unavailable mapping, snapshot paging; the API answers every call in `contracts/api.md` | parallel, own worktree |
-| **4 `dc-web`** | i18n shell (Hebrew, RTL), controls list, editor (builder, pickers, relationship map, preview, errors by JSON path), results screen with all states, suggestions dialog, per `docs/design.md` | Playwright: create → save → run → read results on the six examples; screenshots at 390 and 1440; the design skills' critique and polish applied once | parallel, own worktree; starts on what needs no API (shell, i18n, components) and wires to the real API as it lands |
-| **5 `dc-delivery`** | compose end to end from a fresh clone, the from-source instructions of the manual path, all docs in §17, `docs/ai-usage.md`, the §18 checklist ticked | a clean machine runs both paths first time; six examples run from the UI | last, short |
+| Task | Ships | Gate | Runs | Result |
+|---|---|---|---|---|
+| **1 `dc-contracts`** | repository skeleton, harness, Docker Compose with SQL Server + init container, `sql/` (hr, dq, two logins, Hebrew seed with planted violations, indexes), the whole `contracts/` folder (§5.1), `docs/architecture.md` (this document), README skeleton | `docker compose up db` + init on a clean container; a check script prints the expected violating records per example; the schema validates all six examples | first, alone; nothing else starts before its gate | PR #1, merged 2026-11-10 (`f9928bf`) |
+| **2 `dc-engine`** | glossary loader + startup check, validator, compiler, executor, explainer, cache, suggestions (heuristics), all endpoints, the image | golden tests for the six examples; every rejection path; injection values bound; integration against the seed returns the exact planted ids; `/suggest` yields the examples marked `heuristic` (2 to 5) from the seed | parallel, own worktree | PR #2, merged 2026-11-11 (`0e07fca`). `/suggest` yields examples 2 to 5 node for node, and three more proposals on the seed |
+| **3 `dc-api`** | glossary cache, controls + versions + concurrency, runs + snapshot, paging/filter/search/sort, suggestions proxy + accept, engine client with resilience and error mapping, problem details, OpenAPI, static hosting | tests for validation, status codes, conflict, timeout/unavailable mapping, snapshot paging; the API answers every call in `contracts/api.md` | parallel, own worktree | PR #3, merged 2026-11-11 (`eec007d`). The live pass against the real engine ran twice |
+| **4 `dc-web`** | i18n shell (Hebrew, RTL), controls list, editor (builder, pickers, entity chain, the rule in words, errors by JSON path), results with all states, suggestions, per `docs/design.md` | Playwright: create → save → run → read results on the six examples; screenshots at 390 and 1440; the design skills' critique and polish applied | parallel, own worktree; starts on what needs no API (shell, i18n, components) and wires to the real API as it lands | PRs #4 and #5, merged 2026-11-11 (`612b2b7`, `d66670d`). The second PR made the client one page with a new look |
+| **5 `dc-delivery`** | compose end to end from a fresh clone, the from-source instructions of the manual path, all docs in §17, `docs/ai-usage.md`, the §18 checklist ticked | a clean machine runs both paths first time; six examples run from the UI | last, short | the branch `feat/delivery`; its gate is in `dev/active/dc-delivery/gates/` |
 
 Parallel rules: one SQL Server container on the machine, started from the main tree and shared by every session; never two test suites at once; a contract change goes through `contracts/` plus one line to the other sessions; nothing is pushed or merged without the developer's word; one PR per task.
 
@@ -428,7 +465,9 @@ Parallel rules: one SQL Server container on the machine, started from the main t
 
 ## 20. Out of scope for v1 (listed as extensions in the docs)
 
-Authentication, authorization and per-user audit; scheduling of runs; asynchronous long-running runs; export of results; glossary administration UI and database-backed glossary; "rule must hold" semantics mode; templated controls applied across several entities; marking violations as handled; notifications.
+Authentication, authorization and per-user audit; scheduling of runs; asynchronous long-running runs; export of results; glossary administration UI and database-backed glossary; "rule must hold" semantics mode; templated controls applied across several entities; marking violations as handled; notifications; the AI advisor service.
+
+Each is listed with its reason, beside the assumptions and the limitations, in [assumptions-limitations-extensions.md](assumptions-limitations-extensions.md).
 
 ---
 

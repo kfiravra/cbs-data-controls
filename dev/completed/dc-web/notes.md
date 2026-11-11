@@ -1326,6 +1326,9 @@ rewrote. A review that found nothing, or did not run, is logged as that.
   last section): the client's type checks, lint, 390 unit tests in 37 files, build and print guard green;
   `e2e/mocked` 221 passed, 5 skipped by project. No gate run on the real stack (decision 116). The api hosts
   the build; the commit is local, since his message has no word for a push (decision 118).
+- 2026-11-11, on Kfir's word ("great push it the pr5"): `9b5f79a` pushed to the PR, its text brought in line.
+  The PR is open and not merged. (This line was written by the dc-web session in its worktree and never
+  committed there; the dc-delivery session copied it here on 2026-11-12, unchanged.)
 - 2026-11-12 closed on paper by the dc-delivery session: it ticked the two boxes of the Gate that were still
   open, both now true, and left none open. Kfir read the Hebrew interface on 2026-11-11 (his statement of
   2026-11-12), which closes the reading of the phase 10 texts as well. `/ship`: PRs #4 and #5 merged by Kfir as

@@ -87,3 +87,7 @@ the reason. Playwright stays outside the map and runs at the web gate.
   parts not built yet); `print-guard.sh` with the tracked git pre-commit; stop-check parsing for the .NET, Angular and
   pyright formats; the leftover scan in the infra tests. Removed: the previous stack's skills, rules, docker service
   names, doc links and its database MCP server.
+- 2026-11-12 (dc-delivery): `CLAUDE.md` gains the compose stack in its Map, the documents of the submission in
+  "Where to read" and the Hebrew cover page in the Hebrew gotcha; `dc-sql` records the five compose services and
+  the two port defaults; the doc-link test also covers `README.md`, `docs/*.md`, `sql/README.md` and
+  `web/README.md`. The four finished task folders moved to `dev/completed/`.

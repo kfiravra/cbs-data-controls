@@ -55,14 +55,21 @@ are named in the last Log lines.
    were fetched once and saved as `gates/pr-1.md` to `pr-5.md`; this session and every agent read those, and
    no `gh pr` command runs again before the final PR.
 
+9. The start scripts wait on the containers' health and on the loader's exit code (`docker inspect`), where
+   Design D polls the health address from the host: the compose health check already reads the body of that
+   address inside the container, the wait then needs no curl, and a failed loader is seen. Both scripts end
+   with one request to the address from the host.
+10. The order of `docs/examples.md` is read from the table of the document itself, so `scripts/examples.py`
+    names no example (the B1 review's first warning).
+
 ## Next
-1. Phase B2 (the from-source path, run once as the README writes it), then B4 and the Gate.
+1. The Gate: G1 on a fresh clone, G3 on it, G2 from a Windows folder, G5 the audit, G6, G8.
 
 ## Blockers
 - None for the night. G2 and G7 are named in the brief.
 
 ## Last reviewed
-(none)
+`b35d72a` (B1): `reviews/B1.md`.
 
 ## As built
 (Phase B0, 2026-11-11; what was built wins over the names plan.md gave on 2026-11-10)
@@ -128,3 +135,41 @@ are named in the last Log lines.
   PASS lines; `db-check.sh` 27 passed; the gate specs 18 of 18 with the untagged listing equal before and
   after). The first build failed on the credential helper (decision 7); the second took the images to 261 MB
   (engine) and 461 MB (api). The README shots were taken on the six-example list (`docs/screenshots/`).
+- 2026-11-12 01:25 Phase B2 done, in a scratch clone at `b35d72a` (`gates/B2-manual.md`): `requirements.txt`
+  equals a fresh export; the engine from a pip-installed virtual environment and the published api with the
+  client in its `wwwroot` ran as host processes against the container's database; `examples.py verify` seven
+  PASS lines; `docs/examples.md` generated and its `--check` green. Not run as a host command: `db-init.sh`
+  against a host SQL Server (no `sqlcmd` on this machine). The stop command killed its own shell once (`pkill
+  -f` matched the shell's command line); the engine's host process was then stopped by its pid.
+- 2026-11-12 01:30 change d: the sub-agent ticked the 8 open boxes of the four finished plans (contracts 2,
+  engine 3, api 1, web 2), none left open, and wrote State, Next, a Log line and the ARCHIVED line in each
+  notes file. Two ticks rest on thin evidence and it says so in those Logs: engine plan line 315 (Kfir's read
+  of the Hebrew, on the brief's word alone) and web plan line 526 (the last two commits of PR #5 had the
+  client's checks and the mocked specs only). Before the "no gh" message reached it, it had run read-only
+  `gh pr view` for PRs 1 to 5.
+- 2026-11-12 02:10 Phase B1 review (`reviews/B1.md`): two opus `reviewer` agents read `d66670d..b35d72a`.
+  Compose and the api image: 0 critical, 1 warning, 4 info. The warning (`docker-compose.yml`: the engine's row
+  cap and time zone were passed from `.env` and the api's were not, so changing them did nothing) is fixed; of
+  the info findings two are fixed (the database-name passthrough, a tolerant image build), one is left with
+  its reason (`DB_HOST` in the example file) and one waits for G1 (the first-start path). Scripts: 0 critical,
+  2 warnings, 7 info. Both warnings fixed (`scripts/examples.py` named the six example ids; a Hebrew literal
+  in `tools/readme-shots.cjs`); six info findings fixed and one fixed in part (`start.cmd`'s pause keeps
+  firing for a `cmd /c` caller; `DC_NO_PAUSE=1` skips it). After the fixes: the stack rebuilt and restarted by
+  `scripts/start.sh`, `examples.py verify` six PASS lines, `docs --check` green. Fix commit: `fix(compose):
+  review fixes`.
+- 2026-11-12 02:40 Phase A1 and B4 done, written as built in one pass (lanes A and B ran back to back).
+  Sub-agents on opus drafted `docs/control-definition.md` and `docs/glossary.md` (one agent), `docs/ai-usage.md`
+  (one) and the plan of dc-ai-suggestions (one `Plan` agent); this session wrote
+  `docs/summarize-architecture.md`, `docs/assumptions-limitations-extensions.md`, `docs/submission.he.md`, the
+  README, the frame of `docs/examples.md` and the corrections of `docs/architecture.md`. Checked: the token
+  check over the two contract documents (507 tokens, 6 unknown, each explained in `gates/A1.txt`); the worked
+  example of `docs/glossary.md` carried out on a scratch stack, every predicted answer as printed
+  (`gates/glossary-walkthrough.txt`); the harness tests 227 of 227 with the new link test; `examples.py docs
+  --check` green; the three "Docs for dc-delivery" lists applied or answered (`gates/B4.txt`). What the
+  contract-documents agent found in the sources and the documents now say: adding a language needs two lines
+  of client code and, beyond `he` and `en`, a change of the check on `dq.Run.language`; a computed-field kind
+  touches the compiler; `maxTotalValues` cannot go above 500 without engine code; the engine answers a tree
+  more than eight times past a limit with that limit's error alone, which `contracts/errors.md` does not say.
+  In `docs/ai-usage.md` two statements were corrected by this session against tonight's facts (architecture
+  §15 no longer holds the sentence it quoted; the push of `9b5f79a` was on Kfir's recorded word). Its last
+  section lists, from the records, where no read by Kfir is recorded: that section is his to read (G7).

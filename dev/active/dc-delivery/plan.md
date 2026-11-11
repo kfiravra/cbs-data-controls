@@ -217,14 +217,14 @@ Design section below is the specification each step builds from.
 - [x] `git switch -c feat/delivery main`.
 
 #### Phase A1: the contract documents and the settled parts of the architecture
-- [ ] `docs/control-definition.md` per Design H.
-- [ ] `docs/glossary.md` per Design H, with the `department.manager` walkthrough written as steps a reader can
+- [x] `docs/control-definition.md` per Design H.
+- [x] `docs/glossary.md` per Design H, with the `department.manager` walkthrough written as steps a reader can
       follow.
-- [ ] `docs/assumptions-limitations-extensions.md` per Design H.
-- [ ] `docs/ai-usage.md` as a skeleton per Design K: every section present, the per-task table empty.
-- [ ] `docs/architecture.md`, the rows of Design J marked "lane A": the title and purpose, the four decision
+- [x] `docs/assumptions-limitations-extensions.md` per Design H.
+- [x] `docs/ai-usage.md` as a skeleton per Design K: every section present, the per-task table empty.
+- [x] `docs/architecture.md`, the rows of Design J marked "lane A": the title and purpose, the four decision
       records of §3.2, the pointers of §15 and §20. Nothing else in the file.
-- [ ] A throwaway check under `tools/` (not committed): every backticked token of the first two documents is an
+- [x] A throwaway check under `tools/` (not committed): every backticked token of the first two documents is an
       operator key, an entity, field or relationship key, a limit name, an error code or an existing path. The
       list of unknown tokens is empty or explained in `gates/A1.txt`.
 
@@ -298,9 +298,9 @@ Review: `/phase-review sql engine api infra` (the Dockerfiles sit in `engine/` a
 Commit: `feat(compose): full stack with engine, api and example loader`
 
 #### Phase B2: the manual path, from source
-- [ ] `engine/requirements.txt` is dc-engine's: `cd engine && uv export --no-dev --format requirements-txt | diff -
+- [x] `engine/requirements.txt` is dc-engine's: `cd engine && uv export --no-dev --format requirements-txt | diff -
       requirements.txt` prints nothing.
-- [ ] The from-source steps of Design G written out as the commands the README will carry, in
+- [x] The from-source steps of Design G written out as the commands the README will carry, in
       `gates/B2-manual.md`, and carried out once exactly as written.
 
 Verify (on WSL, the database in its container, the `engine` and `api` containers stopped through the guard; the
@@ -316,29 +316,29 @@ Review: `/phase-review infra --since <B1 sha>`
 No commit of its own: the commands ride into the README in B4.
 
 #### Phase B4: README, architecture as built, cover page, checklist
-- [ ] `README.md` per Design I, every command in it copied from a run of B1 and B2 (tick them in
+- [x] `README.md` per Design I, every command in it copied from a run of B1 and B2 (tick them in
       `gates/readme-commands.md`).
-- [ ] `docs/screenshots/`: the five files of decision 27, copied from the B1 run, with the caption of decision 31.
-- [ ] `docs/examples.md`: the frame, then `python3 scripts/examples.py docs` for the generated region.
-- [ ] `docs/architecture.md`, the rows of Design J marked "B4": what differs from what was built in §1 to §14, the
+- [x] `docs/screenshots/`: the five files of decision 27, copied from the B1 run, with the caption of decision 31.
+- [x] `docs/examples.md`: the frame, then `python3 scripts/examples.py docs` for the generated region.
+- [x] `docs/architecture.md`, the rows of Design J marked "B4": what differs from what was built in §1 to §14, the
       suggestion lines of §6 and §19, the tree of §16, the index of §17, the result column of §19, and §18 ticked
       with its evidence.
-- [ ] The three lists "Docs for dc-delivery": every line applied to its document or answered in `gates/B4.txt`.
-- [ ] `docs/ai-usage.md` completed per Design K from the notes Logs of the five tasks, the plans' Decisions and
+- [x] The three lists "Docs for dc-delivery": every line applied to its document or answered in `gates/B4.txt`.
+- [x] `docs/ai-usage.md` completed per Design K from the notes Logs of the five tasks, the plans' Decisions and
       `git log`.
-- [ ] `docs/submission.he.md` per Design L.
-- [ ] `docs/assumptions-limitations-extensions.md`, `docs/control-definition.md`, `docs/glossary.md`: the as-built
+- [x] `docs/submission.he.md` per Design L.
+- [x] `docs/assumptions-limitations-extensions.md`, `docs/control-definition.md`, `docs/glossary.md`: the as-built
       corrections of B0 and the limits learned in B1 and B2 (tested versions, the row cap value, the cuts the
       three tasks recorded, the extension of decision 32, the LLM step as a design that is not built).
-- [ ] `sql/README.md`: the host port.
-- [ ] `docs/design.md` is tracked (`git ls-files docs/design.md`) and is not edited: it is dc-web's. If it is not
+- [x] `sql/README.md`: the host port.
+- [x] `docs/design.md` is tracked (`git ls-files docs/design.md`) and is not edited: it is dc-web's. If it is not
       tracked, ask Kfir.
-- [ ] `.claude/CLAUDE.md`: rows for the §17 documents, `docs/design.md` among them (dc-web left its row to this
+- [x] `.claude/CLAUDE.md`: rows for the §17 documents, `docs/design.md` among them (dc-web left its row to this
       phase), and for the cover page; the Hebrew gotcha naming `docs/submission.he.md` and `docs/examples.md`; the
       map line for the compose services; without the "As they land" line; at most 100 lines. `.claude/README.md`:
       a changelog line.
-- [ ] `.claude/hooks/tests/infra.test.mjs`: the link test also covers `README.md`, `docs/*.md` and `sql/README.md`.
-- [ ] The `docs/glossary.md` walkthrough is carried out once exactly as written, on a scratch copy of the glossary:
+- [x] `.claude/hooks/tests/infra.test.mjs`: the link test also covers `README.md`, `docs/*.md` and `sql/README.md`.
+- [x] The `docs/glossary.md` walkthrough is carried out once exactly as written, on a scratch copy of the glossary:
       the engine starts, `/validate` accepts a definition that uses the new relationship, the editor offers it.
       Result in `gates/glossary-walkthrough.txt`; nothing of the scratch copy is committed.
 

@@ -1,0 +1,35 @@
+# B4 verify, 2026-11-12
+
+$ node --test .claude/hooks/tests/*.test.mjs
+# tests 227, pass 227, fail 0   (CLAUDE.md is 100 lines; every relative link of README.md, docs/*.md,
+#                                sql/README.md and web/README.md resolves)
+$ python3 scripts/examples.py docs --check
+CHECK examples.md: the generated region matches a fresh run
+gates/readme-commands.md: one line unticked on purpose (the PowerShell form of the api's start line), named there.
+
+## The three lists "Docs for dc-delivery" (from the notes and PR bodies of dc-engine, dc-api and dc-web)
+
+Applied to docs/architecture.md: §3 (the glossary file, the one page, the client renders nothing), §3.2 (four
+decision records), §4.1 (the seed's numbers), §5 (the api's schema layer: 240 nodes, 10,000 values), §6 (the flag
+columns; what the suggestions really compute; five generators; the LLM step replaced by the advisor design), §7
+(controls, runs, the engine client's retry and breaker, static hosting, the sorts of the list and of results),
+§8 (one page, the four screens as built, the components list), §9, §10 (compose, the open audit items), §12 (400
+and 415 per service), §13, §14 (variables as built), §15, §16, §17, §18 (ticked, with evidence), §19 (a result
+column), §20.
+Applied to README.md: the two "filled by" sentences are gone; the glossary is Hebrew alone; the walkthrough says
+that the suggestions repeat four loaded controls; the tests table names the mocked and the gate specs; the
+screenshots are new (the new look, a clean list).
+Applied to docs/assumptions-limitations-extensions.md: every "for the limitations document" line of the three
+lists, the four items dc-web left open, the six open items of the api's audit, and what the tasks marked not
+proven.
+Applied to docs/ai-usage.md: the Logs and the "Decisions taken unattended" lists of the three tasks.
+
+Answered, not applied:
+- dc-api, "contracts/api.md §1 and the REQUEST_INVALID row of contracts/errors.md, wording only (415)": a
+  contract change is a commit on main on Kfir's word; the difference is stated in architecture §12 instead.
+- dc-web, "the word for an entity is not shown anywhere in the interface": a fact about the interface with no
+  consequence for a reader of the documents; left in the web notes.
+- dc-web, "the third-party notice of the font changes from IBM Plex Sans Hebrew to Heebo": no document of this
+  task names a font; the notice is the client's.
+- dc-web, "a run on the sample data takes about 10 ms, and the summary says less than a second": the number is
+  in the limitations document; the README's screenshots show the summary.
