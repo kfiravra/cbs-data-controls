@@ -1,10 +1,10 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, untracked } from '@angular/core';
 import { MatFormField } from '@angular/material/form-field';
-import { MatOption, MatSelect } from '@angular/material/select';
+import { MatOption, MatSelect, MatSelectTrigger } from '@angular/material/select';
 import { Router, RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
-import { ResultsSort, SortDirection } from '../../core/api/api.types';
+import { ResultsSort, Run, SortDirection } from '../../core/api/api.types';
 import { findEntity } from '../../core/glossary/glossary.lookups';
 import { CountedService } from '../../core/i18n/counted.service';
 import { FormatService } from '../../core/i18n/format.service';
@@ -24,12 +24,21 @@ import { TextPartsComponent } from '../../shared/text-parts/text-parts.component
 import { ToolbarComponent } from '../../shared/toolbar/toolbar.component';
 import { DEFAULT_PAGE_SIZE, PAGE_SIZES, ResultsStore, ResultsView } from './results.store';
 
-const positive = (text: string | undefined, fallback: number) => (text && /^[1-9]\d*$/.test(text) ? Number(text) : fallback);
+const NUMBER = /^[1-9]\d*$/;
+const positive = (text: string | undefined, fallback: number) => (text && NUMBER.test(text) ? Number(text) : fallback);
+
+/** A run in the picker of the control's runs. */
+interface RunOption {
+  readonly id: number;
+  /** When it ran and what it found, on one line. */
+  readonly text: string;
+}
 
 /**
- * The results of one run: the control in words, the summary, the breakdown by condition and the violating
- * records with the reason for each. Search, filter, sort and paging live in the address, so back and reload
- * keep them.
+ * The results panel: one run of a control, with the control in words, the summary, the breakdown by
+ * condition and the violating records with the reason for each, and a picker of the control's other runs.
+ * Opened by a control with no run yet, it shows the control's rule, that it has not run, and a run button.
+ * Search, filter, sort and paging live in the address, so back and reload keep them.
  */
 @Component({
   selector: 'app-run-results-page',
@@ -41,6 +50,7 @@ const positive = (text: string | undefined, fallback: number) => (text && /^[1-9
     MatFormField,
     MatOption,
     MatSelect,
+    MatSelectTrigger,
     NotFoundComponent,
     PageHeadComponent,
     ResultsTableComponent,
@@ -55,6 +65,7 @@ const positive = (text: string | undefined, fallback: number) => (text && /^[1-9
   ],
   providers: [ResultsStore],
   templateUrl: './run-results.page.html',
+  host: { class: 'sheet__screen' },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RunResultsPage {
@@ -67,8 +78,10 @@ export class RunResultsPage {
 
   protected readonly pageSizes = PAGE_SIZES;
 
-  /** The run's id from the route. */
-  readonly id = input.required<string>();
+  /** The run's id, on the address of a run. */
+  readonly id = input<string>();
+  /** The control's id, on the address of a control's results: its newest run, or none yet. */
+  readonly controlId = input<string>();
   readonly page = input<string>();
   readonly size = input<string>();
   readonly search = input<string>();
@@ -76,9 +89,17 @@ export class RunResultsPage {
   readonly sort = input<string>();
   readonly dir = input<string>();
 
-  /** A run id is a positive integer; anything else in the address names no run. */
-  private readonly runId = computed(() => (/^[1-9]\d*$/.test(this.id()) ? Number(this.id()) : null));
-  protected readonly notFound = computed(() => this.runId() === null || this.store.loadState() === 'notFound');
+  /** What the address names: a run, a control, or nothing (an id is a positive integer). */
+  private readonly target = computed<{ readonly run: number } | { readonly control: number } | null>(() => {
+    const run = this.id();
+    const control = this.controlId();
+    if (run !== undefined) {
+      return NUMBER.test(run) ? { run: Number(run) } : null;
+    }
+    return control !== undefined && NUMBER.test(control) ? { control: Number(control) } : null;
+  });
+
+  protected readonly notFound = computed(() => this.target() === null || this.store.loadState() === 'notFound');
 
   /** The view the address describes; anything the address does not say is the default. */
   protected readonly view = computed<ResultsView>(() => {
@@ -97,8 +118,8 @@ export class RunResultsPage {
 
   private readonly entity = computed(() => {
     const glossary = this.store.glossary();
-    const run = this.store.run();
-    return glossary && run ? findEntity(glossary, run.rootEntity) : undefined;
+    const key = this.store.run()?.rootEntity ?? this.store.control()?.rootEntity;
+    return glossary && key ? findEntity(glossary, key) : undefined;
   });
 
   /** The label of the records a run checked; a dash while the glossary cannot be read. */
@@ -116,15 +137,44 @@ export class RunResultsPage {
     });
   });
 
+  protected readonly title = computed(
+    () => this.store.run()?.controlName ?? this.store.control()?.name ?? this.text('results.title'),
+  );
+
+  /**
+   * The control's runs for the picker, newest first: offered when there is another run to choose. The run
+   * on the screen is always among them, also when it is older than the ones that were read.
+   */
+  protected readonly runs = computed<RunOption[] | null>(() => {
+    const current = this.store.run();
+    const history = this.store.history();
+    if (!current || !history || history.total < 2) {
+      return null;
+    }
+    const runs = history.items.some((run) => run.id === current.id)
+      ? history.items
+      : [...history.items, current].sort((a, b) => b.startedAt.localeCompare(a.startedAt) || b.id - a.id);
+    return runs.map((run) => ({ id: run.id, text: this.runText(run) }));
+  });
+
+  protected readonly pickedText = computed(() => {
+    const id = this.store.run()?.id;
+    return this.runs()?.find((option) => option.id === id)?.text ?? '';
+  });
+
+  /** The picker says when the run was; the line beside it then says only which version ran. */
   protected readonly meta = computed(() => {
     const run = this.store.run();
-    return run
-      ? this.text('results.meta', {
+    if (!run) {
+      return undefined;
+    }
+    return this.runs()
+      ? this.text('results.metaVersion', { version: run.controlVersion })
+      : this.text('results.meta', {
           date: this.format.date(run.startedAt),
           time: this.format.time(run.startedAt),
           version: run.controlVersion,
-        })
-      : undefined;
+        });
   });
 
   protected readonly noun = computed(() => this.counted('results.noun', this.store.run()?.totalCount ?? 0));
@@ -200,9 +250,9 @@ export class RunResultsPage {
 
   constructor() {
     effect(() => {
-      const id = this.runId();
-      if (id !== null) {
-        untracked(() => void this.store.open(id));
+      const target = this.target();
+      if (target) {
+        untracked(() => void this.open(target));
       }
     });
     // the rows follow the address, once the run they belong to is there
@@ -214,12 +264,44 @@ export class RunResultsPage {
     });
   }
 
+  /** The control this panel is about: the list gives the focus back to its row when the panel closes. */
+  panelControl(): number | null {
+    return this.store.controlId();
+  }
+
+  private async open(target: { readonly run: number } | { readonly control: number }): Promise<void> {
+    if ('run' in target) {
+      await this.store.open(target.run);
+      return;
+    }
+    // a control with runs is shown by its newest one, at that run's own address
+    const newest = await this.store.openControl(target.control);
+    if (newest !== null) {
+      await this.router.navigate(['/runs', newest], { replaceUrl: true });
+    }
+  }
+
   private text(key: string, params: object = {}): string {
     return this.translate.instant(key, params) as string;
   }
 
   private counted(baseKey: string, count: number, params: Record<string, unknown> = {}): string {
     return this.countedText.text(baseKey, count, params);
+  }
+
+  /** A run as one line of the picker: its day and time, and what it found or how it ended. */
+  private runText(run: Run): string {
+    const result =
+      run.status === 'succeeded'
+        ? run.totalCount
+          ? this.counted('results.violations', run.totalCount)
+          : this.text('results.picker.none')
+        : this.text(run.status === 'running' ? 'results.picker.running' : 'results.picker.stopped');
+    return this.text('results.picker.option', {
+      date: this.format.date(run.startedAt),
+      time: this.format.time(run.startedAt),
+      result,
+    });
   }
 
   /** Changes the address; the view and the rows follow it. A change of what is shown goes back to page 1. */
@@ -245,26 +327,31 @@ export class RunResultsPage {
     this.go({ sort: by, dir });
   }
 
+  /** Another run of the control, chosen in the picker: its own address, with no search or filter carried over. */
+  protected pick(runId: number): void {
+    if (runId !== this.store.run()?.id) {
+      void this.router.navigate(['/runs', runId]);
+    }
+  }
+
+  /** Runs the control, again or for the first time, and shows the new run. */
   protected async rerun(): Promise<void> {
+    const first = this.store.run() === null;
     const run = await this.store.rerun();
     if (run) {
-      await this.router.navigate(['/runs', run.id]);
+      // the address of a control with no run does not stay in the history: Back would find a run there
+      await this.router.navigate(['/runs', run.id], { replaceUrl: first });
     }
   }
 
   protected reload(): void {
-    const id = this.runId();
-    if (id !== null) {
-      void this.store.open(id);
+    const target = this.target();
+    if (target) {
+      void this.open(target);
     }
   }
 
-  /** A text identifying field reads as the record's name; a number as its reference. */
-  protected isNumber(column: ResultColumn): boolean {
-    return column.field?.type === 'number';
-  }
-
   protected editControl(): void {
-    void this.router.navigate(['/controls', this.store.run()?.controlId]);
+    void this.router.navigate(['/controls', this.store.controlId()]);
   }
 }

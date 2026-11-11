@@ -1,11 +1,12 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 
-export type MarkState = 'resting' | 'traced' | 'active' | 'open';
+export type MarkState = 'resting' | 'traced' | 'open';
 
 /**
  * The letter a condition carries wherever it is spoken of. Display only: derived from the order of the
- * definition, never stored. Give it a `name` where nothing else names its condition; without one it is
- * hidden from assistive technology.
+ * definition, never stored. In the results and the suggestions it is a badge and has one state; the editor
+ * fills the mark of the condition under the pointer (`traced`) and outlines an unfinished one (`open`). Give
+ * it a `name` where nothing else names its condition; without one it is hidden from assistive technology.
  */
 @Component({
   selector: 'app-mark',
@@ -14,7 +15,6 @@ export type MarkState = 'resting' | 'traced' | 'active' | 'open';
     class: 'mark',
     'data-testid': 'mark',
     '[class.mark--traced]': 'state() === "traced"',
-    '[class.mark--active]': 'state() === "active"',
     '[class.mark--open]': 'state() === "open"',
     '[class.mark--changed]': 'changed()',
     '[attr.data-state]': 'state()',

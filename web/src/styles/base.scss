@@ -11,6 +11,15 @@ html {
   scrollbar-color: var(--color-control-line) transparent;
 }
 
+// the inline end as a sign, for the one thing a logical property cannot say: which way a panel slides in
+:root {
+  --inline-end: 1;
+}
+
+[dir='rtl'] {
+  --inline-end: -1;
+}
+
 body {
   margin: 0;
   background: var(--color-ground);

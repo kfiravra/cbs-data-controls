@@ -21,14 +21,11 @@
     color var(--duration-out) var(--ease-out);
 }
 
-.mark--active,
+// the trace, in the editor only: a condition under the pointer or in focus (its row, its clause) fills its
+// mark on its row and in the sentence. In the results and the suggestions a mark is a badge and has one state.
 .mark--traced {
   background: var(--color-action);
   color: var(--color-on-action);
-}
-
-// the trace: a condition in focus (its row, its clause or its meter) fills its mark wherever it stands
-.mark--traced {
   transition-duration: var(--duration-in);
 }
 
@@ -82,12 +79,13 @@
   border-radius: var(--radius-xs);
 }
 
-// the rule sentence as a field: the control in words, in the editor
-.sentence-field {
+// The control in words, in the editor: the bar at the foot of the panel, on the Action ground. Its height
+// never changes: the sentence has the room of two lines and scrolls inside it when it is longer, and the
+// status line keeps its room while it is empty.
+.rulebar {
   display: grid;
-  gap: var(--space-4);
-  padding: var(--space-5);
-  border-radius: var(--radius-lg);
+  gap: var(--space-3);
+  padding: var(--space-3) var(--sheet-pad);
   background: var(--color-action);
   color: var(--color-on-action);
 
@@ -96,9 +94,10 @@
   }
 
   .sentence {
-    font-size: var(--text-sentence);
+    max-inline-size: none;
+    font-size: var(--text-small);
     font-weight: 500;
-    line-height: 1.7;
+    line-height: 1.6;
   }
 
   .mark {
@@ -121,11 +120,6 @@
     animation-name: mark-settle-on-action;
   }
 
-  .btn--text {
-    color: var(--color-on-action);
-    justify-self: center;
-  }
-
   .btn[disabled],
   .btn[aria-disabled='true'] {
     background: var(--color-on-action-tonal);
@@ -146,43 +140,108 @@
   }
 }
 
-.sentence-field__title {
-  font-size: var(--text-small);
+.rulebar__text {
+  display: grid;
+  gap: 2px;
+  min-inline-size: 0;
+}
+
+// below a wide panel the title is heard and not seen: the bar keeps to what is read and what is pressed
+.rulebar__title {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  font-size: var(--text-label);
   font-weight: 500;
   line-height: 1.4;
+  color: var(--color-on-action-stale);
 }
 
-.sentence-field__hint {
-  font-size: var(--text-body);
-  font-weight: 400;
-  line-height: 1.55;
+.rulebar__sentence {
+  block-size: calc(2 * 1.6 * var(--text-small));
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-on-action-line) transparent;
 }
 
-.sentence-field__status {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-2);
-  padding-block-start: var(--space-4);
-  border-block-start: 1px solid var(--color-on-action-line);
+.rulebar__hint {
   font-size: var(--text-small);
+  line-height: 1.6;
+}
+
+// two lines of room on a narrow panel, one on a wide one; what does not fit is cut, and the same words
+// stand in full under the condition they are about
+.rulebar__status {
+  block-size: calc(2 * 1.5 * var(--text-label));
+  overflow: hidden;
+  font-size: var(--text-label);
   line-height: 1.5;
+
+  p {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-2);
+  }
 
   .icon {
     margin-block-start: 1px;
   }
 }
 
-.sentence-field__actions {
-  display: grid;
+.rulebar__actions {
+  display: flex;
   gap: var(--space-3);
+
+  > .btn {
+    flex: 1 1 0;
+  }
 }
 
-@media (min-width: 640px) {
-  .sentence-field__actions {
-    grid-template-columns: 1fr 1fr;
+@container sheet (min-width: 720px) {
+  .rulebar {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--space-5);
+  }
 
-    > .btn--text {
-      grid-column: 1 / -1;
+  .rulebar .sentence,
+  .rulebar__hint {
+    font-size: var(--text-body);
+  }
+
+  .rulebar__title {
+    position: static;
+    inline-size: auto;
+    block-size: auto;
+    overflow: visible;
+    clip-path: none;
+  }
+
+  .rulebar__sentence {
+    block-size: calc(2 * 1.6 * var(--text-body));
+  }
+
+  .rulebar__status {
+    block-size: calc(1.5 * var(--text-small));
+    font-size: var(--text-small);
+
+    p {
+      display: block;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
     }
+
+    .icon {
+      margin-inline-end: var(--space-2);
+      vertical-align: -3px;
+    }
+  }
+
+  .rulebar__actions > .btn {
+    flex: none;
   }
 }

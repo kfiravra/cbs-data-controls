@@ -5,7 +5,6 @@ import { DomSanitizer } from '@angular/platform-browser';
 import accountTree from '../../../assets/icons/account_tree.svg';
 import add from '../../../assets/icons/add.svg';
 import archive from '../../../assets/icons/archive.svg';
-import arrowBack from '../../../assets/icons/arrow_back.svg';
 import arrowDownward from '../../../assets/icons/arrow_downward.svg';
 import arrowUpward from '../../../assets/icons/arrow_upward.svg';
 import checkCircle from '../../../assets/icons/check_circle.svg';
@@ -21,6 +20,7 @@ import info from '../../../assets/icons/info.svg';
 import lightbulb from '../../../assets/icons/lightbulb.svg';
 import linkOff from '../../../assets/icons/link_off.svg';
 import playArrow from '../../../assets/icons/play_arrow.svg';
+import refresh from '../../../assets/icons/refresh.svg';
 import rule from '../../../assets/icons/rule.svg';
 import search from '../../../assets/icons/search.svg';
 import swapHoriz from '../../../assets/icons/swap_horiz.svg';
@@ -37,7 +37,6 @@ const ICONS = {
   account_tree: accountTree,
   add,
   archive,
-  arrow_back: arrowBack,
   arrow_downward: arrowDownward,
   arrow_upward: arrowUpward,
   check_circle: checkCircle,
@@ -53,6 +52,7 @@ const ICONS = {
   lightbulb,
   link_off: linkOff,
   play_arrow: playArrow,
+  refresh,
   rule,
   search,
   swap_horiz: swapHoriz,

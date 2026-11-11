@@ -83,29 +83,20 @@ describe('BreakdownComponent', () => {
     expect(filters).toEqual(['c2', null, null]);
   });
 
-  it('shows which row filters: it is pressed and its mark is active', async () => {
+  it('shows which row filters by pressing it, and leaves every mark as it is: a mark is a badge', async () => {
     await draw();
     expect(all().getAttribute('aria-pressed')).toBe('true');
 
     await draw({ active: 'c1' });
+    rows()[1].dispatchEvent(new Event('pointerenter'));
+    rows()[1].dispatchEvent(new FocusEvent('focus'));
+    await fixture.whenStable();
 
     expect(all().getAttribute('aria-pressed')).toBe('false');
     expect(rows().map((row) => row.getAttribute('aria-pressed'))).toEqual(['true', 'false']);
     expect(rows().map((row) => row.querySelector('[data-testid="mark"]')!.getAttribute('data-state'))).toEqual([
-      'active',
+      'resting',
       'resting',
     ]);
-  });
-
-  it('says which condition is under the pointer or in focus', async () => {
-    await draw();
-    const traced: (string | null)[] = [];
-    fixture.componentInstance.trace.subscribe((id) => traced.push(id));
-
-    rows()[0].dispatchEvent(new Event('pointerenter'));
-    rows()[0].dispatchEvent(new Event('pointerleave'));
-    rows()[1].dispatchEvent(new FocusEvent('focus'));
-
-    expect(traced).toEqual(['c1', null, 'c2']);
   });
 });

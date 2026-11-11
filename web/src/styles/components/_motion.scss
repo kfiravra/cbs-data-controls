@@ -22,12 +22,15 @@
   .skeleton,
   .spinner,
   .mark--changed,
-  .sentence-field .mark--changed {
+  .rulebar .mark--changed {
     animation: none;
   }
 
-  // a dialog appears at once (Material drops its own transitions by itself)
-  .app-dialog {
+  // a dialog and a panel appear at once (Material drops its own transitions by itself)
+  .app-dialog,
+  .app-sheet,
+  .sheet,
+  .sheet-scrim {
     animation: none;
   }
 }

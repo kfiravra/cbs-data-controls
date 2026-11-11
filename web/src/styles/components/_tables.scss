@@ -91,12 +91,17 @@
     align-self: center;
   }
 
+  // below 640 the actions take a line of their own: run at the start, the icon buttons at the end
   .cell-actions {
-    grid-column: 2;
+    grid-column: 1 / -1;
     display: flex;
     align-items: center;
     justify-content: flex-end;
     gap: var(--space-1);
+
+    .btn--run {
+      margin-inline-end: auto;
+    }
   }
 
   .cell-void {
@@ -309,7 +314,11 @@ th[aria-sort='descending'] .th-sort {
     // 9.25rem in Hebrew): the column keeps room for that, so starting a run does not move the other columns
     // of the table. A longer text in another language only brings the movement back; nothing breaks.
     .cell-actions:has(.btn--run) {
-      min-inline-size: calc(9.25rem + 2 * var(--size-control) + 2 * var(--space-3) + var(--space-2));
+      min-inline-size: calc(9.25rem + 3 * var(--size-control) + 2 * var(--space-3) + var(--space-2));
+    }
+
+    .cell-actions .btn--run {
+      margin-inline-end: var(--space-1);
     }
 
     .cell-end {

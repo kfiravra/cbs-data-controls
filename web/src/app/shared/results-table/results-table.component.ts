@@ -25,8 +25,9 @@ const SKELETON_REASONS = ['62%', '84%', '46%'];
 
 /**
  * The violations of a run: a column per identifying field of the record, then the reasons, one line for
- * each condition the record matched: its mark, then the engine's text with the actual value marked. A table
- * from 640px and card rows below, from one template. The first column's header sorts by the record.
+ * each condition the record matched: its mark (a badge, the same letter the condition has everywhere), then
+ * the engine's text with the actual value marked. A table from 640px and card rows below, from one template.
+ * The first column's header sorts by the record.
  */
 @Component({
   selector: 'app-results-table',
@@ -45,14 +46,10 @@ export class ResultsTableComponent {
   readonly rows = input.required<readonly ResultItem[]>();
   readonly columns = input.required<readonly ResultColumn[]>();
   readonly marks = input.required<ReadonlyMap<string, string>>();
-  readonly traced = input<string | null>(null);
-  /** The condition the rows are filtered by: its mark is active on every reason of it. */
-  readonly active = input<string | null>(null);
   readonly sort = input<DisplaySort>(null);
   /** Rows are on their way: skeleton bars stand in their shape. */
   readonly loading = input(false);
   readonly sortChange = output<DisplaySort>();
-  readonly trace = output<string | null>();
 
   protected readonly skeletons = SKELETON_ROWS.map((name, index) => ({ name, reasons: SKELETON_REASONS[index] }));
 

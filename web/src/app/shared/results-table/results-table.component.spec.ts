@@ -146,11 +146,13 @@ describe('ResultsTableComponent', () => {
     expect(mark.getAttribute('aria-label')).toBe(t('common.condition', { mark: 'A' }));
   });
 
-  it('shows the traced and the filtering condition on the marks of its reasons', async () => {
-    await draw({ traced: 'c1', active: 'c2' });
+  it('leaves the marks of its reasons as they are under the pointer: a mark is a badge', async () => {
+    await draw();
+    reasons(rows()[0])[1].dispatchEvent(new Event('pointerenter'));
+    await fixture.whenStable();
 
     const states = reasons(rows()[0]).map((reason) => reason.querySelector('[data-testid="mark"]')!.getAttribute('data-state'));
-    expect(states).toEqual(['traced', 'active']);
+    expect(states).toEqual(['resting', 'resting']);
   });
 
   it('sorts by the first column: ascending, descending, then the order of the run again', async () => {
@@ -180,16 +182,5 @@ describe('ResultsTableComponent', () => {
     expect(rows()).toHaveLength(0);
     expect(host().querySelectorAll('[data-testid="skeleton-row"]').length).toBeGreaterThan(0);
     expect(host().querySelector('table')!.getAttribute('aria-busy')).toBe('true');
-  });
-
-  it('says which condition is under the pointer on a reason', async () => {
-    await draw();
-    const traced: (string | null)[] = [];
-    fixture.componentInstance.trace.subscribe((id) => traced.push(id));
-
-    reasons(rows()[0])[1].dispatchEvent(new Event('pointerenter'));
-    reasons(rows()[0])[1].dispatchEvent(new Event('pointerleave'));
-
-    expect(traced).toEqual(['c2', null]);
   });
 });

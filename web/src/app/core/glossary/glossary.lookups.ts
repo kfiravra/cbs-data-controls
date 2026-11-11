@@ -30,10 +30,20 @@ export interface FieldGroup {
   readonly fields: readonly GlossaryField[];
 }
 
-export interface EntityMap {
+/** How two neighbours of the chain connect: each `one` has many `many`. */
+export interface ChainLink {
+  readonly one: GlossaryEntity;
+  readonly many: GlossaryEntity;
+}
+
+/** The entities a control may check, in glossary order, and how each connects to the next. */
+export interface EntityChain {
   readonly entities: readonly { readonly entity: GlossaryEntity; readonly selected: boolean }[];
-  /** `links[i]` joins `entities[i]` and `entities[i + 1]`; null where no relationship joins them. */
-  readonly links: readonly (GlossaryRelationship | null)[];
+  /**
+   * `links[i]` joins `entities[i]` and `entities[i + 1]`; null where no relationship joins them, or where
+   * the one that does has no many side.
+   */
+  readonly links: readonly (ChainLink | null)[];
 }
 
 export function findEntity(glossary: Glossary, key: string): GlossaryEntity | undefined {
@@ -171,42 +181,29 @@ export function valueLabel(field: GlossaryField, value: Scalar): LocalizedText |
   return undefined;
 }
 
-/** How many relationships away each entity is from the root, whatever their direction. */
-function distancesFrom(glossary: Glossary, rootKey: string): Map<string, number> {
-  const distance = new Map<string, number>([[rootKey, 0]]);
-  const queue = [rootKey];
-  for (let key = queue.shift(); key !== undefined; key = queue.shift()) {
-    for (const relationship of glossary.relationships) {
-      const next =
-        relationship.from === key ? relationship.to : relationship.to === key ? relationship.from : null;
-      if (next !== null && !distance.has(next)) {
-        distance.set(next, distance.get(key)! + 1);
-        queue.push(next);
-      }
-    }
-  }
-  return distance;
-}
-
 /**
- * The relationship map: every rootable entity in glossary order, and between two neighbours the
- * relationship that joins them, taken from the side nearer the chosen root so its label reads as the user
- * would say it from there. It assumes no number of entities. It is one row, so a glossary that is not a
- * chain shows only the relationships between neighbours; the sentence under the map lists everything the
- * root can reach.
+ * The chain under the question of what a control checks: every rootable entity in glossary order, and
+ * between two neighbours which of them holds many of the other, read from the cardinality of a relationship
+ * that joins them. It assumes no number of entities. It is one row, so a glossary that is not a chain shows
+ * only what joins neighbours; the sentence under it lists everything the chosen entity can reach.
  */
-export function mapFor(glossary: Glossary, rootKey: string): EntityMap {
+export function chainFor(glossary: Glossary, rootKey: string | null): EntityChain {
   const entities = rootEntities(glossary);
-  const distance = distancesFrom(glossary, rootKey);
-  const far = Number.MAX_SAFE_INTEGER;
-  const links = entities.slice(1).map((entity, index) => {
-    const pair = [entities[index].key, entity.key];
-    const joining = glossary.relationships.filter(
-      (relationship) =>
-        relationship.from !== relationship.to && pair.includes(relationship.from) && pair.includes(relationship.to),
-    );
-    const nearest = Math.min(...joining.map((relationship) => distance.get(relationship.from) ?? far));
-    return joining.find((relationship) => (distance.get(relationship.from) ?? far) === nearest) ?? null;
+  const links = entities.slice(1).map((entity, index): ChainLink | null => {
+    const before = entities[index];
+    for (const relationship of glossary.relationships) {
+      const joins =
+        (relationship.from === before.key && relationship.to === entity.key) ||
+        (relationship.from === entity.key && relationship.to === before.key);
+      if (!joins || relationship.cardinality === 'one_to_one') {
+        continue;
+      }
+      // many-to-one runs from the many side; one-to-many runs from the one side
+      const fromIsMany = relationship.cardinality === 'many_to_one';
+      const manyKey = fromIsMany ? relationship.from : relationship.to;
+      return manyKey === entity.key ? { one: before, many: entity } : { one: entity, many: before };
+    }
+    return null;
   });
   return {
     entities: entities.map((entity) => ({ entity, selected: entity.key === rootKey })),

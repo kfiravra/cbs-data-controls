@@ -380,6 +380,46 @@ Verify: `/check all --tests` · `cd web && npx playwright test e2e/mocked` · th
 Review: `/phase-review web`
 Commit: `fix(web): design critique and polish`
 
+### Phase 9: UX pass (Kfir's first read of the running app, 2026-11-11)
+Branch `feat/web-ux`, cut from `origin/main` at `612b2b7` (PR #4 merged). Kfir's ten items and his word on the
+look are in `notes.md` (Log, 2026-11-11, "the UX pass"); the layout brief is Design R. No `contracts/`, api or
+engine change. Three commits, one per part and one for the review (notes, decision 53).
+
+Part 1, structure (`/impeccable shape` first: Design R is its brief):
+- [x] One page: the list is the parent route; the editor and the results open in a wide panel over it (full
+      screen below 640), closed by X and Esc with the focus back on the row. No back link. The addresses stay
+      (`/`, `/controls/:id`, `/runs/:id`); one is added for a control with no run (`/controls/:id/runs`).
+- [x] List: the name opens the last run's results (a control that never ran opens its state with a run button);
+      edit stays on the pencil; two tabs with counts, active and archive, in place of the state select; the
+      archive action on the row with the confirm text kept.
+- [x] Results panel: a picker of the control's runs (`GET /controls/{id}/runs`); the condition letters are
+      static badges, with no hover effect; the filter stays a click in the breakdown.
+- [x] Suggestions: a wide panel of cards (name, the rule in words, the evidence), a refresh button and one line
+      that says the suggestions are computed from the current data.
+- [x] Editor panel: "what to check" as a plain question with one card per glossary entity and a small chain of
+      how they connect (the word "ישות" leaves `he.json`); up to three suggestions for the choice
+      (`POST /suggestions` with `rootEntity`), one click fills the conditions; name and description at a fixed
+      width, the description two rows; the rule in words as a bar at the foot of the panel beside save, of a
+      fixed height.
+- [x] Unit specs and the mocked specs follow the new structure; `/check --tests` and `e2e/mocked` green.
+      Commit: `feat(web): one page, with the editor and the results in a panel`
+
+Part 2, look ("this design looks not 2026, quite boring"). Changed by Kfir on 2026-11-11 while part 1 was
+being built: no three directions and no stop; one direction, and straight on to part 3.
+- [ ] One visual direction dealt with the `design-taste-frontend` skill and applied as the only theme; why it
+      was chosen is in `notes.md`.
+
+Part 3:
+- [ ] `/impeccable critique` and `/impeccable polish`, once each; `docs/design.md` in line with what is built.
+- [ ] The mocked specs and the gate specs updated; the gate on the real stack (dev server and hosted build);
+      `/check all --tests`; output in `gates/phase-9.txt`, screenshots in `screenshots/phase-9/`.
+- [ ] `/phase-review web`, one `fix(web): review fixes` commit, the Log lines.
+- [ ] Push and the PR, on Kfir's word of 2026-11-11 for this pass. No merge. The stack is left running.
+
+Verify: `/check all --tests` · `cd web && npx playwright test e2e/mocked` · the gate command of Design O
+Review: `/phase-review web`
+Commit: `feat(web): one page, with the editor and the results in a panel` · `feat(web): the new look` · `fix(web): review fixes`
+
 ### Gate
 Status, 2026-11-11: `gates/final.txt` holds `/check all --tests` (the engine and the api among its parts now),
 the mocked specs and the gate specs on the real stack, behind the dev server and on the build the api hosts, on
@@ -808,6 +848,49 @@ five tasks.
     claude.ai chat is logged as relayed by him: what it found and what changed.
   - A review that found nothing is logged as that, with its range; one that did not run, as not run, with the
     reason. No verdict stands in for the findings, and no line says what Kfir read or approved unless he said so.
+
+### R. One page (the UX pass, phase 9; the brief of `/impeccable shape`)
+
+Kfir said "no questions", so the shape interview was not held: the brief below is built from his ten items, and
+each reading of them that he did not spell out is a numbered decision in `notes.md` (53 on).
+
+- **Job.** The same business user, at a desk. The list is the one place of the product; a control is opened,
+  read and changed without leaving it. Mode: Operate.
+- **Topology.** `ControlsListPage` is the parent route (`''`) with three children: `controls/:id` (editor),
+  `runs/:id` (results), `controls/:controlId/runs` (the results panel of a control: its newest run, or its
+  never-run state). The list holds the outlet inside a sheet: `role="dialog"`, modal, at the inline end, as
+  wide as `min(1120px, 100% - clamp(48px, 22vw, 320px))`, the full window below 640. The list behind it is
+  `inert` under a light scrim and keeps its search, tab and page in memory while a panel address is shown,
+  because the panel's own query (`page`, `search`) would otherwise be read as the list's. A direct link to a
+  panel opens it over the list's default view.
+- **Closing.** The X of the sheet, Esc (after an open select or dialog took its own Esc) and a click on the
+  scrim navigate to `/` with the list's held query; a changed draft still asks (decision 38). The focus goes to
+  the element of the list that opened the panel, else to the row of the panel's control, else to the list's
+  title. The list is read again when a panel closes and when the panel's address changes (a save, a run).
+- **Sheet anatomy.** Head (title, one meta line or the run picker, the actions; the X stands at its end),
+  body (scrolls), foot (the editor's bar). Layout inside answers to the sheet's width (container queries), not
+  the window's.
+- **List.** Tabs `פעילות` and `ארכיון` with counts that follow the search and the filter; the head keeps the
+  two actions and loses its count line. The filter `ישות ראשית` becomes `מה נבדק`. Row actions: run, edit,
+  duplicate, archive (active rows); duplicate alone (archived rows). The name is a link to
+  `/runs/<last run>` or `/controls/<id>/runs`.
+- **Results panel.** Head: the control's name; the picker (a select of the 50 newest runs: date, time, result)
+  when the control has more than one run, else the meta line; edit and run again. Marks are static badges in
+  the sentence, the breakdown and the reasons; the chosen breakdown row carries the filter. Never run: the
+  name, the rule in words (from `POST /controls/validate`), the state and a run button.
+- **Editor panel.** Body: name and description (40rem at most, the description two rows, not resizable); the
+  question `מה רוצים לבדוק?` with one card per rootable entity (plural label and the glossary's description),
+  nothing chosen in a new control; under it the chain (each entity, and between two neighbours
+  `בכל <one> יש <many>` from the relationship's cardinality) and the sentence of what the control returns;
+  for a new blank control, up to three suggestions for the choice (name, the rule in words, the first evidence),
+  shown only when there are any; then the conditions. Foot: the rule in words (two lines high, scrolling inside
+  when longer), one reserved status line, save and run, save.
+- **Suggestions.** The same sheet through `MatDialog`: cards in two columns from 900px of sheet width, each with
+  its checkbox, name, sentence, rationale, evidence and "open in the editor"; a refresh button in the head and
+  the line about the current data; the foot keeps the create button.
+- **Untouched.** The condition builder, the validate loop, the save and its errors, the run states, the texts
+  of errors, the api layer's types, the leave prompt.
+- **Anti-goals.** No dashboard, no second navigation, no state kept in the browser's storage, no renderer.
 
 ## Risks
 

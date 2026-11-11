@@ -8,46 +8,48 @@ import { IconComponent } from '../../shared/icon/icon.component';
 import { TextPartsComponent } from '../../shared/text-parts/text-parts.component';
 
 /**
- * One suggested control: a checkbox, its name, its sentence with a mark per clause, why the engine proposes
- * it, the evidence as chips, and a way to open it in the editor. Its texts arrive rendered by the engine.
+ * One suggested control, as a card: a checkbox with its name, the rule in words with a mark per clause, why
+ * the engine proposes it, the evidence from the data as chips, and a way to open it in the editor. Its
+ * texts arrive rendered by the engine.
  */
 @Component({
-  selector: 'app-suggestion-row',
+  selector: 'app-suggestion-card',
   imports: [IconComponent, MatCheckbox, TextPartsComponent, TranslatePipe],
   template: `
-    <div class="suggestion" data-testid="suggestion">
-      <mat-checkbox
-        class="suggestion__check"
-        data-testid="suggestion-check"
-        [checked]="selected()"
-        [aria-label]="'suggestions.select' | translate: { name: item().name }"
-        (change)="selectedChange.emit($event.checked)"
-      />
-      <span class="cell-title" data-testid="suggestion-name"><bdi>{{ item().name }}</bdi></span>
+    <article class="suggestion" data-testid="suggestion" [class.is-chosen]="selected()">
+      <div class="suggestion__head">
+        <mat-checkbox
+          data-testid="suggestion-check"
+          [checked]="selected()"
+          [aria-label]="'suggestions.select' | translate: { name: item().name }"
+          (change)="selectedChange.emit($event.checked)"
+        />
+        <h3 class="suggestion__name" data-testid="suggestion-name"><bdi>{{ item().name }}</bdi></h3>
+      </div>
       <p class="sentence sentence--body" data-testid="suggestion-sentence">
         <app-text-parts [parts]="item().sentenceParts" [marks]="marks()" />
       </p>
-      <span class="cell-desc">{{ item().rationale }}</span>
-      <span class="evidence">
+      <p class="suggestion__why">{{ item().rationale }}</p>
+      <ul class="evidence" [attr.aria-label]="'suggestions.evidence' | translate">
         @for (evidence of item().evidence; track evidence.key) {
-          <span class="chip num" data-testid="evidence">{{ evidence.text }}</span>
+          <li class="chip num" data-testid="evidence">{{ evidence.text }}</li>
         }
-        <button
-          class="btn btn--text btn--sm"
-          type="button"
-          data-testid="suggestion-edit"
-          [attr.aria-label]="'suggestions.openNamed' | translate: { name: item().name }"
-          (click)="edit.emit()"
-        >
-          {{ 'suggestions.openInEditor' | translate }}
-        </button>
-      </span>
+      </ul>
       @if (failed()) {
         <p class="field__error" role="alert" data-testid="suggestion-error">
           <app-icon name="error" size="sm" />{{ 'suggestions.invalid' | translate }}
         </p>
       }
-    </div>
+      <button
+        class="btn btn--text btn--sm suggestion__open"
+        type="button"
+        data-testid="suggestion-edit"
+        [attr.aria-label]="'suggestions.openNamed' | translate: { name: item().name }"
+        (click)="edit.emit()"
+      >
+        {{ 'suggestions.openInEditor' | translate }}
+      </button>
+    </article>
   `,
   styles: `
     :host {
@@ -56,7 +58,7 @@ import { TextPartsComponent } from '../../shared/text-parts/text-parts.component
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SuggestionRowComponent {
+export class SuggestionCardComponent {
   private readonly marksService = inject(MarksService);
 
   readonly item = input.required<SuggestionItem>();

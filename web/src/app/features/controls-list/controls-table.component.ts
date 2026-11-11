@@ -15,6 +15,8 @@ import { RunResult, resultOf } from './run-result';
 
 interface Row {
   readonly control: ControlSummary;
+  /** Where the name leads: the results of the last run, or the control's panel before a first run. */
+  readonly results: readonly (string | number)[];
   readonly entity: string;
   readonly lastRun: string | null;
   readonly result: RunResult;
@@ -24,9 +26,10 @@ interface Row {
 const SKELETON_ROWS = ['62%', '48%', '70%', '54%'];
 
 /**
- * The controls of the list: a table from 640px, card rows below. A row has the name (a link to the editor)
- * over the description, the root entity, the last run, its result, and the actions. A number of violations
- * is a finding, set as a link to its results and never in red; red is for a run that stopped.
+ * The controls of the list: a table from 640px, card rows below. A row has the name (a link to the results
+ * of its last run) over the description, what it checks, the last run, its result, and the actions: run,
+ * edit, duplicate and archive. A number of violations is a finding, set as a link to its results and never
+ * in red; red is for a run that stopped.
  */
 @Component({
   selector: 'app-controls-table',
@@ -44,11 +47,12 @@ export class ControlsTableComponent {
   private readonly language = inject(LanguageService);
 
   readonly controls = input.required<readonly ControlSummary[]>();
-  /** The glossary, for the label of each root entity; null while it cannot be read. */
+  /** The glossary, for the label of what each control checks; null while it cannot be read. */
   readonly glossary = input<Glossary | null>(null);
   readonly running = input<ReadonlySet<number>>(new Set());
   readonly loading = input(false);
   readonly run = output<ControlSummary>();
+  readonly archive = output<ControlSummary>();
 
   protected readonly skeletons = SKELETON_ROWS;
 
@@ -56,6 +60,7 @@ export class ControlsTableComponent {
     const glossary = this.glossary();
     return this.controls().map((control) => ({
       control,
+      results: control.lastRun ? ['/runs', control.lastRun.id] : ['/controls', control.id, 'runs'],
       entity: this.language.text(glossary ? findEntity(glossary, control.rootEntity)?.label.plural : undefined),
       lastRun: control.lastRun ? this.format.when(control.lastRun.startedAt) : null,
       result: resultOf(control.lastRun),

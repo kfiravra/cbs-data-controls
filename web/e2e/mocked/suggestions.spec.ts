@@ -16,8 +16,8 @@ async function openDialog(page: Page): Promise<void> {
   await expect(dialog(page)).toBeVisible();
 }
 
-test.describe('suggestions dialog', () => {
-  test('shows the engine drafts with their sentence and marks, none ticked, and saves or runs nothing', async ({ page, api }, testInfo) => {
+test.describe('suggestions panel', () => {
+  test('shows the engine drafts as cards with their sentence and marks, none ticked, and saves or runs nothing', async ({ page, api }, testInfo) => {
     api.delay('POST /suggestions', 500);
     await openDialog(page);
     await expect(dialog(page).getByTestId('suggestions-loading')).toBeVisible();
@@ -36,7 +36,45 @@ test.describe('suggestions dialog', () => {
     expect(api.calls.filter((call) => call.method !== 'GET').map((call) => `${call.method} ${call.path}`)).toEqual([
       'POST /suggestions',
     ]);
+    // one line says where they come from: the data as they are now
+    await expect(dialog(page).getByTestId('page-meta')).toHaveText(t('suggestions.note'));
     await shot(page, testInfo, 'suggestions');
+
+    // a wide panel, as tall as the window; from 900px of its width the cards stand two in a row
+    const box = (await dialog(page).boundingBox())!;
+    expect(box.height).toBe(page.viewportSize()!.height);
+    const [first, second] = [(await drafts(page).nth(0).boundingBox())!, (await drafts(page).nth(1).boundingBox())!];
+    if (testInfo.project.name === 'desktop') {
+      expect(box.width).toBeGreaterThan(900);
+      expect(Math.round(first.y)).toBe(Math.round(second.y));
+    } else {
+      expect(second.y).toBeGreaterThan(first.y);
+    }
+  });
+
+  test('computes the suggestions again on refresh, from the data as they then are', async ({ page, api }) => {
+    await openDialog(page);
+    await expect(drafts(page)).toHaveCount(api.suggestions.length);
+    await drafts(page).nth(0).getByRole('checkbox').check();
+    const kept = api.suggestions.slice(1, 3);
+
+    // the data moved on: the engine now proposes less
+    api.suggestions = kept;
+    api.delay('POST /suggestions', 400);
+    const refresh = dialog(page).getByTestId('suggestions-refresh');
+    await refresh.focus();
+    await page.keyboard.press('Enter');
+    // the cards stay while the new ones are computed, and the button keeps the focus
+    await expect(refresh).toBeDisabled();
+    await expect(refresh).toBeFocused();
+    await expect(drafts(page).first()).toBeVisible();
+
+    await expect(drafts(page)).toHaveCount(kept.length);
+    await expect(drafts(page).getByTestId('suggestion-name')).toHaveText(kept.map((item) => item.name));
+    await expect(dialog(page).getByRole('checkbox', { checked: true })).toHaveCount(0);
+    await expect(dialog(page).getByTestId('suggestions-create')).toBeDisabled();
+    expect(api.callsTo('POST /suggestions')).toHaveLength(2);
+    expect(api.callsTo('POST /suggestions/accept')).toHaveLength(0);
   });
 
   test('creates the ticked drafts as controls, says how many, and shows them in the list', async ({ page, api }) => {
@@ -106,7 +144,8 @@ test.describe('suggestions dialog', () => {
 
   test('keeps the focus inside while open and gives it back to the button that opened it', async ({ page }) => {
     await openDialog(page);
-    await expect(dialog(page).getByRole('button', { name: t('common.close'), exact: true }).first()).toBeFocused();
+    // the keyboard starts from the panel itself, as in the panel of a control or a run
+    expect(await page.evaluate(() => document.activeElement?.contains(document.querySelector('[data-testid="suggestions-dialog"]')))).toBe(true);
 
     for (let step = 0; step < 30; step++) {
       await page.keyboard.press('Tab');

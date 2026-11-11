@@ -12,14 +12,15 @@ services for HTTP and the glossary cache, no global store library. Zoneless (the
 components. `@ngx-translate/core` and `@ngx-translate/http-loader` with `he` as the one language (the texts stay
 keyed by language; there is no `en.json` and no language switch); Angular Material and the CDK; Vitest through
 `ng test` (the v21 default); Playwright for e2e.
-Screens follow architecture §8: controls list, control editor, run results, suggestions dialog. The visual design
-comes from `docs/design.md` (written before this task), worked through `/impeccable`. Conventions:
+One page since the UX pass of 2026-11-11: the controls list is the parent route and holds a panel (a modal
+sheet at the inline end) in which the routed screens open: control editor, run results; the suggestions open as
+the same sheet through `MatDialog`. The visual design is `docs/design.md`, worked through `/impeccable`. Conventions:
 [.claude/rules/typescript.md](../../rules/typescript.md).
 
 ## Reusable components (§8: the editor and the suggestions dialog share them)
 
 condition group (recursive) · condition row · field picker · operator picker · value input · related-records node ·
-rule sentence preview · relationship map · results table · run summary · error banner · confirm dialog.
+rule sentence bar · entity cards · entity chain · results table · run summary · error banner · confirm dialog.
 
 Each takes `input()` / `input.required()` and emits `output()`, holds no HTTP, shows glossary labels in the active
 language, and puts every other string through a translation key. Look for the existing one before writing another.
@@ -86,6 +87,26 @@ playwright install --with-deps chromium` needs sudo on WSL: ask the user to run 
   `disabled` is for a button that cannot be used as the screen stands. Both look the same (`_buttons.scss`).
 - Reduced-motion rules live in `styles/components/_motion.scss`, the last partial of `styles.scss`: they have the
   specificity of the rules they switch off, so only the order makes them win.
+- One page: `ControlsListPage` is the route `''` with three children (`controls/:id`, `controls/:controlId/runs`,
+  `runs/:id`) and renders their outlet inside its sheet, created only while a child address is shown. It reads its
+  own view (search, filter, tab, page) from the address only when no child is active and keeps it in memory under
+  a panel: the panel's query (`page`, `search`) would otherwise be read as the list's. Never bind the list's view
+  through `withComponentInputBinding`.
+- Layout inside the panel answers to the panel's width: `@container sheet (min-width: …)`, not `@media`. A screen
+  in the panel is `.sheet__screen` with `.sheet__head`, `.sheet__body` (the one scroller) and `.sheet__foot`.
+- Test ids are shared between the list and what stands in the panel (`toolbar-search`, `table-range`,
+  `error-banner`, `skeleton-row`): a spec of a panel screen looks inside `page.getByTestId('panel')`. The panel's
+  title is `panel-title`; `page-title` is the list's.
+- Esc is heard in the capturing phase on the document (the list's page): a tooltip of Material would otherwise
+  take the first Esc for itself. An open `mat-select` is left its Esc by its state in ARIA
+  (`[role="combobox"][aria-expanded="true"]`).
+- A fixed layer is laid out without the page's scrollbar: at 390 in headless Chromium the panel is 375 wide, the
+  scrollbar beside it. Compare with `document.documentElement.clientWidth`, not the viewport size.
+- A shot with a panel open is of the window, not the whole page (`e2e/support/shots.ts`): the page behind the
+  panel is held still by the CDK's block scroll strategy and a full-page picture would show it running on.
+- A new control has nothing chosen: the builder is not in the page until one of the entity cards is pressed, and
+  that press asks `POST /suggestions` with `rootEntity` and `max: 3` (a store spec answers it; a mocked spec gets
+  the fake api's).
 - The editor's route asks before a changed draft is left (`canDeactivate`, the browser's `confirm`). Playwright
   dismisses a dialog by default, which keeps the page: a spec that leaves a changed draft answers the dialog.
 - `vitest` is pinned to `~4.0.8`: npm 10.9.2 crashes resolving the peer set of 4.1.x.

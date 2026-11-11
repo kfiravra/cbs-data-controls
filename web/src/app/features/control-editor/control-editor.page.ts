@@ -9,10 +9,9 @@ import {
   untracked,
   viewChild,
 } from '@angular/core';
-import { MatDialog } from '@angular/material/dialog';
 import { MatFormField } from '@angular/material/form-field';
 import { MatInput } from '@angular/material/input';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import { SuggestionItem } from '../../core/api/api.types';
@@ -25,12 +24,12 @@ import { LanguageService } from '../../core/i18n/language.service';
 import { BannerComponent } from '../../shared/banner/banner.component';
 import { ErrorBannerComponent } from '../../shared/banner/error-banner.component';
 import { ConditionBuilderComponent } from '../../shared/condition-builder/condition-builder.component';
-import { confirm } from '../../shared/confirm-dialog/confirm-dialog.component';
+import { EntityCardsComponent } from '../../shared/entity-cards/entity-cards.component';
+import { EntityChainComponent } from '../../shared/entity-chain/entity-chain.component';
 import { IconComponent } from '../../shared/icon/icon.component';
 import { InvalidDirective } from '../../shared/invalid/invalid.directive';
 import { NotFoundComponent } from '../../shared/not-found/not-found.component';
 import { PageHeadComponent } from '../../shared/page-head/page-head.component';
-import { RelationshipMapComponent } from '../../shared/relationship-map/relationship-map.component';
 import { SentenceFieldComponent } from '../../shared/sentence-field/sentence-field.component';
 import { SkeletonComponent } from '../../shared/skeleton/skeleton.component';
 import { TextPartsComponent } from '../../shared/text-parts/text-parts.component';
@@ -43,15 +42,18 @@ const NAME_MAX = 200;
 const DESCRIPTION_MAX = 1000;
 
 /**
- * The control editor: details, the root entity on the relationship map, the conditions of the violation,
- * and beside them the control in words with save and run. The store holds the state and talks to the api;
- * the page navigates, confirms and toasts.
+ * The control editor, in the list's panel: the details, what the control checks (a card per entity of the
+ * glossary, and how they connect), for a new control what the engine would suggest about that choice, the
+ * conditions of the violation, and at the foot of the panel the control in words with save and run. The
+ * store holds the state and talks to the api; the page navigates and toasts.
  */
 @Component({
   selector: 'app-control-editor-page',
   imports: [
     BannerComponent,
     ConditionBuilderComponent,
+    EntityCardsComponent,
+    EntityChainComponent,
     ErrorBannerComponent,
     IconComponent,
     InvalidDirective,
@@ -59,8 +61,6 @@ const DESCRIPTION_MAX = 1000;
     MatInput,
     NotFoundComponent,
     PageHeadComponent,
-    RelationshipMapComponent,
-    RouterLink,
     SentenceFieldComponent,
     SkeletonComponent,
     TextPartsComponent,
@@ -68,7 +68,7 @@ const DESCRIPTION_MAX = 1000;
   ],
   providers: [EditorStore],
   templateUrl: './control-editor.page.html',
-  host: { '(window:beforeunload)': 'onBeforeUnload($event)' },
+  host: { class: 'sheet__screen', '(window:beforeunload)': 'onBeforeUnload($event)' },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ControlEditorPage {
@@ -78,15 +78,16 @@ export class ControlEditorPage {
   private readonly format = inject(FormatService);
   private readonly translate = inject(TranslateService);
   private readonly router = inject(Router);
-  private readonly dialog = inject(MatDialog);
   private readonly toast = inject(ToastService);
   /**
-   * The toast that offers a way back (from a removal, or from a changed root entity) and the draft that way
-   * back starts from. The offer stands only while that draft is the one on the screen.
+   * The toast that offers a way back (from a removal, another choice of what to check, or a suggestion that
+   * filled the conditions) and the draft that way back starts from. The offer stands only while that draft
+   * is the one on the screen.
    */
   private undoOffer: { readonly toast: ToastRef; readonly draft: DraftGroup } | null = null;
   private readonly nameInput = viewChild<ElementRef<HTMLInputElement>>('nameInput');
   private readonly descriptionInput = viewChild<ElementRef<HTMLTextAreaElement>>('descriptionInput');
+  private readonly cards = viewChild(EntityCardsComponent);
 
   protected readonly nameMax = NAME_MAX;
   protected readonly descriptionMax = DESCRIPTION_MAX;
@@ -103,7 +104,7 @@ export class ControlEditorPage {
     return this.id() === NEW ? 'editor.titleNew' : 'editor.titleEdit';
   });
 
-  /** A stored control is being read: its meta line and its archive action are on their way. */
+  /** A stored control is being read: its meta line is on its way. */
   protected readonly opening = computed(() => this.id() !== NEW && this.store.loadState() === 'loading');
 
   protected readonly meta = computed(() => {
@@ -217,11 +218,21 @@ export class ControlEditorPage {
     };
   }
 
+  /** The control this panel is about: the list gives the focus back to its row when the panel closes. */
+  panelControl(): number | null {
+    return this.store.control()?.id ?? null;
+  }
+
   protected chooseRoot(key: string): void {
     const undo = this.store.chooseRoot(key);
     if (undo) {
-      this.offerBack('editor.toast.rootChanged', {}, undo);
+      this.offerBack('editor.toast.whatChanged', {}, undo);
     }
+  }
+
+  /** A suggestion fills the conditions; what was there is offered back for as long as the toast stands. */
+  protected applyIdea(idea: SuggestionItem): void {
+    this.offerBack('editor.toast.ideaApplied', {}, this.store.applyIdea(idea));
   }
 
   /** An edit of the builder. A removal is offered back for as long as its toast stands. */
@@ -271,9 +282,14 @@ export class ControlEditorPage {
     }
     const outcome = await this.store.save(run);
     if (outcome.kind === 'invalid') {
-      // the first offending input: a detail before a row (the store points the builder at the row)
+      // the first offending input: a detail, then the choice of what to check, before a row (the store
+      // points the builder at the row)
       const detail = this.store.nameIssue() ? this.nameInput() : this.store.descriptionIssue() ? this.descriptionInput() : null;
-      detail?.nativeElement.focus();
+      if (detail) {
+        detail.nativeElement.focus();
+      } else if (this.store.rootIssue()) {
+        this.cards()?.focus();
+      }
     }
     if (outcome.kind === 'saved') {
       const { control, newVersion } = outcome;
@@ -287,30 +303,6 @@ export class ControlEditorPage {
     }
     if (outcome.kind === 'ran') {
       await this.router.navigate(['/runs', outcome.run.id]);
-    }
-  }
-
-  protected archive(): void {
-    const control = this.store.control();
-    if (!control) {
-      return;
-    }
-    const text = (key: string, params: object = {}) => this.translate.instant(key, params) as string;
-    confirm(this.dialog, {
-      title: text('editor.archive.title'),
-      body: text('editor.archive.body', { name: control.name }),
-      confirmLabel: text('editor.archive.confirm'),
-    }).subscribe((confirmed) => {
-      if (confirmed) {
-        void this.archiveConfirmed();
-      }
-    });
-  }
-
-  private async archiveConfirmed(): Promise<void> {
-    if (await this.store.archive()) {
-      this.toast.show('editor.toast.archived');
-      await this.router.navigate(['/']);
     }
   }
 

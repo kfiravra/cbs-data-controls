@@ -256,23 +256,21 @@
   }
 }
 
-// the relationship map: the root entity picker
-.relmap {
+// what a control checks: one card per entity of the glossary, a radio group. Ink selects.
+.choices {
   display: grid;
-  gap: 0;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+  gap: var(--space-3);
 }
 
-.entity {
-  display: inline-flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-  min-block-size: var(--size-control);
-  padding-inline: var(--space-4);
+.choice {
+  display: grid;
+  align-content: start;
+  gap: var(--space-1);
+  padding: var(--space-4);
   border: 1px solid var(--color-control-line);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   background: var(--color-ground);
-  font-weight: 500;
   text-align: start;
   transition:
     background-color var(--duration-out) var(--ease-out),
@@ -281,98 +279,169 @@
   &:hover {
     border-color: var(--color-muted);
     background: var(--color-row-hover);
+    transition-duration: var(--duration-in);
   }
 
   &[aria-checked='true'] {
-    background: var(--color-ink);
     border-color: var(--color-ink);
+    background: var(--color-ink);
     color: var(--color-ground);
   }
 }
 
-.entity__role {
-  font-size: var(--text-label);
-  font-weight: 400;
-  opacity: 0.8;
+.choices[aria-invalid='true'] .choice {
+  border-color: var(--color-danger);
 }
 
-.relmap__link {
+.choice__name {
   display: flex;
   align-items: center;
-  min-block-size: 32px;
-  margin-inline-start: var(--space-5);
-  padding-inline-start: var(--space-3);
-  border-inline-start: 1px solid var(--color-line-strong);
+  justify-content: space-between;
+  gap: var(--space-2);
+  font-size: var(--text-title);
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.choice__check {
+  visibility: hidden;
+}
+
+.choice[aria-checked='true'] .choice__check {
+  visibility: visible;
+}
+
+.choice__about {
+  font-size: var(--text-small);
+  line-height: 1.5;
+  color: var(--color-muted);
+  text-wrap: pretty;
+}
+
+.choice[aria-checked='true'] .choice__about {
+  color: color-mix(in oklab, var(--color-ground) 82%, var(--color-ink));
+}
+
+// how those entities connect: a picture to read, in the small type of a caption
+.chain-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
   font-size: var(--text-label);
+  line-height: 1.4;
   color: var(--color-muted);
 }
 
-@media (min-width: 640px) {
-  .relmap {
-    display: flex;
-    align-items: center;
-  }
+.chain {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
 
-  .relmap__link {
-    flex: 1 1 0;
-    min-inline-size: 120px;
-    max-inline-size: 220px;
-    margin: 0;
-    padding: 0 var(--space-2) var(--space-5);
-    min-block-size: 0;
-    block-size: 0;
-    border: 0;
-    border-block-start: 1px solid var(--color-line-strong);
-    justify-content: center;
-    text-align: center;
-    position: relative;
-    inset-block-start: -1px;
+.chain__node {
+  padding: 3px var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--color-tonal);
+  color: var(--color-ink);
+  font-weight: 500;
 
-    span {
-      position: relative;
-      inset-block-start: 14px;
-      background: var(--color-ground);
-      padding-inline: var(--space-2);
-      white-space: nowrap;
-    }
+  &.is-chosen {
+    box-shadow: inset 0 0 0 1px var(--color-ink);
   }
 }
 
-// two neighbours that no relationship joins: a gap, no line (after the wide layout, whose border it removes)
-.relmap__link.relmap__link--none {
-  border-color: transparent;
+.chain__link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+
+  &::before,
+  &::after {
+    content: '';
+    inline-size: var(--space-4);
+    block-size: 1px;
+    background: var(--color-line-strong);
+  }
 }
 
-// editor layout
+// two neighbours that say nothing of each other: one short line between them
+.chain__link--bare::after {
+  display: none;
+}
+
+// what the engine would check about the choice: up to three, each a button that fills the conditions
+.ideas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+  gap: var(--space-3);
+}
+
+.idea {
+  display: grid;
+  align-content: start;
+  justify-items: start;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border: 1px solid var(--color-line-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-ground);
+  text-align: start;
+  transition:
+    background-color var(--duration-out) var(--ease-out),
+    border-color var(--duration-out) var(--ease-out);
+}
+
+button.idea:hover {
+  border-color: var(--color-muted);
+  background: var(--color-row-hover);
+  transition-duration: var(--duration-in);
+}
+
+.idea__name {
+  font-weight: 500;
+}
+
+.idea__rule {
+  font-size: var(--text-small);
+  line-height: 1.55;
+  color: var(--color-muted);
+}
+
+// holds the place of the suggestions while they are computed
+.idea--pending {
+  min-block-size: 7.5rem;
+  justify-items: stretch;
+}
+
+// the editor: one column in its panel; the name and the description keep a width that is easy to read
 .editor {
   display: grid;
   gap: var(--space-6);
-}
-
-.editor__main {
-  display: grid;
-  gap: var(--space-6);
-  min-inline-size: 0;
 
   > section {
     display: grid;
     gap: var(--space-4);
+    min-inline-size: 0;
+  }
+
+  .section__head {
+    margin-block-end: 0;
   }
 }
 
-@media (min-width: 1024px) {
+.editor__details .field {
+  max-inline-size: 40rem;
+}
+
+// the description is two rows, and stays two rows
+textarea.two-rows {
+  resize: none;
+}
+
+@container sheet (min-width: 900px) {
   .editor {
-    grid-template-columns: minmax(0, 2fr) minmax(320px, 1fr);
     gap: var(--space-7);
-    align-items: start;
-  }
-
-  .editor__main {
-    gap: var(--space-7);
-  }
-
-  .editor__side {
-    position: sticky;
-    inset-block-start: var(--space-5);
   }
 }

@@ -169,12 +169,14 @@ export class FakeApi {
         return this.withControl(first, (control) => this.version(control, second));
       case 'POST /controls/:n/runs':
         return this.withControl(first, (control) => this.run(control));
+      case 'GET /controls/:n/runs':
+        return this.withControl(first, (control) => ok(this.runsOf(control, query)));
       case 'GET /runs/:n':
         return this.withRun(first, (stored) => ok(stored.run));
       case 'GET /runs/:n/results':
         return this.withRun(first, (stored) => ok(this.results(stored, query)));
       case 'POST /suggestions':
-        return ok({ items: this.suggestions });
+        return ok({ items: this.suggest(body as { rootEntity?: string; max?: number } | null) });
       case 'POST /suggestions/accept':
         return ok(
           { items: (body as { items: { name: string; description?: string; definition: Definition }[] }).items.map((item) => this.create(item)) },
@@ -317,6 +319,25 @@ export class FakeApi {
     });
     this.runs.push(stored);
     return ok(stored.run, 201);
+  }
+
+  /** The control's runs, newest first (by `startedAt`, then `id`), paged. */
+  private runsOf(control: Control, query: URLSearchParams): ApiPage<Run> {
+    const page = Number(query.get('page') ?? 1);
+    const pageSize = Number(query.get('pageSize') ?? 25);
+    const runs = this.runs
+      .map((stored) => stored.run)
+      .filter((run) => run.controlId === control.id)
+      .sort((a, b) => b.startedAt.localeCompare(a.startedAt) || b.id - a.id);
+    return { items: runs.slice((page - 1) * pageSize, page * pageSize), total: runs.length, page, pageSize };
+  }
+
+  /** The suggestions, kept to one root entity and to `max` of them when the request says so. */
+  private suggest(body: { rootEntity?: string; max?: number } | null): SuggestionItem[] {
+    const rooted = body?.rootEntity
+      ? this.suggestions.filter((item) => item.definition.rootEntity === body.rootEntity)
+      : this.suggestions;
+    return rooted.slice(0, body?.max ?? 10);
   }
 
   private results(stored: StoredRun, query: URLSearchParams): ApiPage<ResultItem> {

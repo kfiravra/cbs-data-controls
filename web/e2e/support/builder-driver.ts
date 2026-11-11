@@ -72,7 +72,7 @@ export class BuilderDriver {
     return (await group.getAttribute('data-group'))!;
   }
 
-  // ---------------------------------------------------------------- the root entity
+  // ---------------------------------------------------------------- what the control checks
 
   private async chooseRoot(key: string): Promise<void> {
     const options = this.page.getByTestId('root-entity');
@@ -82,9 +82,11 @@ export class BuilderDriver {
       await expect(wanted).toHaveAttribute('aria-checked', 'true');
       return;
     }
-    // arrow keys walk the radio group; next is the left arrow in a right-to-left page
-    await options.and(this.page.locator('[aria-checked="true"]')).focus();
-    for (let step = 0; step < (await options.count()); step++) {
+    // arrow keys walk the radio group; next is the left arrow in a right-to-left page. The group's one tab
+    // stop is the chosen card, or the first while nothing is chosen, and from no choice the first arrow
+    // chooses the first card
+    await options.and(this.page.locator('[tabindex="0"]')).focus();
+    for (let step = 0; step <= (await options.count()); step++) {
       if ((await wanted.getAttribute('aria-checked')) === 'true') {
         return;
       }

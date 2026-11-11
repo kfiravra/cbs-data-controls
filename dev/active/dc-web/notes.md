@@ -1,19 +1,22 @@
 # dc-web notes
 
 ## State
-All eight phases are done (2026-11-11). Phase 7 ran in the morning on Kfir's word: `origin/main` (`eec007d`, the
-engine and the api) merged into `feat/web`, both services started from this worktree against the shared
-database, the gate specs green on the real stack, on the pre-loaded list twice and on the build the api hosts.
-The six examples are in the dev `dq` under their Hebrew names. Kept by Kfir (2026-11-11): decision 38, the leave
-prompt; the four items the critiques left open stay open, and dc-delivery lists them as limitations.
+Phase 9, the UX pass, is in work on branch `feat/web-ux` (cut from `origin/main` at `612b2b7` on 2026-11-11;
+PR #4 is merged). Part 1, the one-page structure, is built and committed: the list as the parent route, the
+editor and the results in a panel over it, the tabs, the picker, the cards of what to check, the suggestions
+for a choice, the bar of the rule in words (`gates/phase-9-part-1.txt`: 326 unit tests, 186 mocked specs).
+The gate specs are rewritten for it and have not yet run on the real stack. Part 2 is next, as Kfir changed
+it: one visual direction, no stop.
 
 ## Next
-1. Kfir reads the Hebrew interface in the browser, on the stack this session leaves running
-   (`http://localhost:5000`). The texts added since his last reading are decisions 44 and 46.
-2. The PR is opened on his word at the end of this session; the merge is his.
-3. For dc-delivery (limitations, on Kfir's word): the phone results layout (the breakdown stands before the
-   records), nested groups unnamed for a screen reader, a conflict that discards the draft, a list row's count
-   that may belong to an older version of the rule. Each is in the Log of 2026-11-11 with its reason.
+1. Part 2: one direction dealt with the `design-taste-frontend` skill, applied as the only theme; why, in the
+   decisions below. `docs/design.md` is rewritten with it (decision 67).
+2. Part 3: `/impeccable critique` and polish, the gate on the real stack (dev server and hosted build),
+   `/check all --tests`, the phase review, push and PR on Kfir's word of 2026-11-11. No merge; the stack is
+   left running.
+3. Still open from the first gate, for dc-delivery (limitations, on Kfir's word): the phone results layout
+   (the breakdown stands before the records), nested groups unnamed for a screen reader, a conflict that
+   discards the draft, a list row's count that may belong to an older version of the rule.
 
 ## Blockers
 - None.
@@ -169,6 +172,53 @@ Taken on 2026-11-11 in the morning (Kfir's second message: "no questions"):
     process ids and logs are in the session's scratch folder, and `pkill -f "uvicorn app.main"` and
     `pkill -f DataControls.Api` stop them. The database container is not theirs to stop.
 
+### The UX pass (phase 9, 2026-11-11; Kfir: "no questions")
+53. Phase 9 has three commits and not one: the structure, the look, the review fixes. Each is one logical
+    change, and the first protects a day's work before the theme is replaced.
+54. `/impeccable shape` asks for an interview and a confirmation. Kfir said "no questions", so none was held:
+    the brief is Design R of the plan, built from his ten items, and what he did not spell out is decided here.
+55. The panel is a modal sheet at the inline end, as tall as the window and 1120px wide at most; it leaves
+    between 48px and 320px of the list in view at the start edge (the names column) and is the whole window
+    below 640. Not a centred dialog: beside the panel the names of the list stay readable. The list behind it
+    is inert under the scrim, and a click on the scrim closes the panel, as do its X and Esc.
+56. One address is added to the three that stay: `/controls/<id>/runs`, the results panel by the control. It is
+    where the name of a control that never ran leads (there is no run id to link to), and for a control with
+    runs it moves on to `/runs/<newest>`, replacing itself in the history.
+57. Under a panel the list keeps its search, tab and page in memory and gets them back in the address when the
+    panel closes. The panel's own query uses the same names (`page`, `search`), so the address cannot hold
+    both. A direct link to a panel opens it over the list's first page.
+58. The counts on the two tabs follow the search and the filter (one more request, one control of the other
+    tab, for its total). The line under the list's title ("6 active controls") is gone: the tabs say it.
+59. Item 5 ("no hover effect on the condition letters") is read as the results and the suggestions, where the
+    letters are now one static badge. The editor keeps its trace between a row and its clause in the bar at
+    the foot: it was not named, and with the sentence far from the rows it is what ties them. One line in
+    `_mark.scss` and two bindings remove it if Kfir meant the editor too.
+60. The picker of runs lists the 50 newest and is shown when the control has more than one run; with one run
+    the head says when it ran, as before. A run older than the 50 that is opened by its address joins the list.
+61. A new control starts with nothing chosen, and the conditions appear after the choice. The suggestions for
+    the choice are offered to a control that starts from nothing only (not to a copy, not to a draft from the
+    suggestions panel, not to a stored control). One fills the conditions, and the name and the description
+    only where nothing was typed; a toast gives back what was there. While they are computed one bar holds
+    their place; an engine that does not answer leaves nothing there and says nothing.
+62. The chain says how two neighbours connect with one text of `he.json`, `בכל {{one}} יש {{many}}`, filled
+    with the glossary's singular and plural labels and chosen by the relationship's cardinality. It is a
+    sentence of the interface about the glossary, not a rendering of a rule: the engine's renderer is untouched.
+63. The word "ישות" left `he.json` altogether (a unit guard keeps it out): the question is `מה רוצים לבדוק?`,
+    the list's column and filter are `מה נבדק`, and the two definition errors that named it are reworded.
+    `docs/PRODUCT.md` fixed "ישות ראשית" as vocabulary; that line is rewritten.
+64. The editor's `ביטול` button is gone: the panel's X is the way out, with the same question about a changed
+    draft (decision 38). The "back to the list" link of the no-violations state is gone for the same reason.
+    The archive action left the editor for the row; the confirmation keeps its text.
+65. The bar of the rule in words is two lines of sentence and one line of status high (two lines of status on
+    a narrow panel), whatever it holds: a longer sentence scrolls inside its room, and a status line that does
+    not fit is cut, since the same words stand in full under the condition they are about.
+66. Esc is heard in the capturing phase. Material's tooltip takes the first Esc for itself when one is shown,
+    and one is shown whenever the pointer rests where the panel's X appears; a user would press twice.
+67. `docs/design.md` is rewritten once, with the look (part 2): its layout and component sections are untrue
+    between the first commit of this phase and the second.
+68. Kfir changed part 2 while part 1 was being built (2026-11-11): one direction dealt with the
+    `design-taste-frontend` skill and applied as the only theme, the reason in these notes, and no stop.
+
 ## Reconciliation with `contracts/` (phase 2, 2026-11-11)
 Read: `api.md`, `errors.md`, `glossary.json`, `control-definition.schema.json`, the six examples and the thirteen
 invalid fixtures, as merged in `f9928bf`. Where they differ from Design E to M of the plan, the contracts were built:
@@ -282,6 +332,21 @@ file under `docs/`) and against what was built.
 - Dropped since the plan: the 1024 screenshot (main's §8 already says 390 and 1440), the missing
   `docs/design.md` row and the "client renders the text" gotcha of `.claude/CLAUDE.md` (both already right on
   main).
+- `docs/architecture.md` §8 and §9, since the UX pass of 2026-11-11: the client is one page. The list is the
+  parent route and the editor and the results open in a panel over it; the suggestions are the same panel. The
+  addresses of §8 stand, and `/controls/<id>/runs` is added. Screen 1: the name of a control opens its last run
+  (or its state before a first run), edit is the pencil, archive is an action of the row, and the state filter
+  is two tabs with counts. Screen 2: the root entity is chosen as an answer to "what to check" from one card per
+  entity, with nothing chosen in a new control, and a new control is offered up to three suggestions for the
+  choice (`POST /suggestions` with `rootEntity`, `max: 3`). Screen 3: a picker of the control's runs
+  (`GET /controls/{id}/runs`, the 50 newest). The reusable components list: "relationship map" is now "entity
+  cards" and "entity chain".
+- `docs/assumptions-limitations-extensions.md`: the list's search, tab and page are not in the address while a
+  panel is open (they are kept in memory and return when it closes), so a link to a run or a control opens it
+  over the first page of the list. The picker offers a control's 50 newest runs. The word for an entity is not
+  shown anywhere in the interface.
+- README, the screenshots: a picture with a panel open is of the window, not of the whole page; the gate leaves a
+  fifth name, `gate-panel`.
 
 ## Log
 A review's line follows plan.md Design Q: who reviewed and on which model, the diff range, findings per axis and
@@ -690,3 +755,19 @@ rewrote. A review that found nothing, or did not run, is logged as that.
   properly restarted api and stands as written. In the same commit, the review's item on the 49/50 ms edge,
   left an hour earlier, is taken after all: the mocked spec now reads 9, 49, 50 and 412 ms (36 passed, 2
   skipped by project). That commit is pushed to the open PR.
+- 2026-11-11 the UX pass (phase 9) opened on Kfir's message after his first read of the running app, PR #4
+  merged. His ten items of structure: one page with the editor and the results in a wide panel over the list
+  (X, Esc, focus back to the row, no back arrow, full screen on a phone, the routes kept); the name opens the
+  last run and edit stays on the pencil; a picker of the control's runs; two tabs with counts in place of the
+  state filter and archive on the row; no hover effect on the condition letters in the results; the
+  suggestions as a wide panel of cards with a refresh and a line about the current data; up to three
+  suggestions for a new control's choice; the word "ישות" out, a plain question with a card per entity and a
+  small chain; name and description at a fixed width, the description two rows; the rule in words as a bar at
+  the foot beside save, with no layout shift. His word on the look: "this design looks not 2026, quite boring".
+  He gave his word for the agent runs and critiques of the pass, and for its push and PR; no merge.
+- 2026-11-11 phase 9, part 1: the structure is built as Design R says, with decisions 53 to 67 for what the
+  ten items left open. No `contracts/`, api or engine file is touched. Costs, said here and not waited for
+  (he said no questions): four unit runs (about 40 s each), six runs of mocked specs (0.5 to 2.3 minutes),
+  one build; no agent. `gates/phase-9-part-1.txt`: ngc, lint, the e2e type check, 326 unit tests in 33 files,
+  the build (555 kB initial, 139 kB transfer; it was 545 and 137), `e2e/mocked` 186 passed and 2 skipped by
+  project on purpose. While it was being built Kfir changed part 2 (decision 68).

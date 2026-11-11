@@ -10,9 +10,12 @@ export class SuggestionsApi {
   private readonly http = inject(HttpClient);
   private readonly base = `${API_BASE}/suggestions`;
 
-  /** Drafts the engine proposes from the glossary and the data. Nothing is stored or run. */
-  request(): Observable<SuggestionsAnswer> {
-    return this.http.post<SuggestionsAnswer>(this.base, {});
+  /**
+   * Drafts the engine proposes from the glossary and the data as they are now. Nothing is stored or run.
+   * `rootEntity` keeps the drafts about one entity; `max` is how many are wanted at most.
+   */
+  request(only: { readonly rootEntity?: string; readonly max?: number } = {}): Observable<SuggestionsAnswer> {
+    return this.http.post<SuggestionsAnswer>(this.base, only);
   }
 
   /** Creates the chosen drafts as controls: all of them or none. */

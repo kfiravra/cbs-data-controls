@@ -1,29 +1,24 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
-import { RouterLink } from '@angular/router';
-import { TranslatePipe } from '@ngx-translate/core';
 
-import { IconComponent } from '../icon/icon.component';
 import { SkeletonComponent } from '../skeleton/skeleton.component';
 
 /**
- * The head of a screen: the way back to the list, the title, one meta line, and the actions (projected).
- * The title may be user data, so it is isolated from the direction of the text around it. While the meta
- * line is on its way a bar holds its place, so the screen under the head does not move when it arrives.
+ * The head of the list and of a panel: the title, one meta line (or what is projected as `[meta]`, such as a
+ * panel's run picker), and the actions (projected). The title may be user data, so it is isolated from the
+ * direction of the text around it, and it can take the focus: a panel that closes with nowhere to go back to
+ * puts it there. While the meta line is on its way a bar holds its place, so what stands under the head
+ * does not move when it arrives.
  */
 @Component({
   selector: 'app-page-head',
-  imports: [IconComponent, RouterLink, SkeletonComponent, TranslatePipe],
+  imports: [SkeletonComponent],
   template: `
     <div class="page-head">
       <div class="page-head__text">
-        @if (back()) {
-          <a class="back" routerLink="/" data-testid="back-to-list">
-            <app-icon name="arrow_back" size="sm" [mirrored]="true" />{{ 'common.backToList' | translate }}
-          </a>
-        }
-        <h1 class="t-page" data-testid="page-title">
+        <h1 class="t-page" tabindex="-1" [id]="titleId()" [attr.data-testid]="titleId() ?? 'page-title'">
           <bdi>{{ title() }}</bdi>
         </h1>
+        <ng-content select="[meta]" />
         @if (meta(); as text) {
           <p class="muted num" data-testid="page-meta">{{ text }}</p>
         } @else if (metaPending()) {
@@ -55,8 +50,9 @@ import { SkeletonComponent } from '../skeleton/skeleton.component';
 })
 export class PageHeadComponent {
   readonly title = input.required<string>();
+  /** The id of the title, and its test id: a panel is named by it (`aria-labelledby`). The list's title has none. */
+  readonly titleId = input<string>();
   readonly meta = input<string>();
   /** Whether a meta line is on its way: its place is held until it arrives. */
   readonly metaPending = input(false);
-  readonly back = input(false);
 }

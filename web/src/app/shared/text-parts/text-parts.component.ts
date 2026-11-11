@@ -48,8 +48,8 @@ export class TextPartsComponent {
   /** Node id to mark. Leave it out for a text that carries its mark elsewhere (a reason, a breakdown row). */
   readonly marks = input<ReadonlyMap<string, string>>(NO_MARKS);
   readonly markValues = input(false);
+  /** The node whose mark is filled, in a screen that traces its conditions (the editor); null in one that does not. */
   readonly traced = input<string | null>(null);
-  readonly active = input<string | null>(null);
   readonly open = input<ReadonlySet<string>>(NONE);
   readonly changed = input<ReadonlySet<string>>(NONE);
   /** The node under the pointer, or null when the pointer leaves a clause. */
@@ -79,9 +79,6 @@ export class TextPartsComponent {
   protected stateOf(id: string): MarkState {
     if (this.open().has(id)) {
       return 'open';
-    }
-    if (this.active() === id) {
-      return 'active';
     }
     return this.traced() === id ? 'traced' : 'resting';
   }

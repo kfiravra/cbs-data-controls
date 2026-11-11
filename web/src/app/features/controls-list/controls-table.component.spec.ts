@@ -100,16 +100,28 @@ describe('ControlsTableComponent', () => {
     });
   });
 
-  it('links the name to the editor and labels the root entity from the glossary', async () => {
-    await draw([control(7, null)]);
+  it('links the name to the results of the last run, and the pencil to the editor', async () => {
+    await draw([control(7, ran('succeeded', 3))]);
 
     const name = cell(rows()[0], 'control-link')!;
-    expect(name.getAttribute('href')).toBe('/controls/7');
+    expect(name.getAttribute('href')).toBe('/runs/40');
     expect(name.querySelector('bdi')!.textContent).toBe('control 7');
+    expect(cell(rows()[0], 'edit')!.getAttribute('href')).toBe('/controls/7');
+  });
+
+  it('links the name of a control that never ran to the control\'s own results, where it can be run', async () => {
+    await draw([control(7, null)]);
+
+    expect(cell(rows()[0], 'control-link')!.getAttribute('href')).toBe('/controls/7/runs');
+  });
+
+  it('labels what the control checks from the glossary', async () => {
+    await draw([control(7, null)]);
+
     expect(rows()[0].textContent).toContain(SYNTHETIC_GLOSSARY.entities[0].label.plural['he']);
   });
 
-  it('shows a dash for the root entity when the glossary could not be read', async () => {
+  it('shows a dash for what the control checks when the glossary could not be read', async () => {
     await draw([control(7, null)], { glossary: null });
 
     expect(rows()[0].querySelectorAll('td')[1].textContent?.trim()).toBe(t('common.none'));
@@ -147,12 +159,24 @@ describe('ControlsTableComponent', () => {
     }
   });
 
-  it('offers only duplicate for an archived control, and marks it', async () => {
+  it('asks to archive the control of the row whose archive button is pressed, and names the button by the control', async () => {
+    const asked: number[] = [];
+    fixture.componentInstance.archive.subscribe((control) => asked.push(control.id));
+    await draw([control(1, null), control(2, null)]);
+
+    const button = cell(rows()[1], 'archive')!;
+    button.click();
+
+    expect(asked).toEqual([2]);
+    expect(button.getAttribute('aria-label')).toBe(t('list.actions.archiveNamed', { name: 'control 2' }));
+  });
+
+  it('offers only duplicate for an archived control: it cannot be run, edited or archived again', async () => {
     await draw([control(1, null, { isActive: false })]);
 
-    expect(cell(rows()[0], 'archived-chip')!.textContent).toBe(t('list.archived'));
     expect(cell(rows()[0], 'run')).toBeNull();
     expect(cell(rows()[0], 'edit')).toBeNull();
+    expect(cell(rows()[0], 'archive')).toBeNull();
     expect(cell(rows()[0], 'duplicate')!.getAttribute('href')).toBe('/controls/new?from=1');
   });
 

@@ -56,3 +56,10 @@ export interface Sent {
   readonly draft: DraftGroup;
   readonly rootEntity: string | null;
 }
+
+/** What a removal took away, and the way back. */
+export interface Removal {
+  /** The mark of the condition that was removed; undefined for a group, which goes with its conditions. */
+  readonly mark?: string;
+  readonly undo: () => void;
+}

@@ -31,6 +31,13 @@ describe('translation file', () => {
     const empty = leaves(he, '').filter(([, value]) => typeof value !== 'string' || value.trim() === '');
     expect(empty.map(([key]) => key)).toEqual([]);
   });
+
+  it('never says "entity": the interface asks what to check, in the user\'s own words', () => {
+    // the Hebrew word for a data entity, built from its code points so this file holds no Hebrew
+    const entity = String.fromCodePoint(0x5d9, 0x5e9, 0x5d5, 0x5ea);
+    const saying = leaves(he, '').filter(([, value]) => typeof value === 'string' && value.includes(entity));
+    expect(saying.map(([key]) => key)).toEqual([]);
+  });
 });
 
 /** The codes of one catalogue table of contracts/errors.md, read as the file says to read them. */

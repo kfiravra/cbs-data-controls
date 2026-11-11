@@ -8,7 +8,6 @@ describe('EditorStore: the validate loop', () => {
   const settle = () => h.settle();
   const wait = (milliseconds: number) => h.wait(milliseconds);
   const firstRow = () => h.firstRow();
-  const open = (...args: Parameters<typeof h.open>) => h.open(...args);
   const openComplete = () => h.openComplete();
   const answerValidate = (...args: Parameters<typeof h.answerValidate>) => h.answerValidate(...args);
 
@@ -20,7 +19,7 @@ describe('EditorStore: the validate loop', () => {
   afterEach(() => h.finish());
 
   it('sends nothing for an unfinished draft', async () => {
-    await open({ id: null });
+    await h.openNew();
     store.apply({ kind: 'field', id: firstRow().id, left: { field: 'total' }, scope: 'order' });
     settle();
 

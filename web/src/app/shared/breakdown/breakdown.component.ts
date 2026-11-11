@@ -4,7 +4,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { ConditionSummary } from '../../core/api/api.types';
 import { CountedService } from '../../core/i18n/counted.service';
 import { FormatService } from '../../core/i18n/format.service';
-import { MarkComponent, MarkState } from '../mark/mark.component';
+import { MarkComponent } from '../mark/mark.component';
 import { TextPartsComponent } from '../text-parts/text-parts.component';
 
 interface Meter {
@@ -20,8 +20,8 @@ interface Meter {
 /**
  * Violations by condition, as a meter list: a first row for all violations, then one row per condition a
  * run can match with its mark, its clause, how many violations match it and that share as a bar. Each row
- * is a button that filters the table; the chosen row is pressed and its mark turns active. Counts are over
- * all violations, also above the row cap.
+ * is a button that filters the table; the chosen row is pressed. The marks are badges and answer to nothing.
+ * Counts are over all violations, also above the row cap.
  */
 @Component({
   selector: 'app-breakdown',
@@ -49,13 +49,9 @@ interface Meter {
           [class.meter--unmarked]="!marks().has(meter.id)"
           [style.--share]="meter.share"
           (click)="filter.emit(active() === meter.id ? null : meter.id)"
-          (focus)="trace.emit(meter.id)"
-          (blur)="trace.emit(null)"
-          (pointerenter)="trace.emit(meter.id)"
-          (pointerleave)="trace.emit(null)"
         >
           @if (marks().get(meter.id); as mark) {
-            <app-mark [label]="mark" [state]="stateOf(meter.id)" [name]="'common.condition' | translate: { mark }" />
+            <app-mark [label]="mark" [name]="'common.condition' | translate: { mark }" />
           }
           <span class="meter__clause"><app-text-parts [parts]="meter.parts" /></span>
           <span class="meter__count" aria-hidden="true" data-testid="breakdown-count">{{ meter.count }}</span>
@@ -82,9 +78,7 @@ export class BreakdownComponent {
   readonly marks = input.required<ReadonlyMap<string, string>>();
   /** The condition the table is filtered by; null for all violations. */
   readonly active = input<string | null>(null);
-  readonly traced = input<string | null>(null);
   readonly filter = output<string | null>();
-  readonly trace = output<string | null>();
 
   protected readonly totalText = computed(() => this.format.number(this.total()));
   protected readonly totalCounted = computed(() => this.countedText.text('results.violations', this.total()));
@@ -104,11 +98,4 @@ export class BreakdownComponent {
         : [],
     ),
   );
-
-  protected stateOf(id: string): MarkState {
-    if (this.active() === id) {
-      return 'active';
-    }
-    return this.traced() === id ? 'traced' : 'resting';
-  }
 }

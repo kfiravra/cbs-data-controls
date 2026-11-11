@@ -1,4 +1,5 @@
-// The frame of every screen: the bar, the page container, the page head.
+// The frame: the bar, the page container, the page head, the tabs of the list, and the panel that opens
+// over the list.
 
 .appbar {
   background: var(--color-bar);
@@ -71,25 +72,6 @@
   }
 }
 
-.back {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  justify-self: start;
-  min-block-size: var(--size-control);
-  margin-block: calc(-1 * var(--space-3)) calc(-1 * var(--space-2));
-  font-size: var(--text-small);
-  font-weight: 500;
-  color: var(--color-muted);
-  text-decoration: none;
-  transition: color var(--duration-out) var(--ease-out);
-
-  &:hover {
-    color: var(--color-ink);
-    transition-duration: var(--duration-in);
-  }
-}
-
 .section {
   margin-block-start: var(--space-6);
 }
@@ -132,5 +114,180 @@
 
   .section {
     margin-block-start: var(--space-7);
+  }
+}
+
+// the two tabs of the list: one underline, and the count of each as a chip
+.tabs {
+  display: flex;
+  gap: var(--space-5);
+  margin-block-end: var(--space-4);
+  border-block-end: 1px solid var(--color-line-strong);
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-block-size: var(--size-control);
+  margin-block-end: -1px;
+  padding: 0 var(--space-1);
+  border: 0;
+  border-block-end: 2px solid transparent;
+  background: none;
+  font-weight: 500;
+  color: var(--color-muted);
+  transition:
+    color var(--duration-out) var(--ease-out),
+    border-color var(--duration-out) var(--ease-out);
+
+  &:hover {
+    color: var(--color-ink);
+    transition-duration: var(--duration-in);
+  }
+
+  &[aria-selected='true'] {
+    border-block-end-color: var(--color-ink);
+    color: var(--color-ink);
+  }
+}
+
+.tab__count {
+  display: inline-grid;
+  place-items: center;
+  min-inline-size: 24px;
+  block-size: 22px;
+  padding-inline: 6px;
+  border-radius: var(--radius-sm);
+  background: var(--color-tonal);
+  font-size: var(--text-label);
+  line-height: 1;
+}
+
+// The panel: a control or a run, over the list. It stands at the inline end, as tall as the window, and the
+// list stays in view beside it; below 640 it is the whole window. What is inside answers to the panel's own
+// width (`@container sheet`), not to the window's.
+.sheet-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.sheet-scrim {
+  position: absolute;
+  inset: 0;
+  background: var(--color-scrim);
+  animation: scrim-in var(--duration-panel) var(--ease-out);
+}
+
+.sheet,
+.app-sheet {
+  --sheet-pad: var(--space-4);
+
+  container: sheet / inline-size;
+}
+
+.sheet {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  inline-size: 100%;
+  block-size: 100%;
+  background: var(--color-ground);
+  box-shadow: var(--shadow-overlay);
+  animation: sheet-in var(--duration-panel) var(--ease-out);
+
+  // the keyboard starts from the panel itself: a container shows no ring
+  &:focus {
+    outline: none;
+  }
+}
+
+@keyframes sheet-in {
+  from {
+    opacity: 0;
+    transform: translateX(calc(var(--inline-end) * var(--space-6)));
+  }
+}
+
+@keyframes scrim-in {
+  from {
+    opacity: 0;
+  }
+}
+
+// the screen in the panel: a head and a foot that stay, and a body that scrolls between them
+.sheet__screen {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-block-size: 0;
+}
+
+.sheet__head {
+  flex: none;
+  padding: var(--space-4) var(--sheet-pad);
+  // the room of the close button, which stands over the head's end
+  padding-inline-end: calc(var(--space-3) + var(--size-control) + var(--space-2));
+  border-block-end: 1px solid var(--color-line);
+
+  .page-head {
+    margin-block-end: 0;
+  }
+}
+
+.sheet__body {
+  flex: 1 1 auto;
+  min-block-size: 0;
+  padding: var(--space-5) var(--sheet-pad) var(--space-7);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.sheet__foot {
+  flex: none;
+}
+
+// a foot of buttons: at the end edge, the main one last
+.sheet__foot--actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--sheet-pad);
+  border-block-start: 1px solid var(--color-line-strong);
+}
+
+.sheet__close {
+  position: absolute;
+  inset-block-start: var(--space-3);
+  inset-inline-end: var(--space-3);
+  z-index: 1;
+}
+
+// the picker of a control's runs, with what the head says beside it
+.run-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+}
+
+.run-pick {
+  inline-size: min(100%, 23rem);
+}
+
+@media (min-width: 640px) {
+  .sheet {
+    inline-size: min(1120px, 100% - clamp(48px, 22vw, 320px));
+    border-inline-start: 1px solid var(--color-line-strong);
+  }
+
+  .sheet,
+  .app-sheet {
+    --sheet-pad: var(--space-6);
   }
 }

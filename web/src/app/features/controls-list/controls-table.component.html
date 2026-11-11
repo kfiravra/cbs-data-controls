@@ -3,7 +3,7 @@
     <thead>
       <tr>
         <th scope="col" class="col-40">{{ 'list.columns.control' | translate }}</th>
-        <th scope="col" class="col-16">{{ 'list.columns.entity' | translate }}</th>
+        <th scope="col" class="col-16">{{ 'list.columns.checked' | translate }}</th>
         <th scope="col" class="col-18">{{ 'list.columns.lastRun' | translate }}</th>
         <th scope="col" class="col-16">{{ 'list.columns.result' | translate }}</th>
         <th scope="col"><span class="sr-only">{{ 'list.columns.actions' | translate }}</span></th>
@@ -29,13 +29,10 @@
                 class="cell-title"
                 data-testid="control-link"
                 [id]="'control-' + row.control.id"
-                [routerLink]="['/controls', row.control.id]"
+                [routerLink]="row.results"
               >
                 <bdi>{{ row.control.name }}</bdi>
               </a>
-              @if (!row.control.isActive) {
-                <span class="chip" data-testid="archived-chip">{{ 'list.archived' | translate }}</span>
-              }
               @if (row.control.description; as description) {
                 <p class="cell-desc"><bdi>{{ description }}</bdi></p>
               }
@@ -120,6 +117,18 @@
               >
                 <app-icon name="content_copy" />
               </a>
+              @if (row.control.isActive) {
+                <button
+                  class="icon-btn"
+                  type="button"
+                  data-testid="archive"
+                  [attr.aria-label]="'list.actions.archiveNamed' | translate: { name: row.control.name }"
+                  [matTooltip]="'list.actions.archive' | translate"
+                  (click)="archive.emit(row.control)"
+                >
+                  <app-icon name="archive" />
+                </button>
+              }
             </td>
           </tr>
         }

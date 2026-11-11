@@ -116,6 +116,36 @@ describe('SuggestionsDialogComponent', () => {
     expect(host().querySelectorAll('input[type="checkbox"]:checked')).toHaveLength(0);
   });
 
+  it('says under its title that the suggestions are computed from the data as they are now', async () => {
+    await opened();
+
+    expect(host().querySelector('[data-testid="page-meta"]')!.textContent).toBe(t('suggestions.note'));
+  });
+
+  it('computes the suggestions again on a refresh: the cards stay meanwhile, and the ticks are dropped', async () => {
+    await opened();
+    await tick(1);
+    const refresh = host().querySelector<HTMLButtonElement>('[data-testid="suggestions-refresh"]')!;
+
+    refresh.click();
+    await settled();
+    const request = await next('/api/v1/suggestions');
+    expect(request.request.method).toBe('POST');
+    // the pressed button keeps the focus, and a second press asks nothing more
+    expect(refresh.getAttribute('aria-disabled')).toBe('true');
+    refresh.click();
+    http.expectNone('/api/v1/suggestions');
+    expect(drafts()).toHaveLength(3);
+
+    request.flush({ items: [item('fresh'), item('second')] });
+    await settled();
+
+    expect(drafts().map((draft) => draft.querySelector('[data-testid="suggestion-name"]')!.textContent)).toEqual(['fresh', 'second']);
+    expect(host().querySelectorAll('input[type="checkbox"]:checked')).toHaveLength(0);
+    expect(createButton().disabled).toBe(true);
+    expect(refresh.hasAttribute('aria-disabled')).toBe(false);
+  });
+
   it('counts the selection on the main button, and disables it while nothing is ticked', async () => {
     await opened();
     expect(createButton().disabled).toBe(true);

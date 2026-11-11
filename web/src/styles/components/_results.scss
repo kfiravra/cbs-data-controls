@@ -1,4 +1,5 @@
-// The run summary, the breakdown by condition and the split layout of the results screen.
+// The run summary, the breakdown by condition and the split layout of the results panel. The layout answers
+// to the panel's width, not the window's.
 
 .summary {
   display: grid;
@@ -44,7 +45,7 @@
   }
 }
 
-@media (min-width: 1024px) {
+@container sheet (min-width: 900px) {
   .summary {
     grid-template-columns: auto minmax(0, 1fr);
     align-items: end;
@@ -147,16 +148,17 @@
   }
 }
 
-@media (min-width: 1024px) {
+@container sheet (min-width: 900px) {
   .split {
-    grid-template-columns: minmax(0, 1fr) 360px;
-    gap: var(--space-7);
+    grid-template-columns: minmax(0, 1fr) 340px;
+    gap: var(--space-6);
     align-items: start;
   }
 
+  // in view while the records scroll in the panel's body
   .split__side {
     position: sticky;
-    inset-block-start: var(--space-5);
+    inset-block-start: 0;
     order: 2;
   }
 }

@@ -1,132 +1,181 @@
-<!-- "6 active controls" is a fact about the whole state; under a search or an entity filter the line says
-     how many were found, so a narrowed list never reads as the whole -->
-<app-page-head
-  [title]="'list.title' | translate"
-  [meta]="
-    store.page()
-      ? ((narrowed() ? 'list.count.found' : 'list.count.' + view().state) | plural: store.page()!.total)
-      : undefined
-  "
-  [metaPending]="store.loading()"
->
-  <!-- in the first-use state the panel carries the two actions: one filled button in a view -->
-  @if (empty() !== 'first') {
-    <button class="btn btn--tonal" type="button" data-testid="open-suggestions" (click)="suggest()">
-      <app-icon name="lightbulb" />{{ 'list.actions.suggestions' | translate }}
-    </button>
-    <a class="btn btn--primary" routerLink="/controls/new" data-testid="new-control">
-      <app-icon name="add" />{{ 'list.actions.new' | translate }}
-    </a>
-  }
-</app-page-head>
-
-<p class="sr-only" role="status" data-testid="run-announcement">{{ announcement() }}</p>
-
-<div class="stack page-banners">
-  @if (store.glossaryError(); as error) {
-    <app-error-banner data-source="glossary" [error]="error" (retry)="store.reload()" />
-  }
-  @if (store.failure(); as error) {
-    <app-error-banner data-source="read" [error]="error" (retry)="store.reload()" />
-  }
-  @if (store.runFailure(); as error) {
-    <!-- tried again with the row's own button -->
-    <app-error-banner data-source="run" [error]="error" [retryable]="false" />
-  }
-</div>
-
-@if (empty() === 'first') {
-  <app-state-panel icon="rule" data-testid="first-use" [title]="'list.first.title' | translate">
-    <p>{{ 'list.first.body' | translate }}</p>
-    <a actions class="btn btn--primary" routerLink="/controls/new">
-      <app-icon name="add" />{{ 'list.actions.new' | translate }}
-    </a>
-    <button actions class="btn btn--tonal" type="button" data-testid="open-suggestions" (click)="suggest()">
-      <app-icon name="lightbulb" />{{ 'list.actions.suggestions' | translate }}
-    </button>
-  </app-state-panel>
-} @else {
-  <app-toolbar
-    [search]="view().search"
-    [searchLabel]="'list.search.label' | translate"
-    [placeholder]="'list.search.placeholder' | translate"
-    [filtersLabel]="'list.filters.label' | translate"
-    [filtersActive]="view().entity !== null || view().state !== 'active'"
-    (searchChange)="go({ search: $event })"
-  >
-    <mat-form-field class="toolbar__filter" appearance="outline" subscriptSizing="dynamic">
-      <mat-select
-        data-testid="filter-entity"
-        [aria-label]="'list.filters.entity' | translate"
-        [value]="view().entity ?? all"
-        (selectionChange)="go({ entity: $event.value || null })"
-      >
-        <mat-select-trigger>
-          <span class="field__prefix">{{ 'list.filters.entity' | translate }}:</span>
-          {{ entityLabel() ?? ('list.filters.all' | translate) }}
-        </mat-select-trigger>
-        <mat-option [value]="all">{{ 'list.filters.all' | translate }}</mat-option>
-        @for (entity of entities(); track entity.key) {
-          <mat-option [value]="entity.key">{{ language.text(entity.label.plural) }}</mat-option>
-        }
-      </mat-select>
-    </mat-form-field>
-    <mat-form-field class="toolbar__filter" appearance="outline" subscriptSizing="dynamic">
-      <mat-select
-        data-testid="filter-state"
-        [aria-label]="'list.filters.state' | translate"
-        [value]="view().state"
-        (selectionChange)="go({ state: $event.value })"
-      >
-        <mat-select-trigger>
-          <span class="field__prefix">{{ 'list.filters.state' | translate }}:</span>
-          {{ 'list.states.' + view().state | translate }}
-        </mat-select-trigger>
-        @for (state of states; track state) {
-          <mat-option [value]="state">{{ 'list.states.' + state | translate }}</mat-option>
-        }
-      </mat-select>
-    </mat-form-field>
-  </app-toolbar>
-
-  @if (empty() === 'noActive') {
-    <app-state-panel data-testid="no-active" [title]="'list.noActive.title' | translate">
-      <p>{{ 'list.noActive.body' | translate }}</p>
-      <button actions class="btn btn--tonal" type="button" (click)="go({ state: 'archived' })">
-        {{ 'list.noActive.show' | translate }}
+<!-- under an open panel the list is still seen, and is out of reach of the pointer and the keyboard -->
+<div #listing class="listing" data-testid="listing" [attr.inert]="panelOpen() ? '' : null">
+  <app-page-head [title]="'list.title' | translate">
+    <!-- in the first-use state the panel carries the two actions: one filled button in a view -->
+    @if (empty() !== 'first') {
+      <button class="btn btn--tonal" type="button" data-testid="open-suggestions" (click)="suggest()">
+        <app-icon name="lightbulb" />{{ 'list.actions.suggestions' | translate }}
       </button>
-    </app-state-panel>
-  } @else if (empty() === 'noMatch') {
-    <app-state-panel
-      role="status"
-      data-testid="no-match"
-      [title]="
-        view().search
-          ? ('list.noMatch.title' | translate: { term: view().search })
-          : ('list.noMatch.titleFilter' | translate)
-      "
-    >
-      <p>{{ 'list.noMatch.body' | translate }}</p>
-      <button actions class="btn btn--tonal" type="button" (click)="go({ search: '', entity: null, state: 'active' })">
-        {{ 'list.noMatch.clear' | translate }}
+      <a class="btn btn--primary" routerLink="/controls/new" data-testid="new-control">
+        <app-icon name="add" />{{ 'list.actions.new' | translate }}
+      </a>
+    }
+  </app-page-head>
+
+  <p class="sr-only" role="status" data-testid="run-announcement">{{ announcement() }}</p>
+
+  <div class="stack page-banners">
+    @if (store.glossaryError(); as error) {
+      <app-error-banner data-source="glossary" [error]="error" (retry)="store.reload()" />
+    }
+    @if (store.failure(); as error) {
+      <app-error-banner data-source="read" [error]="error" (retry)="store.reload()" />
+    }
+    @if (store.runFailure(); as error) {
+      <!-- tried again with the row's own button -->
+      <app-error-banner data-source="run" [error]="error" [retryable]="false" />
+    }
+    @if (store.archiveFailure(); as error) {
+      <app-error-banner data-source="archive" [error]="error" [retryable]="false" />
+    }
+  </div>
+
+  @if (empty() === 'first') {
+    <app-state-panel icon="rule" data-testid="first-use" [title]="'list.first.title' | translate">
+      <p>{{ 'list.first.body' | translate }}</p>
+      <a actions class="btn btn--primary" routerLink="/controls/new">
+        <app-icon name="add" />{{ 'list.actions.new' | translate }}
+      </a>
+      <button actions class="btn btn--tonal" type="button" data-testid="open-suggestions" (click)="suggest()">
+        <app-icon name="lightbulb" />{{ 'list.actions.suggestions' | translate }}
       </button>
     </app-state-panel>
   } @else {
-    <app-controls-table
-      [controls]="store.page()?.items ?? []"
-      [glossary]="store.glossary()"
-      [running]="store.running()"
-      [loading]="store.page() === null && store.loading()"
-      (run)="run($event)"
-    />
-    @if (store.page(); as page) {
-      <app-table-foot
-        rangeKey="list.range"
-        [total]="page.total"
-        [page]="page.page"
-        [pageSize]="page.pageSize"
-        (pageChange)="go({ page: $event })"
-      />
-    }
+    <!-- the counts follow the search and the filter: a tab says how many of what was asked for it holds -->
+    <div class="tabs" role="tablist" [attr.aria-label]="'list.tabs.label' | translate">
+      @for (state of states; track state) {
+        <button
+          class="tab"
+          type="button"
+          role="tab"
+          aria-controls="list-panel"
+          [id]="'tab-' + state"
+          [attr.data-testid]="'tab-' + state"
+          [attr.aria-selected]="view().state === state"
+          [attr.tabindex]="view().state === state ? 0 : -1"
+          (click)="go({ state })"
+          (keydown)="onTabKey($event)"
+        >
+          {{ 'list.tabs.' + state | translate }}
+          @if (counts()[state]; as count) {
+            <span class="tab__count num" data-testid="tab-count">{{ count }}</span>
+          }
+        </button>
+      }
+    </div>
+
+    <div class="stack" id="list-panel" role="tabpanel" [attr.aria-labelledby]="'tab-' + view().state">
+      @if (view().state === 'archived') {
+        <p class="muted t-small" data-testid="archive-note">{{ 'list.archiveNote' | translate }}</p>
+      }
+      <app-toolbar
+        [search]="view().search"
+        [searchLabel]="'list.search.label' | translate"
+        [placeholder]="'list.search.placeholder' | translate"
+        [filtersLabel]="'list.filters.label' | translate"
+        [filtersActive]="view().entity !== null"
+        (searchChange)="go({ search: $event })"
+      >
+        <mat-form-field class="toolbar__filter" appearance="outline" subscriptSizing="dynamic">
+          <mat-select
+            data-testid="filter-entity"
+            [aria-label]="'list.filters.checked' | translate"
+            [value]="view().entity ?? all"
+            (selectionChange)="go({ entity: $event.value || null })"
+          >
+            <mat-select-trigger>
+              <span class="field__prefix">{{ 'list.filters.checked' | translate }}:</span>
+              {{ entityLabel() ?? ('list.filters.all' | translate) }}
+            </mat-select-trigger>
+            <mat-option [value]="all">{{ 'list.filters.all' | translate }}</mat-option>
+            @for (entity of entities(); track entity.key) {
+              <mat-option [value]="entity.key">{{ language.text(entity.label.plural) }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </app-toolbar>
+
+      @switch (empty()) {
+        @case ('noActive') {
+          <app-state-panel data-testid="no-active" [title]="'list.noActive.title' | translate">
+            <p>{{ 'list.noActive.body' | translate }}</p>
+            <button actions class="btn btn--tonal" type="button" (click)="go({ state: 'archived' })">
+              {{ 'list.noActive.show' | translate }}
+            </button>
+          </app-state-panel>
+        }
+        @case ('noArchived') {
+          <app-state-panel role="status" data-testid="no-archived" [title]="'list.noArchived.title' | translate">
+            <p>{{ 'list.noArchived.body' | translate }}</p>
+          </app-state-panel>
+        }
+        @case ('noMatch') {
+          <app-state-panel
+            role="status"
+            data-testid="no-match"
+            [title]="
+              view().search
+                ? ('list.noMatch.title' | translate: { term: view().search })
+                : ('list.noMatch.titleFilter' | translate)
+            "
+          >
+            <p>{{ 'list.noMatch.body' | translate }}</p>
+            <button actions class="btn btn--tonal" type="button" (click)="go({ search: '', entity: null })">
+              {{ 'list.noMatch.clear' | translate }}
+            </button>
+          </app-state-panel>
+        }
+        @default {
+          <app-controls-table
+            [controls]="store.page()?.items ?? []"
+            [glossary]="store.glossary()"
+            [running]="store.running()"
+            [loading]="store.page() === null && store.loading()"
+            (run)="run($event)"
+            (archive)="archive($event)"
+          />
+          @if (store.page(); as page) {
+            <app-table-foot
+              rangeKey="list.range"
+              [total]="page.total"
+              [page]="page.page"
+              [pageSize]="page.pageSize"
+              (pageChange)="go({ page: $event })"
+            />
+          }
+        }
+      }
+    </div>
   }
+</div>
+
+@if (panelOpen()) {
+  <!-- the panel: a control or a run, over the list. A click beside it, its X and Esc close it -->
+  <div class="sheet-layer" data-testid="panel-layer">
+    <!-- a click beside the panel is the pointer's shortcut for its X; the keyboard has the X and Esc -->
+    <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
+    <div class="sheet-scrim" data-testid="panel-scrim" (click)="closePanel()"></div>
+    <section
+      #sheet
+      class="sheet"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="panel-title"
+      tabindex="-1"
+      data-testid="panel"
+      cdkTrapFocus
+    >
+      <button
+        class="icon-btn sheet__close"
+        type="button"
+        data-testid="panel-close"
+        [attr.aria-label]="'common.close' | translate"
+        [matTooltip]="'common.close' | translate"
+        (click)="closePanel()"
+      >
+        <app-icon name="close" />
+      </button>
+      <router-outlet (activate)="entered()" (deactivate)="left($event)" />
+    </section>
+  </div>
 }

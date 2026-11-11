@@ -3,26 +3,29 @@ import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { catchError, firstValueFrom, map, of, switchMap, timer } from 'rxjs';
 
 import { ApiError, toApiError } from '../../core/api/api-error';
-import { Control } from '../../core/api/api.types';
+import { Control, SuggestionItem } from '../../core/api/api.types';
 import { ControlsApi } from '../../core/api/controls.api';
 import { RunsApi } from '../../core/api/runs.api';
+import { SuggestionsApi } from '../../core/api/suggestions.api';
 import { Definition } from '../../core/definition/definition.types';
 import { DraftGroup, IdSource, fromDefinition, highestId, toDefinition } from '../../core/definition/draft';
 import { DraftCheck, checkDraft } from '../../core/definition/draft.check';
 import { DraftEdit, FocusTarget, applyEdit, newDraft } from '../../core/definition/draft.edit';
 import { orderedNodeIds } from '../../core/definition/marks';
 import { MarksService } from '../../core/definition/marks.service';
-import { mapFor, rootEntities } from '../../core/glossary/glossary.lookups';
+import { chainFor, rootEntities } from '../../core/glossary/glossary.lookups';
 import { GlossaryService } from '../../core/glossary/glossary.service';
 import { LanguageService } from '../../core/i18n/language.service';
 import { changedNodes } from '../../core/text/text-parts';
 import { BuilderView, RowMessage } from '../../shared/condition-builder/builder-view';
+import { EditorIdeas } from './editor.ideas';
 import { LocatedError, errorMessage, issueMessage, locateErrors, statusOf } from './editor.messages';
 import {
   DetailIssue,
   EditorTarget,
   LoadState,
   Question,
+  Removal,
   SaveOutcome,
   SaveState,
   Sent,
@@ -40,17 +43,11 @@ const DESCRIPTION_MAX = 1000;
 
 const NO_MESSAGES: ReadonlyMap<string, readonly RowMessage[]> = new Map();
 
-/** What a removal took away, and the way back. */
-export interface Removal {
-  /** The mark of the condition that was removed; undefined for a group, which goes with its conditions. */
-  readonly mark?: string;
-  readonly undo: () => void;
-}
-
 /**
- * The state of the control editor, provided by its page: the loaded control and its token, the details, the
- * root entity and the draft tree, what the client's check and the server say about them, the engine's
- * sentence, and the save. The store talks to the api; the page navigates and shows toasts and dialogs.
+ * The state of the control editor, provided by its page: the loaded control and its token, the details,
+ * what the control checks (its root entity) and the draft tree, what the client's check and the server say
+ * about them, the engine's sentence, the suggestions a new control may start from, and the save. The store
+ * talks to the api; the page navigates and shows toasts.
  */
 @Injectable()
 export class EditorStore {
@@ -68,6 +65,8 @@ export class EditorStore {
   private awaitingFirstSentence = false;
   /** Counts the calls of `open`: an older one that lands after a newer one changes nothing. */
   private turn = 0;
+  /** True for a new control that starts from nothing: the one that is offered suggestions for its choice. */
+  private blank = false;
   private settleTimer: ReturnType<typeof setTimeout> | undefined;
 
   readonly glossary = this.glossaryService.glossary;
@@ -88,9 +87,13 @@ export class EditorStore {
   readonly showErrors = signal(false);
   readonly nameIssue = signal<DetailIssue | null>(null);
   readonly descriptionIssue = signal<DetailIssue | null>(null);
+  /** A save was asked for before it was chosen what the control checks. */
+  readonly rootIssue = signal(false);
+  /** What the engine would check about the choice; empty for a control that did not start from nothing. */
+  readonly ideas = new EditorIdeas(inject(SuggestionsApi));
 
   readonly saveState = signal<SaveState>('idle');
-  /** A failed load, save, run or archive. */
+  /** A failed load, save or run. */
   readonly failure = signal<ApiError | null>(null);
   /** An engine that does not answer the sentence; gone as soon as a sentence comes back. */
   readonly sentenceFailure = signal<ApiError | null>(null);
@@ -173,10 +176,16 @@ export class EditorStore {
       : null;
   });
 
-  readonly map = computed(() => {
+  /** What a control may check: the entities the glossary allows as a root. Null until the glossary is read. */
+  readonly choices = computed(() => {
     const glossary = this.glossary();
-    const rootEntity = this.rootEntity();
-    return glossary && rootEntity ? mapFor(glossary, rootEntity) : null;
+    return glossary ? rootEntities(glossary) : null;
+  });
+
+  /** How those entities connect, with the chosen one marked. */
+  readonly chain = computed(() => {
+    const glossary = this.glossary();
+    return glossary ? chainFor(glossary, this.rootEntity()) : null;
   });
 
   constructor() {
@@ -196,7 +205,7 @@ export class EditorStore {
     }
     const turn = ++this.turn;
     this.reset();
-    const glossary = await this.glossaryService.load();
+    await this.glossaryService.load();
     try {
       const stored = target.id ?? target.from ?? null;
       const control = stored !== null ? await firstValueFrom(this.controlsApi.get(stored)) : null;
@@ -211,7 +220,8 @@ export class EditorStore {
       } else if (target.draft) {
         this.startFrom(target.draft.name, target.draft.description, target.draft.definition);
       } else {
-        this.rootEntity.set((glossary ? rootEntities(glossary)[0] : undefined)?.key ?? null);
+        // a control from nothing: what it checks is the user's first choice, and nothing is chosen for them
+        this.blank = true;
       }
       this.loadState.set('ready');
     } catch (error) {
@@ -235,6 +245,9 @@ export class EditorStore {
   private reset(): void {
     this.ids = new IdSource();
     this.awaitingFirstSentence = false;
+    this.blank = false;
+    this.ideas.set();
+    this.rootIssue.set(false);
     this.loadState.set('loading');
     this.control.set(null);
     this.name.set('');
@@ -293,22 +306,30 @@ export class EditorStore {
   }
 
   /**
-   * The conditions of one entity mean nothing for another: a new root entity starts the tree over. Returns
-   * a way back to what was there, for the toast's undo.
+   * Chooses what the control checks. The conditions of one entity mean nothing for another: another choice
+   * starts the tree over, and the answer is a way back to what was there, for the toast's undo. A first
+   * choice replaces nothing and answers null.
    */
   chooseRoot(key: string): (() => void) | null {
-    const previous = { rootEntity: this.rootEntity(), draft: this.draft() };
+    const previous = { rootEntity: this.rootEntity(), draft: this.draft(), ideas: this.ideas.items() };
     if (key === previous.rootEntity) {
       return null;
     }
     const fresh = newDraft(this.ids);
     this.rootEntity.set(key);
+    this.rootIssue.set(false);
     this.draft.set(fresh);
     this.serverErrors.set([]);
     this.liveErrors.set([]);
     this.awaitingFirstSentence = false;
     this.focus.set(null);
     this.dirty.set(true);
+    if (this.blank) {
+      void this.ideas.read(key);
+    }
+    if (previous.rootEntity === null) {
+      return null;
+    }
     return () => {
       // the way back is from the empty tree the change left: one that was built on, or replaced, stays
       if (this.draft() !== fresh) {
@@ -316,6 +337,42 @@ export class EditorStore {
       }
       this.rootEntity.set(previous.rootEntity);
       this.draft.set(previous.draft);
+      this.ideas.set(previous.ideas);
+    };
+  }
+
+  /**
+   * Fills the conditions from a suggestion, and the name and the description where nothing was typed.
+   * Answers a way back to what was there, for the toast's undo.
+   */
+  applyIdea(idea: SuggestionItem): () => void {
+    const before = { ids: this.ids, draft: this.draft(), name: this.name(), description: this.description() };
+    this.ids = new IdSource(highestId(idea.definition.where));
+    const filled = fromDefinition(idea.definition, this.ids);
+    this.draft.set(filled);
+    if (before.name.trim() === '') {
+      this.setName(idea.name);
+    }
+    if (before.description.trim() === '') {
+      this.setDescription(idea.description);
+    }
+    this.serverErrors.set([]);
+    this.liveErrors.set([]);
+    this.focus.set(null);
+    this.dirty.set(true);
+    return () => {
+      // the way back is from the conditions the suggestion gave: once they were edited, they stay
+      if (this.draft() !== filled) {
+        return;
+      }
+      this.ids = before.ids;
+      this.draft.set(before.draft);
+      if (this.name() === idea.name) {
+        this.name.set(before.name);
+      }
+      if (this.description() === idea.description) {
+        this.description.set(before.description);
+      }
     };
   }
 
@@ -447,9 +504,13 @@ export class EditorStore {
 
   // ---------------------------------------------------------------- saving
 
-  /** Saves the control, and with `run` runs it. Nothing is sent while a detail or a row is unfinished. */
+  /**
+   * Saves the control, and with `run` runs it. Nothing is sent while a detail or a row is unfinished, or
+   * before it was chosen what the control checks.
+   */
   async save(run = false): Promise<SaveOutcome> {
     const definition = this.definition();
+    this.rootIssue.set(this.rootEntity() === null);
     if (!this.checkDetails() || !definition) {
       this.showErrors.set(true);
       this.focusFirstIssue();
@@ -481,22 +542,6 @@ export class EditorStore {
       return { kind: 'failed' };
     } finally {
       this.saveState.set('idle');
-    }
-  }
-
-  /** Archives the control; true when it left the list. */
-  async archive(): Promise<boolean> {
-    const control = this.control();
-    if (!control) {
-      return false;
-    }
-    try {
-      await firstValueFrom(this.controlsApi.archive(control.id));
-      this.dirty.set(false);
-      return true;
-    } catch (error) {
-      this.failure.set(toApiError(error));
-      return false;
     }
   }
 

@@ -91,9 +91,9 @@ describe('TextPartsComponent', () => {
     expect(host().textContent).toBe('age under 18 and monthly salary over 15,000 units');
   });
 
-  it('shows a traced, an active and an open condition on its mark, open first', async () => {
-    await draw({ parts: SENTENCE, marks: MARKS, traced: 'c1', active: 'c2' });
-    expect(marks().map((mark) => mark.className)).toEqual(['mark mark--traced', 'mark mark--active']);
+  it('shows a traced and an open condition on its mark, open first, and leaves the others as badges', async () => {
+    await draw({ parts: SENTENCE, marks: MARKS, traced: 'c1' });
+    expect(marks().map((mark) => mark.className)).toEqual(['mark mark--traced', 'mark']);
 
     await draw({ open: new Set(['c1']) });
     expect(marks()[0].className).toBe('mark mark--open');

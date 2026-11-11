@@ -11,12 +11,16 @@ import { PluralPipe } from '../../core/i18n/plural.pipe';
 import { SuggestionsOutcome } from '../../core/suggestions/suggestions-opener';
 import { ErrorBannerComponent } from '../../shared/banner/error-banner.component';
 import { IconComponent } from '../../shared/icon/icon.component';
+import { PageHeadComponent } from '../../shared/page-head/page-head.component';
 import { SkeletonComponent } from '../../shared/skeleton/skeleton.component';
-import { SuggestionRowComponent } from './suggestion-row.component';
+import { SuggestionCardComponent } from './suggestion-card.component';
+
+const SKELETON_CARDS = ['46%', '38%', '52%', '42%'];
 
 /**
- * The suggestions dialog: the engine's drafts, to review and to choose from. Opening it saves and runs
- * nothing: a draft becomes a control only when it is ticked and created, or opened in the editor and saved.
+ * The suggestions panel: the engine's drafts as cards, to review and to choose from. They are computed from
+ * the data as they are when the panel opens, and again on every refresh. Opening it saves and runs nothing:
+ * a draft becomes a control only when it is ticked and created, or opened in the editor and saved.
  */
 @Component({
   selector: 'app-suggestions-dialog',
@@ -24,9 +28,10 @@ import { SuggestionRowComponent } from './suggestion-row.component';
     ErrorBannerComponent,
     IconComponent,
     MatTooltip,
+    PageHeadComponent,
     PluralPipe,
     SkeletonComponent,
-    SuggestionRowComponent,
+    SuggestionCardComponent,
     TranslatePipe,
   ],
   templateUrl: './suggestions-dialog.component.html',
@@ -36,7 +41,11 @@ export class SuggestionsDialogComponent implements OnInit {
   private readonly api = inject(SuggestionsApi);
   private readonly ref = inject<MatDialogRef<SuggestionsDialogComponent, SuggestionsOutcome>>(MatDialogRef);
 
+  protected readonly skeletons = SKELETON_CARDS;
+
   protected readonly items = signal<readonly SuggestionItem[] | null>(null);
+  /** The suggestions are being computed: on opening, and on a refresh. */
+  protected readonly loading = signal(false);
   protected readonly failure = signal<ApiError | null>(null);
   /** The places, in `items`, of the drafts that are ticked. None is at first. */
   protected readonly selected = signal<ReadonlySet<number>>(new Set());
@@ -50,13 +59,25 @@ export class SuggestionsDialogComponent implements OnInit {
     void this.load();
   }
 
+  /**
+   * Asks the engine for its suggestions as the data are now. A refresh keeps the cards on the screen until
+   * the new ones arrive, and drops the ticks: they named places in a list that is no longer there.
+   */
   protected async load(): Promise<void> {
+    if (this.loading() || this.creating()) {
+      return;
+    }
+    this.loading.set(true);
     this.failure.set(null);
-    this.items.set(null);
+    this.refused.set(null);
     try {
-      this.items.set((await firstValueFrom(this.api.request())).items);
+      const { items } = await firstValueFrom(this.api.request());
+      this.items.set(items);
+      this.selected.set(new Set());
     } catch (error) {
       this.failure.set(toApiError(error));
+    } finally {
+      this.loading.set(false);
     }
   }
 
@@ -116,14 +137,20 @@ export class SuggestionsDialogComponent implements OnInit {
   }
 }
 
-/** Opens the dialog and answers how the review ended; closing it any other way ends it with nothing. */
-export async function openSuggestions(dialog: MatDialog): Promise<SuggestionsOutcome> {
+/**
+ * Opens the panel and answers how the review ended; closing it any other way ends it with nothing. It is
+ * the same sheet as the panel of a control or a run: at the inline end, as tall as the window.
+ */
+export async function openSuggestions(dialog: MatDialog, dir: 'rtl' | 'ltr'): Promise<SuggestionsOutcome> {
   const closed = dialog
     .open<SuggestionsDialogComponent, void, SuggestionsOutcome>(SuggestionsDialogComponent, {
-      panelClass: 'app-dialog',
+      panelClass: 'app-sheet',
       backdropClass: 'app-scrim',
+      // the inline end, said as a side: the dialog's position has no logical word for it
+      position: dir === 'rtl' ? { top: '0', left: '0' } : { top: '0', right: '0' },
+      maxWidth: '100vw',
       ariaLabelledBy: 'suggestions-title',
-      autoFocus: 'first-tabbable',
+      autoFocus: 'dialog',
       restoreFocus: true,
     })
     .afterClosed();

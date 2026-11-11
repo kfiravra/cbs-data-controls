@@ -1,49 +1,77 @@
-<div class="dialog dialog--tall" data-testid="suggestions-dialog">
-  <div class="dialog__head">
-    <div class="stack stack--tight">
-      <h2 class="t-title" id="suggestions-title">{{ 'suggestions.title' | translate }}</h2>
-      <p class="muted t-small">{{ 'suggestions.hint' | translate }}</p>
-    </div>
-    <button
-      class="icon-btn"
-      type="button"
-      [attr.aria-label]="'common.close' | translate"
-      [matTooltip]="'common.close' | translate"
-      [disabled]="creating()"
-      (click)="close()"
-    >
-      <app-icon name="close" />
-    </button>
-  </div>
+<div class="sheet__screen" data-testid="suggestions-dialog">
+  <button
+    class="icon-btn sheet__close"
+    type="button"
+    data-testid="suggestions-x"
+    [attr.aria-label]="'common.close' | translate"
+    [matTooltip]="'common.close' | translate"
+    [disabled]="creating()"
+    (click)="close()"
+  >
+    <app-icon name="close" />
+  </button>
 
-  <div class="dialog__body">
+  <header class="sheet__head">
+    <!-- the line under the title says where the suggestions come from, and when: they are computed on every
+         opening and on every refresh, from the data as they are at that moment -->
+    <app-page-head
+      titleId="suggestions-title"
+      [title]="'suggestions.title' | translate"
+      [meta]="'suggestions.note' | translate"
+    >
+      <!-- aria-disabled while the suggestions are on their way: the pressed button keeps the focus -->
+      <button
+        class="btn btn--tonal"
+        type="button"
+        data-testid="suggestions-refresh"
+        [disabled]="creating()"
+        [attr.aria-disabled]="loading() ? 'true' : null"
+        (click)="load()"
+      >
+        @if (loading()) {
+          <span class="spinner" aria-hidden="true"></span>
+        } @else {
+          <app-icon name="refresh" />
+        }
+        {{ 'suggestions.refresh' | translate }}
+      </button>
+    </app-page-head>
+  </header>
+
+  <div class="sheet__body" data-testid="suggestions-body">
     @if (failure(); as error) {
-      <app-error-banner [error]="error" [retryable]="items() === null" (retry)="load()" />
+      <div class="page-banners">
+        <app-error-banner [error]="error" [retryable]="items() === null" (retry)="load()" />
+      </div>
     }
     @if (items(); as drafts) {
-      @for (item of drafts; track $index) {
-        <app-suggestion-row
-          [item]="item"
-          [selected]="selected().has($index)"
-          [failed]="refused() === $index"
-          (selectedChange)="toggle($index, $event)"
-          (edit)="edit(item)"
-        />
-      } @empty {
-        <p data-testid="suggestions-empty">{{ 'suggestions.empty' | translate }}</p>
-      }
+      <div class="suggestions" [attr.aria-busy]="loading()">
+        @for (item of drafts; track $index) {
+          <app-suggestion-card
+            [item]="item"
+            [selected]="selected().has($index)"
+            [failed]="refused() === $index"
+            (selectedChange)="toggle($index, $event)"
+            (edit)="edit(item)"
+          />
+        } @empty {
+          <p data-testid="suggestions-empty">{{ 'suggestions.empty' | translate }}</p>
+        }
+      </div>
     } @else if (!failure()) {
-      <div class="stack" aria-hidden="true" data-testid="suggestions-loading">
-        <app-skeleton width="46%" />
-        <app-skeleton width="82%" />
-        <app-skeleton width="58%" />
-        <app-skeleton width="40%" />
-        <app-skeleton width="76%" />
+      <div class="suggestions" aria-hidden="true" data-testid="suggestions-loading">
+        @for (width of skeletons; track $index) {
+          <div class="suggestion">
+            <app-skeleton [width]="width" />
+            <app-skeleton width="82%" />
+            <app-skeleton width="58%" />
+          </div>
+        }
       </div>
     }
   </div>
 
-  <div class="dialog__foot">
+  <footer class="sheet__foot sheet__foot--actions">
     <button class="btn btn--tonal" type="button" data-testid="suggestions-close" [disabled]="creating()" (click)="close()">
       {{ 'common.close' | translate }}
     </button>
@@ -60,5 +88,5 @@
       }
       {{ count() === 0 ? ('suggestions.create.none' | translate) : ('suggestions.create' | plural: count()) }}
     </button>
-  </div>
+  </footer>
 </div>

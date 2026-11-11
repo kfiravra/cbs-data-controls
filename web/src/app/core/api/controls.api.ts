@@ -12,6 +12,7 @@ import {
   ControlsQuery,
   Definition,
   Page,
+  Run,
   ValidateAnswer,
 } from './api.types';
 import { queryParams } from './params';
@@ -45,6 +46,11 @@ export class ControlsApi {
   /** A dry compile: the rule sentence of a definition, or 422 with what is wrong in it. Nothing is stored. */
   validate(definition: Definition): Observable<ValidateAnswer> {
     return this.http.post<ValidateAnswer>(`${this.base}/validate`, { definition });
+  }
+
+  /** The control's runs, newest first. */
+  runs(id: number, query: { readonly page?: number; readonly pageSize?: number } = {}): Observable<Page<Run>> {
+    return this.http.get<Page<Run>>(`${this.base}/${id}/runs`, { params: queryParams(query) });
   }
 
   /** The definition of one version: marks and clauses of a run come from the version that ran. */

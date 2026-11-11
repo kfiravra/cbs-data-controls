@@ -295,3 +295,31 @@ mat-button-toggle-group button:is([aria-checked='true'], [aria-pressed='true']):
 .app-scrim {
   background: var(--color-scrim);
 }
+
+// The suggestions panel is a dialog of Material shown as the same sheet as the panel of a control or a run:
+// at the inline end (its position strategy), as tall as the window, square, with the panel's own width.
+.app-sheet {
+  inline-size: 100vw;
+  block-size: 100dvh;
+  animation: sheet-in var(--duration-panel) var(--ease-out);
+
+  @include mat.dialog-overrides(
+    (
+      container-shape: 0,
+      container-max-width: none,
+      container-small-max-width: none,
+      container-min-width: 0,
+    )
+  );
+
+  .sheet__screen {
+    block-size: 100dvh;
+  }
+}
+
+@media (min-width: 640px) {
+  .app-sheet {
+    inline-size: min(1120px, 100vw - clamp(48px, 22vw, 320px));
+    border-inline-start: 1px solid var(--color-line-strong);
+  }
+}
