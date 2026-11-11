@@ -419,6 +419,35 @@ describe('EditorStore', () => {
       expect(store.chooseRoot('order')).toBeNull();
     });
 
+    it('keeps the conditions built since when the way back from a root change is taken late', async () => {
+      await open({ id: 7 }, control());
+      answerValidate([]);
+      const undo = store.chooseRoot('customer');
+      store.apply({ kind: 'addCondition', group: store.draft().key });
+      const built = store.draft();
+
+      undo!();
+
+      expect([store.rootEntity(), store.draft()]).toEqual(['customer', built]);
+    });
+
+    it('refuses the way back from a removal once the control was read again from the server', async () => {
+      await open({ id: 7 }, control());
+      answerValidate([]);
+      const removal = store.apply({ kind: 'remove', target: 'c2' });
+
+      const again = store.open({ id: 7 }, true);
+      (await next('/api/v1/controls/7')).flush(control());
+      await again;
+      const reloaded = store.draft();
+      removal!.undo();
+
+      expect(store.draft()).toBe(reloaded);
+      expect(store.dirty()).toBe(false);
+      settle();
+      answerValidate([]);
+    });
+
     it('gives a way back from a removal: the condition returns under its id and its mark', async () => {
       await open({ id: 7 }, control());
       answerValidate([]);
@@ -433,6 +462,18 @@ describe('EditorStore', () => {
       expect(store.draft()).toBe(before);
       expect(store.marks().get('c2')).toBe(letters[1]);
       expect(store.dirty()).toBe(true);
+    });
+
+    it('leaves the draft alone when the way back is taken after the draft moved on', async () => {
+      await open({ id: 7 }, control());
+      answerValidate([]);
+      const removal = store.apply({ kind: 'remove', target: 'c2' });
+      store.apply({ kind: 'addCondition', group: store.draft().key });
+      const moved = store.draft();
+
+      removal!.undo();
+
+      expect(store.draft()).toBe(moved);
     });
 
     it('names no mark for a removed group, and offers no way back from an edit that removes nothing', async () => {

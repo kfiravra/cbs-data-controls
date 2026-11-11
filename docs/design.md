@@ -518,8 +518,9 @@ Plain and exact; they step, they do not glow.
 - **Icon button:** 44px square, Muted icon, Tonal ground on hover; always with a name for assistive technology and
   a tooltip.
 - **States:** hover changes the ground and lifts 1px for a fine pointer; a press sinks 1px and scales to 0.985;
-  focus is the ring; disabled is Tonal ground with Muted text; while its action runs, the button is disabled and
-  shows a 16px spinner before its label (`ההרצה מתבצעת`).
+  focus is the ring; disabled is Tonal ground with Muted text; while its action runs, the button looks the
+  same, is unavailable and keeps the focus (Dialogs and toast, below), and shows a 16px spinner before its label
+  (`ההרצה מתבצעת`).
 - An underline anywhere (text button, link, adder) rests at 40% of its text colour and fills on hover.
 
 ### Fields
@@ -615,8 +616,9 @@ One Surface panel. Inside it:
   entity, and their letters continue after the node's own.
 - **Adders:** at the foot of each group, text buttons with a plus: condition, group, condition on related records.
 - **Removing:** a removed condition or group is offered back by a toast for as long as it stands (`תנאי ב הוסר`
-  or `הקבוצה הוסרה, עם התנאים שבה`, with `שחזור`); the next edit of the builder takes the offer away, because
-  the way back leads to the draft as it was before the removal.
+  or `הקבוצה הוסרה, עם התנאים שבה`, with `שחזור`), and so are the conditions a changed root entity cleared. The
+  offer is withdrawn as soon as the conditions are another draft (edited further, read again from the server,
+  started over), because the way back leads to the draft as it was.
 - **Note:** once, at the foot of the panel, the rule about missing values (a comparison does not match a missing
   value; missing values are found with the comparisons that ask whether a value is missing or empty). The note
   names no comparison: their labels are the glossary's.
@@ -729,7 +731,9 @@ in the shape of the rows to come.
   application, and an unchanged control is left without a question.
 - **A button made unavailable by its own press** (save, run, the last page of a pager) keeps the focus it holds:
   it is marked unavailable for assistive technology and ignores a second press, and is not removed from the tab
-  order. A button that cannot be used as the screen stands (nothing ticked, a limit reached) is disabled.
+  order. A button that cannot be used as the screen stands (nothing ticked, a limit reached) is disabled. The
+  pager's two buttons are of the first kind at both ends, also on a first page nobody has pressed yet: one
+  button, one behaviour.
 
 ### Motion
 

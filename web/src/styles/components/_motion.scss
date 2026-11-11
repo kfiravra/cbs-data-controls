@@ -9,12 +9,12 @@
     transition-property: background-color, color, border-color;
   }
 
-  // a press shows as a tone, not as a step
-  .btn--primary:active {
+  // a press shows as a tone, not as a step; an unavailable button shows no press at all
+  .btn--primary:active:not([aria-disabled='true']) {
     background: var(--color-action-pressed);
   }
 
-  .btn--tonal:active {
+  .btn--tonal:active:not([aria-disabled='true']) {
     background: var(--color-line-strong);
   }
 

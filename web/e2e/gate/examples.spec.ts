@@ -1,9 +1,8 @@
 import { Page } from '@playwright/test';
 
-import { Example, exampleNumber } from '../fixtures/examples';
+import { Example, exampleNumber, markedIds } from '../fixtures/examples';
 import { glossary } from '../fixtures/glossary';
 import { BuilderDriver } from '../support/builder-driver';
-import { markedIds } from '../support/definitions';
 import { controlIdOf, expect, test } from '../support/gate';
 import { t } from '../support/i18n';
 import { shot } from '../support/shots';

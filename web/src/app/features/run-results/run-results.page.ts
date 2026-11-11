@@ -26,9 +26,6 @@ import { DEFAULT_PAGE_SIZE, PAGE_SIZES, ResultsStore, ResultsView } from './resu
 
 const positive = (text: string | undefined, fallback: number) => (text && /^[1-9]\d*$/.test(text) ? Number(text) : fallback);
 
-/** The codes a failed run may carry (contracts/api.md, `RunError`) that have a text under `results.failed.reasons`. */
-const FAILED_REASONS = ['DATABASE_UNAVAILABLE', 'ENGINE_UNAVAILABLE', 'INTERNAL_ERROR'];
-
 /**
  * The results of one run: the control in words, the summary, the breakdown by condition and the violating
  * records with the reason for each. Search, filter, sort and paging live in the address, so back and reload
@@ -132,10 +129,13 @@ export class RunResultsPage {
 
   protected readonly noun = computed(() => this.counted('results.noun', this.store.run()?.totalCount ?? 0));
 
-  /** Why a failed run stopped, in the past tense of its code; a code with no text of its own reads as a fault. */
+  /**
+   * Why a failed run stopped, in the past tense of its code (`results.failed.reasons` holds the codes of
+   * contracts/api.md, `RunError`); a code with no text of its own there reads as a fault.
+   */
   protected readonly failedReason = computed(() => {
-    const code = this.store.run()?.error?.code;
-    return `results.failed.reasons.${code && FAILED_REASONS.includes(code) ? code : 'INTERNAL_ERROR'}`;
+    const key = `results.failed.reasons.${this.store.run()?.error?.code ?? 'INTERNAL_ERROR'}`;
+    return this.translate.instant(key) === key ? 'results.failed.reasons.INTERNAL_ERROR' : key;
   });
 
   protected readonly facts = computed<RunFact[]>(() => {

@@ -380,6 +380,12 @@ Review: `/phase-review web`
 Commit: `fix(web): design critique and polish`
 
 ### Gate
+Status, 2026-11-11 (unattended run): `gates/final.txt` holds `/check all --tests` and the mocked specs on both
+projects, all green, with the screenshots in `gates/final/screenshots/` (the folder name keeps them out of git).
+The gate specs on the real stack, the pre-loaded list and the hosted build wait with phase 7 for the api and the
+engine on main, so no box below is ticked and nothing is pushed. `notes.md` is complete up to phase 8; its lines
+that say "not run" change with phase 7.
+
 - [ ] After phase 8: the mocked and the gate specs green on `mobile` and `desktop`, the gate on the pre-loaded
       list and, where phase 7 could run it, on the build the api hosts; `/check all --tests` green. The output
       goes to `gates/final.txt`, the screenshots to `gates/final/`.

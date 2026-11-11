@@ -131,14 +131,15 @@ a.cell-title:hover {
   text-underline-offset: 4px;
 }
 
-// A link that stands alone in a row is a target of its own: it answers a touch 8px above and below its
-// line, the height of a control in all, while the row keeps its height and the focus ring stays on the text.
+// A link that stands alone in a row is a target of its own: its box is a step taller than its line, and it
+// answers a touch two more steps above and below, the height of a control in all. The row keeps its height
+// (the negative margin) and the focus ring stays close to the text.
 a.cell-title,
 .table a.link,
 .table a.status {
   position: relative;
-  padding-block: 2px;
-  margin-block: -2px;
+  padding-block: var(--space-1);
+  margin-block: calc(-1 * var(--space-1));
 
   &::after {
     content: '';
@@ -304,8 +305,9 @@ th[aria-sort='descending'] .th-sort {
       }
     }
 
-    // A run button is wider while it runs (the spinner and `ההרצה מתבצעת`, about 9.25rem): the column
-    // keeps room for that, so starting a run does not move the other columns of the table.
+    // A run button is wider while it runs (the spinner and the text of `list.actions.running`, about
+    // 9.25rem in Hebrew): the column keeps room for that, so starting a run does not move the other columns
+    // of the table. A longer text in another language only brings the movement back; nothing breaks.
     .cell-actions:has(.btn--run) {
       min-inline-size: calc(9.25rem + 2 * var(--size-control) + 2 * var(--space-3) + var(--space-2));
     }

@@ -55,7 +55,8 @@ export function exampleById(id: string): Example {
   return example;
 }
 
-function markedIds(node: DefinitionNode): string[] {
+/** The ids of the nodes that carry a mark, in the order their marks are given: a related node before its rows. */
+export function markedIds(node: DefinitionNode): string[] {
   if (node.type === 'group') {
     return node.children.flatMap(markedIds);
   }

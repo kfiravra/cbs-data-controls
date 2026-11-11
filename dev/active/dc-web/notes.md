@@ -119,11 +119,14 @@ PR is open.
     and suggestions because "`beforeunload` covers a dirty draft"; the editor critique watched it not cover a
     link of the app. The prompt is the browser's, not a dialog of the app, so the rule of design.md stands. If
     Kfir would rather keep the silent leave, it is the one `canDeactivate` line of `app.routes.ts`.
-39. A removed condition or group is offered back by a toast, as a changed root entity already was; the next
-    edit of the builder takes the offer away (the way back is the draft as it was before the removal).
+39. A removed condition or group is offered back by a toast, as a changed root entity already was. Both
+    offers are withdrawn as soon as the conditions are another draft (a further edit, a reload, a conflict's
+    "load the current version"), and the store refuses a way back taken from a draft that moved on.
 40. A button made unavailable by its own press is `aria-disabled`, not `disabled`, and keeps the focus: run on
     a list row, save, save and run, run again, the pager's two ends, "create the selected". A button that cannot
     be used as the screen stands (nothing ticked, a limit reached, the operator before a field) stays `disabled`.
+    The pager's buttons are `aria-disabled` at both ends always, also on a first page nobody pressed: one
+    button with one behaviour, at the cost of a stop on a button that does nothing.
 41. `ללא חריגות` on a list row links to its run, as a count and a stopped run already did (design.md drew it as
     text): the results of a clean run could not be opened from the list at all.
 42. The results page head offers no "run again" for a run whose definition is outdated or that is still running:
@@ -157,8 +160,8 @@ invalid fixtures, as merged in `f9928bf`. Where they differ from Design E to M o
 - Nothing in `contracts/` looked wrong, and nothing blocks a screen: no line for Kfir from this step.
 
 ## Last reviewed
-383ec73 (phase 6), fixed in 3d5836f. The gate specs (44a7219) and phase 8 are reviewed together; the line of
-that review in the Log names its range.
+fcf0036 (phase 8) together with 44a7219 (the gate specs of phase 7), fixed in the `fix(web): review fixes` commit
+that follows fcf0036. That fix commit is not reviewed, as the earlier ones were not.
 
 ## Hand-over to dc-delivery
 Read by its phase B0 (plan.md Design Q). Complete for phase 8; the lines that say "not run" change when phase 7
@@ -540,3 +543,39 @@ rewrote. A review that found nothing, or did not run, is logged as that.
   files, ng build at 545 kB initial and 137 kB transfer, print guard, `e2e/mocked` on mobile and desktop: 150
   passed, 2 skipped by project on purpose). The gate specs were dry-run on the stand-in again after the changes
   (16 of 16; decision 33). Screenshots in `screenshots/phase-8/`. No cut taken.
+- 2026-11-11 /phase-review web, phase 8 and the gate specs of phase 7 (one reviewer agent, opus, 196.7k tokens,
+  8.2 minutes; started without waiting), diffs 9137de9..44a7219 and 3d5836f..fcf0036: standards 1 critical, 3
+  warnings, 8 info; plan 2 info and one decision only partly built. `editor.store.ts`: the way back from a
+  removal could be taken after the control was read again (a conflict's "load the current version", "try
+  again"), putting the old draft over the newer version with `dirty` still false, so a save would overwrite
+  it unasked (critical). `control-editor.page.ts`: the flag behind the offer was never cleared when its toast
+  timed out or was replaced, so the next edit dismissed an unrelated toast, and the root change's way back
+  threw away later edits the same way (warning). `e2e/support/gate.ts`: the teardown stopped at the first
+  control that would not archive and left the rest active, against Design O (warning). `app.routes.ts`: the
+  leave guard also ran on the first save's own move from `new` to the saved address, and asked if something was
+  typed while it saved (warning). Info: a Hebrew word in a stylesheet comment; a raw `2px` and `-4px` where
+  tokens exist, and a width tied to a Hebrew label; the segment's ring reaches Material's inner `button`, which
+  the skill file did not allow though design.md did; design.md still called a running button disabled; under
+  reduced motion a pressed unavailable button changed its tone; `markedIds` written twice in the e2e folder;
+  `resultOf` imported from a component file; the codes with a failed-run text listed twice; the pager's first
+  button is unavailable, not disabled, on a page nobody pressed (against the wording of decision 40); the gate
+  has not run on the real stack (known, Blockers). Fixed in the review-fix commit: the critical and the three
+  warnings (the store refuses a way back from a draft that moved on, for a removal and for a root change; the
+  page ties each offer to the draft it starts from and withdraws it when the draft is another one; the
+  teardown tries every control and fails at the end with what it could not archive; the guard lets the editor
+  move to the address of the control it holds), with a unit spec for each refusal and e2e specs for the
+  withdrawn offer and the first save; and the info items (the comment, the two literals, the pressed tone,
+  one `markedIds`, `run-result.ts`, the translation file as the one list of failed-run texts, the skill file
+  and design.md in line, decisions 39 and 40 reworded to what is built). Left: the 9.25rem of the actions
+  column, with its reason beside it. The gate specs were dry-run on the stand-in once more after the teardown
+  change (16 of 16; 6 untagged controls untouched, 18 tagged ones archived).
+- 2026-11-11 final gate on Fable 5.2, on what can run without the api and the engine: `gates/final.txt`
+  (`/check all --tests`: `sql-check` 27 assertions, `contracts-check` 5 checks, ngc, ng lint, the e2e type
+  check, 296 unit tests in 30 files, ng build at 545 kB initial and 137 kB transfer, the print guard, 226 hook
+  tests; then `e2e/mocked` on mobile and desktop: 154 passed, 2 skipped by project on purpose). `sql-init` is
+  skipped in a worktree by the runner. Screenshots in `gates/final/screenshots/` (31 a project; no gate shot
+  among them: those come from the real stack). Not run, and why: `e2e/gate` on the real stack, on a pre-loaded
+  list and on the build the api hosts: `git log main` and `origin/main` still end at `f9928bf`, so the api and
+  the engine are not there. By Kfir's rule for the night the gate is blocked only by steps that wait for a
+  merge: committed, not pushed, no PR. The stand-in api and the dev server of this session are stopped; nothing
+  of this run is left in the repository's tree or in the dev `dq`.

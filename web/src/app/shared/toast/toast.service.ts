@@ -10,6 +10,12 @@ export interface ToastAction {
   readonly run: () => void;
 }
 
+/** A toast that was shown: it can be taken away before its time, when its action no longer fits the screen. */
+export interface ToastRef {
+  /** Takes this toast away; nothing happens if it is already gone or another toast took its place. */
+  dismiss(): void;
+}
+
 const TOAST_MS = 6000;
 
 /** One line and at most one text button, at the bottom start edge. Never for an error. */
@@ -25,16 +31,11 @@ export class ToastService {
     this.open(this.counted.text(baseKey, count));
   }
 
-  show(messageKey: string, params: Record<string, unknown> = {}, action?: ToastAction): void {
-    this.open(this.translate.instant(messageKey, params) as string, action);
+  show(messageKey: string, params: Record<string, unknown> = {}, action?: ToastAction): ToastRef {
+    return this.open(this.translate.instant(messageKey, params) as string, action);
   }
 
-  /** Takes the toast away now: its action no longer fits what is on the screen. */
-  dismiss(): void {
-    this.snackBar.dismiss();
-  }
-
-  private open(message: string, action?: ToastAction): void {
+  private open(message: string, action?: ToastAction): ToastRef {
     const label: string | undefined = action ? this.translate.instant(action.labelKey) : undefined;
     const ref = this.snackBar.open(message, label, {
       duration: TOAST_MS,
@@ -46,5 +47,6 @@ export class ToastService {
     if (action) {
       ref.onAction().subscribe(() => action.run());
     }
+    return ref;
   }
 }

@@ -3,29 +3,15 @@ import { MatTooltip } from '@angular/material/tooltip';
 import { RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 
-import { ControlSummary, Glossary, LastRun } from '../../core/api/api.types';
+import { ControlSummary, Glossary } from '../../core/api/api.types';
 import { findEntity } from '../../core/glossary/glossary.lookups';
 import { FormatService } from '../../core/i18n/format.service';
 import { LanguageService } from '../../core/i18n/language.service';
 import { PluralPipe } from '../../core/i18n/plural.pipe';
 import { IconComponent } from '../../shared/icon/icon.component';
 import { SkeletonComponent } from '../../shared/skeleton/skeleton.component';
+import { RunResult, resultOf } from './run-result';
 
-/** What a row says of its control's last run. */
-export type RunResult = 'never' | 'violations' | 'none' | 'stopped' | 'running';
-
-export function resultOf(run: LastRun | null): RunResult {
-  if (!run) {
-    return 'never';
-  }
-  if (run.status === 'running') {
-    return 'running';
-  }
-  if (run.status !== 'succeeded') {
-    return 'stopped';
-  }
-  return run.totalCount === 0 ? 'none' : 'violations';
-}
 
 interface Row {
   readonly control: ControlSummary;

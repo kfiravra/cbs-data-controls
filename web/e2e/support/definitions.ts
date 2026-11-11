@@ -1,14 +1,6 @@
 import { Definition, DefinitionNode } from '../../src/app/core/definition/definition.types';
 import { FakeApi } from './routes';
 
-/** The ids of the nodes that carry a mark, in the order their marks are given: a related node before its rows. */
-export function markedIds(node: DefinitionNode): string[] {
-  if (node.type === 'group') {
-    return node.children.flatMap(markedIds);
-  }
-  return node.type === 'related' ? [node.id, ...markedIds(node.where)] : [node.id];
-}
-
 /**
  * A definition with its node ids renamed by their place in the document. The editor gives its own ids, so
  * two definitions are the same rule when they are equal in this form.

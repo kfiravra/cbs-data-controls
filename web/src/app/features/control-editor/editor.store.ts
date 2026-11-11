@@ -301,14 +301,19 @@ export class EditorStore {
     if (key === previous.rootEntity) {
       return null;
     }
+    const fresh = newDraft(this.ids);
     this.rootEntity.set(key);
-    this.draft.set(newDraft(this.ids));
+    this.draft.set(fresh);
     this.serverErrors.set([]);
     this.liveErrors.set([]);
     this.awaitingFirstSentence = false;
     this.focus.set(null);
     this.dirty.set(true);
     return () => {
+      // the way back is from the empty tree the change left: one that was built on, or replaced, stays
+      if (this.draft() !== fresh) {
+        return;
+      }
       this.rootEntity.set(previous.rootEntity);
       this.draft.set(previous.draft);
     };
@@ -343,9 +348,15 @@ export class EditorStore {
     if (edit.kind !== 'remove' || result.draft === before.draft) {
       return null;
     }
+    const after = result.draft;
     return {
       mark,
       undo: () => {
+        // the way back is from the draft the removal left: a draft that was edited, saved over by a reload
+        // or started over since is not replaced
+        if (this.draft() !== after) {
+          return;
+        }
         this.draft.set(before.draft);
         this.serverErrors.set(before.serverErrors);
         this.liveErrors.set(before.liveErrors);

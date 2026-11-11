@@ -17,8 +17,9 @@ import { StatePanelComponent } from '../../shared/state-panel/state-panel.compon
 import { TableFootComponent } from '../../shared/table-foot/table-foot.component';
 import { ToastService } from '../../shared/toast/toast.service';
 import { ToolbarComponent } from '../../shared/toolbar/toolbar.component';
-import { ControlsTableComponent, resultOf } from './controls-table.component';
+import { ControlsTableComponent } from './controls-table.component';
 import { ListState, ListStore, ListView } from './list.store';
+import { resultOf } from './run-result';
 
 const STATES: readonly ListState[] = ['active', 'archived', 'all'];
 const ALL = '';

@@ -25,10 +25,15 @@ export interface Gate {
 
 const HEADERS = { 'Accept-Language': lang, 'Content-Type': 'application/json' };
 
-async function archive(request: APIRequestContext, id: number): Promise<void> {
-  // a repeat answers 204, so a control the test already archived through the interface is no error
-  const response = await request.delete(`/api/v1/controls/${id}`, { headers: HEADERS });
-  expect(response.status(), `archiving control ${id}`).toBe(204);
+/** Archives one control and answers what went wrong, if anything: the teardown goes on to the next one. */
+async function archive(request: APIRequestContext, id: number): Promise<string | null> {
+  try {
+    // a repeat answers 204, so a control the test already archived through the interface is no error
+    const response = await request.delete(`/api/v1/controls/${id}`, { headers: HEADERS });
+    return response.status() === 204 ? null : `control ${id}: status ${response.status()}`;
+  } catch (error) {
+    return `control ${id}: ${error instanceof Error ? error.message : String(error)}`;
+  }
 }
 
 export const test = base.extend<{ gate: Gate }, { stack: Health }>({
@@ -76,9 +81,15 @@ export const test = base.extend<{ gate: Gate }, { stack: Health }>({
         return control;
       },
     });
+    // every control is tried, also after one of them failed: a failure must not leave the others active
+    const failures: string[] = [];
     for (const id of created) {
-      await archive(request, id);
+      const failure = await archive(request, id);
+      if (failure) {
+        failures.push(failure);
+      }
     }
+    expect(failures, 'archiving the controls this test created').toEqual([]);
   },
 });
 

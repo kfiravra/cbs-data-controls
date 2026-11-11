@@ -78,7 +78,9 @@ playwright install --with-deps chromium` needs sudo on WSL: ask the user to run 
 - Material in RTL: `MatSnackBar` reads `horizontalPosition: 'start'` as the left edge unless the config carries
   `direction`; `[attr.aria-label]` on `mat-select` is overwritten by its own host binding, so bind its `aria-label`
   input. Never select an internal `mdc-` or `mat-mdc-` class: use the component's `overrides` mixin
-  (`src/styles/material-theme.scss`), a rule on the host element, or a panel class the app passes in.
+  (`src/styles/material-theme.scss`), a rule on the host element, or a panel class the app passes in. Where no
+  token exists (the focus ring of a button-toggle segment) the rule names the component's element and its state
+  in ARIA.
 - A button its own press makes unavailable (run, save, run again, the pager's ends) takes
   `[attr.aria-disabled]`, and its handler ignores a second press: `disabled` would drop the focus the button holds.
   `disabled` is for a button that cannot be used as the screen stands. Both look the same (`_buttons.scss`).

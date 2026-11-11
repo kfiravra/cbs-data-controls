@@ -376,6 +376,39 @@ test.describe('control editor', () => {
     await expect(row(page, 1).getByTestId('mark')).toHaveText(letters[1]);
   });
 
+  test('the offer to bring a removed condition back is withdrawn by the next edit', async ({ page, api }) => {
+    await openStored(page, stored(api));
+    const restore = page.getByRole('button', { name: t('editor.toast.restore'), exact: true });
+
+    await row(page, 1).getByTestId('remove-row').click();
+    await expect(restore).toBeVisible();
+
+    // the way back leads to the draft before the removal: taken now, it would undo this edit too
+    await row(page, 0).getByTestId('value-single').fill('17');
+    await expect(restore).toHaveCount(0);
+  });
+
+  test('a first save moves to the saved address unasked, also when something was typed while it saved', async ({ page, api }) => {
+    const example = exampleNumber(1);
+    api.delay('POST /controls', 500);
+    let asked = false;
+    page.on('dialog', (dialog) => {
+      asked = true;
+      void dialog.dismiss();
+    });
+    await page.goto('/controls/new');
+    await page.getByTestId('control-name').fill('typed before the save');
+    await new BuilderDriver(page).build(example.definition);
+    await expect(sentence(page)).toHaveAttribute('data-stale', 'false');
+
+    await page.getByTestId('save').click();
+    await page.getByTestId('control-description').fill('typed while it saved');
+
+    await expect(page).toHaveURL(/\/controls\/\d+$/);
+    expect(asked).toBe(false);
+    await expect(page.getByTestId('control-description')).toHaveValue('typed while it saved');
+  });
+
   test('a changed draft is not left by a link of the app without a word', async ({ page, api }) => {
     await openStored(page, stored(api));
     await page.getByTestId('control-name').fill('changed and not saved');

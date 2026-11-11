@@ -15,7 +15,9 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/control-editor/control-editor.page').then((m) => m.ControlEditorPage),
     // a changed draft is not left by a link of the app without a word, as it is not by closing the tab
-    canDeactivate: [(editor: { mayLeave(): boolean }) => editor.mayLeave()],
+    canDeactivate: [
+      (editor: { mayLeave(nextUrl: string): boolean }, _route, _state, next) => editor.mayLeave(next.url),
+    ],
   },
   {
     path: 'runs/:id',
