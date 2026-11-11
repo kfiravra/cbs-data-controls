@@ -208,11 +208,8 @@ export class ControlEditorPage {
   /** Whether the suggestions for the choice are shown; closed until their row is pressed. */
   protected readonly ideasOpen = signal(false);
 
-  /** What the row of the suggestions says: what it waits for, or that it can be opened. */
+  /** What the row of the suggestions says: that they are computed, that there are none, or that it can be opened. */
   protected readonly ideasLabel = computed(() => {
-    if (this.store.rootEntity() === null) {
-      return 'editor.ideas.waiting';
-    }
     if (this.store.ideas.loading()) {
       return 'editor.ideas.loading';
     }

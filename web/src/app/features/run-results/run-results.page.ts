@@ -4,7 +4,7 @@ import { MatOption, MatSelect, MatSelectTrigger } from '@angular/material/select
 import { Router, RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
-import { ResultsSort, Run, SortDirection } from '../../core/api/api.types';
+import { Run } from '../../core/api/api.types';
 import { findEntity } from '../../core/glossary/glossary.lookups';
 import { CountedService } from '../../core/i18n/counted.service';
 import { FormatService } from '../../core/i18n/format.service';
@@ -22,7 +22,7 @@ import { StatePanelComponent } from '../../shared/state-panel/state-panel.compon
 import { TableFootComponent } from '../../shared/table-foot/table-foot.component';
 import { TextPartsComponent } from '../../shared/text-parts/text-parts.component';
 import { ToolbarComponent } from '../../shared/toolbar/toolbar.component';
-import { DEFAULT_PAGE_SIZE, PAGE_SIZES, ResultsStore, ResultsView } from './results.store';
+import { DEFAULT_PAGE_SIZE, PAGE_SIZES, REASONS_COLUMN, ResultsStore, ResultsView } from './results.store';
 
 const NUMBER = /^[1-9]\d*$/;
 const positive = (text: string | undefined, fallback: number) => (text && NUMBER.test(text) ? Number(text) : fallback);
@@ -117,12 +117,32 @@ export class RunResultsPage {
       size: (PAGE_SIZES as readonly number[]).includes(size) ? size : DEFAULT_PAGE_SIZE,
       search: this.search() ?? '',
       condition: this.condition() || null,
-      sort: this.sort() === 'display' ? 'display' : 'key',
+      sort: this.sortColumn(),
       dir: this.dir() === 'desc' ? 'desc' : 'asc',
     };
   });
 
-  protected readonly displaySort = computed<DisplaySort>(() => (this.view().sort === 'display' ? this.view().dir : null));
+  protected readonly displaySort = computed<DisplaySort>(() => {
+    const { sort, dir } = this.view();
+    return sort === null ? null : { column: sort, dir };
+  });
+
+  /** Every order the records can take, for the select that sorts where the table has no head (below 640px). */
+  protected readonly sortOptions = computed(() =>
+    [...this.columns().map((column) => ({ key: column.key, label: column.label })), { key: REASONS_COLUMN, label: this.text('results.table.reasons') }].flatMap(
+      (column) => (['asc', 'desc'] as const).map((dir) => ({ value: `${column.key}:${dir}`, text: `results.sort.${dir}`, column: column.label })),
+    ),
+  );
+
+  /**
+   * The column the address asks to sort by, when the table has it: the reasons, or an identifying field of
+   * the records. Anything else (an older link, a field of another control) is the order of the run.
+   */
+  private readonly sortColumn = computed(() => {
+    const asked = this.sort();
+    const known = asked === REASONS_COLUMN || this.columns().some((column) => column.key === asked);
+    return asked && known ? asked : null;
+  });
 
   private readonly entity = computed(() => {
     const glossary = this.store.glossary();
@@ -320,7 +340,7 @@ export class RunResultsPage {
       size: DEFAULT_PAGE_SIZE,
       search: '',
       condition: null,
-      sort: 'key',
+      sort: null,
       dir: 'asc',
     };
     const next: Record<string, string | number | null> = { ...this.view(), ...('page' in change ? {} : { page: 1 }), ...change };
@@ -331,9 +351,13 @@ export class RunResultsPage {
   }
 
   protected setSort(sort: DisplaySort): void {
-    const by: ResultsSort = sort === null ? 'key' : 'display';
-    const dir: SortDirection = sort ?? 'asc';
-    this.go({ sort: by, dir });
+    this.go({ sort: sort?.column ?? null, dir: sort?.dir ?? 'asc' });
+  }
+
+  /** An order chosen in the select, as `<column>:<direction>`, or `key` for the order of the run. */
+  protected sortTo(value: string): void {
+    const [column, direction] = value.split(':');
+    this.setSort(value === 'key' ? null : { column, dir: direction === 'desc' ? 'desc' : 'asc' });
   }
 
   /** Another run of the control, chosen in the picker: its own address, with no search or filter carried over. */

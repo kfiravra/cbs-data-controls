@@ -42,12 +42,6 @@ describe('SortHeaderComponent', () => {
     expect(button().getAttribute('data-sort')).toBe('desc');
   });
 
-  it('carries the test id it is given, so two tables tell their heads apart', async () => {
-    await draw({ testId: 'sort-display' });
-
-    expect(button().getAttribute('data-testid')).toBe('sort-display');
-  });
-
   it('gives the words of aria-sort for a header cell', () => {
     expect([ariaSort('asc'), ariaSort('desc'), ariaSort(null)]).toEqual(['ascending', 'descending', 'none']);
   });

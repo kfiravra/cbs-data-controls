@@ -20,6 +20,10 @@
   }
 }
 
+.rule .rule-joiner {
+  color: var(--color-action-ink);
+}
+
 // on the tint the label takes the accent's own ink: a grey would go dull on it
 .rule__title {
   font-size: var(--text-label);
@@ -209,7 +213,12 @@
     }
   }
 
+  // the search has the room of its placeholder: the column is given, not left to what the title spares
   .records__head {
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 26rem);
+  }
+
+  .records__head .toolbar__search {
+    flex: 1 1 100%;
   }
 }

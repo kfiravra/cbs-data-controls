@@ -1,4 +1,4 @@
-import { ControlSummary, Page } from '../../src/app/core/api/api.types';
+import { ControlSummary, Page, ResultItem } from '../../src/app/core/api/api.types';
 import { exampleNumber } from '../fixtures/examples';
 import { controlIdOf, expect, test } from '../support/gate';
 import { t } from '../support/i18n';
@@ -69,6 +69,40 @@ test('a control of its own is found, opened, run, read in its panel, duplicated 
     await expect(records).toHaveCount(matching.length);
     const keys = await records.evaluateAll((found) => found.map((record) => record.getAttribute('data-key')));
     expect(new Set(keys)).toEqual(new Set(matching.map((violation) => violation.key)));
+  });
+
+  await test.step('its results are sorted by the server on any column: here by the reasons, most first', async () => {
+    await panel.getByTestId('toolbar-search').fill('');
+    await panel.locator(`[data-testid="breakdown-all"]`).click();
+    await expect(records).toHaveCount(example.expected.total);
+    if (testInfo.project.name === 'mobile') {
+      await panel.getByTestId('toolbar-filters-toggle').click();
+      await panel.getByTestId('sort-select').click();
+      await page.getByRole('option', { name: t('results.sort.desc', { column: t('results.table.reasons') }), exact: true }).click();
+    } else {
+      const head = panel.locator('[data-column="reasons"]').getByTestId('sort-header');
+      await head.click();
+      await head.click();
+    }
+    await expect(page).toHaveURL(/sort=reasons&dir=desc|dir=desc&sort=reasons/);
+
+    // the panel shows the order the api gives, and that order is the contract's: more reasons first
+    const run = page.url().match(/\/runs\/(\d+)/)![1];
+    const answer = await page.request.get(`/api/v1/runs/${run}/results?sort=reasons&dir=desc&page=1&pageSize=25`);
+    const { items } = (await answer.json()) as Page<ResultItem>;
+    await expect(records.first()).toHaveAttribute('data-key', items[0].key);
+    expect(await records.evaluateAll((found) => found.map((record) => record.getAttribute('data-key')))).toEqual(items.map((item) => item.key));
+    const counts = items.map((item) => item.reasons.length);
+    expect(counts).toEqual([...counts].sort((a, b) => b - a));
+
+    // an identifying field the same way: the api reads it by the glossary and answers 200
+    const field = Object.keys(items[0].display)[0];
+    const byField = await page.request.get(`/api/v1/runs/${run}/results?sort=field&field=${field}&page=1&pageSize=25`);
+    expect(byField.status()).toBe(200);
+    const refused = await page.request.get(`/api/v1/runs/${run}/results?sort=field&field=no_such_field`);
+    expect(refused.status()).toBe(400);
+    await page.goto(`/runs/${run}`);
+    await expect(records).toHaveCount(example.expected.total);
   });
 
   await test.step('run again in the panel: the picker then holds both runs, and the earlier one is shown on request', async () => {

@@ -19,19 +19,50 @@
   font-style: normal;
 }
 
-// In a sentence the letter is smaller still and sits at the top corner of its clause, at the start side:
-// raised over the first word, the way a note's number is.
-.sentence .mark {
-  // moved, not aligned: a raised box would push its line apart from the others
+// In a text the letter is a superscript: a tiny badge that sits at the start corner of its condition, over
+// the first word, and takes no room in the line, so the words keep their own spacing. It is placed, not
+// aligned: a raised box in the line would push that line apart from the others.
+.marked {
   position: relative;
+}
+
+.marked > .mark {
+  position: absolute;
   inset-block-start: -0.5em;
+  inset-inline-start: -0.3em;
   min-inline-size: var(--size-mark-corner);
   block-size: var(--size-mark-corner);
   padding-inline: 2px;
-  margin-inline-end: 1px;
   border-radius: var(--radius-xs);
   font-size: var(--text-mark-corner);
-  vertical-align: baseline;
+}
+
+// The brackets of the engine's text are drawn and not written. What stands between a pair is one soft
+// block, a tint of the ink that deepens where a block lies in a block; where the top level of a rule joins
+// groups, each stands on a line of its own and the joining word on a short line between them.
+.rule-group {
+  display: inline-block;
+  max-inline-size: 100%;
+  padding-inline: var(--space-2);
+  border-radius: var(--radius-chip);
+  background: var(--color-tonal);
+}
+
+.rule-line,
+.rule-joiner {
+  display: block;
+}
+
+.rule-line + .rule-joiner,
+.rule-joiner + .rule-line {
+  margin-block-start: 2px;
+}
+
+.rule-joiner {
+  padding-inline-start: var(--space-2);
+  font-size: var(--text-label);
+  line-height: var(--leading-title);
+  color: var(--color-muted);
 }
 
 // the settle: when a condition changes, its mark in the sentence fills at once and eases back
@@ -115,6 +146,14 @@
     color: var(--color-on-inverse);
   }
 
+  .rule-group {
+    background: var(--color-on-inverse-tonal);
+  }
+
+  .rule-joiner {
+    color: var(--color-on-inverse-muted);
+  }
+
   .mark--changed {
     animation-name: mark-settle-on-inverse;
   }
@@ -160,10 +199,14 @@
   color: var(--color-on-inverse-muted);
 }
 
+// the room of two lines, and above them the room of a letter: it sits over its line, and the first line's
+// would otherwise be cut by the edge of what scrolls
 .rulebar__sentence {
   --scroll-thumb: var(--color-scroll-on-inverse);
 
-  block-size: calc(2 * var(--leading-read) * var(--text-small));
+  block-size: calc(2 * var(--leading-read) * var(--text-small) + var(--space-2));
+  padding-block-start: var(--space-2);
+  padding-inline-start: var(--space-1);
   overflow-y: auto;
 }
 
@@ -221,7 +264,7 @@
   }
 
   .rulebar__sentence {
-    block-size: calc(2 * var(--leading-read) * var(--text-body));
+    block-size: calc(2 * var(--leading-read) * var(--text-body) + var(--space-2));
   }
 
   .rulebar__status {

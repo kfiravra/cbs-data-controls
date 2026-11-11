@@ -1,6 +1,3 @@
-import { Page } from '@playwright/test';
-
-import { Control } from '../../src/app/core/api/api.types';
 import { exampleNumber } from '../fixtures/examples';
 import { glossary, label } from '../fixtures/glossary';
 import {
@@ -14,26 +11,9 @@ import {
 } from '../fixtures/runs';
 import { t } from '../support/i18n';
 import { expect, test } from '../support/mocked';
-import { FakeApi, problem } from '../support/routes';
+import { RUN, breakdown, controlOf, letters, open, rows, ui } from '../support/results-screen';
+import { problem } from '../support/routes';
 import { sheetInset, shot } from '../support/shots';
-
-const letters = t('common.markLetters').split(' ');
-const RUN = 500;
-
-function controlOf(api: FakeApi, number: 1 | 2 | 3 | 4 | 5 | 6): Control {
-  const wanted = JSON.stringify(exampleNumber(number).definition);
-  return api.controls.find((control) => JSON.stringify(control.definition) === wanted)!;
-}
-
-/** The panel: the list stands behind it with a toolbar, a table and a foot of its own, so everything is looked for in here. */
-const ui = (page: Page) => page.getByTestId('panel');
-const rows = (page: Page) => ui(page).getByTestId('result-row');
-const breakdown = (page: Page) => ui(page).getByTestId('breakdown-row');
-
-async function open(page: Page, stored: StoredRun, query = ''): Promise<void> {
-  await page.goto(`/runs/${stored.run.id}${query}`);
-  await expect(ui(page).getByTestId('panel-title')).toHaveText(stored.run.controlName);
-}
 
 test.describe('run results', () => {
   test('a run with violations shows the control in words, the summary, the breakdown and a reason for every record', async ({ page, api }, testInfo) => {
@@ -136,53 +116,6 @@ test.describe('run results', () => {
     if (testInfo.project.name === 'mobile') {
       await shot(page, testInfo, 'results-last-page');
     }
-  });
-
-  test('the first column sorts the records: up, down, and back to the order of the run', async ({ page, api }, testInfo) => {
-    test.skip(testInfo.project.name === 'mobile', 'the header is a table header from 640px; a phone sorts by the select');
-    const control = controlOf(api, 1);
-    const stored = api.addRun(succeededRun(control, RUN, { expected: manyViolations(control, 12) }));
-    const identifying = glossary.entities.find((entity) => entity.key === stored.run.rootEntity)!.identifyingFields;
-    const text = (index: number) => identifying.map((field) => stored.results[index].display[field]).join(' ');
-    const sorted = stored.results.map((_, index) => text(index)).sort((a, b) => a.localeCompare(b, 'he'));
-    await open(page, stored);
-    const firstCell = () => rows(page).first().locator('td').first();
-    const head = ui(page).locator('th').first();
-
-    await ui(page).getByTestId('sort-display').click();
-    await expect(page).toHaveURL(/sort=display/);
-    await expect(head).toHaveAttribute('aria-sort', 'ascending');
-    await expect(firstCell()).toHaveText(sorted[0].split(' ')[0]);
-
-    await ui(page).getByTestId('sort-display').click();
-    await expect(page).toHaveURL(/dir=desc/);
-    await expect(head).toHaveAttribute('aria-sort', 'descending');
-    await expect(firstCell()).toHaveText(sorted.at(-1)!.split(' ')[0]);
-
-    await ui(page).getByTestId('sort-display').click();
-    await expect(page).not.toHaveURL(/sort=/);
-    await expect(rows(page).first()).toHaveAttribute('data-key', stored.results[0].key);
-  });
-
-  test('a phone sorts the records from a select in the toolbar', async ({ page, api }, testInfo) => {
-    test.skip(testInfo.project.name !== 'mobile', 'the select stands in for the table header below 640px');
-    const control = controlOf(api, 1);
-    const stored = api.addRun(succeededRun(control, RUN, { expected: manyViolations(control, 12) }));
-    await open(page, stored);
-    const column = label(
-      glossary.entities
-        .find((entity) => entity.key === stored.run.rootEntity)!
-        .fields.find((field) => field.key === glossary.entities.find((e) => e.key === stored.run.rootEntity)!.identifyingFields[0])!.label,
-    );
-
-    // the header is read and not seen at this width: its button must not be a stop the keyboard cannot see
-    await expect(ui(page).getByTestId('sort-display')).toBeHidden();
-
-    await ui(page).getByTestId('toolbar-filters-toggle').click();
-    await ui(page).getByTestId('sort-select').click();
-    await page.getByRole('option', { name: t('results.sort.desc', { column }), exact: true }).click();
-
-    await expect(page).toHaveURL(/sort=display&dir=desc|dir=desc&sort=display/);
   });
 
   test('the letters of the conditions are badges: the pointer and the keyboard change none of them', async ({ page, api }) => {
@@ -347,8 +280,13 @@ test.describe('run results', () => {
       expect(box.x).toBe(inset);
     }
     // nothing in the panel is wider than the panel
-    const overflow = await ui(page).evaluate((panel) => [...panel.querySelectorAll('*')].filter((el) => el.scrollWidth > panel.clientWidth + 1).length);
-    expect(overflow).toBe(0);
+    const overflow = await ui(page).evaluate((panel) =>
+      // what is heard and not seen is a clipped box of one pixel: its text has a width and takes none
+      [...panel.querySelectorAll('*:not(.sr-only)')]
+        .filter((el) => el.scrollWidth > panel.clientWidth + 1)
+        .map((el) => `${el.tagName.toLowerCase()}.${el.className} ${el.scrollWidth}`),
+    );
+    expect(overflow).toEqual([]);
   });
 
   test('a run that found nothing says so, with what was checked', async ({ page, api }, testInfo) => {
@@ -563,45 +501,4 @@ test.describe('run results', () => {
     await expect(rows(page)).toHaveCount(stored.run.totalCount!);
   });
 
-  test('the panel reads from the top: the rule on a tint, one block for the run and its filter, the records as wide as the panel, and the pager at the foot', async ({ page, api }, testInfo) => {
-    const control = controlOf(api, 4);
-    const stored = api.addRun(succeededRun(control, RUN, { expected: manyViolations(control, 60) }));
-    await open(page, stored);
-    const box = async (testId: string) => (await ui(page).getByTestId(testId).boundingBox())!;
-    const [rule, summary, table, body] = [await box('run-sentence'), await box('run-summary'), await box('results-table'), await box('panel-body')];
-
-    // top to bottom: the rule, the one block, the records
-    expect(rule.y + rule.height).toBeLessThanOrEqual(summary.y);
-    expect(summary.y + summary.height).toBeLessThanOrEqual(table.y);
-    // the rule stands on a tint of its own, and the count is said once: beside the filter, not also in it
-    const tint = await ui(page).locator('.rule').evaluate((element) => getComputedStyle(element).backgroundColor);
-    expect(tint).not.toBe(await ui(page).getByTestId('panel-body').evaluate((element) => getComputedStyle(element).backgroundColor));
-    await expect(ui(page).getByTestId('run-summary').getByTestId('breakdown')).toBeVisible();
-    await expect(ui(page).getByTestId('breakdown-all')).toHaveText(t('results.breakdown.all'));
-    await expect(ui(page).getByTestId('breakdown-all').getByTestId('breakdown-count')).toHaveCount(0);
-    await expect(ui(page).getByTestId('run-total')).toHaveText(String(stored.run.totalCount));
-    // the records take the whole width the panel gives its content, like the two blocks over them
-    expect(Math.round(table.width)).toBe(Math.round(summary.width));
-    expect(table.width).toBeGreaterThan(body.width * 0.85);
-
-    // the letters of the rule are small, and sit over the start of their clause
-    const mark = ui(page).getByTestId('run-sentence').getByTestId('mark').first();
-    const clause = ui(page).getByTestId('run-sentence').getByTestId('clause').first();
-    const [markBox, clauseBox] = [(await mark.boundingBox())!, (await clause.boundingBox())!];
-    const inReason = (await rows(page).first().getByTestId('mark').first().boundingBox())!;
-    expect(markBox.height).toBeLessThan(inReason.height);
-    expect(markBox.height).toBeLessThanOrEqual(15);
-    expect(markBox.y).toBeLessThan(clauseBox.y + 4);
-    expect(Math.abs(markBox.x + markBox.width - (clauseBox.x + clauseBox.width))).toBeLessThan(2);
-
-    // the count and the pager are in view however far the records are scrolled
-    const viewport = page.viewportSize()!;
-    const foot = await box('table-range');
-    expect(foot.y + foot.height).toBeLessThanOrEqual(viewport.height);
-    await ui(page).getByTestId('panel-body').evaluate((element) => element.scrollTo(0, element.scrollHeight));
-    await expect(ui(page).getByTestId('table-range')).toBeInViewport({ ratio: 1 });
-    await expect(ui(page).getByTestId('page-next')).toBeInViewport({ ratio: 1 });
-    expect(await box('table-range')).toEqual(foot);
-    await shot(page, testInfo, 'results-foot');
-  });
 });

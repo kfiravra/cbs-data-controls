@@ -1,5 +1,5 @@
 import { TextPart } from '../api/api.types';
-import { changedNodes, plainText, splitFirstWord, toClauses } from './text-parts';
+import { Block, changedNodes, plainText, splitFirstWord, toBlocks, toClauses } from './text-parts';
 
 // the sentence of contracts/api.md §5, as shapes: two clauses and their joining word
 const SENTENCE: TextPart[] = [
@@ -58,5 +58,53 @@ describe('text parts', () => {
     expect([...changedNodes(SENTENCE, edited)]).toEqual(['c2']);
     expect([...changedNodes(SENTENCE, added)]).toEqual(['c2', 'c3']);
     expect([...changedNodes(null, SENTENCE)]).toEqual([]);
+  });
+
+  describe('as a tree of clauses and groups', () => {
+    /** A tree written out: a clause as its text, a group as an array (a scope of a related node starts with `~`). */
+    type Shape = string | Shape[];
+    const shape = (blocks: readonly Block[]): Shape[] =>
+      blocks.map((block) =>
+        block.kind === 'clause'
+          ? block.clause.parts.map((part) => part.text).join('')
+          : [...(block.logical ? [] : ['~']), ...shape(block.children)],
+      );
+    const text = (value: string, nodeId?: string): TextPart => ({ text: value, nodeId });
+
+    it('is the run of clauses itself for a text without brackets', () => {
+      expect(shape(toBlocks([text('a', 'c1'), text(' and '), text('b', 'c2')]))).toEqual(['a', ' and ', 'b']);
+    });
+
+    it('makes a group of what a pair of brackets holds, to any depth, and leaves the bracket characters out', () => {
+      const parts = [text('('), text('a', 'c1'), text(' and '), text('('), text('b', 'c2'), text(' or '), text('c', 'c3'), text(')'), text(')'), text(' or '), text('('), text('d', 'c4'), text(')')];
+
+      expect(shape(toBlocks(parts))).toEqual([['a', ' and ', ['b', ' or ', 'c']], ' or ', ['d']]);
+      expect(JSON.stringify(shape(toBlocks(parts)))).not.toMatch(/[()]/);
+    });
+
+    it('takes a text that is one group from end to end as that group\'s content', () => {
+      expect(shape(toBlocks([text('('), text('a', 'c1'), text(' and '), text('b', 'c2'), text(')')]))).toEqual(['a', ' and ', 'b']);
+    });
+
+    it('tells the scope of a related node, opened inside the node\'s own text, from a group of conditions', () => {
+      const parts = [text('no ', 'r1'), text('line with (', 'r1'), text('q over 3', 'c2'), text(')', 'r1')];
+
+      expect(shape(toBlocks(parts))).toEqual(['no line with ', ['~', 'q over 3']]);
+    });
+
+    it('marks a node once, where its text first stands, also when a group lies between its parts', () => {
+      const blocks = toBlocks([text('no ', 'r1'), text('line with (', 'r1'), text('q', 'c2'), text(') at all', 'r1')]);
+      const opens = blocks.flatMap((block) => (block.kind === 'clause' ? [[block.clause.nodeId, block.clause.opensNode]] : []));
+
+      expect(opens).toEqual([
+        ['r1', true],
+        ['r1', false],
+      ]);
+    });
+
+    it('closes at the end of the text a bracket that never closes, and ignores one that closes nothing', () => {
+      expect(shape(toBlocks([text('a', 'c1'), text(' or ('), text('b', 'c2')]))).toEqual(['a', ' or ', ['b']]);
+      expect(shape(toBlocks([text('a', 'c1'), text(')'), text(' or b')]))).toEqual(['a', ' or b']);
+    });
   });
 });

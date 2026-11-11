@@ -92,12 +92,11 @@ describe('ResultsTableComponent', () => {
     expect(heads).toEqual([...COLUMNS.map((column) => column.label), t('results.table.reasons')]);
   });
 
-  it('names the sortable header itself, for the width at which its button is not rendered', async () => {
+  it('names every header itself, for the width at which its sort button is not rendered', async () => {
     await draw();
 
-    const [first, second] = host().querySelectorAll('th');
-    expect(first.getAttribute('aria-label')).toBe(COLUMNS[0].label);
-    expect(second.hasAttribute('aria-label')).toBe(false);
+    const labels = [...host().querySelectorAll('th')].map((head) => head.getAttribute('aria-label'));
+    expect(labels).toEqual([...COLUMNS.map((column) => column.label), t('results.table.reasons')]);
   });
 
   it('writes the identifying fields of each record, isolated from the direction of the page', async () => {
@@ -155,25 +154,31 @@ describe('ResultsTableComponent', () => {
     expect(states).toEqual(['resting', 'resting']);
   });
 
-  it('sorts by the first column: ascending, descending, then the order of the run again', async () => {
+  it('sorts by any column on a press of its name: ascending, descending, then the order of the run again', async () => {
     const asked: DisplaySort[] = [];
     fixture.componentInstance.sortChange.subscribe((sort) => asked.push(sort));
-    const button = () => host().querySelector<HTMLButtonElement>('[data-testid="sort-display"]')!;
-    const head = () => host().querySelector('th')!;
-
+    const heads = () => [...host().querySelectorAll('th')];
+    const buttons = () => [...host().querySelectorAll<HTMLButtonElement>('[data-testid="sort-header"]')];
     await draw();
-    expect(head().getAttribute('aria-sort')).toBe('none');
-    button().click();
+    const column = buttons()[1].closest('[data-column]')!.getAttribute('data-column')!;
 
-    await draw({ sort: 'asc' });
-    expect(head().getAttribute('aria-sort')).toBe('ascending');
-    button().click();
+    // every column has a name that sorts, the reasons last
+    expect(buttons()).toHaveLength(heads().length);
+    expect(buttons().at(-1)!.closest('[data-column]')!.getAttribute('data-column')).toBe('reasons');
+    expect(heads().map((head) => head.getAttribute('aria-sort'))).toEqual(heads().map(() => 'none'));
+    buttons()[1].click();
 
-    await draw({ sort: 'desc' });
-    expect(head().getAttribute('aria-sort')).toBe('descending');
-    button().click();
+    await draw({ sort: { column, dir: 'asc' } });
+    expect(heads().map((head) => head.getAttribute('aria-sort'))).toEqual(heads().map((_, index) => (index === 1 ? 'ascending' : 'none')));
+    buttons()[1].click();
 
-    expect(asked).toEqual(['asc', 'desc', null]);
+    await draw({ sort: { column, dir: 'desc' } });
+    expect(heads()[1].getAttribute('aria-sort')).toBe('descending');
+    buttons()[1].click();
+    // another column starts from ascending, whatever this one was at
+    buttons().at(-1)!.click();
+
+    expect(asked).toEqual([{ column, dir: 'asc' }, { column, dir: 'desc' }, null, { column: 'reasons', dir: 'asc' }]);
   });
 
   it('stands skeleton rows in the shape of the table while rows are on their way', async () => {

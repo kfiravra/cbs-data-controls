@@ -377,17 +377,46 @@ export class FakeApi {
         .join(' ');
     const search = (query.get('search') ?? '').trim().toLowerCase();
     const condition = query.get('condition');
-    const direction = query.get('dir') === 'desc' ? -1 : 1;
-    const byDisplay = query.get('sort') === 'display';
     const page = Number(query.get('page') ?? 1);
     const pageSize = Number(query.get('pageSize') ?? 25);
     const matching = stored.results
       .filter((row) => !condition || row.matched.includes(condition))
       .filter((row) => `${displayText(row)}\n${row.reasonText}`.toLowerCase().includes(search))
-      .sort(
-        (a, b) =>
-          direction * ((byDisplay ? displayText(a).localeCompare(displayText(b), 'he') : 0) || a.seq - b.seq),
-      );
+      .sort(this.resultsOrder(stored, query, displayText));
     return { items: matching.slice((page - 1) * pageSize, page * pageSize), total: matching.length, page, pageSize };
+  }
+
+  /**
+   * The order of a run's records as contracts/api.md gives it. `key` and `display` turn both sort keys with
+   * `dir`; `field` (a number by value, anything else as text, a missing value last either way) and `reasons`
+   * (how many, then their text) turn the sort key only and break a tie by `seq`.
+   */
+  private resultsOrder(
+    stored: StoredRun,
+    query: URLSearchParams,
+    displayText: (row: ResultItem) => string,
+  ): (a: ResultItem, b: ResultItem) => number {
+    const direction = query.get('dir') === 'desc' ? -1 : 1;
+    const field = query.get('field') ?? '';
+    const entity = this.glossary.entities.find((candidate) => candidate.key === stored.run.rootEntity);
+    const isNumber = entity?.fields.find((candidate) => candidate.key === field)?.type === 'number';
+    switch (query.get('sort')) {
+      case 'display':
+        return (a, b) => direction * (displayText(a).localeCompare(displayText(b), 'he') || a.seq - b.seq);
+      case 'reasons':
+        return (a, b) =>
+          direction * (a.reasons.length - b.reasons.length || a.reasonText.localeCompare(b.reasonText, 'he')) || a.seq - b.seq;
+      case 'field':
+        return (a, b) => {
+          const [left, right] = [a.display[field] ?? null, b.display[field] ?? null];
+          if (left === null || right === null) {
+            return Number(left === null) - Number(right === null) || a.seq - b.seq;
+          }
+          const compared = isNumber ? Number(left) - Number(right) : String(left).localeCompare(String(right), 'he');
+          return direction * compared || a.seq - b.seq;
+        };
+      default:
+        return (a, b) => direction * (a.seq - b.seq);
+    }
   }
 }

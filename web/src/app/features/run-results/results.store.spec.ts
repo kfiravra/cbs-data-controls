@@ -21,7 +21,7 @@ const DEFINITION: Definition = {
     ],
   },
 };
-const VIEW: ResultsView = { page: 1, size: 25, search: '', condition: null, sort: 'key', dir: 'asc' };
+const VIEW: ResultsView = { page: 1, size: 25, search: '', condition: null, sort: null, dir: 'asc' };
 const letters = t('common.markLetters').split(' ');
 
 function run(status: RunStatus, totalCount: number | null, error: RunError | null = null): Run {
@@ -258,14 +258,32 @@ describe('ResultsStore', () => {
       request.flush({ items: [], total: 23, page: 1, pageSize: 25 });
     });
 
+    it('are asked for in the order of the run when the view names no column, and by the reasons when it names them', async () => {
+      await open(run('succeeded', 23));
+
+      store.show(VIEW);
+      const unsorted = await next('/api/v1/runs/41/results');
+      expect([unsorted.request.params.get('sort'), unsorted.request.params.get('field')]).toEqual(['key', null]);
+
+      store.show({ ...VIEW, sort: 'reasons', dir: 'desc' });
+      const byReasons = await next('/api/v1/runs/41/results');
+      expect([byReasons.request.params.get('sort'), byReasons.request.params.get('field'), byReasons.request.params.get('dir')]).toEqual([
+        'reasons',
+        null,
+        'desc',
+      ]);
+      byReasons.flush({ items: [], total: 23, page: 1, pageSize: 25 });
+    });
+
     it('are asked for with everything the view of the address says', async () => {
       await open(run('succeeded', 23));
 
-      store.show({ ...VIEW, page: 2, size: 10, search: 'levi', condition: 'c2', sort: 'display', dir: 'desc' });
+      store.show({ ...VIEW, page: 2, size: 10, search: 'levi', condition: 'c2', sort: 'reference', dir: 'desc' });
       const request = await next('/api/v1/runs/41/results');
 
+      // a column of the view is an identifying field in the api's words
       const sent = Object.fromEntries(request.request.params.keys().map((key) => [key, request.request.params.get(key)]));
-      expect(sent).toEqual({ page: '2', pageSize: '10', search: 'levi', condition: 'c2', sort: 'display', dir: 'desc' });
+      expect(sent).toEqual({ page: '2', pageSize: '10', search: 'levi', condition: 'c2', sort: 'field', field: 'reference', dir: 'desc' });
       expect(store.rowsLoading()).toBe(true);
       request.flush({ items: [], total: 0, page: 2, pageSize: 10 });
       expect(store.rowsLoading()).toBe(false);

@@ -99,7 +99,7 @@ typography:
     lineHeight: 1
   mark-corner:
     fontFamily: "Heebo, system-ui, sans-serif"
-    fontSize: 0.6875rem
+    fontSize: 0.625rem
     fontWeight: 600
     lineHeight: 1
 rounded:
@@ -227,7 +227,7 @@ components:
   mark-corner:
     typography: "{typography.mark-corner}"
     rounded: "{rounded.xs}"
-    size: 15px
+    size: 13px
   mark-on-inverse:
     backgroundColor: "{colors.on-inverse-tonal}"
     textColor: "{colors.on-inverse}"
@@ -507,8 +507,8 @@ figure 36.
 - **Label** (500, 0.8125rem, 1.35) and **Caption** (400, 1.5): chips, status chips, column heads, the joining word
   on the rail, the terms of the overview, the chain of what connects; hints under a field, the description on a
   card of what to check.
-- **Mark** (600, 0.75rem) and **Mark corner** (600, 0.6875rem): the letter of a condition at the start of its row,
-  and at the corner of its clause in a sentence.
+- **Mark** (600, 0.75rem) and **Mark corner** (600, 0.625rem): the letter of a condition at the start of its row,
+  and as a superscript over the start corner of its clause in a sentence.
 
 ### Named Rules
 
@@ -532,8 +532,8 @@ and no capitals style: emphasis is weight.
 
 One page. Its content is one column, at most 1280px wide, centred, with a side gutter of 16px on a phone, 32px
 from 640px and 48px from 1024px. The bar (60px) spans the window; its content keeps the same edges. Under the
-list its foot (the range and the pager) stays at the bottom of the window, on the ground with a Line over it,
-while the rows scroll behind it.
+list its foot (the range and the pager) is a bar fixed at the bottom of the window, a Card with a Line over it as
+the foot of the results panel is, there whether the list is longer than the window or one row.
 
 **The panel.** A control or a run opens in a panel over the list: a card at the inline end, as tall as the window
 less 12px of room on every side, `min(1120px, the window less between 48 and 320px)` wide, with the large radius
@@ -706,10 +706,17 @@ what is outside it: Action on a resting segment, On inverse on the selected one.
 
 The signature of the system.
 
+- **The groups of a rule** are drawn, not written: no bracket character of the engine's sentence stands on the
+  screen. What a pair of brackets holds is one soft block (Tonal on a light ground, On inverse tonal on the bar,
+  6px radius, 8px of room at its sides), and a block in a block is a shade deeper. Where the top level of a rule
+  joins groups, each stands on a line of its own and the joining word on a short line between them (Label,
+  Muted; Action ink on the rule's tint). The engine's text is untouched: beside a drawing that has blocks the
+  plain sentence, brackets and all, is given to assistive technology, and the drawing is hidden from it. A
+  reason is not a rule: its brackets are its own punctuation and are written as they came.
 - **Mark:** an 18px badge (wider for two letters), 6px radius, Action tint ground, Action ink letter (0.75rem,
-  600). In a sentence it is smaller still (15px, 0.6875rem, 4px radius) and raised to the top corner of its
-  clause, at the start side, the way the number of a note is; it is moved and not aligned, so its line keeps its
-  height. Letters follow the order of the conditions in the definition, top to bottom, and are recomputed on every
+  600). In a sentence it is a superscript (13px, 0.625rem, 4px radius): placed over the start corner of its
+  clause, above the first word, and out of the line, so it takes no room in it and the words keep their own
+  spacing. Letters follow the order of the conditions in the definition, top to bottom, and are recomputed on every
   edit: Hebrew numerals (א to י, then יא, יב and on). A condition on related records has a letter of its own, given
   before the letters of the conditions inside it: a run matches that node as a whole, so its letter is the one a
   reason and the count by condition show. The mark is display only: it is derived from the order of the
@@ -774,8 +781,9 @@ assumes no number of entities. The word for an entity is not shown.
 
 **The row of ideas.** A new control that starts from nothing has, under the chain, one collapsed row of Action
 tint (12px radius, 44px, Small strong in Action ink) with a sparkle, its words and, once there are any, their
-count in a small Action chip and a chevron. The row is there from the start, so nothing moves when the ideas
-arrive: before a choice it says that ideas will appear after it, while they are computed it says so, and when
+count in a small Action chip and a chevron. The row comes in with the choice of what to check (a short rise and
+fade, none under reduced motion): the conditions come in with it, so it moves nothing that was read. Then it
+only changes its words, so nothing moves when the ideas arrive: while they are computed it says so, and when
 there are none it says that too; in those states it is not a button to press. Pressed, it opens (the chevron
 turns) and shows one line of hint and up to three ideas the engine computed for that choice from the data as
 they are now: each a white button card (8px radius, a Line edge, Raised under the pointer) with its name, its
@@ -843,8 +851,8 @@ One table design for the controls, the archive and the records of a run.
 - **Sorting.** A column head is a button (`app-sort-header`): a press sorts ascending, the next descending; the
   sorted column turns Ink and shows its arrow, the others a faint `unfold_more`. The order of the list is the
   server's (`sort` and `dir` in the address and in `GET /api/v1/controls`); below 640px the toolbar's select
-  sorts. The records of a run have one sortable head, the first identifying column: ascending, descending, then
-  back to the run's order.
+  sorts. Every head of a run's records sorts as well, the reasons too (by how many there are, then by their
+  text): ascending, descending, then back to the run's order; the api orders a field by its glossary type.
 - **A row of the list** has three parts with a line between them: its details, its run button, its actions. The
   details are the name over its description; what it checks; the last run; the result as a status chip (Chips,
   above). The name is a link to the results of the control's last run, and for a control that never ran to the
@@ -864,8 +872,8 @@ One table design for the controls, the archive and the records of a run.
   identifying fields (the first in Name type), then the reasons: one line for each condition the record matched,
   its mark, then the sentence with the value marked, at the Read line height.
 - **Foot:** the range in words, a page size select and previous and next icon buttons, which are drawn when
-  there is more than one page. Under the list it stays at the bottom of the window; under the records it is the
-  panel's foot. The range is a status: after a search, a filter, a sort or another page it is said to assistive
+  there is more than one page. Under the list it is a bar fixed at the bottom of the window; under the records
+  it is the panel's foot. The range is a status: after a search, a filter, a sort or another page it is said to assistive
   technology.
 
 ### Run overview
@@ -1054,7 +1062,7 @@ Notes for the client task; the visual system above does not depend on them.
   `mark-corner`), `--weight-regular`, `--weight-medium`, `--weight-strong`, `--leading-tight`, `--leading-title`,
   `--leading-body`, `--leading-read`, `--space-1` to `--space-8`, `--radius-xs`, `--radius-chip`, `--radius-sm`,
   `--radius-md`, `--radius-lg`, `--size-control` (44px), `--size-control-sm` (36px, 44px below 640px),
-  `--size-icon`, `--size-mark` (18px), `--size-mark-corner` (15px), `--size-bar`, `--gutter`, `--container`,
+  `--size-icon`, `--size-mark` (18px), `--size-mark-corner` (13px), `--size-bar`, `--gutter`, `--container`,
   `--sheet-inset`, `--sheet-width`, `--sheet-peek`, `--shadow-overlay`, `--shadow-raised`, `--ease-out` and the
   `--duration-*` set. Component styles read only these; the type roles of `base.scss` (`t-page`, `t-title`,
   `t-small`, `t-label`) set a size with its weight and line height. There is one theme: no second set of values

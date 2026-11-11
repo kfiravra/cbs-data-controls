@@ -211,7 +211,8 @@ export interface ResultItem extends Violation {
   readonly seq: number;
 }
 
-export type ResultsSort = 'key' | 'display';
+/** How a run's records are ordered: the run's own order, the identifying text, one identifying field, or the reasons. */
+export type ResultsSort = 'key' | 'display' | 'field' | 'reasons';
 export type SortDirection = 'asc' | 'desc';
 
 export interface ResultsQuery {
@@ -220,6 +221,8 @@ export interface ResultsQuery {
   readonly search?: string;
   readonly condition?: string;
   readonly sort?: ResultsSort;
+  /** With `sort: 'field'`: the key of the identifying field to sort by. */
+  readonly field?: string;
   readonly dir?: SortDirection;
 }
 

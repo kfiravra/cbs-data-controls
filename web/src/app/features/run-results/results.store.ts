@@ -10,7 +10,6 @@ import {
   Page,
   ResultItem,
   ResultsQuery,
-  ResultsSort,
   Run,
   SortDirection,
   TextPart,
@@ -32,9 +31,16 @@ export interface ResultsView {
   readonly search: string;
   /** The node the rows are filtered by; null for all violations. */
   readonly condition: string | null;
-  readonly sort: ResultsSort;
+  /**
+   * The column the records are sorted by: the key of an identifying field, `reasons`, or null for the order
+   * of the run. The order itself is the server's.
+   */
+  readonly sort: string | null;
   readonly dir: SortDirection;
 }
+
+/** The name of the reasons column in a view and in the address. */
+export const REASONS_COLUMN = 'reasons';
 
 export type LoadState = 'loading' | 'ready' | 'notFound' | 'failed';
 
@@ -51,6 +57,16 @@ export type RunState =
 const NO_MARKS: ReadonlyMap<string, string> = new Map();
 
 type Rows = { readonly page: Page<ResultItem> } | { readonly failure: ApiError };
+
+/** A view's order in the api's words: a column is an identifying field unless it is the reasons column. */
+function sortOf(view: ResultsView): Pick<ResultsQuery, 'sort' | 'field' | 'dir'> {
+  if (view.sort === null) {
+    return { sort: 'key', dir: view.dir };
+  }
+  return view.sort === REASONS_COLUMN
+    ? { sort: 'reasons', dir: view.dir }
+    : { sort: 'field', field: view.sort, dir: view.dir };
+}
 
 /**
  * The state of the results panel, provided by its page: the run, the marks of the version that ran, the
@@ -251,8 +267,7 @@ export class ResultsStore {
         pageSize: view.size,
         search: view.search,
         condition: view.condition ?? undefined,
-        sort: view.sort,
-        dir: view.dir,
+        ...sortOf(view),
       },
     });
   }

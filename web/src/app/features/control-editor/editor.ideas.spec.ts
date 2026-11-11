@@ -1,4 +1,4 @@
-import { STORED, SUGGEST, control, editorHarness, sentenceOf } from '../../../testing/editor-store';
+import { STORED, SUGGEST, VALIDATE, control, editorHarness, sentenceOf } from '../../../testing/editor-store';
 import { SuggestionItem } from '../../core/api/api.types';
 import { DraftCondition, DraftGroup } from '../../core/definition/draft';
 import { IDEAS_MAX } from './editor.ideas';
@@ -116,14 +116,29 @@ describe('EditorStore: suggestions for the choice', () => {
     expect(store.draft()).not.toBe(before);
   });
 
-  it('leave a name that was typed as it is, and give back what was there when the way back is taken', async () => {
+  it('replace what an earlier suggestion gave: the name, the description and the conditions of the second one stand', async () => {
+    await open({ id: null });
+    await h.choose('order', [idea('late orders'), idea('open orders')]);
+    const [first, second] = store.ideas.items();
+
+    store.applyIdea(first);
+    const afterFirst = store.draft();
+    store.applyIdea(second);
+
+    expect([store.name(), store.description()]).toEqual(['open orders', 'finds open orders']);
+    expect(store.draft()).not.toBe(afterFirst);
+    expect(idsOf(store.draft())).toHaveLength(idsOf(afterFirst).length);
+    http.match(VALIDATE).forEach((request) => request.flush({ valid: true, sentence: '', sentenceParts: [], conditions: [] }));
+  });
+
+  it('replace a name that was typed, and give back what was there when the way back is taken', async () => {
     await open({ id: null });
     await h.choose('order', [idea('late orders')]);
     store.setName('my own name');
     const before = store.draft();
 
     const undo = store.applyIdea(store.ideas.items()[0]);
-    expect([store.name(), store.description()]).toEqual(['my own name', 'finds late orders']);
+    expect([store.name(), store.description()]).toEqual(['late orders', 'finds late orders']);
 
     undo();
     expect(store.draft()).toBe(before);

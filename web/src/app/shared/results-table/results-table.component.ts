@@ -16,8 +16,11 @@ export interface ResultColumn {
   readonly field: GlossaryField | undefined;
 }
 
-/** How the rows are ordered: by the record's identifying text, or as the engine returned them (null). */
-export type DisplaySort = SortDirection | null;
+/** How the rows are ordered: by one column (an identifying field's key, or `reasons`), or as the run returned them (null). */
+export type DisplaySort = { readonly column: string; readonly dir: SortDirection } | null;
+
+/** The name of the reasons column. */
+const REASONS = 'reasons';
 
 const SKELETON_ROWS = ['70%', '52%', '64%'];
 const SKELETON_REASONS = ['62%', '84%', '46%'];
@@ -26,7 +29,8 @@ const SKELETON_REASONS = ['62%', '84%', '46%'];
  * The violations of a run: a column per identifying field of the record, then the reasons, one line for
  * each condition the record matched: its mark (a badge, the same letter the condition has everywhere), then
  * the engine's text with the actual value marked. A table from 640px and card rows below, from one template,
- * in the one design of the product's tables: a bubble per row. The first column's header sorts by the record.
+ * in the one design of the product's tables: a bubble per row. Every column's name sorts by it, the reasons'
+ * too (by how many there are, then by their text); the order itself is the server's.
  */
 @Component({
   selector: 'app-results-table',
@@ -63,9 +67,16 @@ export class ResultsTableComponent {
     return this.format.value(row.display[column.key] ?? null, column.field);
   }
 
-  /** Ascending, then descending, then back to the order of the run. */
-  protected cycleSort(): void {
+  protected readonly reasons = REASONS;
+
+  protected sortedBy(column: string): SortDirection | null {
     const sort = this.sort();
-    this.sortChange.emit(sort === null ? 'asc' : sort === 'asc' ? 'desc' : null);
+    return sort?.column === column ? sort.dir : null;
+  }
+
+  /** A column's name was pressed: ascending by it, then descending, then back to the order of the run. */
+  protected cycleSort(column: string): void {
+    const sorted = this.sortedBy(column);
+    this.sortChange.emit(sorted === null ? { column, dir: 'asc' } : sorted === 'asc' ? { column, dir: 'desc' } : null);
   }
 }

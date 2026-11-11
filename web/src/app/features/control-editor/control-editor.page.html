@@ -174,10 +174,11 @@
                 }
               </div>
 
-              <!-- A control that starts from nothing is offered what the engine would check about the
-                   choice, behind one row that is there from the start: nothing moves when the offer
-                   arrives, and nothing opens until the row is pressed -->
-              @if (store.fromNothing()) {
+              <!-- A control that starts from nothing is offered what the engine would check about its
+                   choice, behind one row. The row comes in with the choice (the conditions come in with it,
+                   so it moves nothing that was read), and then only changes its words when the offer
+                   arrives; nothing opens until it is pressed -->
+              @if (store.fromNothing() && store.rootEntity()) {
                 <div class="ideas" data-testid="ideas" [attr.aria-busy]="store.ideas.loading()">
                   <button
                     class="ideas__row"

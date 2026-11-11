@@ -54,9 +54,11 @@ describe('TextPartsComponent', () => {
   it('opens each clause with its mark, bound to the first word of the clause', async () => {
     await draw({ parts: SENTENCE, marks: MARKS });
 
-    const bound = [...host().querySelectorAll('.nb:has(app-mark)')].map((element) => element.textContent);
-    expect(bound).toEqual(['A age', 'B monthly']);
-    expect(host().textContent).toBe('A age under 18 and B monthly salary over 15,000');
+    // the mark is placed over the start of the word and takes no room: no space stands between the two
+    const bound = [...host().querySelectorAll('.nb.marked')].map((element) => element.textContent);
+    expect(bound).toEqual(['Aage', 'Bmonthly']);
+    expect(bound.map((_, index) => host().querySelectorAll('.nb.marked')[index].firstElementChild?.tagName)).toEqual(['APP-MARK', 'APP-MARK']);
+    expect(host().textContent).toBe('Aage under 18 and Bmonthly salary over 15,000');
   });
 
   it('names each mark as its condition, because nothing else in a sentence names it', async () => {
@@ -109,7 +111,7 @@ describe('TextPartsComponent', () => {
     expect(marks().map((mark) => mark.getAttribute('data-state'))).toEqual(['resting', 'resting']);
   });
 
-  it('gives a node one mark when its clause is split around the clauses inside it', async () => {
+  it('gives a node one mark when its clause is split around the clauses inside it, and draws its brackets as a block', async () => {
     const related: TextPart[] = [
       { text: 'no ', nodeId: 'r1' },
       { text: 'line', nodeId: 'r1', role: 'relationship' },
@@ -122,6 +124,70 @@ describe('TextPartsComponent', () => {
     await draw({ parts: related, marks: new Map([['r1', 'A'], ['c2', 'B']]) });
 
     expect(marks().map((mark) => mark.textContent)).toEqual(['A', 'B']);
-    expect(host().textContent).toBe('A no line with (B quantity over 3)');
+    // on the screen no bracket: what stood in them is one block, and the text runs on as one sentence
+    const drawn = host().querySelector('[data-testid="drawn-text"]')!;
+    expect(drawn.textContent).toBe('Ano line with Bquantity over 3');
+    expect([...drawn.querySelectorAll('[data-testid="rule-group"]')].map((group) => group.textContent)).toEqual(['Bquantity over 3']);
+    expect(drawn.querySelector('.rule-line')).toBeNull();
+    // to be read: the engine's sentence as it wrote it, and the drawing is not read twice
+    expect(host().querySelector('[data-testid="plain-text"]')!.textContent).toBe('no line with (quantity over 3)');
+    expect(drawn.getAttribute('aria-hidden')).toBe('true');
+  });
+
+  it('stands each group of the top level on a line of its own, with the joining word between, and nests a group as a block in a block', async () => {
+    const nested: TextPart[] = [
+      { text: '(' },
+      { text: 'state: open', nodeId: 'c1' },
+      { text: ' and ' },
+      { text: '(' },
+      { text: 'mail: empty', nodeId: 'c2' },
+      { text: ' or ' },
+      { text: 'pay: missing', nodeId: 'c3' },
+      { text: ')' },
+      { text: ')' },
+      { text: ' or ' },
+      { text: '(' },
+      { text: 'state: closed', nodeId: 'c4' },
+      { text: ')' },
+    ];
+
+    await draw({ parts: nested, marks: new Map([['c1', 'A'], ['c2', 'B'], ['c3', 'C'], ['c4', 'D']]) });
+
+    const drawn = host().querySelector('[data-testid="drawn-text"]')!;
+    const lines = [...drawn.children];
+    expect(lines.map((line) => line.className)).toEqual(['rule-line', 'rule-joiner', 'rule-line']);
+    expect(lines.map((line) => line.textContent?.trim())).toEqual([
+      'Astate: open and Bmail: empty or Cpay: missing',
+      'or',
+      'Dstate: closed',
+    ]);
+    // the inner group is a block inside the first line's block
+    const outer = lines[0].querySelector('[data-testid="rule-group"]')!;
+    expect(outer.querySelector('[data-testid="rule-group"]')!.textContent).toBe('Bmail: empty or Cpay: missing');
+    expect(drawn.textContent).not.toMatch(/[()]/);
+    expect(host().querySelector('[data-testid="plain-text"]')!.textContent).toBe(
+      '(state: open and (mail: empty or pay: missing)) or (state: closed)',
+    );
+  });
+
+  it('draws a text without brackets as before: one run of clauses, read as it is drawn', async () => {
+    await draw({ parts: SENTENCE, marks: MARKS });
+
+    expect(host().querySelector('[data-testid="plain-text"]')).toBeNull();
+    expect(host().querySelector('[data-testid="drawn-text"]')!.hasAttribute('aria-hidden')).toBe(false);
+    expect(host().querySelector('[data-testid="rule-group"]')).toBeNull();
+  });
+
+  it('writes the brackets of a reason as they came: they are its punctuation, not a group of a rule', async () => {
+    const reason: TextPart[] = [
+      { text: 'age: ', nodeId: 'c1' },
+      { text: '16', nodeId: 'c1', role: 'actual' },
+      { text: ' (under 18)', nodeId: 'c1' },
+    ];
+
+    await draw({ parts: reason, markValues: true });
+
+    expect(host().textContent).toBe('age: 16 (under 18)');
+    expect(host().querySelector('[data-testid="rule-group"]')).toBeNull();
   });
 });

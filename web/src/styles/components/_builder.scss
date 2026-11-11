@@ -402,6 +402,15 @@
   border-radius: var(--radius-md);
   background: var(--color-action-tint);
   color: var(--color-action-ink);
+  // it comes in with the choice it is about; under reduced motion it is simply there (_motion.scss)
+  animation: ideas-in var(--duration-panel) var(--ease-out) both;
+}
+
+@keyframes ideas-in {
+  from {
+    opacity: 0;
+    transform: translateY(calc(-1 * var(--space-2)));
+  }
 }
 
 .ideas__row {

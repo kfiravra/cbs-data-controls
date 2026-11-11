@@ -68,24 +68,27 @@ test.describe('control editor: what to check, suggestions for it, and the bar', 
     await expect(page.getByTestId('root-entity').and(page.locator('[aria-checked="true"]'))).toHaveCount(1);
   });
 
-  test('a new control is offered up to three suggestions behind one row that is there from the start, and one click fills the conditions', async ({ page, api }, testInfo) => {
+  test('a new control is offered up to three suggestions behind one row that comes in with its choice, and one click fills the conditions', async ({ page, api }, testInfo) => {
     const entity = glossary.entities.find((candidate) => candidate.key === api.suggestions[0].definition.rootEntity)!;
     const offered = api.suggestions.filter((item) => item.definition.rootEntity === entity.key).slice(0, 3);
-    api.delay('POST /suggestions', 400);
+    api.delay('POST /suggestions', 600);
     await page.goto('/controls/new');
     const toggle = page.getByTestId('ideas-toggle');
     const ideas = page.getByTestId('idea');
 
-    // the row stands before anything is chosen, and says what it waits for
-    await expect(page.getByTestId('ideas-label')).toHaveText(t('editor.ideas.waiting'));
-    await expect(toggle).toHaveAttribute('aria-disabled', 'true');
+    // nothing is offered before it is chosen what to check: the row is not there
+    await expect(page.getByTestId('root-entity').first()).toBeVisible();
+    await expect(page.getByTestId('ideas')).toHaveCount(0);
 
     await page.getByRole('radio', { name: label(entity.label.plural) }).click();
 
-    // while the suggestions are computed the row says so; when they arrive it only changes its words
+    // the row comes in with the choice, with a short entrance, and says that the suggestions are computed
     await expect(page.getByTestId('ideas-label')).toHaveText(t('editor.ideas.loading'));
+    expect(await page.getByTestId('ideas').evaluate((row) => getComputedStyle(row).animationName)).toBe('ideas-in');
+    await atRest(page);
     const computing = (await page.getByTestId('ideas').boundingBox())!;
     const builderAt = (await page.getByTestId('condition-builder').boundingBox())!.y;
+    // when they arrive the row only changes its words: nothing moves
     await expect(page.getByTestId('ideas-count')).toHaveText(String(offered.length));
     await expect(page.getByTestId('ideas-label')).toHaveText(t('editor.ideas.title'));
     expect(await page.getByTestId('ideas').boundingBox()).toEqual(computing);
@@ -94,7 +97,7 @@ test.describe('control editor: what to check, suggestions for it, and the bar', 
     await expect(toggle).toHaveAttribute('aria-expanded', 'false');
     await expect(ideas).toHaveCount(0);
     expect(await toggle.innerText()).not.toMatch(/\bAI\b/i);
-    expect(offered.length).toBeGreaterThan(0);
+    expect(offered.length).toBeGreaterThan(1);
     expect(offered.length).toBeLessThanOrEqual(3);
     expect(api.callsTo('POST /suggestions').at(-1)!.body).toEqual({ rootEntity: entity.key, max: 3 });
 
@@ -116,10 +119,26 @@ test.describe('control editor: what to check, suggestions for it, and the bar', 
     await expect(sentence(page)).toContainText(engine.sentenceOf(offered[0].definition).conditions[0].sentence.split(' ').slice(1).join(' '));
     expect(api.callsTo('POST /controls')).toHaveLength(0);
 
-    // one press is not final: the toast gives back what was there
+    // another suggestion replaces the first one whole: its name, its description and its conditions
+    await toggle.click();
+    await ideas.nth(1).click();
+    await expect(page.getByTestId('control-name')).toHaveValue(offered[1].name);
+    await expect(page.getByTestId('control-description')).toHaveValue(offered[1].description);
+    await expect(sentence(page)).toContainText(engine.sentenceOf(offered[1].definition).conditions[0].sentence.split(' ').slice(1).join(' '));
+
+    // one press is not final: the toast gives back what was there before it
     await page.getByRole('button', { name: t('editor.toast.restore'), exact: true }).click();
-    await expect(page.getByTestId('condition-row')).toHaveCount(1);
-    await expect(page.getByTestId('control-name')).toHaveValue('');
+    await expect(page.getByTestId('control-name')).toHaveValue(offered[0].name);
+    await expect(page.getByTestId('control-description')).toHaveValue(offered[0].description);
+  });
+
+  test('under reduced motion the row of suggestions is there with the choice, without an entrance', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto('/controls/new');
+    await page.getByTestId('root-entity').first().click();
+
+    await expect(page.getByTestId('ideas')).toBeVisible();
+    expect(await page.getByTestId('ideas').evaluate((row) => getComputedStyle(row).animationName)).toBe('none');
   });
 
   test('the row says that there are no suggestions when there are none, and a stored control has no such row', async ({ page, api }) => {

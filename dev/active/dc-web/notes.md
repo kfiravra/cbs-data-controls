@@ -322,6 +322,32 @@ Taken on 2026-11-11 in the morning (Kfir's second message: "no questions"):
 90. `docs/design.md` is brought in line by one opus sub-agent (`impeccable-documenter`) from the shipped
     code; it edits that file alone.
 
+### The hot fixes (phase 11, 2026-11-11; Kfir's third read, "be fast")
+91. Results sort in the api (item 4): `sort=field` with a `field`, and `sort=reasons`, beside `key` and
+    `display`, which stand. A field's key is not itself a word of `sort`: a field named `key` or `reasons`
+    would collide. The field is checked against the glossary's identifying fields of the run's root entity
+    (400 `MALFORMED` otherwise, after the run's 404), through the api's glossary service, which may ask the
+    engine once when the api holds no copy: hence 503 `ENGINE_UNAVAILABLE` for that one case. The value is
+    read with `JSON_VALUE` from the stored display by a bound path (a mapped function of the context): a
+    number by value, anything else as text under the database collation (a date is ISO text), a missing value
+    last both ways, ties by `seq`. Reasons: how many, then their text.
+92. In the client a results view sorts by a column (an identifying field's key, or `reasons`); the three
+    states stay (ascending, descending, back to the run's order). A column the table does not have (an older
+    link with `sort=display`) is the run's order, not an error.
+93. Item 5 is the rule's brackets, and only the rule's: the engine's reasons use brackets as punctuation
+    round a value ("16 (under 18)"), which the tests found, and a reason is written as it came. The plain
+    sentence is given to assistive technology only where the drawing has blocks; there the letters are not
+    read (he asked for the plain sentence). In the editor's bar the lines of a rule scroll inside the bar's
+    fixed room, as a long sentence already did: the bar keeps its height.
+94. Item 6: the superscript is a 13px tinted badge with a 10px letter, placed over the first word and out of
+    the line. A bare letter was not used: beside Hebrew words it would read as a letter of the word.
+95. Item 1 supersedes decision 86: the row of suggestions is not in the page before the choice; it comes in
+    with it. Item 2 supersedes the "only where nothing was typed" of decision 61: every suggestion replaces
+    the name, the description and the conditions, and the toast gives back what was there.
+96. Item 7: the list's count is a bar fixed at the bottom of the window. The sticky foot of phase 10 stood
+    under the last row of a short list, not at the bottom, which is what he saw. Item 3: the results' search
+    is given a column of 26rem; its placeholder is 215px in a field with 356px of room.
+
 ## Reconciliation with `contracts/` (phase 2, 2026-11-11)
 Read: `api.md`, `errors.md`, `glossary.json`, `control-definition.schema.json`, the six examples and the thirteen
 invalid fixtures, as merged in `f9928bf`. Where they differ from Design E to M of the plan, the contracts were built:
@@ -1084,3 +1110,11 @@ rewrote. A review that found nothing, or did not run, is logged as that.
   from the branch's last build, with no error in the console. Stop the stack with `pkill -f DataControls.Api`
   and `pkill -f "uvicorn app.main"`. This entry, the reset's output and the last tick of the plan are not
   committed: they are documents alone, and ride with the next code commit.
+- 2026-11-11, hot fixes from Kfir's third read (phase 11), same branch and PR, fast: no critique, one reviewer
+  at the end; his word for the api and contract change of item 4 and one database reset at the end. Seven
+  items: (1) the suggestions row only after the choice, with an entrance; (2) every suggestion replaces name,
+  description and conditions; (3) the results' search shows its whole placeholder; (4) every results head
+  sorts, through the api, by the field's glossary type and by the reasons; (5) no bracket on the screen in a
+  rule, groups as soft blocks, top groups on their own lines, the plain sentence for a screen reader; (6) the
+  letters as superscripts that take no room in the line; (7) the list's count in a bar fixed at the bottom.
+  Decisions 91 to 96.

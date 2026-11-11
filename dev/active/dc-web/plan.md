@@ -470,10 +470,10 @@ change of item 4 and one database reset at the very end. The seven items are in 
 - [x] Item 4, the api: `GET /api/v1/runs/{id}/results` sorts by any identifying field of the record, by its
       glossary type, and by the reasons (`sort=field` with `field`, `sort=reasons`); `contracts/api.md` and
       the api's tests. Commit: `feat(api): sort a run's results by a field and by the reasons`
-- [ ] Item 4, the client: every head of the results table sorts.
-- [ ] Items 5 and 6: the rule in words with no bracket on the screen (a nested group as a soft block, top
+- [x] Item 4, the client: every head of the results table sorts.
+- [x] Items 5 and 6: the rule in words with no bracket on the screen (a nested group as a soft block, top
       groups on lines of their own), and the letters as superscripts that take no room in the line.
-- [ ] Items 1, 2, 3 and 7: the suggestions row after the choice, with an entrance; every suggestion replaces
+- [x] Items 1, 2, 3 and 7: the suggestions row after the choice, with an entrance; every suggestion replaces
       name, description and conditions; the results' search shows its whole placeholder; the list's count in
       a bar fixed at the bottom of the window.
 - [ ] Specs; the gate on the real stack; `/check all --tests`; one reviewer; the push; then the database

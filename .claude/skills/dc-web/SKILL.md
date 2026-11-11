@@ -112,6 +112,13 @@ playwright install --with-deps chromium` needs sudo on WSL: ask the user to run 
   the link as a user's click does; the run and action cells stand over the link and are clicked as usual.
 - A button that says it is unavailable with `aria-disabled` is not enabled for Playwright: `click()` waits on
   it. A spec that presses such a button on purpose forces the click.
+- `app-text-parts` draws a rule's brackets as blocks (`rule-group`) and writes none; a text that has a block
+  carries the engine's plain sentence in a visually hidden `plain-text` span and hides the drawing
+  (`drawn-text`) from assistive technology, so `textContent` of such a sentence holds the words twice. A reason
+  (`markValues`) keeps its brackets. In a marked sentence the mark is placed over the first word with no space
+  between them in the DOM.
+- A results view sorts by a column: an identifying field's key or `reasons` in the address (`?sort=`), sent to
+  the api as `sort=field&field=<key>` or `sort=reasons`; null is the run's order (`sort=key`).
 - The builder offers one adder until its "advanced" action is pressed (`data-testid="advanced"`), or the draft
   holds a group or a related-records node. The e2e builder driver presses it before a group or a related node.
 - A shot with a panel open is of the window, not the whole page (`e2e/support/shots.ts`): the page behind the
@@ -125,8 +132,8 @@ playwright install --with-deps chromium` needs sudo on WSL: ask the user to run 
 - A new control has nothing chosen: until one of the entity cards is pressed the builder's place is held by
   `builder-waiting` (no `condition-builder` in the page), and that press asks `POST /suggestions` with
   `rootEntity` and `max: 3` (a store spec answers it; a mocked spec gets the fake api's). The answer stands
-  behind one row (`ideas-toggle`, there from the start): the options (`idea`) are in the page only while it
-  is open.
+  behind one row (`ideas-toggle`), which is in the page from the choice on and comes in with an animation (a
+  spec that measures it waits with `atRest`): the options (`idea`) are in the page only while it is open.
 - The editor has no leave guard: the panel closes at once, and a changed draft is kept in memory
   (`ClosedDrafts`, one draft) and offered back by a toast that stands twelve seconds. Its action asks for the
   draft (`ClosedDrafts.ask(path)`) and navigates to the editor's address; the editor takes it in `show()`, or,

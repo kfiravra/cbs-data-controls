@@ -135,12 +135,13 @@
                   <mat-select
                     data-testid="sort-select"
                     [aria-label]="'results.sort.label' | translate"
-                    [value]="displaySort() ?? 'key'"
-                    (selectionChange)="setSort($event.value === 'key' ? null : $event.value)"
+                    [value]="displaySort() ? displaySort()!.column + ':' + displaySort()!.dir : 'key'"
+                    (selectionChange)="sortTo($event.value)"
                   >
                     <mat-option value="key">{{ 'results.sort.key' | translate }}</mat-option>
-                    <mat-option value="asc">{{ 'results.sort.asc' | translate: { column: columns()[0]?.label } }}</mat-option>
-                    <mat-option value="desc">{{ 'results.sort.desc' | translate: { column: columns()[0]?.label } }}</mat-option>
+                    @for (option of sortOptions(); track option.value) {
+                      <mat-option [value]="option.value">{{ option.text | translate: { column: option.column } }}</mat-option>
+                    }
                   </mat-select>
                 </mat-form-field>
               </app-toolbar>

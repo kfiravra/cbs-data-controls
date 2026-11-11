@@ -408,19 +408,15 @@ export class EditorStore {
   }
 
   /**
-   * Fills the conditions from a suggestion, and the name and the description where nothing was typed.
-   * Answers a way back to what was there, for the toast's undo.
+   * Takes a suggestion: its name, its description and its conditions replace what was there, also what
+   * another suggestion or the user put there. Answers a way back to what was there, for the toast's undo.
    */
   applyIdea(idea: SuggestionItem): () => void {
     const before = { draft: this.draft(), name: this.name(), description: this.description() };
     const filled = this.draftOf(idea.definition);
     this.draft.set(filled);
-    if (before.name.trim() === '') {
-      this.setName(idea.name);
-    }
-    if (before.description.trim() === '') {
-      this.setDescription(idea.description);
-    }
+    this.setName(idea.name);
+    this.setDescription(idea.description);
     this.serverErrors.set([]);
     this.liveErrors.set([]);
     this.focus.set(null);

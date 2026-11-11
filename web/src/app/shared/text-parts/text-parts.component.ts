@@ -1,8 +1,9 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { TranslatePipe } from '@ngx-translate/core';
 
 import { TextPart } from '../../core/api/api.types';
-import { splitFirstWord, toClauses } from '../../core/text/text-parts';
+import { Block, Clause, plainText, splitFirstWord, toBlocks, toClauses } from '../../core/text/text-parts';
 import { MarkComponent, MarkState } from '../mark/mark.component';
 import { ValueComponent } from '../value/value.component';
 
@@ -15,6 +16,7 @@ interface Piece {
 }
 
 interface ClauseView {
+  readonly kind: 'clause';
   readonly nodeId?: string;
   /** The mark that opens the clause, bound to `lead` so a line never ends on a mark. */
   readonly mark?: string;
@@ -22,20 +24,40 @@ interface ClauseView {
   readonly pieces: readonly Piece[];
 }
 
+interface GroupView {
+  readonly kind: 'group';
+  readonly logical: boolean;
+  readonly children: readonly ItemView[];
+}
+
+type ItemView = ClauseView | GroupView;
+
+/** One line of a text whose top level joins groups: a group or a condition, or the joining word between two. */
+interface Line {
+  readonly joiner: boolean;
+  readonly items: readonly ItemView[];
+}
+
 const NO_MARKS: ReadonlyMap<string, string> = new Map();
 const NONE: ReadonlySet<string> = new Set();
+const isJoiner = (item: ItemView) => item.kind === 'clause' && item.nodeId === undefined;
 
 /**
  * Draws text the engine rendered, from its parts: a rule sentence, a condition's clause or a reason. The
- * consecutive parts of one node are one clause; with `marks`, a mark stands before the first clause of each
- * node; with `markValues`, the record's actual values are drawn as values. Nothing is rendered here: no
- * template, no variant, no value format.
+ * consecutive parts of one node are one clause; with `marks`, the mark of each node stands at the start
+ * corner of its first clause, over the line, and takes no room in it; with `markValues`, the record's actual
+ * values are drawn as values. Nothing is rendered here: no template, no variant, no value format.
+ *
+ * The brackets of a rule are drawn, not written (a reason, `markValues`, keeps its own): what stands between a pair is one soft block,
+ * and where the top level joins groups each of them stands on a line of its own with the joining word
+ * between. The text itself stays the engine's, brackets included, for assistive technology: beside a
+ * drawing that has blocks the plain sentence is given to be read, and the drawing is hidden from it.
  */
 @Component({
   selector: 'app-text-parts',
-  imports: [MarkComponent, TranslatePipe, ValueComponent],
+  imports: [MarkComponent, NgTemplateOutlet, TranslatePipe, ValueComponent],
   // one line per block: white space between elements would add spaces the engine did not write
-  template: `@for (clause of clauses(); track $index) {@if (clause.nodeId; as id) {<span class="clause" data-testid="clause" [attr.data-node]="id">@if (clause.mark; as mark) {<span class="nb"><app-mark [label]="mark" [state]="stateOf(id)" [changed]="changed().has(id)" [name]="'common.condition' | translate: { mark }" /> {{ clause.lead }}</span>}@for (piece of clause.pieces; track $index) {@if (piece.value) {<app-value [text]="piece.text" />} @else if (piece.whole) {<span class="nb">{{ piece.text }}</span>} @else {{{ piece.text }}}}</span>} @else {@for (piece of clause.pieces; track $index) {{{ piece.text }}}}}`,
+  template: `@if (grouped()) {<span class="sr-only" data-testid="plain-text">{{ plain() }}</span>}<span data-testid="drawn-text" [attr.aria-hidden]="grouped() ? 'true' : null">@if (lines(); as rows) {@for (row of rows; track $index) {<span [class]="row.joiner ? 'rule-joiner' : 'rule-line'"><ng-container *ngTemplateOutlet="draw; context: { $implicit: row.items }" /></span>}} @else {<ng-container *ngTemplateOutlet="draw; context: { $implicit: items() }" />}</span><ng-template #draw let-list>@for (item of list; track $index) {@if (item.kind === 'group') {<span class="rule-group" data-testid="rule-group"><ng-container *ngTemplateOutlet="draw; context: { $implicit: item.children }" /></span>} @else if (item.nodeId; as id) {<span class="clause" data-testid="clause" [attr.data-node]="id">@if (item.mark; as mark) {<span class="nb marked"><app-mark [label]="mark" [state]="stateOf(id)" [changed]="changed().has(id)" [name]="'common.condition' | translate: { mark }" />{{ item.lead }}</span>}@for (piece of item.pieces; track $index) {@if (piece.value) {<app-value [text]="piece.text" />} @else if (piece.whole) {<span class="nb">{{ piece.text }}</span>} @else {{{ piece.text }}}}</span>} @else {@for (piece of item.pieces; track $index) {{{ piece.text }}}}}</ng-template>`,
   styles: `
     :host {
       display: inline;
@@ -51,28 +73,71 @@ export class TextPartsComponent {
   readonly open = input<ReadonlySet<string>>(NONE);
   readonly changed = input<ReadonlySet<string>>(NONE);
 
-  protected readonly clauses = computed<ClauseView[]>(() =>
-    toClauses(this.parts()).map((clause) => {
-      const pieces: Piece[] = clause.parts.map((part) => {
-        const actual = part.role === 'actual' || part.role === 'otherActual';
-        return {
-          text: part.text,
-          value: actual && this.markValues(),
-          whole: part.role === 'value' || (actual && !this.markValues()),
-        };
-      });
-      const mark = clause.nodeId && clause.opensNode ? this.marks().get(clause.nodeId) : undefined;
-      if (mark === undefined || pieces[0].value || pieces[0].whole) {
-        return { nodeId: clause.nodeId, mark, lead: '', pieces };
-      }
-      // the engine's text as written: the mark only takes the first word beside it
-      const [lead, rest] = splitFirstWord(pieces[0].text);
-      const tail = rest === '' ? [] : [{ text: rest, value: false, whole: false }];
-      return { nodeId: clause.nodeId, mark, lead, pieces: [...tail, ...pieces.slice(1)] };
-    }),
+  /** The engine's text as it wrote it, brackets and all. */
+  protected readonly plain = computed(() => plainText(this.parts()));
+
+  /**
+   * A rule is drawn with its groups as blocks. A reason is not a rule: its brackets are the engine's own
+   * punctuation round a value ("16 (under 18)") and are written as they came.
+   */
+  protected readonly items = computed<ItemView[]>(() =>
+    this.markValues()
+      ? toClauses(this.parts()).map((clause) => this.clause(clause))
+      : toBlocks(this.parts()).map((block) => this.view(block)),
   );
+
+  /** The drawing has a block in it: the plain text is then what assistive technology reads. */
+  protected readonly grouped = computed(() => this.items().some((item) => item.kind === 'group'));
+
+  /**
+   * The top level as lines, when it joins groups of conditions: what stands between two joining words is
+   * one line (a group, or a condition with whatever follows it), and each joining word a line between them.
+   * Null for a text whose top level holds no such group: it runs on as one sentence.
+   */
+  protected readonly lines = computed<Line[] | null>(() => {
+    const items = this.items();
+    if (!items.some((item) => item.kind === 'group' && item.logical)) {
+      return null;
+    }
+    const lines: { joiner: boolean; items: ItemView[] }[] = [];
+    for (const item of items) {
+      const joiner = isJoiner(item);
+      const last = lines.at(-1);
+      if (joiner || !last || last.joiner) {
+        lines.push({ joiner, items: [item] });
+      } else {
+        last.items.push(item);
+      }
+    }
+    return lines;
+  });
 
   protected stateOf(id: string): MarkState {
     return this.open().has(id) ? 'open' : 'resting';
+  }
+
+  private view(block: Block): ItemView {
+    return block.kind === 'group'
+      ? { kind: 'group', logical: block.logical, children: block.children.map((child) => this.view(child)) }
+      : this.clause(block.clause);
+  }
+
+  private clause(clause: Clause): ClauseView {
+    const pieces: Piece[] = clause.parts.map((part) => {
+      const actual = part.role === 'actual' || part.role === 'otherActual';
+      return {
+        text: part.text,
+        value: actual && this.markValues(),
+        whole: part.role === 'value' || (actual && !this.markValues()),
+      };
+    });
+    const mark = clause.nodeId && clause.opensNode ? this.marks().get(clause.nodeId) : undefined;
+    if (mark === undefined || pieces[0].value || pieces[0].whole) {
+      return { kind: 'clause', nodeId: clause.nodeId, mark, lead: '', pieces };
+    }
+    // the engine's text as written: the mark only takes the first word beside it
+    const [lead, rest] = splitFirstWord(pieces[0].text);
+    const tail = rest === '' ? [] : [{ text: rest, value: false, whole: false }];
+    return { kind: 'clause', nodeId: clause.nodeId, mark, lead, pieces: [...tail, ...pieces.slice(1)] };
   }
 }
