@@ -6,7 +6,22 @@ import { DraftCheck, DraftIssue } from '../../core/definition/draft.check';
 import { orderedNodeIds } from '../../core/definition/marks';
 import { ErrorLocation, locateError } from '../../core/definition/pointer';
 import { RowMessage } from '../../shared/condition-builder/builder-view';
-import { StatusLine } from './editor.types';
+import { DetailIssue, Sent, StatusLine } from './editor.types';
+
+/** The longest name and description the api stores (contracts/api.md). */
+export const NAME_MAX = 200;
+export const DESCRIPTION_MAX = 1000;
+
+/** What is wrong with a name as typed; null when nothing is. */
+export function nameIssueOf(name: string): DetailIssue | null {
+  const trimmed = name.trim();
+  return trimmed === '' ? 'required' : trimmed.length > NAME_MAX ? 'tooLong' : null;
+}
+
+/** What is wrong with a description as typed; null when nothing is. */
+export function descriptionIssueOf(description: string): DetailIssue | null {
+  return description.trim().length > DESCRIPTION_MAX ? 'tooLong' : null;
+}
 
 /** A definition error of the server, with the row and the input it belongs to. */
 export interface LocatedError {
@@ -57,4 +72,9 @@ export function statusOf(
   }
   const id = first.location.nodeId;
   return { kind: 'invalid', mark: id ? (marks.get(id) ?? null) : null, error: first.error };
+}
+
+/** Whether the screen holds what a save sent: nothing was typed or edited while the save was on its way. */
+export function sameHeld(a: Sent, b: Sent): boolean {
+  return a.name === b.name && a.description === b.description && a.draft === b.draft && a.rootEntity === b.rootEntity;
 }

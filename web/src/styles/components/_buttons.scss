@@ -15,7 +15,7 @@
   border: 1px solid transparent;
   border-radius: var(--radius-sm);
   font-size: var(--text-body);
-  font-weight: 500;
+  font-weight: var(--weight-medium);
   line-height: 1;
   white-space: nowrap;
   text-decoration: none;
@@ -181,7 +181,7 @@
 
 .link {
   color: var(--color-action);
-  font-weight: 500;
+  font-weight: var(--weight-medium);
   text-decoration: underline;
   text-decoration-thickness: 1px;
   text-underline-offset: 4px;

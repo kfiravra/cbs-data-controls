@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { TranslatePipe } from '@ngx-translate/core';
 
 import { TextPart } from '../../core/api/api.types';
@@ -35,7 +35,7 @@ const NONE: ReadonlySet<string> = new Set();
   selector: 'app-text-parts',
   imports: [MarkComponent, TranslatePipe, ValueComponent],
   // one line per block: white space between elements would add spaces the engine did not write
-  template: `@for (clause of clauses(); track $index) {@if (clause.nodeId; as id) {<span class="clause" data-testid="clause" [attr.data-node]="id" (pointerenter)="trace.emit(id)" (pointerleave)="trace.emit(null)">@if (clause.mark; as mark) {<span class="nb"><app-mark [label]="mark" [state]="stateOf(id)" [changed]="changed().has(id)" [name]="'common.condition' | translate: { mark }" /> {{ clause.lead }}</span>}@for (piece of clause.pieces; track $index) {@if (piece.value) {<app-value [text]="piece.text" />} @else if (piece.whole) {<span class="nb">{{ piece.text }}</span>} @else {{{ piece.text }}}}</span>} @else {@for (piece of clause.pieces; track $index) {{{ piece.text }}}}}`,
+  template: `@for (clause of clauses(); track $index) {@if (clause.nodeId; as id) {<span class="clause" data-testid="clause" [attr.data-node]="id">@if (clause.mark; as mark) {<span class="nb"><app-mark [label]="mark" [state]="stateOf(id)" [changed]="changed().has(id)" [name]="'common.condition' | translate: { mark }" /> {{ clause.lead }}</span>}@for (piece of clause.pieces; track $index) {@if (piece.value) {<app-value [text]="piece.text" />} @else if (piece.whole) {<span class="nb">{{ piece.text }}</span>} @else {{{ piece.text }}}}</span>} @else {@for (piece of clause.pieces; track $index) {{{ piece.text }}}}}`,
   styles: `
     :host {
       display: inline;
@@ -48,12 +48,8 @@ export class TextPartsComponent {
   /** Node id to mark. Leave it out for a text that carries its mark elsewhere (a reason, a breakdown row). */
   readonly marks = input<ReadonlyMap<string, string>>(NO_MARKS);
   readonly markValues = input(false);
-  /** The node whose mark is filled, in a screen that traces its conditions (the editor); null in one that does not. */
-  readonly traced = input<string | null>(null);
   readonly open = input<ReadonlySet<string>>(NONE);
   readonly changed = input<ReadonlySet<string>>(NONE);
-  /** The node under the pointer, or null when the pointer leaves a clause. */
-  readonly trace = output<string | null>();
 
   protected readonly clauses = computed<ClauseView[]>(() =>
     toClauses(this.parts()).map((clause) => {
@@ -77,9 +73,6 @@ export class TextPartsComponent {
   );
 
   protected stateOf(id: string): MarkState {
-    if (this.open().has(id)) {
-      return 'open';
-    }
-    return this.traced() === id ? 'traced' : 'resting';
+    return this.open().has(id) ? 'open' : 'resting';
   }
 }

@@ -98,6 +98,18 @@ export class BuilderDriver {
 
   // ---------------------------------------------------------------- groups
 
+  /**
+   * Groups and related records are behind the builder's "advanced" action: it is pressed once, while the
+   * list is still flat. A draft that holds one of them shows the adders by itself, and has no such action.
+   */
+  private async askForAdvanced(): Promise<void> {
+    const advanced = this.builder.getByTestId('advanced');
+    if ((await advanced.count()) > 0 && (await advanced.getAttribute('aria-pressed')) !== 'true') {
+      await this.press(advanced);
+      await expect(advanced).toHaveAttribute('aria-pressed', 'true');
+    }
+  }
+
   private async fillGroup(key: string, definition: GroupNode, scope: string): Promise<void> {
     const toggle = this.builder.locator(`[data-op-of="${key}"]`);
     await this.press(toggle.getByRole('radio', { name: t(definition.op === 'and' ? 'editor.group.all' : 'editor.group.any') }));
@@ -107,6 +119,9 @@ export class BuilderDriver {
       const takesBlank = index === 0 && child.type === 'condition';
       if (!takesBlank) {
         const adder = { condition: 'condition', group: 'group', related: 'related' }[child.type];
+        if (child.type !== 'condition') {
+          await this.askForAdvanced();
+        }
         await this.press(this.builder.locator(`[data-adder-of="${key}"][data-adder="${adder}"]`));
         await expect(nodes).toHaveCount(index === 0 ? 2 : index + 1);
       }

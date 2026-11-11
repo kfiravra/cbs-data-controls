@@ -10,7 +10,7 @@ import {
 } from '../../../testing/editor-store';
 import { SYNTHETIC_GLOSSARY } from '../../../testing/synthetic-glossary';
 import { DraftCondition, DraftGroup } from '../../core/definition/draft';
-import { VALIDATE_DEBOUNCE_MS } from './editor.store';
+import { VALIDATE_DEBOUNCE_MS } from './editor.validation';
 
 describe('EditorStore', () => {
   let h: ReturnType<typeof editorHarness>;

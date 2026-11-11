@@ -121,7 +121,14 @@ describe('ResultsStore', () => {
     store = TestBed.inject(ResultsStore);
   });
 
-  afterEach(() => http.verify());
+  // beside every run the store asks whether its control is archived: where a test does not answer that
+  // itself, the control is an active one
+  afterEach(() => {
+    http.match((request) => request.method === 'GET' && /\/api\/v1\/controls\/\d+$/.test(request.url)).forEach(
+      (request) => request.flush(CONTROL),
+    );
+    http.verify();
+  });
 
   describe('the state chosen from a run', () => {
     const cases: [string, Run, string][] = [
@@ -176,6 +183,36 @@ describe('ResultsStore', () => {
 
       expect(store.loadState()).toBe('failed');
       expect(store.failure()?.code).toBe('NETWORK_ERROR');
+    });
+  });
+
+  describe('an archived control', () => {
+    it('is told by the control of the run: its runs are read, and it is neither run nor edited', async () => {
+      await open(run('succeeded', 23));
+      expect(store.archived()).toBe(false);
+
+      (await next('/api/v1/controls/7')).flush({ ...CONTROL, isActive: false });
+      await settle();
+
+      expect(store.archived()).toBe(true);
+    });
+
+    it('is not assumed of an active control', async () => {
+      await open(run('succeeded', 23));
+      (await next('/api/v1/controls/7')).flush(CONTROL);
+      await settle();
+
+      expect(store.archived()).toBe(false);
+    });
+
+    it('is not assumed of a control that cannot be read: the run stays readable, with its buttons', async () => {
+      await open(run('succeeded', 23));
+      (await next('/api/v1/controls/7')).flush(null, { status: 500, statusText: 'Server Error' });
+      await settle();
+
+      expect(store.archived()).toBe(false);
+      expect(store.failure()).toBeNull();
+      expect(store.state()).toBe('violations');
     });
   });
 

@@ -21,3 +21,13 @@ export async function shot(page: Page, testInfo: TestInfo, name: string): Promis
 export function sheetInset(page: Page): Promise<number> {
   return page.evaluate(() => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sheet-inset')) || 0);
 }
+
+/**
+ * Waits until what moves has come to rest: a panel slides in, and a box measured meanwhile is on its way.
+ * Call it once the thing to measure is in the page: before that there is no animation to wait for.
+ */
+export function atRest(page: Page): Promise<void> {
+  return page.evaluate(async () => {
+    await Promise.all(document.getAnimations().map((animation) => animation.finished));
+  });
+}

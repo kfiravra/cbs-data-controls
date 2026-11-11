@@ -1,5 +1,5 @@
 import { VALIDATE, editorHarness, letters, problem, sentenceOf } from '../../../testing/editor-store';
-import { VALIDATE_DEBOUNCE_MS } from './editor.store';
+import { VALIDATE_DEBOUNCE_MS } from './editor.validation';
 
 describe('EditorStore: the validate loop', () => {
   let h: ReturnType<typeof editorHarness>;

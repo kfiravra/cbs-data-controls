@@ -3,7 +3,15 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Subject, catchError, firstValueFrom, forkJoin, map, of, switchMap } from 'rxjs';
 
 import { ApiError, toApiError } from '../../core/api/api-error';
-import { ActiveFilter, ControlSummary, ControlsQuery, LastRun, Page } from '../../core/api/api.types';
+import {
+  ActiveFilter,
+  ControlSummary,
+  ControlsQuery,
+  ControlsSort,
+  LastRun,
+  Page,
+  SortDirection,
+} from '../../core/api/api.types';
 import { ControlsApi } from '../../core/api/controls.api';
 import { RunsApi } from '../../core/api/runs.api';
 import { GlossaryService } from '../../core/glossary/glossary.service';
@@ -19,6 +27,9 @@ export interface ListView {
   /** The root entity the list is narrowed to; null for all. */
   readonly entity: string | null;
   readonly state: ListState;
+  /** The column the list is ordered by, and which way; the order itself is the server's. */
+  readonly sort: ControlsSort;
+  readonly dir: SortDirection;
   readonly page: number;
 }
 
@@ -111,6 +122,8 @@ export class ListStore {
         search: view.search,
         rootEntity: view.entity ?? undefined,
         active: ACTIVE[view.state],
+        sort: view.sort,
+        dir: view.dir,
         page: view.page,
         pageSize: LIST_PAGE_SIZE,
       },

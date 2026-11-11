@@ -1,3 +1,4 @@
+import { ControlSummary, Page } from '../../src/app/core/api/api.types';
 import { exampleNumber } from '../fixtures/examples';
 import { controlIdOf, expect, test } from '../support/gate';
 import { t } from '../support/i18n';
@@ -5,8 +6,10 @@ import { shot } from '../support/shots';
 
 /**
  * The one page on the real stack, on a control of the test's own (example 4, created through the api:
- * building through the interface is proven by examples.spec.ts). Nothing here counts, orders or pages the
- * list as a whole, and a row is found by a search for the control's full name and then by its id.
+ * building through the interface is proven by examples.spec.ts). Nothing here counts or pages the list as a
+ * whole, and a row is found by a search for the control's full name and then by its id. One step sorts the
+ * whole list: it asserts no control in particular, only that the page shows the order the api gives and
+ * that the order is the contract's.
  */
 test('a control of its own is found, opened, run, read in its panel, duplicated and archived from its row', async ({ page, gate }, testInfo) => {
   const example = exampleNumber(4);
@@ -25,7 +28,7 @@ test('a control of its own is found, opened, run, read in its panel, duplicated 
     await page.getByTestId('toolbar-search').fill(control.name);
     await expect(row).toBeVisible();
     await expect(row.getByTestId('control-link')).toHaveText(control.name);
-    await expect(row.getByTestId('last-run')).toHaveText(t('list.neverRun'));
+    await expect(row.getByTestId('status-chip')).toHaveText(t('list.neverRun'));
     await row.getByTestId('control-link').click();
     await expect(page).toHaveURL(new RegExp(`/controls/${control.id}/runs$`));
     await expect(panel.getByTestId('state-never-run')).toContainText(t('results.never.title'));
@@ -38,12 +41,14 @@ test('a control of its own is found, opened, run, read in its panel, duplicated 
     await expect(row.getByTestId('control-link')).toBeFocused();
   });
 
-  await test.step('run from its row: the result lands on the row, and the name now opens that run', async () => {
+  await test.step('run from its row: the result lands on the row, in the red of violations, and the whole of its details now opens that run', async () => {
     await row.getByTestId('run').click();
-    const result = row.getByTestId('result').getByRole('link');
+    const result = row.getByTestId('status-chip');
     await expect(result).toHaveText(t('results.violations.other', { count: example.expected.total }));
+    await expect(result).toHaveClass(/status-chip--violations/);
     await expect(page).toHaveURL(/search=/);
-    await row.getByTestId('control-link').click();
+    // not the name: a click on what the run found, which the row's one link covers
+    await result.click({ force: true });
     await expect(page).toHaveURL(/\/runs\/\d+$/);
     await expect(panel.getByTestId('panel-title')).toHaveText(control.name);
     await expect(records).toHaveCount(example.expected.total);
@@ -87,6 +92,35 @@ test('a control of its own is found, opened, run, read in its panel, duplicated 
     await expect(page).toHaveURL(/search=/);
   });
 
+  await test.step('sorted by the server: the list by violations, most first, with what has no count last', async () => {
+    await page.goto('/');
+    await expect(rows.first()).toBeVisible();
+    if (testInfo.project.name === 'mobile') {
+      await page.getByTestId('toolbar-filters-toggle').click();
+      await page.getByTestId('sort-select').click();
+      await page.getByRole('option', { name: t('list.sort.desc', { column: t('list.columns.result') }), exact: true }).click();
+    } else {
+      const head = page.locator('[data-column="violations"]').getByTestId('sort-header');
+      await head.click();
+      await expect(page).toHaveURL(/sort=violations/);
+      await head.click();
+    }
+    await expect(page).toHaveURL(/sort=violations&dir=desc|dir=desc&sort=violations/);
+
+    // the page shows the order the api gives, and that order is the contract's
+    const answer = await page.request.get('/api/v1/controls?active=true&sort=violations&dir=desc&page=1&pageSize=25');
+    const { items } = (await answer.json()) as Page<ControlSummary>;
+    await expect(rows).toHaveCount(items.length);
+    expect(await rows.evaluateAll((found) => found.map((item) => Number(item.getAttribute('data-id'))))).toEqual(
+      items.map((item) => item.id),
+    );
+    const place = (item: ControlSummary) => (item.lastRun === null ? 2 : item.lastRun.totalCount === null ? 1 : 0);
+    expect(items.map(place)).toEqual([...items.map(place)].sort((a, b) => a - b));
+    const counts = items.filter((item) => place(item) === 0).map((item) => item.lastRun!.totalCount!);
+    expect(counts).toEqual([...counts].sort((a, b) => b - a));
+    expect(counts.length).toBeGreaterThan(0);
+  });
+
   let copy = 0;
   await test.step('duplicated: the copy keeps the tag in its name and is saved under its own id', async () => {
     await page.goto('/');
@@ -118,11 +152,24 @@ test('a control of its own is found, opened, run, read in its panel, duplicated 
     await expect(rows).toHaveCount(0);
 
     // only the controls are archived: the runs are kept, and the name of the control still opens its last one
+    // the archive behaves as the active list does, less the run and the edit: a row per control, in the
+    // archive's grey, that opens its last run, where the picker still moves to the earlier one
     await page.getByTestId('tab-archived').click();
     await expect(rows).toHaveCount(2);
     await expect(row.getByTestId('run')).toHaveCount(0);
+    await expect(row.getByTestId('edit')).toHaveCount(0);
+    await expect(row.getByTestId('status-chip')).toHaveText(t('results.violations.other', { count: example.expected.total }));
+    await expect(row.getByTestId('status-chip')).toHaveClass('status-chip');
     await row.getByTestId('control-link').click();
     await expect(page).toHaveURL(/\/runs\/\d+$/);
     await expect(records).toHaveCount(example.expected.total);
+    await expect(panel.getByTestId('archived-chip')).toBeVisible();
+    await expect(panel.getByTestId('rerun')).toHaveCount(0);
+    await expect(panel.getByTestId('edit-control')).toHaveCount(0);
+    await panel.getByTestId('run-picker').click();
+    await expect(page.getByTestId('run-option')).toHaveCount(2);
+    await page.getByTestId('run-option').nth(1).click();
+    await expect(records).toHaveCount(example.expected.total);
+    await expect(panel.getByTestId('archived-chip')).toBeVisible();
   });
 });

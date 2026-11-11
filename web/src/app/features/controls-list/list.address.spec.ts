@@ -13,13 +13,22 @@ describe('the address of the list', () => {
     expect(addressOf(route({}))).toEqual({ panel: null, own: DEFAULT_VIEW });
   });
 
-  it('gives the search, what is checked, the tab and the page as the query says them', () => {
-    expect(addressOf(route({ search: 'pay', entity: 'employee', state: 'archived', page: '3' })).own).toEqual({
+  it('gives the search, what is checked, the tab, the order and the page as the query says them', () => {
+    const query = { search: 'pay', entity: 'employee', state: 'archived', sort: 'lastRun', dir: 'desc', page: '3' };
+
+    expect(addressOf(route(query)).own).toEqual({
       search: 'pay',
       entity: 'employee',
       state: 'archived',
+      sort: 'lastRun',
+      dir: 'desc',
       page: 3,
     });
+  });
+
+  it('takes a column it does not know, and a direction that is not a word of the api, as the default order', () => {
+    expect(addressOf(route({ sort: 'createdAt', dir: 'down' })).own).toEqual(DEFAULT_VIEW);
+    expect(addressOf(route({ sort: 'violations' })).own).toEqual({ ...DEFAULT_VIEW, sort: 'violations' });
   });
 
   it('takes a tab it does not know, and a page that is no positive number, as the default', () => {
@@ -33,11 +42,13 @@ describe('the address of the list', () => {
   });
 
   it('writes a view back as a query that leaves out what is the default', () => {
-    expect(queryOf(DEFAULT_VIEW)).toEqual({ search: null, entity: null, state: null, page: null });
-    expect(queryOf({ search: 'pay', entity: null, state: 'archived', page: 2 })).toEqual({
+    expect(queryOf(DEFAULT_VIEW)).toEqual({ search: null, entity: null, state: null, sort: null, dir: null, page: null });
+    expect(queryOf({ ...DEFAULT_VIEW, search: 'pay', state: 'archived', sort: 'violations', dir: 'desc', page: 2 })).toEqual({
       search: 'pay',
       entity: null,
       state: 'archived',
+      sort: 'violations',
+      dir: 'desc',
       page: 2,
     });
   });
@@ -45,5 +56,6 @@ describe('the address of the list', () => {
   it('tells two views apart by what they show, not by which object holds them', () => {
     expect(sameView(DEFAULT_VIEW, { ...DEFAULT_VIEW })).toBe(true);
     expect(sameView(DEFAULT_VIEW, { ...DEFAULT_VIEW, page: 2 })).toBe(false);
+    expect(sameView(DEFAULT_VIEW, { ...DEFAULT_VIEW, dir: 'desc' })).toBe(false);
   });
 });

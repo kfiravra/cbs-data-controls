@@ -24,7 +24,7 @@
   min-block-size: var(--size-control);
   text-decoration: none;
   font-size: var(--text-title);
-  font-weight: 600;
+  font-weight: var(--weight-strong);
   line-height: 1;
 }
 
@@ -141,7 +141,7 @@
   border-radius: var(--radius-sm);
   background: none;
   font-size: var(--text-small);
-  font-weight: 500;
+  font-weight: var(--weight-medium);
   color: var(--color-muted);
   white-space: nowrap;
   transition:
@@ -292,6 +292,11 @@
   overscroll-behavior: contain;
 }
 
+// a body that holds rows: on the page's ground, so a row is the same white bubble it is in the list
+.sheet__body--ground {
+  background: var(--color-ground);
+}
+
 // what takes the focus in the body is scrolled clear of its edges: the reason under an invalid row stays in
 // view above the foot
 .sheet__body :is(input, textarea, select, button, a, mat-select, [tabindex]) {
@@ -309,6 +314,13 @@
   justify-content: flex-end;
   gap: var(--space-3);
   padding: var(--space-4) var(--sheet-pad);
+  border-block-start: 1px solid var(--color-line);
+}
+
+// a foot of a table: how many rows are shown, and the pager, always in view under the rows
+.sheet__foot--table {
+  padding: var(--space-2) var(--sheet-pad);
+  padding-block-end: max(var(--space-2), env(safe-area-inset-bottom));
   border-block-start: 1px solid var(--color-line);
 }
 
@@ -338,6 +350,12 @@
 @media (min-width: 640px) {
   .sheet {
     inline-size: min(var(--sheet-width), 100% - var(--sheet-peek));
+  }
+
+  // the room of the body's scrollbar is always kept, as the page's is: a body that grows past the panel (a
+  // first choice in a new control, one more condition) does not move sideways when the bar appears
+  .sheet__body {
+    scrollbar-gutter: stable;
   }
 
   // the actions stand at the end of the title's row: the whole head gives way to the close button

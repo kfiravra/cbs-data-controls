@@ -16,7 +16,6 @@
   --color-on-action: #ffffff; // 5.5:1 on action
   --color-action-ink: #0b5f69; // the letter of a mark: 5.6:1 on the tint, also over surface
   --color-action-tint: #0d74801a; // 10%: marks, highlighted values, the chosen filter row
-  --color-action-track: #0d748029; // 16%: the meter's unfilled track
   --color-inverse: #1f3038; // the ink as a ground: the bar of the rule in words, a chosen option, the toast
   --color-on-inverse: #f7f9fa; // 12.9:1 on inverse
   --color-on-inverse-muted: #bbc1c4; // 7.5:1 on inverse: the last valid sentence of an unfinished draft
@@ -26,7 +25,9 @@
   --color-line-strong: #1f303833; // 20% ink: header rules, the edge of a button, the tree rail
   --color-control-line: #74838b; // field borders: 3.9:1 on card, 3.7:1 on ground, 3.4:1 on surface
   --color-tonal: #1f303812; // 7% ink: chips, skeleton bars, an icon button under the pointer
-  --color-row-hover: #1f30380a; // 4% ink
+  --color-card-hover: #f4f7f8; // a row of the table under the pointer: the card, one step towards the ground
+  --color-scroll: #1f303880; // 50% ink: the thumb of a scrollbar
+  --color-scroll-on-inverse: #f7f9fa80; // the same on the inverse ground
   --color-danger: #b51522; // 6.4:1 on ground
   --color-danger-tint: #b515221a;
   --color-danger-line: #b5152259;
@@ -38,14 +39,24 @@
   --color-success-line: #2d6a1e59;
   --color-scrim: #1f303847; // 28% ink behind a panel or a dialog: the list stays readable under it
 
-  // type
+  // type: one family, five sizes and a figure, three weights, four line heights. A role is a size with its
+  // weight and its line height (base.scss, "type roles"); nothing sets one of the three alone
   --font-sans: 'Heebo', system-ui, sans-serif;
-  --text-label: 0.8125rem; // 13
-  --text-small: 0.875rem; // 14
+  --text-label: 0.8125rem; // 13: column heads, field labels, chips, captions
+  --text-small: 0.875rem; // 14: descriptions, hints, meta lines
   --text-body: 1rem; // 16
-  --text-title: 1.125rem; // 18
-  --text-page: 1.5rem; // 24, 28 from 1024
-  --text-figure: 2.5rem; // 40, 48 from 1024
+  --text-title: 1.125rem; // 18: the title of a section
+  --text-page: 1.5rem; // 24: the title of the page and of a panel
+  --text-figure: 2.25rem; // 36: the count of a run
+  --text-mark: 0.75rem; // 12: the letter of a condition at the start of its row
+  --text-mark-corner: 0.6875rem; // 11: the same letter at the corner of its clause
+  --weight-regular: 400; // what is read
+  --weight-medium: 500; // labels, buttons, chips
+  --weight-strong: 600; // titles, names, figures
+  --leading-tight: 1.2; // page titles, figures
+  --leading-title: 1.35; // section titles, names, labels
+  --leading-body: 1.5; // body and small text
+  --leading-read: 1.7; // lines that carry marks and values: the rule in words, a reason
 
   // space: 4, 8, 12, 16, 24, 32, 48, 64
   --space-1: 4px;
@@ -68,14 +79,14 @@
   --size-control: 44px;
   --size-control-sm: 36px;
   --size-icon: 20px;
-  --size-mark: 20px;
+  --size-mark: 18px; // the letter of a condition at the start of its row
+  --size-mark-corner: 15px; // the same letter at the corner of its clause in a sentence
   --size-bar: 60px;
   --gutter: 16px; // 32 from 640, 48 from 1024
   --container: 1280px;
   --sheet-inset: 0px; // the room around the panel: 12px from 640, where it floats over the list
   --sheet-width: 1120px; // the panel at its widest
   --sheet-peek: clamp(48px, 22vw, 320px); // how much of the list stays in view beside the panel
-  --size-aside: 340px; // the breakdown beside the records
 
   // depth: the page is flat; a shadow belongs to what floats over it, and to a card that is about to be pressed
   --shadow-overlay: 0 24px 48px -12px #1f303829, 0 2px 8px #1f303814;
@@ -108,7 +119,5 @@
 @media (min-width: 1024px) {
   :root {
     --gutter: 48px;
-    --text-page: 1.75rem;
-    --text-figure: 3rem;
   }
 }

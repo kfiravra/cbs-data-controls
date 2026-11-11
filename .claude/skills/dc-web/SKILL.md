@@ -103,8 +103,17 @@ playwright install --with-deps chromium` needs sudo on WSL: ask the user to run 
 - Esc is heard in the capturing phase on the document (the list's page): a tooltip of Material would otherwise
   take the first Esc for itself. An open `mat-select` is left its Esc by its state in ARIA
   (`[role="combobox"][aria-expanded="true"]`).
-- A fixed layer is laid out without the page's scrollbar: at 390 in headless Chromium the panel is 375 wide, the
-  scrollbar beside it. Compare with `document.documentElement.clientWidth`, not the viewport size.
+- From 640px the page and a panel's body keep the room of their scrollbar (`scrollbar-gutter: stable`), so
+  nothing moves sideways when one appears; below 640px they do not (a phone lays its scrollbar over the page).
+  A fixed layer is laid out beside the page's scrollbar: compare a panel's width with
+  `document.documentElement.clientWidth` or with its layer, not with the viewport size.
+- The details of a list row are under the name's stretched link (`.row-link::after`): Playwright reports a
+  click on another cell as intercepted. A spec clicks the details with `click({ force: true })`, which lands on
+  the link as a user's click does; the run and action cells stand over the link and are clicked as usual.
+- A button that says it is unavailable with `aria-disabled` is not enabled for Playwright: `click()` waits on
+  it. A spec that presses such a button on purpose forces the click.
+- The builder offers one adder until its "advanced" action is pressed (`data-testid="advanced"`), or the draft
+  holds a group or a related-records node. The e2e builder driver presses it before a group or a related node.
 - A shot with a panel open is of the window, not the whole page (`e2e/support/shots.ts`): the page behind the
   panel is held still by the CDK's block scroll strategy and a full-page picture would show it running on.
 - The entity cards are a radio group whose arrows move the focus and choose nothing; Space, Enter or a click
@@ -113,11 +122,19 @@ playwright install --with-deps chromium` needs sudo on WSL: ask the user to run 
 - A results panel always shows the rule: a run that stopped carries no `sentenceParts`, so the store asks
   `POST /controls/validate` once with the definition of the version that ran. A store spec of a stopped run
   answers that request.
-- A new control has nothing chosen: the builder is not in the page until one of the entity cards is pressed, and
-  that press asks `POST /suggestions` with `rootEntity` and `max: 3` (a store spec answers it; a mocked spec gets
-  the fake api's).
-- The editor's route asks before a changed draft is left (`canDeactivate`, the browser's `confirm`). Playwright
-  dismisses a dialog by default, which keeps the page: a spec that leaves a changed draft answers the dialog.
+- A new control has nothing chosen: until one of the entity cards is pressed the builder's place is held by
+  `builder-waiting` (no `condition-builder` in the page), and that press asks `POST /suggestions` with
+  `rootEntity` and `max: 3` (a store spec answers it; a mocked spec gets the fake api's). The answer stands
+  behind one row (`ideas-toggle`, there from the start): the options (`idea`) are in the page only while it
+  is open.
+- The editor has no leave guard: the panel closes at once, and a changed draft is kept in memory
+  (`ClosedDrafts`, one draft) and offered back by a toast whose action navigates to the editor's address with
+  `state: { restoreDraft: true }`. Only the browser's own `beforeunload` prompt is left: a spec that reloads
+  or `goto`s away from a changed draft answers that dialog.
+- The glossary is read once per page load: a store spec that opens twice answers `/api/v1/glossary` the first
+  time only.
+- The results store reads the run's control beside the run (`GET /controls/<id>`, for whether it is archived):
+  a store spec answers it or leaves it to the spec's teardown.
 - `vitest` is pinned to `~4.0.8`: npm 10.9.2 crashes resolving the peer set of 4.1.x.
 - Dev server: `ng serve` on :4200 proxies `/api` to :5000 (`proxy.conf.json`), so the api needs no CORS entry for
   it. The production build lands in `dist/web/browser/`, which the api serves from the `wwwroot` beside its own

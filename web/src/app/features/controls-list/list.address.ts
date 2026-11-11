@@ -1,9 +1,11 @@
 import { ActivatedRouteSnapshot } from '@angular/router';
 
+import { ControlsSort } from '../../core/api/api.types';
 import { ListState, ListView } from './list.store';
 
 export const LIST_STATES: readonly ListState[] = ['active', 'archived'];
-export const DEFAULT_VIEW: ListView = { search: '', entity: null, state: 'active', page: 1 };
+export const LIST_SORTS: readonly ControlsSort[] = ['name', 'rootEntity', 'lastRun', 'violations'];
+export const DEFAULT_VIEW: ListView = { search: '', entity: null, state: 'active', sort: 'name', dir: 'asc', page: 1 };
 
 /** What the address shows: the list alone with its view, or a panel over it. */
 export interface Address {
@@ -24,6 +26,7 @@ export function addressOf(route: ActivatedRouteSnapshot): Address {
   }
   const query = route.queryParamMap;
   const state = query.get('state');
+  const sort = query.get('sort');
   const page = query.get('page');
   return {
     panel: null,
@@ -31,6 +34,8 @@ export function addressOf(route: ActivatedRouteSnapshot): Address {
       search: query.get('search') ?? '',
       entity: query.get('entity') || null,
       state: LIST_STATES.find((candidate) => candidate === state) ?? 'active',
+      sort: LIST_SORTS.find((candidate) => candidate === sort) ?? 'name',
+      dir: query.get('dir') === 'desc' ? 'desc' : 'asc',
       page: page && /^[1-9]\d*$/.test(page) ? Number(page) : 1,
     },
   };
@@ -43,5 +48,5 @@ export function queryOf(view: ListView): Record<string, string | number | null> 
 }
 
 export function sameView(a: ListView, b: ListView): boolean {
-  return a.search === b.search && a.entity === b.entity && a.state === b.state && a.page === b.page;
+  return (Object.keys(DEFAULT_VIEW) as (keyof ListView)[]).every((name) => a[name] === b[name]);
 }

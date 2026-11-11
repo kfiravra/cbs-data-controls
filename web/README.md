@@ -8,7 +8,14 @@ texts arrive rendered by the engine.
 The list is the parent route and holds the panel; the addresses are `/` (the list), `/controls/<id>` (the
 editor, `new` for a control not saved yet), `/runs/<id>` (the results of a run) and `/controls/<id>/runs` (a
 control's results by the control: its newest run, or its state before a first run). The panel's X, Esc and a
-click beside it lead back to `/` with the list's search, tab and page as they were.
+click beside it lead back to `/` with the list's search, tab, order and page as they were. The panel closes
+at once, also over a changed draft: a toast then offers the draft back.
+
+Every table is one design: a head of column names and a bubble per row (a card per row below 640px). A row of
+the list has three parts: its details, which open the results of its last run wherever they are clicked, its
+run button and its actions. A column's name sorts by it, ascending and then descending; the order of the list
+is the server's (`sort` and `dir` in the address and in `GET /api/v1/controls`). A status has one colour
+everywhere: violations red, a clean run green, a run that stopped amber, never ran and archived grey.
 Design: [docs/design.md](../docs/design.md); payloads: [contracts/api.md](../contracts/api.md); errors:
 [contracts/errors.md](../contracts/errors.md).
 
@@ -64,16 +71,18 @@ E2E_BASE_URL=http://localhost:5000 npm run e2e:gate # the build the api hosts; n
 One worker, both projects, about two minutes. The gate builds each of the six examples of `contracts/examples/` in the editor from
 glossary terms, saves it, runs it on the engine and reads the violating records back one by one; it then works a
 control of its own through the one page (search, open, run, filter, the picker of its runs, duplicate, archive
-from the row), creates one control from the suggestions panel, and fills a new control from the engine's
-suggestions for its choice without saving it.
+from the row), sorts the list by violations and checks that the page shows the api's order, creates one
+control from the suggestions panel, and fills a new control from the engine's suggestions for its choice
+without saving it.
 
 - **Needs.** `GET /api/v1/health` at the base URL answering `database: ok` and `engine: ok`; the gate checks
   this first and stops with a message that names the failing part when it does not hold. The organization data must be the seed of
   `sql/` (the expected records are the planted rows of `sql/README.md`). The expected records hold for every run
   date from 2026-11-01 to 2027-12-31.
-- **May run on any list.** A gate test touches only controls it created. It never counts, orders or pages the
-  list as a whole, so a list that already holds the six examples under their real names, or what an earlier
-  gate run left, does not change the outcome.
+- **May run on any list.** A gate test touches only controls it created. It never counts or pages the list as
+  a whole, and where it sorts the whole list it asserts only that the page shows the order the api gives and
+  that the order is the contract's. A list that already holds the six examples under their real names, or
+  what an earlier gate run left, does not change the outcome.
 - **Leaves.** Every control a test creates carries a tag in its name, `e2e-` and six characters, and is
   archived when the test ends, also when it failed. Archived controls and their runs stay in the `dq` schema:
   after one gate run there are 18 more archived controls with `e2e-` in their names (9 per project) and none
@@ -98,7 +107,8 @@ system loaded with the six examples it shows them, never run.
 src/app/core/       api (types mirroring contracts/api.md, services), http (interceptors), glossary,
                     definition (the draft tree, its checks and edits), i18n, text, icons
 src/app/shared/     components with inputs and outputs only: the condition builder, the entity cards and
-                    chain, the sentence bar, the results table, the pickers, the dialog, the states
+                    chain, the sentence bar, the run overview, the results table, the sort header, the
+                    pickers, the dialog, the states
 src/app/features/   controls-list (the page, and the panel that holds the routed screens), control-editor,
                     run-results, suggestions: a page and a store each
 src/styles/         tokens.scss (the design tokens), the Material theme, one partial per native component

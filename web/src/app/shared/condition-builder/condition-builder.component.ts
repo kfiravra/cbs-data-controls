@@ -18,8 +18,10 @@ import { BuilderView } from './builder-view';
 import { ConditionGroupComponent } from './condition-group.component';
 
 /**
- * The condition builder: one panel of the operating grey with the tree of groups, rows and related-records
- * nodes, and once, at its foot, the rule about missing values. It draws the draft it is given and emits
+ * The condition builder: one panel of the operating grey with the conditions and, once, at its foot, the
+ * rule about missing values. Simple by default: a flat list of conditions and one switch (all of them, or
+ * at least one). Groups and conditions on related records are behind one "advanced" action; a draft that
+ * holds them is shown in full. It draws the draft it is given and emits
  * every edit; after an edit it moves the keyboard focus where `focus` says (a new row, or the row before a
  * removed one).
  */
@@ -34,7 +36,7 @@ import { ConditionGroupComponent } from './condition-group.component';
         [view]="view()"
         [root]="true"
         (edit)="edit.emit($event)"
-        (trace)="trace.emit($event)"
+        (advancedChange)="advancedChange.emit($event)"
       />
       <p class="note"><app-icon name="info" size="sm" />{{ 'editor.nullNote' | translate }}</p>
     </div>
@@ -56,7 +58,8 @@ export class ConditionBuilderComponent {
   /** Where the focus goes after the last edit; a new object each time, also for the same target. */
   readonly focus = input<FocusTarget | null>(null);
   readonly edit = output<DraftEdit>();
-  readonly trace = output<string | null>();
+  /** The advanced actions were asked for, or put away. */
+  readonly advancedChange = output<boolean>();
 
   constructor() {
     effect(() => {

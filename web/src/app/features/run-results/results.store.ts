@@ -92,8 +92,14 @@ export class ResultsStore {
   /** The control's runs, newest first, as far as `HISTORY_SIZE`; null until read, and when they cannot be. */
   readonly history = signal<Page<Run> | null>(null);
 
+  /** Whether the control of the run on the screen is active; null until read, and when it cannot be. */
+  private readonly controlActive = signal<boolean | null>(null);
+
   /** The control the panel is about. */
   readonly controlId = computed(() => this.run()?.controlId ?? this.control()?.id ?? null);
+
+  /** The control is in the archive: its runs are read, and it is neither run nor edited. */
+  readonly archived = computed(() => (this.control()?.isActive ?? this.controlActive()) === false);
 
   readonly sentenceParts = computed(() => this.run()?.sentenceParts ?? this.controlSentence());
 
@@ -153,6 +159,7 @@ export class ResultsStore {
     this.rows.set(null);
     this.rowsLoading.set(false);
     this.marks.set(NO_MARKS);
+    this.controlActive.set(null);
     this.failure.set(null);
     this.rerunFailure.set(null);
     void this.glossaryService.load();
@@ -184,6 +191,7 @@ export class ResultsStore {
       this.loadState.set('ready');
       void this.readMarks(run);
       void this.readHistory(run.controlId);
+      void this.readControlState(run);
     } catch (error) {
       if (turn === this.turn) {
         this.fail(error);
@@ -275,6 +283,24 @@ export class ResultsStore {
       // without the version's definition the screen stays readable: reasons and clauses stand without marks
       if (this.run()?.id === run.id) {
         this.marks.set(NO_MARKS);
+      }
+    }
+  }
+
+  /**
+   * A run does not say whether its control is archived; the control does. Until it answers, and when it
+   * does not, the panel offers the run and the edit: the api refuses them for an archived control.
+   */
+  private async readControlState(run: Run): Promise<void> {
+    try {
+      const control = await firstValueFrom(this.controlsApi.get(run.controlId));
+      if (this.run()?.id === run.id) {
+        this.controlActive.set(control.isActive);
+      }
+    } catch {
+      // not knowing is no failure of the panel: the run stays readable, with its buttons
+      if (this.run()?.id === run.id) {
+        this.controlActive.set(null);
       }
     }
   }

@@ -17,12 +17,12 @@
 }
 
 .banner__title {
-  font-weight: 500;
+  font-weight: var(--weight-medium);
 }
 
 .banner__body {
   font-size: var(--text-small);
-  line-height: 1.55;
+  line-height: var(--leading-body);
 }
 
 .banner__actions {
@@ -159,13 +159,13 @@
 
 .suggestion__name {
   font-size: var(--text-title);
-  font-weight: 500;
-  line-height: 1.35;
+  font-weight: var(--weight-strong);
+  line-height: var(--leading-title);
 }
 
 .suggestion__why {
   font-size: var(--text-small);
-  line-height: 1.5;
+  line-height: var(--leading-body);
   color: var(--color-muted);
 }
 

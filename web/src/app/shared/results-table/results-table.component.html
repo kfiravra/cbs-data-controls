@@ -1,68 +1,65 @@
-<div class="table-bleed">
-  <table class="table table--records" data-testid="results-table" [attr.aria-busy]="loading()">
-    <thead>
-      <tr>
-        @for (column of columns(); track column.key; let first = $first) {
-          <!-- the sort button is not rendered below 640px (the toolbar's select sorts there), so the header
-               carries its name itself and is still read with its column -->
-          <th
-            scope="col"
-            class="col-id"
-            [attr.aria-sort]="first ? ariaSort() : null"
-            [attr.aria-label]="first ? column.label : null"
-          >
-            @if (first) {
-              <button class="th-sort" type="button" data-testid="sort-display" (click)="cycleSort()">
-                {{ column.label }}<app-icon size="sm" [name]="sortIcon()" />
-              </button>
-            } @else {
-              {{ column.label }}
-            }
-          </th>
-        }
-        <th scope="col">{{ 'results.table.reasons' | translate }}</th>
-      </tr>
-    </thead>
-    <tbody>
-      @if (loading()) {
-        @for (skeleton of skeletons; track $index) {
-          <tr aria-hidden="true" data-testid="skeleton-row">
-            @for (column of columns(); track column.key; let first = $first) {
-              <td [class.cell-title]="first" [class.cell-meta]="!first">
-                <app-skeleton [width]="first ? skeleton.name : 'calc(var(--space-7))'" />
-              </td>
-            }
-            <td class="cell-full"><app-skeleton [width]="skeleton.reasons" /></td>
-          </tr>
-        }
-      } @else {
-        @for (row of rows(); track row.seq) {
-          <tr data-testid="result-row" [attr.data-key]="row.key">
-            @for (column of columns(); track column.key; let first = $first) {
-              <td [class.cell-title]="first" [class.cell-meta]="!first && isNumber(column)" [class.num]="isNumber(column)">
-                <bdi>{{ value(row, column) }}</bdi>
-              </td>
-            }
-            <td class="cell-full">
-              <div class="reasons">
-                @for (reason of row.reasons; track reason.conditionId) {
-                  <p
-                    class="reason"
-                    [class.reason--unmarked]="!marks().has(reason.conditionId)"
-                    data-testid="reason"
-                    [attr.data-node]="reason.conditionId"
-                  >
-                    @if (marks().get(reason.conditionId); as mark) {
-                      <app-mark [label]="mark" [name]="'common.condition' | translate: { mark }" />
-                    }
-                    <span><app-text-parts [parts]="reason.textParts" [markValues]="true" /></span>
-                  </p>
-                }
-              </div>
-            </td>
-          </tr>
-        }
+<table class="table table--records" data-testid="results-table" [attr.aria-busy]="loading()">
+  <thead>
+    <tr>
+      @for (column of columns(); track column.key; let first = $first) {
+        <!-- the sort button is not rendered below 640px (the toolbar's select sorts there), so the header
+             carries its name itself and is still read with its column. The server orders the records by
+             their identifying text, which the first column leads: that column's name is the one that sorts -->
+        <th
+          scope="col"
+          class="col-id"
+          [attr.aria-sort]="first ? ariaSort(sort()) : null"
+          [attr.aria-label]="first ? column.label : null"
+        >
+          @if (first) {
+            <app-sort-header testId="sort-display" [label]="column.label" [sorted]="sort()" (sort)="cycleSort()" />
+          } @else {
+            {{ column.label }}
+          }
+        </th>
       }
-    </tbody>
-  </table>
-</div>
+      <th scope="col">{{ 'results.table.reasons' | translate }}</th>
+    </tr>
+  </thead>
+  <tbody>
+    @if (loading()) {
+      @for (skeleton of skeletons; track $index) {
+        <tr aria-hidden="true" data-testid="skeleton-row">
+          @for (column of columns(); track column.key; let first = $first) {
+            <td [class.cell-title]="first" [class.cell-meta]="!first">
+              <app-skeleton [width]="first ? skeleton.name : 'calc(var(--space-7))'" />
+            </td>
+          }
+          <td class="cell-full"><app-skeleton [width]="skeleton.reasons" /></td>
+        </tr>
+      }
+    } @else {
+      @for (row of rows(); track row.seq) {
+        <tr data-testid="result-row" [attr.data-key]="row.key">
+          @for (column of columns(); track column.key; let first = $first) {
+            <td [class.cell-title]="first" [class.cell-meta]="!first && isNumber(column)" [class.num]="isNumber(column)">
+              <bdi>{{ value(row, column) }}</bdi>
+            </td>
+          }
+          <td class="cell-full">
+            <div class="reasons">
+              @for (reason of row.reasons; track reason.conditionId) {
+                <p
+                  class="reason"
+                  [class.reason--unmarked]="!marks().has(reason.conditionId)"
+                  data-testid="reason"
+                  [attr.data-node]="reason.conditionId"
+                >
+                  @if (marks().get(reason.conditionId); as mark) {
+                    <app-mark [label]="mark" [name]="'common.condition' | translate: { mark }" />
+                  }
+                  <span><app-text-parts [parts]="reason.textParts" [markValues]="true" /></span>
+                </p>
+              }
+            </div>
+          </td>
+        </tr>
+      }
+    }
+  </tbody>
+</table>

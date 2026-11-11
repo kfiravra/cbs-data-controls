@@ -113,10 +113,15 @@ export interface ControlUpdateBody extends ControlDraftBody {
 
 export type ActiveFilter = 'true' | 'false' | 'all';
 
+/** What the controls list can be ordered by: the name, what is checked, the newest run, what that run found. */
+export type ControlsSort = 'name' | 'rootEntity' | 'lastRun' | 'violations';
+
 export interface ControlsQuery {
   readonly search?: string;
   readonly rootEntity?: string;
   readonly active?: ActiveFilter;
+  readonly sort?: ControlsSort;
+  readonly dir?: SortDirection;
   readonly page?: number;
   readonly pageSize?: number;
 }

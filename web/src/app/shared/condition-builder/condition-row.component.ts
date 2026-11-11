@@ -44,10 +44,6 @@ import { BuilderView } from './builder-view';
   host: {
     '[attr.data-node]': 'condition().id',
     'data-testid': 'condition-row',
-    '(focusin)': 'trace.emit(condition().id)',
-    '(focusout)': 'trace.emit(null)',
-    '(pointerenter)': 'trace.emit(condition().id)',
-    '(pointerleave)': 'trace.emit(null)',
   },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -57,9 +53,8 @@ export class ConditionRowComponent {
   readonly scope = input<string>();
   readonly view = input.required<BuilderView>();
   readonly edit = output<DraftEdit>();
-  readonly trace = output<string | null>();
 
-  /** The glossary alone: tracing a row changes the view on every hover, and must not rebuild every list. */
+  /** The glossary alone: the view changes with every edit, and that must not rebuild every list. */
   private readonly glossary = computed(() => this.view().glossary);
 
   protected readonly mark = computed(() => this.view().marks.get(this.condition().id) ?? '');
@@ -70,10 +65,7 @@ export class ConditionRowComponent {
 
   protected readonly markState = computed<MarkState>(() => {
     const id = this.condition().id;
-    if (this.view().check.issues.has(id) || this.messages().length > 0) {
-      return 'open';
-    }
-    return this.view().traced === id ? 'traced' : 'resting';
+    return this.view().check.issues.has(id) || this.messages().length > 0 ? 'open' : 'resting';
   });
 
   protected readonly groups = computed(() => {

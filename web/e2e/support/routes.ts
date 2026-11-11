@@ -221,12 +221,40 @@ export class FakeApi {
       .filter((control) => active === 'all' || control.isActive === (active === 'true'))
       .filter((control) => !rootEntity || control.rootEntity === rootEntity)
       .filter((control) => control.name.toLowerCase().includes(search))
-      .sort((a, b) => a.name.localeCompare(b.name, 'he') || a.id - b.id);
+      .sort(this.order(query.get('sort') ?? 'name', query.get('dir') === 'desc' ? -1 : 1));
     const items = matching.slice((page - 1) * pageSize, page * pageSize).map((control) => {
       const { definition: _definition, concurrencyToken: _token, ...summary } = control;
       return { ...summary, lastRun: this.lastRunOf(control) } satisfies ControlSummary;
     });
     return { items, total: matching.length, page, pageSize };
+  }
+
+  /**
+   * The order of the list as contracts/api.md gives it: `dir` turns the sort key only, equal controls stand
+   * by name and then id, and what a key cannot place comes last either way (a control that never ran, and
+   * under `violations` a control whose newest run has no count, before it).
+   */
+  private order(sort: string, direction: 1 | -1): (a: Control, b: Control) => number {
+    const byName = (a: Control, b: Control) => a.name.localeCompare(b.name, 'he') || a.id - b.id;
+    const label = (control: Control) =>
+      this.glossary.entities.find((entity) => entity.key === control.rootEntity)?.label.plural['he'] ?? control.rootEntity;
+    /** Where a control stands whatever the direction: placed by the key, without a count, or never ran. */
+    const rank = (run: LastRun | null) => (run === null ? 2 : sort === 'violations' && run.totalCount === null ? 1 : 0);
+    const key = (run: LastRun) => (sort === 'violations' ? (run.totalCount ?? 0) : Date.parse(run.startedAt));
+    switch (sort) {
+      case 'rootEntity':
+        return (a, b) => direction * label(a).localeCompare(label(b), 'he') || byName(a, b);
+      case 'lastRun':
+      case 'violations':
+        return (a, b) => {
+          const [runA, runB] = [this.lastRunOf(a), this.lastRunOf(b)];
+          const placed = rank(runA) - rank(runB);
+          const keyed = runA && runB && rank(runA) === 0 ? direction * (key(runA) - key(runB)) : 0;
+          return placed || keyed || byName(a, b);
+        };
+      default:
+        return (a, b) => direction * a.name.localeCompare(b.name, 'he') || a.id - b.id;
+    }
   }
 
   private create(body: { name: string; description?: string | null; definition: Definition }): Control {

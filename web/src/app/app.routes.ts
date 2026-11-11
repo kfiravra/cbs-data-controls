@@ -14,12 +14,9 @@ export const routes: Routes = [
         // `new` is the id of a control that is not saved yet: one route, so a first save keeps the screen
         path: 'controls/:id',
         title: (route) => (route.paramMap.get('id') === 'new' ? 'editor.titleNew' : 'editor.titleEdit'),
+        // no guard: the panel closes at once, and the editor offers a changed draft back in a toast
         loadComponent: () =>
           import('./features/control-editor/control-editor.page').then((m) => m.ControlEditorPage),
-        // a changed draft is not left by a link of the app without a word, as it is not by closing the tab
-        canDeactivate: [
-          (editor: { mayLeave(nextUrl: string): boolean }, _route, _state, next) => editor.mayLeave(next.url),
-        ],
       },
       // a control's results by the control: its newest run, or what stands there before a first run
       { path: 'controls/:controlId/runs', title: 'results.pageTitle', loadComponent: results },

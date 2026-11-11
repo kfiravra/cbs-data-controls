@@ -291,17 +291,21 @@ test.describe('control editor', () => {
     );
   });
 
-  test('the condition under the pointer fills its mark on its clause in the sentence', async ({ page, api }) => {
+  test('a row and its clause answer nothing to the pointer: a mark is a badge here too', async ({ page, api }) => {
     await openStored(page, stored(api));
-    const marks = sentence(page).getByTestId('mark');
-    await expect(marks.nth(1)).toHaveAttribute('data-state', 'resting');
+    const inSentence = sentence(page).getByTestId('mark');
+    const onRow = row(page, 0).getByTestId('mark');
+    const fill = (mark: typeof onRow) => mark.evaluate((element) => getComputedStyle(element).backgroundColor);
+    await expect(inSentence.nth(1)).toHaveAttribute('data-state', 'resting');
+    const resting = { sentence: await fill(inSentence.nth(1)), row: await fill(onRow) };
 
     await row(page, 1).hover();
-    await expect(marks.nth(1)).toHaveAttribute('data-state', 'traced');
-    await expect(marks.nth(0)).toHaveAttribute('data-state', 'resting');
+    await expect(inSentence.nth(1)).toHaveAttribute('data-state', 'resting');
+    expect(await fill(inSentence.nth(1))).toBe(resting.sentence);
 
     await sentence(page).getByTestId('clause').first().hover();
-    await expect(row(page, 0).getByTestId('mark')).toHaveAttribute('data-state', 'traced');
+    await expect(onRow).toHaveAttribute('data-state', 'resting');
+    expect(await fill(onRow)).toBe(resting.row);
   });
 
   test('an archived control is read-only and can be duplicated into a new one', async ({ page, api }, testInfo) => {
@@ -384,29 +388,86 @@ test.describe('control editor', () => {
     await expect(page.getByTestId('control-description')).toHaveValue('typed while it saved');
   });
 
-  test('a changed draft is not left by closing the panel without a word', async ({ page, api }) => {
-    await openStored(page, stored(api));
-    await page.getByTestId('control-name').fill('changed and not saved');
-
-    // the browser's own prompt, as on closing the tab: a "no" keeps the panel and what was typed
-    page.once('dialog', (dialog) => {
-      expect(dialog.type()).toBe('confirm');
-      expect(dialog.message()).toBe(t('editor.leave.confirm'));
+  test('a changed draft closes at once, with no question, and the toast brings it back as it was', async ({ page, api }, testInfo) => {
+    const control = stored(api);
+    await openStored(page, control);
+    let asked = false;
+    page.on('dialog', (dialog) => {
+      asked = true;
       void dialog.dismiss();
     });
-    await page.getByTestId('panel-close').click();
-    await expect(page).toHaveURL(/\/controls\/\d+$/);
-    await expect(page.getByTestId('control-name')).toHaveValue('changed and not saved');
+    const restore = page.getByRole('button', { name: t('editor.toast.restore'), exact: true });
+    await page.getByTestId('control-name').fill('changed and not saved');
+    await row(page, 1).getByTestId('remove-row').click();
+    await expect(page.getByTestId('condition-row')).toHaveCount(control.definition.where.children.length - 1);
 
-    // Esc asks the same question
-    page.once('dialog', (dialog) => void dialog.dismiss());
-    await page.getByTestId('control-name').press('Escape');
-    await expect(page.getByTestId('control-name')).toHaveValue('changed and not saved');
-
-    page.once('dialog', (dialog) => void dialog.accept());
+    // the X closes the panel at once: no prompt of the browser, no dialog of the app
     await page.getByTestId('panel-close').click();
     await expect(page).toHaveURL(/\/$/);
     await expect(ui(page)).toHaveCount(0);
+    expect(asked).toBe(false);
+    await expect(page.getByText(t('editor.toast.closed'))).toBeVisible();
+
+    // the toast's one button puts the draft back on the screen, at its own address, still unsaved
+    await restore.click();
+    await expect(page).toHaveURL(new RegExp(`/controls/${control.id}$`));
+    await expect(page.getByTestId('control-name')).toHaveValue('changed and not saved');
+    await expect(page.getByTestId('condition-row')).toHaveCount(control.definition.where.children.length - 1);
+    expect(api.callsTo(`GET /controls/${control.id}`)).toHaveLength(1);
+
+    // Esc closes at once as well, and so does a click beside the panel where the list shows
+    await page.getByTestId('control-name').press('Escape');
+    await expect(ui(page)).toHaveCount(0);
+    await restore.click();
+    await expect(page.getByTestId('control-name')).toHaveValue('changed and not saved');
+    if (testInfo.project.name === 'desktop') {
+      await page.getByTestId('panel-scrim').click({ position: { x: 8, y: 8 } });
+      await expect(ui(page)).toHaveCount(0);
+      await restore.click();
+      await expect(page.getByTestId('control-name')).toHaveValue('changed and not saved');
+    }
+    expect(asked).toBe(false);
+
+    // what came back is the stored control's draft: it saves over it, with its token
+    await page.getByTestId('save').click();
+    await expect.poll(() => api.callsTo(`PUT /controls/${control.id}`).length).toBe(1);
+    expect(api.callsTo(`PUT /controls/${control.id}`)[0].body).toMatchObject({
+      name: 'changed and not saved',
+      concurrencyToken: control.concurrencyToken,
+    });
+
+    // a saved control has nothing to bring back: closing it says nothing
+    await expect(page.getByText(t('editor.toast.saved'), { exact: false }).first()).toBeVisible();
+    await page.getByTestId('panel-close').click();
+    await expect(ui(page)).toHaveCount(0);
+    await expect(page.getByText(t('editor.toast.closed'))).toHaveCount(0);
+  });
+
+  test('a new control that was closed comes back with its choice, its name and its conditions', async ({ page, api }) => {
+    await page.goto('/controls/new');
+    await page.getByTestId('root-entity').first().click();
+    await page.getByTestId('control-name').fill('not saved yet');
+    await page.locator('[data-adder="condition"]').click();
+    await expect(page.getByTestId('condition-row')).toHaveCount(2);
+
+    await page.getByTestId('panel-close').click();
+    await expect(ui(page)).toHaveCount(0);
+    await page.getByRole('button', { name: t('editor.toast.restore'), exact: true }).click();
+
+    await expect(page).toHaveURL(/\/controls\/new$/);
+    await expect(page.getByTestId('control-name')).toHaveValue('not saved yet');
+    await expect(page.getByTestId('root-entity').first()).toHaveAttribute('aria-checked', 'true');
+    await expect(page.getByTestId('condition-row')).toHaveCount(2);
+    expect(api.callsTo('POST /controls')).toHaveLength(0);
+
+    // an untouched new control has nothing to lose: closing it says nothing
+    await page.getByTestId('panel-close').click();
+    await page.getByRole('button', { name: t('editor.toast.restore'), exact: true }).click();
+    await page.getByTestId('panel-close').click();
+    await page.goto('/controls/new');
+    await page.getByTestId('panel-close').click();
+    await expect(ui(page)).toHaveCount(0);
+    await expect(page.getByText(t('editor.toast.closed'))).toHaveCount(0);
   });
 
   test('a panel that was closed while a save was on its way stays closed when the save lands', async ({ page, api }) => {
@@ -417,10 +478,10 @@ test.describe('control editor', () => {
 
     await page.getByTestId('save-run').click();
     await expect(page.getByTestId('save-run')).toBeDisabled();
-    // the draft is still unsaved at this moment: leaving asks, and the answer is yes
-    page.once('dialog', (dialog) => void dialog.accept());
+    // the draft is being stored at this moment: the panel closes, and offers no draft back
     await page.getByTestId('panel-close').click();
     await expect(ui(page)).toHaveCount(0);
+    await expect(page.getByText(t('editor.toast.closed'))).toHaveCount(0);
 
     // the save lands and the run after it: the control is saved and ran, and the panel stays closed
     await expect.poll(() => api.callsTo(`POST /controls/${control.id}/runs`).length).toBe(1);

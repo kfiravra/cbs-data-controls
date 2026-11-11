@@ -91,24 +91,22 @@ describe('TextPartsComponent', () => {
     expect(host().textContent).toBe('age under 18 and monthly salary over 15,000 units');
   });
 
-  it('shows a traced and an open condition on its mark, open first, and leaves the others as badges', async () => {
-    await draw({ parts: SENTENCE, marks: MARKS, traced: 'c1' });
-    expect(marks().map((mark) => mark.className)).toEqual(['mark mark--traced', 'mark']);
+  it('outlines the mark of an open condition and leaves the others as badges', async () => {
+    await draw({ parts: SENTENCE, marks: MARKS });
+    expect(marks().map((mark) => mark.className)).toEqual(['mark', 'mark']);
 
     await draw({ open: new Set(['c1']) });
-    expect(marks()[0].className).toBe('mark mark--open');
+    expect(marks().map((mark) => mark.className)).toEqual(['mark mark--open', 'mark']);
   });
 
-  it('says which condition is under the pointer, and that none is when the pointer leaves', async () => {
+  it('answers nothing to the pointer: a clause and its mark stay as they are under it', async () => {
     await draw({ parts: SENTENCE, marks: MARKS });
-    const traced: (string | null)[] = [];
-    fixture.componentInstance.trace.subscribe((id) => traced.push(id));
     const clause = host().querySelector('[data-node="c2"]')!;
 
     clause.dispatchEvent(new Event('pointerenter'));
-    clause.dispatchEvent(new Event('pointerleave'));
+    await fixture.whenStable();
 
-    expect(traced).toEqual(['c2', null]);
+    expect(marks().map((mark) => mark.getAttribute('data-state'))).toEqual(['resting', 'resting']);
   });
 
   it('gives a node one mark when its clause is split around the clauses inside it', async () => {

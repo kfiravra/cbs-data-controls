@@ -25,7 +25,7 @@ import { ActivatedRoute, NavigationEnd, NavigationStart, Router, RouterLink, Rou
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { filter, fromEvent, map } from 'rxjs';
 
-import { ControlSummary } from '../../core/api/api.types';
+import { ControlSummary, ControlsSort, SortDirection } from '../../core/api/api.types';
 import { rootEntities } from '../../core/glossary/glossary.lookups';
 import { CountedService } from '../../core/i18n/counted.service';
 import { FormatService } from '../../core/i18n/format.service';
@@ -40,12 +40,21 @@ import { StatePanelComponent } from '../../shared/state-panel/state-panel.compon
 import { TableFootComponent } from '../../shared/table-foot/table-foot.component';
 import { ToastService } from '../../shared/toast/toast.service';
 import { ToolbarComponent } from '../../shared/toolbar/toolbar.component';
-import { ControlsTableComponent } from './controls-table.component';
-import { Address, DEFAULT_VIEW, LIST_STATES, addressOf, queryOf, sameView } from './list.address';
+import { ControlsTableComponent, LIST_COLUMNS } from './controls-table.component';
+import { Address, DEFAULT_VIEW, LIST_SORTS, LIST_STATES, addressOf, queryOf, sameView } from './list.address';
 import { ListStore, ListView } from './list.store';
 import { resultOf } from './run-result';
 
 const ALL = '';
+
+/** Every order the list can take, for the select that sorts where the table has no head (below 640px). */
+const SORT_OPTIONS = LIST_COLUMNS.flatMap((column) =>
+  (['asc', 'desc'] as const).map((dir) => ({
+    value: `${column.key}:${dir}`,
+    text: `list.sort.${dir}`,
+    column: column.label,
+  })),
+);
 
 /** A screen shown in the panel says which control it is about, so a closing panel can find that control's row. */
 interface PanelScreen {
@@ -114,6 +123,7 @@ export class ControlsListPage {
 
   protected readonly states = LIST_STATES;
   protected readonly all = ALL;
+  protected readonly sortOptions = SORT_OPTIONS;
 
   private readonly address = toSignal(
     this.router.events.pipe(
@@ -292,6 +302,20 @@ export class ControlsListPage {
   protected go(change: Partial<ListView>): void {
     const next: ListView = { ...this.view(), ...('page' in change ? {} : { page: 1 }), ...change };
     void this.router.navigate(['/'], { queryParams: queryOf(next), replaceUrl: 'search' in change });
+  }
+
+  /** A column's name was pressed: ascending by it, and descending on the next press. */
+  protected sortBy(column: ControlsSort): void {
+    const view = this.view();
+    this.go({ sort: column, dir: view.sort === column && view.dir === 'asc' ? 'desc' : 'asc' });
+  }
+
+  /** An order chosen in the select, as `<column>:<direction>`. */
+  protected sortTo(value: string): void {
+    const [column, direction] = value.split(':');
+    const sort = LIST_SORTS.find((candidate) => candidate === column) ?? DEFAULT_VIEW.sort;
+    const dir: SortDirection = direction === 'desc' ? 'desc' : 'asc';
+    this.go({ sort, dir });
   }
 
   /** The two tabs are one stop of the keyboard: an arrow, Home or End moves between them and chooses. */

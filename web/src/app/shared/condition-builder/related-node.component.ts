@@ -57,7 +57,6 @@ export class RelatedNodeComponent {
   readonly scope = input<string>();
   readonly view = input.required<BuilderView>();
   readonly edit = output<DraftEdit>();
-  readonly trace = output<string | null>();
 
   protected readonly mark = computed(() => this.view().marks.get(this.node().id) ?? '');
   protected readonly messages = computed(() => this.view().messages.get(this.node().id) ?? []);
@@ -65,10 +64,7 @@ export class RelatedNodeComponent {
 
   protected readonly markState = computed<MarkState>(() => {
     const id = this.node().id;
-    if (this.view().check.issues.has(id) || this.messages().length > 0) {
-      return 'open';
-    }
-    return this.view().traced === id ? 'traced' : 'resting';
+    return this.view().check.issues.has(id) || this.messages().length > 0 ? 'open' : 'resting';
   });
 
   protected readonly options = computed(() => {

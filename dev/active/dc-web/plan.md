@@ -433,28 +433,28 @@ The api (item 3):
       Commit: `feat(api): sort the controls list`
 
 All tables (items 1 to 6):
-- [ ] One table design for the active list, the archive and the results: a row is a bubble of three parts
+- [x] One table design for the active list, the archive and the results: a row is a bubble of three parts
       (details, run, actions) over a real table; a click anywhere on the details opens the results.
-- [ ] Every header the server can sort sorts on a click, ascending then descending.
-- [ ] One colour language: violations red, clean green, a stopped run amber, archive muted grey.
-- [ ] The archive behaves as the active list does, less run and edit.
-- [ ] No layout shift when a scrollbar appears; thin, half transparent scrollbars with no arrows.
+- [x] Every header the server can sort sorts on a click, ascending then descending.
+- [x] One colour language: violations red, clean green, a stopped run amber, archive muted grey.
+- [x] The archive behaves as the active list does, less run and edit.
+- [x] No layout shift when a scrollbar appears; thin, half transparent scrollbars with no arrows.
 
 Results panel (items 7 to 11):
-- [ ] The rule in words on a tinted ground at the top, the letters small at the start corner of their condition.
-- [ ] One block for the run's information and the filter by condition; the table from edge to edge under it;
+- [x] The rule in words on a tinted ground at the top, the letters small at the start corner of their condition.
+- [x] One block for the run's information and the filter by condition; the table from edge to edge under it;
       the pager and the counts sticky at the foot.
-- [ ] Typography across the app (`/impeccable typeset`): sizes, weights, line height.
+- [x] Typography across the app (`/impeccable typeset`): sizes, weights, line height.
 
 Editor panel (items 12 to 16):
-- [ ] Closing asks nothing: the panel closes at once and a toast gives the draft back.
-- [ ] The suggestions for a new control are one collapsed row; nothing moves when they load.
-- [ ] The conditions are in the first view; simple by default (a flat list and one switch), groups and related
+- [x] Closing asks nothing: the panel closes at once and a toast gives the draft back.
+- [x] The suggestions for a new control are one collapsed row; nothing moves when they load.
+- [x] The conditions are in the first view; simple by default (a flat list and one switch), groups and related
       records behind "advanced"; no trace between a row and its clause.
 
 Phone and the finish (item 17):
-- [ ] 390: rows as cards, full-screen panels, the sticky bars in reach, no sideways scroll.
-- [ ] Mocked and gate specs; the gate on the real stack; `/check all --tests`; screenshots at 390 and 1440;
+- [x] 390: rows as cards, full-screen panels, the sticky bars in reach, no sideways scroll.
+- [x] Mocked and gate specs; the gate on the real stack; `/check all --tests`; screenshots at 390 and 1440;
       `/impeccable polish`; `docs/design.md` in line. Commit: `feat(web): the last design round`
 - [ ] `/phase-review`, one review-fix commit, the push to the PR on Kfir's word.
 - [ ] Last of all: the dev database reset from the main tree, the six examples posted again, the stack left

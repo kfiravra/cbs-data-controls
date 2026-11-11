@@ -70,7 +70,7 @@
         [searchLabel]="'list.search.label' | translate"
         [placeholder]="'list.search.placeholder' | translate"
         [filtersLabel]="'list.filters.label' | translate"
-        [filtersActive]="view().entity !== null"
+        [filtersActive]="view().entity !== null || view().sort !== 'name' || view().dir !== 'asc'"
         (searchChange)="go({ search: $event })"
       >
         <mat-form-field class="toolbar__filter" appearance="outline" subscriptSizing="dynamic">
@@ -87,6 +87,21 @@
             <mat-option [value]="all">{{ 'list.filters.all' | translate }}</mat-option>
             @for (entity of entities(); track entity.key) {
               <mat-option [value]="entity.key">{{ language.text(entity.label.plural) }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <!-- below 640px the table has no head to press: the order is chosen here -->
+        <mat-form-field class="toolbar__filter only-narrow" appearance="outline" subscriptSizing="dynamic">
+          <mat-select
+            data-testid="sort-select"
+            [aria-label]="'list.sort.label' | translate"
+            [value]="view().sort + ':' + view().dir"
+            (selectionChange)="sortTo($event.value)"
+          >
+            @for (option of sortOptions; track option.value) {
+              <mat-option [value]="option.value">
+                {{ option.text | translate: { column: option.column | translate } }}
+              </mat-option>
             }
           </mat-select>
         </mat-form-field>
@@ -134,11 +149,17 @@
             [glossary]="store.glossary()"
             [running]="store.running()"
             [loading]="store.page() === null && store.loading()"
+            [archived]="view().state === 'archived'"
+            [sort]="view().sort"
+            [dir]="view().dir"
             (run)="run($event)"
             (archive)="archive($event)"
+            (sortChange)="sortBy($event)"
           />
           @if (store.page(); as page) {
+            <!-- the count and the pager stay at the bottom of the window while the rows scroll -->
             <app-table-foot
+              class="table-foot--page"
               rangeKey="list.range"
               [total]="page.total"
               [page]="page.page"

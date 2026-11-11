@@ -7,7 +7,7 @@ import { ControlSummary, Page } from '../../core/api/api.types';
 import { problemInterceptor } from '../../core/http/problem.interceptor';
 import { LIST_PAGE_SIZE, ListStore, ListView } from './list.store';
 
-const VIEW: ListView = { search: '', entity: null, state: 'active', page: 1 };
+const VIEW: ListView = { search: '', entity: null, state: 'active', sort: 'name', dir: 'asc', page: 1 };
 
 function summary(id: number): ControlSummary {
   return {
@@ -76,16 +76,25 @@ describe('ListStore', () => {
     const request = await shown(VIEW, pageOf(1, 2));
 
     const sent = Object.fromEntries(request.request.params.keys().map((key) => [key, request.request.params.get(key)]));
-    expect(sent).toEqual({ active: 'true', page: '1', pageSize: String(LIST_PAGE_SIZE) });
+    expect(sent).toEqual({ active: 'true', sort: 'name', dir: 'asc', page: '1', pageSize: String(LIST_PAGE_SIZE) });
     expect(store.page()?.items.map((item) => item.id)).toEqual([1, 2]);
     expect(store.loading()).toBe(false);
   });
 
-  it('asks with the search, the root entity, the state and the page of the view', async () => {
-    const request = await shown({ search: 'pay', entity: 'customer', state: 'archived', page: 3 }, pageOf());
+  it('asks with the search, the root entity, the state, the order and the page of the view', async () => {
+    const view: ListView = { search: 'pay', entity: 'customer', state: 'archived', sort: 'violations', dir: 'desc', page: 3 };
+    const request = await shown(view, pageOf());
 
     const sent = Object.fromEntries(request.request.params.keys().map((key) => [key, request.request.params.get(key)]));
-    expect(sent).toEqual({ search: 'pay', rootEntity: 'customer', active: 'false', page: '3', pageSize: String(LIST_PAGE_SIZE) });
+    expect(sent).toEqual({
+      search: 'pay',
+      rootEntity: 'customer',
+      active: 'false',
+      sort: 'violations',
+      dir: 'desc',
+      page: '3',
+      pageSize: String(LIST_PAGE_SIZE),
+    });
   });
 
   it('lets the page of a newer question stand when an older one was still on its way', async () => {
@@ -122,13 +131,21 @@ describe('ListStore', () => {
 
   describe('the counts of the two tabs', () => {
     it('are the total of the page that is shown and, asked beside it, the total of the other tab', async () => {
-      store.show({ search: 'pay', entity: 'customer', state: 'active', page: 2 });
+      store.show({ ...VIEW, search: 'pay', entity: 'customer', page: 2 });
       (await nextPage()).flush(pageOf(1, 2, 3));
       const count = await nextCount();
 
       // the same search and filter, the other state, and one control only: its total is what is wanted
       const sent = Object.fromEntries(count.request.params.keys().map((key) => [key, count.request.params.get(key)]));
-      expect(sent).toEqual({ search: 'pay', rootEntity: 'customer', active: 'false', page: '1', pageSize: '1' });
+      expect(sent).toEqual({
+        search: 'pay',
+        rootEntity: 'customer',
+        active: 'false',
+        sort: 'name',
+        dir: 'asc',
+        page: '1',
+        pageSize: '1',
+      });
       count.flush({ items: [summary(9)], total: 148, page: 1, pageSize: 1 });
 
       expect(store.counts()).toEqual({ active: 3, archived: 148 });

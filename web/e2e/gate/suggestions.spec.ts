@@ -1,5 +1,6 @@
 import { AcceptAnswer, AcceptBody, SuggestionsAnswer } from '../../src/app/core/api/api.types';
 import { expect, test } from '../support/gate';
+import { t } from '../support/i18n';
 import { shot } from '../support/shots';
 
 /**
@@ -74,9 +75,16 @@ test('a new control is offered the engine\'s suggestions for its choice, and one
   expect(asked.rootEntity).toBe(await cards.first().getAttribute('data-key'));
   expect(asked.max).toBe(3);
   expect(items.length).toBeLessThanOrEqual(3);
+  // the answer stands behind one row: it says how many there are, and opens them when it is pressed
   const ideas = page.getByTestId('idea');
-  await expect(ideas).toHaveCount(items.length);
+  await expect(ideas).toHaveCount(0);
+  if (items.length === 0) {
+    await expect(page.getByTestId('ideas-label')).toHaveText(t('editor.ideas.none'));
+  }
   test.skip(items.length === 0, 'the engine proposes nothing for the first choice over this data');
+  await expect(page.getByTestId('ideas-count')).toHaveText(String(items.length));
+  await page.getByTestId('ideas-toggle').click();
+  await expect(ideas).toHaveCount(items.length);
 
   await expect(ideas.first()).toContainText(items[0].name);
   await ideas.first().click();

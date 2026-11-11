@@ -20,6 +20,9 @@ export interface BuilderView {
   readonly check: DraftCheck;
   /** By node id: what to say under the row (its issues once the user asked to save, and the server's errors). */
   readonly messages: ReadonlyMap<string, readonly RowMessage[]>;
-  /** The node under the pointer or in focus anywhere on the screen. */
-  readonly traced: string | null;
+  /**
+   * Whether the advanced actions are offered: adding a group, and a condition on related records. Off, the
+   * builder is a flat list of conditions with one switch (all of them, or at least one).
+   */
+  readonly advanced: boolean;
 }

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { TranslatePipe } from '@ngx-translate/core';
 
 import { TextPart } from '../../core/api/api.types';
@@ -28,10 +28,8 @@ const NONE: ReadonlySet<string> = new Set();
               <app-text-parts
                 [parts]="sentence"
                 [marks]="marks()"
-                [traced]="traced()"
                 [open]="open()"
                 [changed]="changed()"
-                (trace)="trace.emit($event)"
               />
             </p>
           } @else {
@@ -62,7 +60,6 @@ export class SentenceFieldComponent {
   readonly stale = input(false);
   /** Marks of the current draft: ids are stable, and a clause whose node is gone has no mark. */
   readonly marks = input.required<ReadonlyMap<string, string>>();
-  readonly traced = input<string | null>(null);
   readonly open = input<ReadonlySet<string>>(NONE);
   /** The nodes whose clause was just rewritten: their marks play the settle once. */
   readonly changed = input<ReadonlySet<string>>(NONE);
@@ -70,5 +67,4 @@ export class SentenceFieldComponent {
   readonly hintKey = input('editor.sentence.hint');
   /** One translated line that names what is unfinished; absent when nothing is. */
   readonly status = input<string | null>(null);
-  readonly trace = output<string | null>();
 }

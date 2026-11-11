@@ -44,9 +44,12 @@ test.describe('controls list', () => {
     await expect(tabCount(page, 'archived')).toHaveText('0');
     const byName = [...api.controls].sort((a, b) => a.name.localeCompare(b.name, 'he') || a.id - b.id);
     await expect(rows(page).getByTestId('control-link')).toHaveText(byName.map((control) => control.name));
-    await expect(rows(page).getByTestId('last-run')).toHaveText(byName.map(() => t('list.neverRun')));
+    // a control that never ran says so on its chip, in the grey of what has no result, and has no run to date
+    await expect(rows(page).getByTestId('status-chip')).toHaveText(byName.map(() => t('list.neverRun')));
+    await expect(rows(page).getByTestId('last-run')).toHaveText(byName.map(() => t('common.none')));
     for (const row of await rows(page).all()) {
       await expect(row.getByTestId('result')).toHaveAttribute('data-result', 'never');
+      await expect(row.getByTestId('status-chip')).toHaveClass('status-chip');
     }
     await expect(page.getByTestId('first-use')).toHaveCount(0);
     await shot(page, testInfo, 'list-delivered');
@@ -68,9 +71,9 @@ test.describe('controls list', () => {
     await expect(row.getByTestId('run')).toBeFocused();
     await expect(announced).toHaveText(t('list.announce.started', { name: control.name }));
 
-    const link = row.getByTestId('result').getByRole('link');
+    const chip = row.getByTestId('status-chip');
     expect(example.expected.total).toBeGreaterThan(2);
-    await expect(link).toHaveText(t('results.violations.other', { count: example.expected.total }));
+    await expect(chip).toHaveText(t('results.violations.other', { count: example.expected.total }));
     await expect(row.getByTestId('last-run')).toContainText(t('common.todayAt', { time: '' }).trim());
     await expect(page).toHaveURL(/\/$/);
     await expect(row.getByTestId('run')).toBeEnabled();
@@ -82,23 +85,134 @@ test.describe('controls list', () => {
       }),
     );
 
-    await link.click();
+    // the whole of the row's details opens the results, not the name alone: a click on what the run found
+    await chip.click({ force: true });
     await expect(page).toHaveURL(new RegExp(`/runs/${api.runs.at(-1)!.run.id}$`));
   });
 
-  test('a row says what its last run found: violations, none, or that it stopped', async ({ page, api }, testInfo) => {
-    const [found, clean, stopped] = [controlOf(api, 4), controlOf(api, 2), controlOf(api, 6)];
+  test('a row says what its last run found, in the one colour of each status: violations red, clean green, stopped amber', async ({ page, api }, testInfo) => {
+    const [found, clean, stopped, never] = [controlOf(api, 4), controlOf(api, 2), controlOf(api, 6), controlOf(api, 1)];
     api.addRun(succeededRun(found, 501));
     api.addRun(succeededRun(clean, 502, { expected: [] }));
     api.addRun(timedOutRun(stopped, 503));
     await open(page);
+    const chip = (control: Control) => rowOf(page, control).getByTestId('status-chip');
+    const colour = (control: Control) => chip(control).evaluate((element) => getComputedStyle(element).color);
+    /** A colour token as the browser resolves it. */
+    const token = (name: string) =>
+      page.evaluate((property) => {
+        const probe = document.body.appendChild(document.createElement('span'));
+        probe.style.color = `var(${property})`;
+        const resolved = getComputedStyle(probe).color;
+        probe.remove();
+        return resolved;
+      }, name);
 
-    await expect(rowOf(page, found).getByTestId('result').getByRole('link')).toHaveAttribute('href', '/runs/501');
-    await expect(rowOf(page, clean).getByTestId('result').getByRole('link')).toHaveText(t('list.result.none'));
-    await expect(rowOf(page, clean).getByTestId('result').getByRole('link')).toHaveAttribute('href', '/runs/502');
-    await expect(rowOf(page, stopped).getByTestId('result').getByRole('link')).toHaveText(t('list.result.stopped'));
-    await expect(rowOf(page, stopped).getByTestId('result').getByRole('link')).toHaveAttribute('href', '/runs/503');
+    await expect(chip(found)).toHaveText(t('results.violations.other', { count: exampleNumber(4).expected.total }));
+    await expect(chip(clean)).toHaveText(t('list.result.none'));
+    await expect(chip(stopped)).toHaveText(t('list.result.stopped'));
+    expect(await colour(found)).toBe(await token('--color-danger'));
+    expect(await colour(clean)).toBe(await token('--color-success'));
+    expect(await colour(stopped)).toBe(await token('--color-warning'));
+    expect(await colour(never)).toBe(await token('--color-muted'));
+    // each row leads to its own run
+    await expect(rowOf(page, found).getByTestId('control-link')).toHaveAttribute('href', '/runs/501');
+    await expect(rowOf(page, clean).getByTestId('control-link')).toHaveAttribute('href', '/runs/502');
+    await expect(rowOf(page, stopped).getByTestId('control-link')).toHaveAttribute('href', '/runs/503');
     await shot(page, testInfo, 'list-results');
+  });
+
+  test('a row is one bubble of three parts, and the whole of its details opens the results', async ({ page, api }, testInfo) => {
+    const control = controlOf(api, 4);
+    api.addRun(succeededRun(control, 501));
+    await open(page);
+    const row = rowOf(page, control);
+    const box = async (testId: string) => (await row.getByTestId(testId).boundingBox())!;
+    const whole = (await row.boundingBox())!;
+
+    // the run button and the actions stand inside the row's own box, after its details
+    for (const part of ['control-link', 'status-chip', 'run', 'edit', 'duplicate', 'archive']) {
+      const inside = await box(part);
+      expect(inside.y).toBeGreaterThanOrEqual(whole.y);
+      expect(inside.y + inside.height).toBeLessThanOrEqual(whole.y + whole.height + 1);
+    }
+    // the details hold one link, and it covers them: a click on what is checked, far from the name, opens the run
+    await expect(row.locator('td:not(.cell-run, .cell-actions)').locator('a, button')).toHaveCount(1);
+    await row.locator('.cell-checked').click({ force: true });
+    await expect(page).toHaveURL(/\/runs\/501$/);
+    await page.getByTestId('panel-close').click();
+
+    // the run button and the actions are not part of that link: each does its own thing and opens no panel
+    await row.getByTestId('run').click();
+    await expect.poll(() => api.callsTo(`POST /controls/${control.id}/runs`).length).toBe(1);
+    await expect(page).toHaveURL(/\/$/);
+    await row.getByTestId('archive').click();
+    await expect(page.getByTestId('confirm-dialog')).toBeVisible();
+    await expect(page).toHaveURL(/\/$/);
+    if (testInfo.project.name === 'mobile') {
+      // on a phone the row is a card: the run and the actions under the details, on one line
+      const [name, run, archive] = [await box('control-link'), await box('run'), await box('archive')];
+      expect(run.y).toBeGreaterThan(name.y + name.height);
+      expect(Math.abs(run.y + run.height / 2 - (archive.y + archive.height / 2))).toBeLessThan(2);
+    }
+  });
+
+  test('every column of the details sorts on a click of its name, ascending and then descending, in the order the server gives', async ({ page, api }, testInfo) => {
+    const [few, many, stopped] = [controlOf(api, 2), controlOf(api, 4), controlOf(api, 6)];
+    api.addRun(succeededRun(few, 501, { expected: [] }));
+    api.addRun(succeededRun(many, 502));
+    api.addRun(timedOutRun(stopped, 503));
+    await open(page);
+    const names = () => rows(page).getByTestId('control-link').allTextContents();
+    const asked = () => {
+      const query = api.callsTo('GET /controls').at(-1)!.query;
+      return `${query.get('sort')}:${query.get('dir')}`;
+    };
+    /** Sorts as this width lets the user: the head of the table on a desk, the select of the toolbar on a phone. */
+    const sortBy = async (column: string, columnKey: string, dir: 'asc' | 'desc') => {
+      if (testInfo.project.name === 'mobile') {
+        if (!(await page.getByTestId('sort-select').isVisible())) {
+          await page.getByTestId('toolbar-filters-toggle').click();
+        }
+        await page.getByTestId('sort-select').click();
+        await page.getByRole('option', { name: t(`list.sort.${dir}`, { column: t(`list.columns.${columnKey}`) }), exact: true }).click();
+      } else {
+        await page.locator(`[data-column="${column}"]`).getByTestId('sort-header').click();
+      }
+    };
+    const neverRan = api.controls.length - 3;
+
+    await sortBy('violations', 'result', 'asc');
+    await expect(page).toHaveURL(/sort=violations/);
+    await expect.poll(asked).toBe('violations:asc');
+    await expect(rows(page).first()).toHaveAttribute('data-id', String(few.id));
+    // what has no count comes last either way: the stopped run, then the controls that never ran
+    await expect(rows(page).nth(2)).toHaveAttribute('data-id', String(stopped.id));
+    await expect(rows(page).getByTestId('status-chip').filter({ hasText: t('list.neverRun') })).toHaveCount(neverRan);
+    await expect(rows(page).last().getByTestId('status-chip')).toHaveText(t('list.neverRun'));
+
+    await sortBy('violations', 'result', 'desc');
+    await expect(page).toHaveURL(/dir=desc/);
+    await expect.poll(asked).toBe('violations:desc');
+    await expect(rows(page).first()).toHaveAttribute('data-id', String(many.id));
+    await expect(rows(page).nth(2)).toHaveAttribute('data-id', String(stopped.id));
+    await expect(rows(page).last().getByTestId('status-chip')).toHaveText(t('list.neverRun'));
+    if (testInfo.project.name === 'desktop') {
+      await expect(page.locator('th', { has: page.locator('[data-column="violations"]') })).toHaveAttribute('aria-sort', 'descending');
+      await expect(page.locator('th[aria-sort="descending"], th[aria-sort="ascending"]')).toHaveCount(1);
+    }
+
+    // the other three columns ask the server the same way, and the address keeps the order over a reload
+    for (const [column, key] of [['rootEntity', 'checked'], ['lastRun', 'lastRun'], ['name', 'control']]) {
+      await sortBy(column, key, 'asc');
+      await expect.poll(asked).toBe(`${column}:asc`);
+    }
+    await sortBy('name', 'control', 'desc');
+    await expect.poll(asked).toBe('name:desc');
+    const descending = [...api.controls].sort((a, b) => b.name.localeCompare(a.name, 'he')).map((control) => control.name);
+    expect(await names()).toEqual(descending);
+    await page.reload();
+    await expect(rows(page).getByTestId('control-link')).toHaveText(descending);
   });
 
   test('the search narrows the list by name, and says so when nothing matches', async ({ page, api }, testInfo) => {
@@ -188,10 +302,23 @@ test.describe('controls list', () => {
     // the row and its button are gone: the keyboard goes on from the row that took its place
     await expect(rows(page).getByTestId('control-link').nth(indexOf(api, control))).toBeFocused();
 
-    // only the control is archived: its run is kept, and its name still opens it
+    // only the control is archived: its run is kept, and its row still opens it, as a row of the active list does
     await page.getByTestId('tab-archived').click();
-    await expect(rowOf(page, control).getByTestId('result').getByRole('link')).toHaveAttribute('href', '/runs/501');
-    await expect(rowOf(page, control).getByTestId('control-link')).toHaveAttribute('href', '/runs/501');
+    const archived = rowOf(page, control);
+    await expect(archived.getByTestId('control-link')).toHaveAttribute('href', '/runs/501');
+    // what its run found is still said, in the grey of the archive
+    await expect(archived.getByTestId('status-chip')).toHaveText(t('results.violations.other', { count: exampleNumber(4).expected.total }));
+    await expect(archived.getByTestId('status-chip')).toHaveClass('status-chip');
+    await shot(page, testInfo, 'list-archive-row');
+
+    await archived.locator('.cell-last').click({ force: true });
+    const panel = page.getByTestId('panel');
+    await expect(page).toHaveURL(/\/runs\/501$/);
+    await expect(panel.getByTestId('result-row').first()).toBeVisible();
+    // run and edit are what an archived control lacks, here as on its row
+    await expect(panel.getByTestId('archived-chip')).toHaveText(t('results.archived'));
+    await expect(panel.getByTestId('rerun')).toHaveCount(0);
+    await expect(panel.getByTestId('edit-control')).toHaveCount(0);
   });
 
   test('a control that cannot be archived says why, and stays on the list', async ({ page, api }) => {
@@ -331,13 +458,27 @@ test.describe('controls list', () => {
     await expect(rows(page)).toHaveCount(examples.length);
   });
 
-  test('a long list pages, and the address keeps the page', async ({ page, api }) => {
+  test('a long list pages under a foot that stays in view, and the address keeps the page', async ({ page, api }, testInfo) => {
     const base = api.controls[0];
     api.controls = Array.from({ length: 30 }, (_, index) => ({ ...base, id: 100 + index, name: `${base.name} ${String(index).padStart(2, '0')}` }));
     await open(page);
 
     await expect(rows(page)).toHaveCount(25);
     await expect(page.getByTestId('table-range')).toHaveText(t('list.range', { from: 1, to: 25, total: 30 }));
+    // the count and the pager stay at the bottom of the window while the rows run on under them
+    expect(await page.evaluate(() => document.documentElement.scrollHeight > window.innerHeight)).toBe(true);
+    await expect(page.getByTestId('table-range')).toBeInViewport({ ratio: 1 });
+    await expect(page.getByTestId('page-next')).toBeInViewport({ ratio: 1 });
+    const title = (await page.getByTestId('page-title').boundingBox())!;
+    // a tab with nothing in it has no scrollbar, and nothing moves sideways for that
+    await page.getByTestId('tab-archived').click();
+    await expect(page.getByTestId('no-archived')).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollHeight > window.innerHeight)).toBe(false);
+    if (testInfo.project.name === 'desktop') {
+      expect((await page.getByTestId('page-title').boundingBox())!.x).toBe(title.x);
+    }
+    await page.getByTestId('tab-active').click();
+    await expect(rows(page)).toHaveCount(25);
 
     await page.getByTestId('page-next').click();
     await expect(page).toHaveURL(/page=2/);

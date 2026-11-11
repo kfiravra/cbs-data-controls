@@ -157,6 +157,7 @@ test.describe('condition builder', () => {
   test('removes a nested group with its last row, and keeps one row in the root group', async ({ page }) => {
     const builder = await open(page);
 
+    await builder.getByTestId('advanced').click();
     await builder.locator('[data-adder="group"]').first().click();
     await expect(builder.getByTestId('condition-group')).toHaveCount(2);
     await builder.getByTestId('condition-group').nth(1).getByTestId('remove-row').click();
@@ -176,6 +177,9 @@ test.describe('condition builder', () => {
     const adder = async (kind: string, group = 0) => builder.locator(`[data-adder-of="${(await keys())[group]}"][data-adder="${kind}"]`);
 
     await expect(await adder('condition')).toBeEnabled();
+    // a flat list offers one adder; the other two are behind the advanced action
+    await expect(builder.locator('[data-adder]')).toHaveCount(1);
+    await builder.getByTestId('advanced').click();
     // one more node fits, and a related-records node brings two: itself and its first row
     await expect(await adder('related')).toBeDisabled();
     await (await adder('group')).click();

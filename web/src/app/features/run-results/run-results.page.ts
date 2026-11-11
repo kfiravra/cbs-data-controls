@@ -12,12 +12,11 @@ import { LanguageService } from '../../core/i18n/language.service';
 import { ListChanges } from '../../core/list/list-changes';
 import { BannerComponent } from '../../shared/banner/banner.component';
 import { ErrorBannerComponent } from '../../shared/banner/error-banner.component';
-import { BreakdownComponent } from '../../shared/breakdown/breakdown.component';
 import { IconComponent } from '../../shared/icon/icon.component';
 import { NotFoundComponent } from '../../shared/not-found/not-found.component';
 import { PageHeadComponent } from '../../shared/page-head/page-head.component';
 import { DisplaySort, ResultColumn, ResultsTableComponent } from '../../shared/results-table/results-table.component';
-import { PreviousRunFact, RunFact, RunSummaryComponent } from '../../shared/run-summary/run-summary.component';
+import { PreviousRunFact, RunFact, RunOverviewComponent } from '../../shared/run-overview/run-overview.component';
 import { SkeletonComponent } from '../../shared/skeleton/skeleton.component';
 import { StatePanelComponent } from '../../shared/state-panel/state-panel.component';
 import { TableFootComponent } from '../../shared/table-foot/table-foot.component';
@@ -36,16 +35,18 @@ interface RunOption {
 }
 
 /**
- * The results panel: one run of a control, with the control in words, the summary, the breakdown by
- * condition and the violating records with the reason for each, and a picker of the control's other runs.
- * Opened by a control with no run yet, it shows the control's rule, that it has not run, and a run button.
- * Search, filter, sort and paging live in the address, so back and reload keep them.
+ * The results panel: one run of a control. From the top: the control in words on a tint; one block with
+ * what the run found (the count, the run's facts, the count by condition, which filters); the violating
+ * records with the reason for each, as wide as the panel; and at the foot, always in view, how many are
+ * shown and the pager. The head holds a picker of the control's other runs. Opened by a control with no run
+ * yet, it shows the control's rule, that it has not run, and a run button. An archived control is read the
+ * same way and is neither run nor edited. Search, filter, sort and paging live in the address, so back and
+ * reload keep them.
  */
 @Component({
   selector: 'app-run-results-page',
   imports: [
     BannerComponent,
-    BreakdownComponent,
     ErrorBannerComponent,
     IconComponent,
     MatFormField,
@@ -56,7 +57,7 @@ interface RunOption {
     PageHeadComponent,
     ResultsTableComponent,
     RouterLink,
-    RunSummaryComponent,
+    RunOverviewComponent,
     SkeletonComponent,
     StatePanelComponent,
     TableFootComponent,

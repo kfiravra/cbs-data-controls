@@ -531,7 +531,26 @@ test.describe('run results', () => {
     await expect(ui(page).getByTestId('results-table')).toHaveAttribute('aria-busy', 'false');
   });
 
-  test('a run of an archived control cannot be run again, and the screen says why', async ({ page, api }) => {
+  test('a run of an archived control is read like any other, and offers neither a run nor an edit', async ({ page, api }) => {
+    const control = controlOf(api, 4);
+    const [older, newer] = [api.addRun(succeededRun(control, RUN, { startedAt: '2026-11-08T08:00:00.000Z' })), api.addRun(succeededRun(control, RUN + 1))];
+    api.controls = api.controls.map((candidate) => (candidate.id === control.id ? { ...candidate, isActive: false } : candidate));
+    await open(page, newer);
+
+    await expect(ui(page).getByTestId('archived-chip')).toHaveText(t('results.archived'));
+    await expect(ui(page).getByTestId('rerun')).toHaveCount(0);
+    await expect(ui(page).getByTestId('edit-control')).toHaveCount(0);
+    await expect(rows(page)).toHaveCount(newer.run.totalCount!);
+
+    // the picker moves to its earlier runs, as it does for an active control
+    await ui(page).getByTestId('run-picker').click();
+    await page.getByTestId('run-option').nth(1).click();
+    await expect(page).toHaveURL(new RegExp(`/runs/${older.run.id}$`));
+    await expect(ui(page).getByTestId('archived-chip')).toBeVisible();
+    await expect(ui(page).getByTestId('rerun')).toHaveCount(0);
+  });
+
+  test('a control that was archived while its run was on the screen says why it cannot be run again', async ({ page, api }) => {
     const control = controlOf(api, 1);
     const stored = api.addRun(succeededRun(control, RUN));
     api.fail(`POST /controls/${control.id}/runs`, problem(409, 'CONTROL_ARCHIVED', { id: control.id }));
@@ -542,5 +561,47 @@ test.describe('run results', () => {
     await expect(ui(page).getByTestId('archived-banner')).toContainText(t('errors.CONTROL_ARCHIVED.title'));
     await expect(ui(page).getByTestId('error-banner')).toHaveCount(0);
     await expect(rows(page)).toHaveCount(stored.run.totalCount!);
+  });
+
+  test('the panel reads from the top: the rule on a tint, one block for the run and its filter, the records as wide as the panel, and the pager at the foot', async ({ page, api }, testInfo) => {
+    const control = controlOf(api, 4);
+    const stored = api.addRun(succeededRun(control, RUN, { expected: manyViolations(control, 60) }));
+    await open(page, stored);
+    const box = async (testId: string) => (await ui(page).getByTestId(testId).boundingBox())!;
+    const [rule, summary, table, body] = [await box('run-sentence'), await box('run-summary'), await box('results-table'), await box('panel-body')];
+
+    // top to bottom: the rule, the one block, the records
+    expect(rule.y + rule.height).toBeLessThanOrEqual(summary.y);
+    expect(summary.y + summary.height).toBeLessThanOrEqual(table.y);
+    // the rule stands on a tint of its own, and the count is said once: beside the filter, not also in it
+    const tint = await ui(page).locator('.rule').evaluate((element) => getComputedStyle(element).backgroundColor);
+    expect(tint).not.toBe(await ui(page).getByTestId('panel-body').evaluate((element) => getComputedStyle(element).backgroundColor));
+    await expect(ui(page).getByTestId('run-summary').getByTestId('breakdown')).toBeVisible();
+    await expect(ui(page).getByTestId('breakdown-all')).toHaveText(t('results.breakdown.all'));
+    await expect(ui(page).getByTestId('breakdown-all').getByTestId('breakdown-count')).toHaveCount(0);
+    await expect(ui(page).getByTestId('run-total')).toHaveText(String(stored.run.totalCount));
+    // the records take the whole width the panel gives its content, like the two blocks over them
+    expect(Math.round(table.width)).toBe(Math.round(summary.width));
+    expect(table.width).toBeGreaterThan(body.width * 0.85);
+
+    // the letters of the rule are small, and sit over the start of their clause
+    const mark = ui(page).getByTestId('run-sentence').getByTestId('mark').first();
+    const clause = ui(page).getByTestId('run-sentence').getByTestId('clause').first();
+    const [markBox, clauseBox] = [(await mark.boundingBox())!, (await clause.boundingBox())!];
+    const inReason = (await rows(page).first().getByTestId('mark').first().boundingBox())!;
+    expect(markBox.height).toBeLessThan(inReason.height);
+    expect(markBox.height).toBeLessThanOrEqual(15);
+    expect(markBox.y).toBeLessThan(clauseBox.y + 4);
+    expect(Math.abs(markBox.x + markBox.width - (clauseBox.x + clauseBox.width))).toBeLessThan(2);
+
+    // the count and the pager are in view however far the records are scrolled
+    const viewport = page.viewportSize()!;
+    const foot = await box('table-range');
+    expect(foot.y + foot.height).toBeLessThanOrEqual(viewport.height);
+    await ui(page).getByTestId('panel-body').evaluate((element) => element.scrollTo(0, element.scrollHeight));
+    await expect(ui(page).getByTestId('table-range')).toBeInViewport({ ratio: 1 });
+    await expect(ui(page).getByTestId('page-next')).toBeInViewport({ ratio: 1 });
+    expect(await box('table-range')).toEqual(foot);
+    await shot(page, testInfo, 'results-foot');
   });
 });

@@ -7,6 +7,7 @@ import {
   effect,
   inject,
   input,
+  signal,
   untracked,
   viewChild,
 } from '@angular/core';
@@ -36,17 +37,18 @@ import { SentenceFieldComponent } from '../../shared/sentence-field/sentence-fie
 import { SkeletonComponent } from '../../shared/skeleton/skeleton.component';
 import { TextPartsComponent } from '../../shared/text-parts/text-parts.component';
 import { ToastRef, ToastService } from '../../shared/toast/toast.service';
+import { ClosedDrafts } from './closed-drafts';
+import { DESCRIPTION_MAX, NAME_MAX } from './editor.messages';
 import { EditorStore } from './editor.store';
 import { EditorTarget } from './editor.types';
 
 const NEW = 'new';
-const NAME_MAX = 200;
-const DESCRIPTION_MAX = 1000;
 
 /**
  * The control editor, in the list's panel: the details, what the control checks (a card per entity of the
- * glossary, and how they connect), for a new control what the engine would suggest about that choice, the
- * conditions of the violation, and at the foot of the panel the control in words with save and run. The
+ * glossary, and how they connect), for a new control one row that opens what the engine would suggest about
+ * that choice, the conditions of the violation, and at the foot of the panel the control in words with save
+ * and run. The panel closes at once, also over a changed draft: a toast then offers the draft back. The
  * store holds the state and talks to the api; the page navigates and toasts.
  */
 @Component({
@@ -82,6 +84,9 @@ export class ControlEditorPage {
   private readonly router = inject(Router);
   private readonly toast = inject(ToastService);
   private readonly listChanges = inject(ListChanges);
+  private readonly closedDrafts = inject(ClosedDrafts);
+  /** The address of the editor whose draft is on the screen (`/controls/new`, `/controls/12`). */
+  private openPath: string | null = null;
   /**
    * The toast that offers a way back (from a removal, another choice of what to check, or a suggestion that
    * filled the conditions) and the draft that way back starts from. The offer stands only while that draft
@@ -196,17 +201,35 @@ export class ControlEditorPage {
 
   protected readonly busy = computed(() => this.store.saveState() !== 'idle');
 
+  /** Whether the suggestions for the choice are shown; closed until their row is pressed. */
+  protected readonly ideasOpen = signal(false);
+
+  /** What the row of the suggestions says: what it waits for, or that it can be opened. */
+  protected readonly ideasLabel = computed(() => {
+    if (this.store.rootEntity() === null) {
+      return 'editor.ideas.waiting';
+    }
+    if (this.store.ideas.loading()) {
+      return 'editor.ideas.loading';
+    }
+    return this.store.ideas.items().length > 0 ? 'editor.ideas.title' : 'editor.ideas.none';
+  });
+
   /** An address that names no control (not `new`, not a positive integer), or a control that is not there. */
   protected readonly notFound = computed(
     () => this.target(this.id(), this.from()) === null || this.store.loadState() === 'notFound',
   );
 
   constructor() {
-    inject(DestroyRef).onDestroy(() => (this.left = true));
+    inject(DestroyRef).onDestroy(() => {
+      this.left = true;
+      this.offerClosedDraft();
+    });
     effect(() => {
-      const target = this.target(this.id(), this.from());
+      const id = this.id();
+      const target = this.target(id, this.from());
       if (target) {
-        untracked(() => void this.store.open(target));
+        untracked(() => this.show(target, `/controls/${id}`));
       }
     });
     // an offered way back is withdrawn as soon as the draft is another one: edited further, read again from
@@ -233,20 +256,63 @@ export class ControlEditorPage {
     };
   }
 
+  /**
+   * Opens what the address names, or brings back the draft that was closed there when the toast's undo
+   * asked for it. A changed draft that this takes the place of is kept and offered back first.
+   */
+  private show(target: EditorTarget, path: string): void {
+    // a first save moves the control to its own address: the same draft, which nothing takes the place of
+    const sameControl = target.id !== null && this.store.control()?.id === target.id;
+    if (!sameControl) {
+      this.offerClosedDraft();
+      this.ideasOpen.set(false);
+    }
+    this.openPath = path;
+    const asked = (history.state as { restoreDraft?: boolean } | null)?.restoreDraft === true;
+    const closed = asked ? this.closedDrafts.take(path) : null;
+    void (closed ? this.store.restore(closed) : this.store.open(target));
+  }
+
+  /**
+   * The screen is left, or another control takes its place. A changed draft is not asked about: it is kept,
+   * and a toast offers it back at its own address. Not while a save is on its way: that draft is being stored.
+   */
+  private offerClosedDraft(): void {
+    const path = this.openPath;
+    if (path === null || !this.store.dirty() || this.store.archived() || this.busy()) {
+      return;
+    }
+    this.closedDrafts.keep(path, this.store.snapshot());
+    this.toast.show(
+      'editor.toast.closed',
+      {},
+      { labelKey: 'editor.toast.restore', run: () => void this.router.navigateByUrl(path, { state: { restoreDraft: true } }) },
+    );
+  }
+
   /** The control this panel is about: the list gives the focus back to its row when the panel closes. */
   panelControl(): number | null {
     return this.store.control()?.id ?? null;
   }
 
   protected chooseRoot(key: string): void {
+    this.ideasOpen.set(false);
     const undo = this.store.chooseRoot(key);
     if (undo) {
       this.offerBack('editor.toast.whatChanged', {}, undo);
     }
   }
 
+  /** Opens or closes the suggestions; a row with nothing to offer stays as it is. */
+  protected toggleIdeas(): void {
+    if (this.store.ideas.items().length > 0) {
+      this.ideasOpen.update((open) => !open);
+    }
+  }
+
   /** A suggestion fills the conditions; what was there is offered back for as long as the toast stands. */
   protected applyIdea(idea: SuggestionItem): void {
+    this.ideasOpen.set(false);
     this.offerBack('editor.toast.ideaApplied', {}, this.store.applyIdea(idea));
   }
 
@@ -267,28 +333,6 @@ export class ControlEditorPage {
   private offerBack(messageKey: string, params: Record<string, unknown>, undo: () => void): void {
     const toast = this.toast.show(messageKey, params, { labelKey: 'editor.toast.restore', run: undo });
     this.undoOffer = { toast, draft: this.store.draft() };
-  }
-
-  /**
-   * Whether this screen may be left for `nextUrl`. The address of the control this editor holds is not
-   * another screen: a first save moves there by itself, also when something was typed while it saved.
-   */
-  private staysOnControl(nextUrl: string): boolean {
-    const control = this.store.control();
-    return control !== null && nextUrl.split(/[?#]/)[0] === `/controls/${control.id}`;
-  }
-
-  /**
-   * Asked by the router before another screen takes this one's place (`canDeactivate`). A changed draft
-   * leaves only on the user's word, given to the browser's own prompt: the same guard as closing the tab,
-   * and no dialog of the app.
-   */
-  mayLeave(nextUrl: string): boolean {
-    return (
-      !this.store.dirty() ||
-      this.staysOnControl(nextUrl) ||
-      window.confirm(this.translate.instant('editor.leave.confirm') as string)
-    );
   }
 
   protected async save(run: boolean): Promise<void> {

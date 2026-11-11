@@ -6,7 +6,8 @@ import { Control, DefinitionError, SuggestionItem, TextPart } from '../app/core/
 import { Definition } from '../app/core/definition/definition.types';
 import { DraftCondition } from '../app/core/definition/draft';
 import { problemInterceptor } from '../app/core/http/problem.interceptor';
-import { EditorStore, VALIDATE_DEBOUNCE_MS } from '../app/features/control-editor/editor.store';
+import { EditorStore } from '../app/features/control-editor/editor.store';
+import { VALIDATE_DEBOUNCE_MS } from '../app/features/control-editor/editor.validation';
 import { SYNTHETIC_GLOSSARY } from './synthetic-glossary';
 import { provideTestTranslations, t } from './translate';
 

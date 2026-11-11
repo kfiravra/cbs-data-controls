@@ -1,12 +1,11 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input, output } from '@angular/core';
 import { TranslatePipe } from '@ngx-translate/core';
 
 import { GlossaryField, ResultItem, SortDirection } from '../../core/api/api.types';
 import { FormatService } from '../../core/i18n/format.service';
-import { IconName } from '../../core/icons/icons';
-import { IconComponent } from '../icon/icon.component';
 import { MarkComponent } from '../mark/mark.component';
 import { SkeletonComponent } from '../skeleton/skeleton.component';
+import { SortHeaderComponent, ariaSort } from '../sort-header/sort-header.component';
 import { TextPartsComponent } from '../text-parts/text-parts.component';
 
 /** One identifying field of the record: its key in `display`, its label, and how its values are written. */
@@ -26,12 +25,12 @@ const SKELETON_REASONS = ['62%', '84%', '46%'];
 /**
  * The violations of a run: a column per identifying field of the record, then the reasons, one line for
  * each condition the record matched: its mark (a badge, the same letter the condition has everywhere), then
- * the engine's text with the actual value marked. A table from 640px and card rows below, from one template.
- * The first column's header sorts by the record.
+ * the engine's text with the actual value marked. A table from 640px and card rows below, from one template,
+ * in the one design of the product's tables: a bubble per row. The first column's header sorts by the record.
  */
 @Component({
   selector: 'app-results-table',
-  imports: [IconComponent, MarkComponent, SkeletonComponent, TextPartsComponent, TranslatePipe],
+  imports: [MarkComponent, SkeletonComponent, SortHeaderComponent, TextPartsComponent, TranslatePipe],
   templateUrl: './results-table.component.html',
   styles: `
     :host {
@@ -53,15 +52,7 @@ export class ResultsTableComponent {
 
   protected readonly skeletons = SKELETON_ROWS.map((name, index) => ({ name, reasons: SKELETON_REASONS[index] }));
 
-  protected readonly sortIcon = computed<IconName>(() => {
-    const sort = this.sort();
-    return sort === 'asc' ? 'arrow_upward' : sort === 'desc' ? 'arrow_downward' : 'unfold_more';
-  });
-
-  protected readonly ariaSort = computed(() => {
-    const sort = this.sort();
-    return sort === 'asc' ? 'ascending' : sort === 'desc' ? 'descending' : 'none';
-  });
+  protected readonly ariaSort = ariaSort;
 
   /** A number reads as the record's reference, set small beside its name; text reads as part of the name. */
   protected isNumber(column: ResultColumn): boolean {

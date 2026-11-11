@@ -36,7 +36,7 @@ const operatorLabels = (keys: string[], variant = 'default') =>
       [view]="view()"
       [focus]="focus()"
       (edit)="apply($event)"
-      (trace)="traced.set($event)"
+      (advancedChange)="advanced.set($event)"
     />
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -44,7 +44,8 @@ const operatorLabels = (keys: string[], variant = 'default') =>
 class HostComponent {
   private readonly ids = new IdSource();
   readonly draft = signal<DraftGroup>(newDraft(this.ids));
-  readonly traced = signal<string | null>(null);
+  /** The advanced actions are asked for: the tests of groups and related records start from there. */
+  readonly advanced = signal(true);
   readonly focus = signal<FocusTarget | null>(null);
   readonly messages = signal<ReadonlyMap<string, readonly RowMessage[]>>(new Map());
   readonly view = computed<BuilderView>(() => ({
@@ -52,7 +53,8 @@ class HostComponent {
     check: checkDraft(this.draft(), 'order', GLOSSARY, 'he'),
     marks: marksOf(this.draft(), LETTERS),
     messages: this.messages(),
-    traced: this.traced(),
+    // as the editor's store says it: asked for, or the draft already holds more than a flat list
+    advanced: this.advanced() || this.draft().children.some((child) => child.type !== 'condition'),
   }));
 
   apply(edit: DraftEdit): void {
@@ -407,14 +409,64 @@ describe('ConditionBuilderComponent', () => {
       expect(names).toEqual([t('common.condition', { mark: 'A' }), t('common.condition', { mark: 'B' })]);
     });
 
-    it('says which row is in focus, so its mark can fill wherever it stands', async () => {
-      await click(adder('condition'));
-      const second = rows()[1];
+    it('answers nothing to the pointer or the focus: the mark of a row is a badge', async () => {
+      const row = rows()[0];
+      const mark = row.querySelector('[data-testid="mark"]')!;
+      const before = { state: mark.getAttribute('data-state'), classes: mark.className };
 
-      second.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+      row.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+      row.dispatchEvent(new Event('pointerenter'));
       await fixture.whenStable();
 
-      expect(fixture.componentInstance.traced()).toBe(second.getAttribute('data-node'));
+      expect({ state: mark.getAttribute('data-state'), classes: mark.className }).toEqual(before);
+    });
+  });
+
+  describe('simple and advanced', () => {
+    const advanced = () => host().querySelector<HTMLButtonElement>('[data-testid="advanced"]');
+
+    beforeEach(async () => {
+      fixture.componentInstance.advanced.set(false);
+      await fixture.whenStable();
+    });
+
+    it('is a flat list by default: one switch, one way to add a condition, and the advanced action', async () => {
+      expect(all('[data-testid="group-op"]')).toHaveLength(1);
+      expect(all('[data-adder]').map((button) => button.getAttribute('data-adder'))).toEqual(['condition']);
+      expect(advanced()!.getAttribute('aria-pressed')).toBe('false');
+      expect(advanced()!.textContent?.trim()).toBe(t('editor.add.advanced'));
+    });
+
+    it('offers groups and related records once the advanced action is pressed, and puts them away again', async () => {
+      await click(advanced()!);
+
+      expect(all('[data-adder]').map((button) => button.getAttribute('data-adder'))).toEqual([
+        'condition',
+        'group',
+        'related',
+      ]);
+      expect(advanced()!.getAttribute('aria-pressed')).toBe('true');
+
+      await click(advanced()!);
+
+      expect(all('[data-adder]').map((button) => button.getAttribute('data-adder'))).toEqual(['condition']);
+    });
+
+    it('shows a draft that holds a group in full, and has nothing to put away while it does', async () => {
+      await click(advanced()!);
+      await click(adder('group'));
+      fixture.componentInstance.advanced.set(false);
+      await fixture.whenStable();
+
+      expect(groups()).toHaveLength(2);
+      expect(adder('group')).not.toBeNull();
+      expect(advanced()).toBeNull();
+
+      // the group goes, and the list is flat again: the action is back, as it was left
+      await click(host().querySelector<HTMLElement>('[data-testid="remove-group"]')!);
+
+      expect(groups()).toHaveLength(1);
+      expect(advanced()!.getAttribute('aria-pressed')).toBe('false');
     });
   });
 });

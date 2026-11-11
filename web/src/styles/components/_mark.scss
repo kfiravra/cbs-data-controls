@@ -1,32 +1,37 @@
 // Every condition carries one mark, a letter in document order. The same mark stands on its row in the
-// builder, on its clause in the sentence, on its line in the breakdown and on each reason it explains.
+// builder, on its clause in the sentence, on its line in the count by condition and on each reason it
+// explains. It is a badge: it names its condition and answers to nothing, here or in the editor.
 
 .mark {
   display: inline-grid;
   place-items: center;
   flex: none;
-  vertical-align: -0.22em;
+  vertical-align: -0.18em;
   min-inline-size: var(--size-mark);
   block-size: var(--size-mark);
-  padding-inline: 4px;
+  padding-inline: 3px;
   border-radius: var(--radius-chip);
   background: var(--color-action-tint);
   color: var(--color-action-ink);
-  font-size: var(--text-label);
-  font-weight: 600;
+  font-size: var(--text-mark);
+  font-weight: var(--weight-strong);
   line-height: 1;
   font-style: normal;
-  transition:
-    background-color var(--duration-out) var(--ease-out),
-    color var(--duration-out) var(--ease-out);
 }
 
-// the trace, in the editor only: a condition under the pointer or in focus (its row, its clause) fills its
-// mark on its row and in the sentence. In the results and the suggestions a mark is a badge and has one state.
-.mark--traced {
-  background: var(--color-action);
-  color: var(--color-on-action);
-  transition-duration: var(--duration-in);
+// In a sentence the letter is smaller still and sits at the top corner of its clause, at the start side:
+// raised over the first word, the way a note's number is.
+.sentence .mark {
+  // moved, not aligned: a raised box would push its line apart from the others
+  position: relative;
+  inset-block-start: -0.5em;
+  min-inline-size: var(--size-mark-corner);
+  block-size: var(--size-mark-corner);
+  padding-inline: 2px;
+  margin-inline-end: 1px;
+  border-radius: var(--radius-xs);
+  font-size: var(--text-mark-corner);
+  vertical-align: baseline;
 }
 
 // the settle: when a condition changes, its mark in the sentence fills at once and eases back
@@ -55,24 +60,24 @@
   padding: 1px 6px;
   border-radius: var(--radius-chip);
   background: var(--color-action-tint);
-  font-weight: 500;
+  font-weight: var(--weight-medium);
   font-variant-numeric: tabular-nums;
   // its own box now: a line of 1.35 and the padding stay inside the line of the text around it
-  line-height: 1.35;
+  line-height: var(--leading-title);
   overflow-wrap: anywhere;
 }
 
-// the rule sentence, plain: on Ground, for reading
+// the rule in words, for reading: its lines carry marks and values, and are set a little apart for them
 .sentence {
-  font-size: var(--text-title);
-  line-height: 1.75;
-  max-inline-size: 70ch;
+  font-size: var(--text-body);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-read);
+  max-inline-size: 75ch;
   text-wrap: pretty;
 }
 
 .sentence--body {
-  font-size: var(--text-body);
-  line-height: 1.7;
+  font-weight: var(--weight-regular);
 }
 
 .clause {
@@ -96,8 +101,7 @@
   .sentence {
     max-inline-size: none;
     font-size: var(--text-small);
-    font-weight: 500;
-    line-height: 1.6;
+    line-height: var(--leading-read);
   }
 
   .mark {
@@ -109,11 +113,6 @@
     background: none;
     box-shadow: inset 0 0 0 1px currentColor;
     color: var(--color-on-inverse);
-  }
-
-  .mark--traced {
-    background: var(--color-on-inverse);
-    color: var(--color-inverse);
   }
 
   .mark--changed {
@@ -156,30 +155,30 @@
   clip-path: inset(50%);
   white-space: nowrap;
   font-size: var(--text-label);
-  font-weight: 500;
-  line-height: 1.4;
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-title);
   color: var(--color-on-inverse-muted);
 }
 
 .rulebar__sentence {
-  block-size: calc(2 * 1.6 * var(--text-small));
+  --scroll-thumb: var(--color-scroll-on-inverse);
+
+  block-size: calc(2 * var(--leading-read) * var(--text-small));
   overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: var(--color-on-inverse-line) transparent;
 }
 
 .rulebar__hint {
   font-size: var(--text-small);
-  line-height: 1.6;
+  line-height: var(--leading-read);
 }
 
 // two lines of room on a narrow panel, one on a wide one; what does not fit is cut, and the same words
 // stand in full under the condition they are about
 .rulebar__status {
-  block-size: calc(2 * 1.5 * var(--text-label));
+  block-size: calc(2 * var(--leading-body) * var(--text-label));
   overflow: hidden;
   font-size: var(--text-label);
-  line-height: 1.5;
+  line-height: var(--leading-body);
 
   p {
     display: flex;
@@ -222,11 +221,11 @@
   }
 
   .rulebar__sentence {
-    block-size: calc(2 * 1.6 * var(--text-body));
+    block-size: calc(2 * var(--leading-read) * var(--text-body));
   }
 
   .rulebar__status {
-    block-size: calc(1.5 * var(--text-small));
+    block-size: calc(var(--leading-body) * var(--text-small));
     font-size: var(--text-small);
 
     p {

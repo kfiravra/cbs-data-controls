@@ -80,8 +80,10 @@
       </section>
     } @else {
       <div class="editor">
+        <!-- the two fields name themselves: the section's title is heard and not seen, and the room it took
+             brings the conditions into the first view -->
         <section class="editor__details" aria-labelledby="s-details">
-          <h2 class="t-title" id="s-details">{{ 'editor.details.title' | translate }}</h2>
+          <h2 class="sr-only" id="s-details">{{ 'editor.details.title' | translate }}</h2>
           <div class="field">
             <label class="field__label" for="control-name">{{ 'editor.details.name.label' | translate }}</label>
             <mat-form-field appearance="outline" subscriptSizing="dynamic" [class.field--invalid]="!!store.nameIssue()">
@@ -143,7 +145,7 @@
             <p class="muted t-small">{{ 'editor.what.hint' | translate }}</p>
           </div>
           @if (store.choices(); as choices) {
-            <div class="stack">
+            <div class="editor__what">
               <app-entity-cards
                 labelledBy="s-what"
                 [entities]="choices"
@@ -157,16 +159,57 @@
                   <app-icon name="error" size="sm" />{{ 'editor.what.required' | translate }}
                 </p>
               }
-              @if (store.chain(); as chain) {
-                <app-entity-chain [chain]="chain" />
-              }
-              @if (rootSummary(); as summary) {
-                <p class="t-small" data-testid="root-summary">
-                  {{ 'editor.what.returns' | translate: { entity: summary.entity } }}
-                  @if (summary.also) {
-                    {{ 'editor.what.also' | translate: { list: summary.also } }}
+              <!-- one line: how the choices connect, and what this choice returns -->
+              <div class="editor__reach">
+                @if (store.chain(); as chain) {
+                  <app-entity-chain [chain]="chain" />
+                }
+                @if (rootSummary(); as summary) {
+                  <p class="t-small muted" data-testid="root-summary">
+                    {{ 'editor.what.returns' | translate: { entity: summary.entity } }}
+                    @if (summary.also) {
+                      {{ 'editor.what.also' | translate: { list: summary.also } }}
+                    }
+                  </p>
+                }
+              </div>
+
+              <!-- A control that starts from nothing is offered what the engine would check about the
+                   choice, behind one row that is there from the start: nothing moves when the offer
+                   arrives, and nothing opens until the row is pressed -->
+              @if (store.fromNothing()) {
+                <div class="ideas" data-testid="ideas" [attr.aria-busy]="store.ideas.loading()">
+                  <button
+                    class="ideas__row"
+                    type="button"
+                    data-testid="ideas-toggle"
+                    aria-controls="ideas-list"
+                    [attr.aria-expanded]="ideasOpen()"
+                    [attr.aria-disabled]="store.ideas.items().length === 0 ? 'true' : null"
+                    (click)="toggleIdeas()"
+                  >
+                    <app-icon name="sparkle" />
+                    <span class="ideas__label" data-testid="ideas-label">{{ ideasLabel() | translate }}</span>
+                    @if (store.ideas.items().length; as count) {
+                      <span class="ideas__count num" data-testid="ideas-count">{{ count }}</span>
+                      <app-icon class="ideas__chevron" name="expand_more" />
+                    }
+                  </button>
+                  @if (ideasOpen()) {
+                    <div class="ideas__list" id="ideas-list">
+                      <p class="muted t-small">{{ 'editor.ideas.hint' | translate }}</p>
+                      @for (idea of store.ideas.items(); track $index) {
+                        <button class="idea" type="button" data-testid="idea" (click)="applyIdea(idea)">
+                          <span class="idea__name"><bdi>{{ idea.name }}</bdi></span>
+                          <span class="idea__rule"><app-text-parts [parts]="idea.sentenceParts" /></span>
+                          @if (idea.evidence[0]; as evidence) {
+                            <span class="chip num">{{ evidence.text }}</span>
+                          }
+                        </button>
+                      }
+                    </div>
                   }
-                </p>
+                </div>
               }
             </div>
           } @else {
@@ -174,40 +217,13 @@
           }
         </section>
 
-        <!-- a new control that starts from nothing is offered what the engine would check about the choice;
-             nothing stands here when the engine offers nothing -->
-        @if (!store.control() && (store.ideas.loading() || store.ideas.items().length > 0)) {
-          <section aria-labelledby="s-ideas" data-testid="ideas" [attr.aria-busy]="store.ideas.loading()">
-            <div class="section__head">
-              <h2 class="t-title" id="s-ideas">{{ 'editor.ideas.title' | translate }}</h2>
-              <p class="muted t-small">{{ 'editor.ideas.hint' | translate }}</p>
-            </div>
-            <div class="ideas">
-              @if (store.ideas.loading()) {
-                <div class="idea idea--pending" aria-hidden="true" data-testid="ideas-loading">
-                  <app-skeleton width="44%" />
-                  <app-skeleton width="78%" />
-                </div>
-              }
-              @for (idea of store.ideas.items(); track $index) {
-                <button class="idea" type="button" data-testid="idea" (click)="applyIdea(idea)">
-                  <span class="idea__name"><bdi>{{ idea.name }}</bdi></span>
-                  <span class="idea__rule"><app-text-parts [parts]="idea.sentenceParts" /></span>
-                  @if (idea.evidence[0]; as evidence) {
-                    <span class="chip num">{{ evidence.text }}</span>
-                  }
-                </button>
-              }
-            </div>
-          </section>
-        }
-
-        @if (store.rootEntity(); as rootEntity) {
-          <section aria-labelledby="s-conditions">
-            <div class="section__head">
-              <h2 class="t-title" id="s-conditions">{{ 'editor.conditions.title' | translate }}</h2>
-              <p class="muted t-small">{{ 'editor.conditions.hint' | translate }}</p>
-            </div>
+        <!-- the conditions are always in the first view: before a choice their place says what they wait for -->
+        <section aria-labelledby="s-conditions">
+          <div class="section__head">
+            <h2 class="t-title" id="s-conditions">{{ 'editor.conditions.title' | translate }}</h2>
+            <p class="muted t-small">{{ 'editor.conditions.hint' | translate }}</p>
+          </div>
+          @if (store.rootEntity(); as rootEntity) {
             @if (store.view(); as view) {
               <app-condition-builder
                 [draft]="store.draft()"
@@ -215,7 +231,7 @@
                 [view]="view"
                 [focus]="store.focus()"
                 (edit)="edit($event)"
-                (trace)="store.traced.set($event)"
+                (advancedChange)="store.advanced.set($event)"
               />
             } @else {
               <div class="builder" aria-hidden="true">
@@ -223,8 +239,12 @@
                 <app-skeleton width="52%" />
               </div>
             }
-          </section>
-        }
+          } @else {
+            <div class="builder builder--waiting" data-testid="builder-waiting">
+              <p class="muted t-small">{{ 'editor.conditions.waiting' | translate }}</p>
+            </div>
+          }
+        </section>
       </div>
     }
   </div>
@@ -236,12 +256,10 @@
         [parts]="store.sentence().parts"
         [stale]="store.sentence().stale"
         [marks]="store.marks()"
-        [traced]="store.traced()"
         [open]="store.openNodes()"
         [changed]="store.settling()"
         [hintKey]="sentenceHint()"
         [status]="status()"
-        (trace)="store.traced.set($event)"
       >
         <!-- aria-disabled while a save is on its way: the pressed button keeps the focus (see _buttons.scss) -->
         <button
