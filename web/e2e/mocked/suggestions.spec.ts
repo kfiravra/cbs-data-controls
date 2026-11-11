@@ -30,6 +30,8 @@ test.describe('suggestions panel', () => {
       await expect(draft).toContainText(item.rationale);
       await expect(draft.getByTestId('suggestion-sentence').locator('[data-testid="clause"][data-tone="1"]').first()).toBeVisible();
       await expect(draft.getByTestId('suggestion-sentence').getByTestId('mark')).toHaveCount(0);
+      // a card shows no letter, so what is read aloud is the engine's sentence and names no condition
+      await expect(draft.getByTestId('suggestion-sentence').getByTestId('plain-text')).toHaveText(item.sentence);
       await expect(draft.getByTestId('evidence')).toHaveText(item.evidence.map((evidence) => evidence.text));
       await expect(draft.getByRole('checkbox')).not.toBeChecked();
     }

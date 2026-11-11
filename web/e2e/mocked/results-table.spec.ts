@@ -1,10 +1,10 @@
-import { examples } from '../fixtures/examples';
+import { joiningWord } from '../../src/app/core/glossary/glossary.phrases';
 import { glossary, label } from '../fixtures/glossary';
 import { manyViolations, succeededRun } from '../fixtures/runs';
 import { t } from '../support/i18n';
 import { expect, test } from '../support/mocked';
 import { RUN, controlOf, open, rows, ui } from '../support/results-screen';
-import { ruleTones, tonesOf } from '../support/rule';
+import { groundOf, lineOf, ruleTones, strengthOf } from '../support/rule';
 import { shot } from '../support/shots';
 
 test.describe('run results: the order of the records and the layout of the panel', () => {
@@ -90,6 +90,8 @@ test.describe('run results: the order of the records and the layout of the panel
     const query = api.callsTo(`GET /runs/${stored.run.id}/results`).at(-1)!.query;
     expect([query.get('sort'), query.get('field'), query.get('dir')]).toEqual(['field', second, 'desc']);
 
+    // the list of the first choice is gone before the select is pressed again: a press while it closes opens nothing
+    await expect(page.getByRole('listbox')).toHaveCount(0);
     await ui(page).getByTestId('sort-select').click();
     await page.getByRole('option', { name: t('results.sort.asc', { column: t('results.table.reasons') }), exact: true }).click();
     await expect(page).toHaveURL(/sort=_reasons/);
@@ -123,13 +125,15 @@ test.describe('run results: the order of the records and the layout of the panel
     const first = sentence.getByTestId('clause').first();
     const node = (await first.getAttribute('data-node'))!;
     expect(await first.evaluate((element) => getComputedStyle(element).backgroundColor)).toBe('rgba(0, 0, 0, 0)');
-    const tone = (element: Element) => getComputedStyle(element).getPropertyValue('--tone').trim();
-    const underline = await first.evaluate(tone);
+    // as the browser paints them: the solid stretch of the line, and the ground of each letter
+    const underline = await lineOf(first);
     const chip = ui(page).locator(`[data-testid="breakdown-row"][data-node="${node}"]`).getByTestId('mark');
     const reason = ui(page).locator(`[data-testid="reason"][data-node="${node}"]`).first().getByTestId('mark');
-    expect(underline).toMatch(/^#[0-9a-f]{6}80$/);
-    expect(await chip.evaluate(tone)).toBe(underline);
-    expect(await reason.evaluate(tone)).toBe(underline);
+    expect(strengthOf(underline)).toBeCloseTo(0.5, 1);
+    expect(await groundOf(chip)).toBe(underline);
+    expect(await groundOf(reason)).toBe(underline);
+    // and the next condition has another colour
+    expect(await lineOf(sentence.getByTestId('clause').nth(1))).not.toBe(underline);
     // the line under the words is drawn (it fades at its ends), and the sentence is set as body text is
     expect(await first.evaluate((element) => getComputedStyle(element).backgroundImage)).toContain('linear-gradient');
     expect(await sentence.evaluate((element) => getComputedStyle(element).fontWeight)).toBe('400');
@@ -145,28 +149,33 @@ test.describe('run results: the order of the records and the layout of the panel
     await shot(page, testInfo, 'results-foot');
   });
 
-  test('a rule with groups is drawn as lines: no bracket, no tint, a group inside a group one step in, and the plain sentence to be read', async ({ page, api }) => {
-    const nested = examples.find((example) => example.definition.where.children.some((child) => child.type === 'group'))!;
-    const control = api.controls.find((candidate) => JSON.stringify(candidate.definition) === JSON.stringify(nested.definition))!;
+  test('a rule with groups is drawn as lines: no bracket, no tint, a group inside a group one step in and led by its joining word, and the plain sentence to be read', async ({ page, api }) => {
+    // example 4: (one condition and (three joined by or)) or (two joined by and)
+    const control = controlOf(api, 4);
     const stored = api.addRun(succeededRun(control, RUN));
     await open(page, stored);
     const sentence = ui(page).getByTestId('run-sentence');
     const lines = sentence.getByTestId('rule-line');
-    const depths = await lines.evaluateAll((all) => all.map((line) => Number(line.getAttribute('data-depth'))));
+    const or = label(joiningWord(glossary, 'or')).trim();
+    const and = label(joiningWord(glossary, 'and')).trim();
+
+    // the first group's own condition, the group inside it one step in, and the second group back at the edge
+    await expect(lines).toHaveCount(3);
+    expect(await lines.evaluateAll((all) => all.map((line) => Number(line.getAttribute('data-depth'))))).toEqual([0, 1, 0]);
     const starts = await lines.evaluateAll((all) => all.map((line) => {
       const range = document.createRange();
       range.selectNodeContents(line);
       const box = range.getBoundingClientRect();
       return Math.round(box.x + box.width);
     }));
-
-    // every group is a line of its own, and a line one step in starts further from the edge (the start edge is the right one here)
-    expect(depths.length).toBeGreaterThan(1);
-    expect(depths[0]).toBe(0);
-    const inner = depths.indexOf(1);
-    if (inner !== -1) {
-      expect(starts[inner]).toBeLessThan(starts[0]);
-    }
+    // a line one step in starts further from the edge (the start edge is the right one here)
+    expect(starts[1]).toBeLessThan(starts[0]);
+    expect(starts[2]).toBe(starts[0]);
+    // every group's line is led by the word that joins it, and no line ends with one
+    const texts = (await lines.allInnerTexts()).map((text) => text.trim());
+    expect(texts[1].startsWith(`${and} `)).toBe(true);
+    expect(texts[2].startsWith(`${or} `)).toBe(true);
+    expect(texts.some((text) => text.endsWith(` ${and}`) || text.endsWith(` ${or}`))).toBe(false);
     // what is drawn holds no bracket and no ground of its own; what is read holds the engine's sentence
     const drawn = sentence.getByTestId('drawn-text');
     expect(await drawn.innerText()).not.toMatch(/[()]/);
@@ -174,7 +183,7 @@ test.describe('run results: the order of the records and the layout of the panel
     expect(grounds).toEqual(['rgba(0, 0, 0, 0)']);
     expect(await sentence.getByTestId('plain-text').textContent()).toContain('(');
     await expect(drawn).toHaveAttribute('aria-hidden', 'true');
-    // each condition's colour once, in the order of the rule
-    await expect.poll(() => ruleTones(sentence)).toEqual(tonesOf(stored.run.conditions!.length));
+    // each condition's colour once, in the order of the rule: six conditions, the first six of the set
+    await expect.poll(() => ruleTones(sentence)).toEqual(['1', '2', '3', '4', '5', '6']);
   });
 });

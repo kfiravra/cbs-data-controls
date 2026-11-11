@@ -348,10 +348,15 @@ export class ControlEditorPage {
     }
   }
 
-  /** Opens or closes the suggestions; a row with nothing to offer stays as it is. */
+  /**
+   * Opens or closes the suggestions. A list that is on the screen always closes, also while new suggestions
+   * are on their way; a row with nothing to offer does not open.
+   */
   protected toggleIdeas(): void {
-    if (this.store.ideas.items().length > 0) {
-      this.ideasOpen.update((open) => !open);
+    if (this.ideasShown()) {
+      this.ideasOpen.set(false);
+    } else if (this.store.ideas.items().length > 0) {
+      this.ideasOpen.set(true);
     }
   }
 

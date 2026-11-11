@@ -166,6 +166,33 @@ test.describe('control editor: what to check, suggestions for it, and the bar', 
     await expect(page.getByTestId('control-name')).toHaveValue(offered(withIdeas)[0].name);
   });
 
+  test('an open list of suggestions closes on a press also while new ones are on their way, and the row says its state aloud', async ({ page, api }) => {
+    const withIdeas = glossary.entities.find((candidate) => candidate.key === api.suggestions[0].definition.rootEntity)!;
+    const other = glossary.entities.find((candidate) => candidate.rootable && candidate.key !== withIdeas.key)!;
+    const choose = (entity: typeof withIdeas) => page.getByRole('radio', { name: label(entity.label.plural) }).click();
+    const toggle = page.getByTestId('ideas-toggle');
+    const status = page.getByTestId('ideas-status');
+    await page.goto('/controls/new');
+
+    await choose(withIdeas);
+    await toggle.click();
+    await expect(page.getByTestId('idea').first()).toBeVisible();
+    // the row changes its words in place; the same words are a status, so the change is said
+    await expect(status).toHaveAttribute('role', 'status');
+    await expect(status).toHaveText(t('editor.ideas.title'));
+
+    api.delay('POST /suggestions', 1500);
+    await choose(other);
+    await expect(page.getByTestId('ideas-pending')).toBeVisible();
+    await expect(status).toHaveText(t('editor.ideas.loading'));
+    // open and waiting: it says it is open, it is not unavailable, and a press closes it
+    await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    await expect(toggle).not.toHaveAttribute('aria-disabled', 'true');
+    await toggle.click();
+    await expect(page.getByTestId('ideas-pending')).toHaveCount(0);
+    await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+  });
+
   test('under reduced motion the row of suggestions is there with the choice, without an entrance', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto('/controls/new');

@@ -113,16 +113,20 @@ playwright install --with-deps chromium` needs sudo on WSL: ask the user to run 
 - A button that says it is unavailable with `aria-disabled` is not enabled for Playwright: `click()` waits on
   it. A spec that presses such a button on purpose forces the click.
 - `app-text-parts` draws a rule as plain text with no letter in it: with `marks`, each condition's clause
-  carries `data-tone` (the place of its colour in the set of eight, `toneOf` in `core/definition/marks.ts`) and
-  is underlined in that colour by a drawn line (a gradient that fades at both ends, not a text decoration).
+  carries `data-tone` (the place of its colour in the set of eight, `tonesOf` in `core/definition/marks.ts`) and
+  is underlined in that colour by a drawn line (a gradient that fades at both ends, not a text decoration, and
+  placed inside the words' own line box: no padding, nothing added to the height).
   The same `data-tone` is on the condition's `app-mark` in the builder, on the filter chips and beside the
   reasons. A rule's group marks are not written: a top-level group is a `rule-line`, a group inside a group a
-  line with `data-depth="1"`. The marks are the glossary's `groupOpen` and `groupClose` (round brackets until a
+  line with `data-depth="1"`, and each group's line starts with its joining word (never a line of one alone).
+  The marks are the glossary's `groupOpen` and `groupClose` (round brackets until a
   glossary is read), looked for only in parts with no `role`: a bracket in a value, a label or a relationship's
   name is data and stays. A drawing with colours or lines carries the engine's plain sentence, each condition
-  named by its mark, in a visually hidden `plain-text` span and is itself hidden from assistive technology
-  (`drawn-text`), so `textContent` of such a sentence holds the words twice. A reason (`markValues`) keeps its
-  brackets. A spec reads a rule's colours with `ruleTones` (`e2e/support/rule.ts`).
+  named by its mark (not where `named` is false: a suggestion shows no letters), in a visually hidden
+  `plain-text` span and is itself hidden from assistive technology (`drawn-text`), so `textContent` of such a
+  sentence holds the words twice. A reason (`markValues`) keeps its brackets. A spec reads a rule's colours
+  with `ruleTones`, and a painted colour with `lineOf` and `groundOf` (`e2e/support/rule.ts`); it writes the
+  colours it expects out and never computes them the way the code does.
 - A results view sorts by a column: an identifying field's key or `_reasons` (`REASONS_COLUMN`, a name no
   field can have) in the address (`?sort=`), sent to the api as `sort=field&field=<key>` or `sort=reasons`;
   null is the run's order (`sort=key`).
@@ -140,7 +144,9 @@ playwright install --with-deps chromium` needs sudo on WSL: ask the user to run 
   `builder-waiting` (no `condition-builder` in the page), and that press asks `POST /suggestions` with
   `rootEntity` and `max: 3` (a store spec answers it; a mocked spec gets the fake api's). The answer stands
   behind one row (`ideas-toggle`), which is in the page from the choice on and comes in with an animation (a
-  spec that measures it waits with `atRest`): the options (`idea`) are in the page only while it is open.
+  spec that measures it waits with `atRest`): the options (`idea`) are in the page only while it is open. Its
+  words are repeated in a hidden `role="status"` (`ideas-status`); an open list closes on a press also while
+  it waits (`ideas-pending`).
 - The editor has no leave guard: the panel closes at once, and a changed draft is kept in memory
   (`ClosedDrafts`, one draft) and offered back by a toast that stands twelve seconds. Its action asks for the
   draft (`ClosedDrafts.ask(path)`) and navigates to the editor's address; the editor takes it in `show()`, or,

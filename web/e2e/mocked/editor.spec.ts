@@ -10,10 +10,10 @@ import { t } from '../support/i18n';
 import { expect, test } from '../support/mocked';
 import { problem } from '../support/routes';
 import { shot } from '../support/shots';
-import { ruleTones, tonesOf } from '../support/rule';
+import { groundOf, lineOf, ruleTones, strengthOf, tonesOf } from '../support/rule';
 
 test.describe('control editor', () => {
-  test('a new control is built, read back as the engine sentence with a mark per clause, and saved', async ({ page, api }, testInfo) => {
+  test('a new control is built, read back as the engine sentence with each condition in its colour, and saved', async ({ page, api }, testInfo) => {
     const example = exampleNumber(1);
     await page.goto('/controls/new');
     await expect(page.getByTestId('sentence-hint')).toHaveText(t('editor.sentence.hint'));
@@ -296,9 +296,9 @@ test.describe('control editor', () => {
     await expect(sentence(page)).toHaveAttribute('data-stale', 'false');
     const letter = (index: number) => row(page, index).getByTestId('mark');
     const words = (index: number) => sentence(page).getByTestId('clause').nth(index);
-    const ground = (index: number) => letter(index).evaluate((element) => getComputedStyle(element).getPropertyValue('--tone').trim());
-    // the line under the words is drawn in the condition's colour: the colour the element is given
-    const line = (index: number) => words(index).evaluate((element) => getComputedStyle(element).getPropertyValue('--tone').trim());
+    // both as the browser paints them: the ground of the letter, and the solid stretch of the drawn line
+    const ground = (index: number) => groundOf(letter(index));
+    const line = (index: number) => lineOf(words(index));
 
     // the rule is plain text: no letter in it, and no ground under its words
     await expect(sentence(page).getByTestId('mark')).toHaveCount(0);
@@ -307,11 +307,17 @@ test.describe('control editor', () => {
     expect(await line(0)).toBe(await ground(0));
     expect(await line(1)).toBe(await ground(1));
     expect(await ground(0)).not.toBe(await ground(1));
-    expect(await ground(0)).toMatch(/^#[0-9a-f]{6}80$/);
+    // a light colour at half strength
+    expect(strengthOf(await ground(0))).toBeCloseTo(0.5, 1);
     // drawn under the words, fading at its ends, and not a decoration of the text
     expect(await words(0).evaluate((element) => getComputedStyle(element).backgroundImage)).toContain('linear-gradient');
     expect(await words(0).evaluate((element) => getComputedStyle(element).textDecorationLine)).toBe('none');
-    expect(await letter(0).evaluate((element) => getComputedStyle(element).backgroundColor)).not.toBe('rgba(0, 0, 0, 0)');
+    // the line lies inside the words' own line of text: it adds nothing to the height of the rule
+    const fits = await words(0).evaluate((element) => {
+      const [box] = element.getClientRects();
+      return box.height <= parseFloat(getComputedStyle(element).lineHeight) + 0.5;
+    });
+    expect(fits).toBe(true);
     const resting = [await ground(0), await ground(1), await line(0), await line(1)];
 
     await row(page, 1).hover();

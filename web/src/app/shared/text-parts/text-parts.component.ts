@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, input } from '@an
 import { TranslatePipe } from '@ngx-translate/core';
 
 import { TextPart } from '../../core/api/api.types';
-import { toneOf } from '../../core/definition/marks';
+import { tonesOf } from '../../core/definition/marks';
 import { groupBrackets } from '../../core/glossary/glossary.phrases';
 import { GlossaryService } from '../../core/glossary/glossary.service';
 import { LanguageService } from '../../core/i18n/language.service';
@@ -85,6 +85,14 @@ export class TextPartsComponent {
   readonly markValues = input(false);
   /** The nodes whose clause was just rewritten: the line under their words plays the settle once. */
   readonly changed = input<ReadonlySet<string>>(NONE);
+  /**
+   * Whether the copy that is read aloud names each condition by its mark. True where the letters stand on the
+   * screen beside the rule (the builder, the count by condition, the reasons); false where a rule is shown
+   * with no letters anywhere (a suggestion): a name that points at nothing is noise.
+   */
+  readonly named = input(true);
+
+  private readonly tones = computed(() => tonesOf(this.marks()));
 
   /**
    * The lines of the drawing. A rule is laid out by its groups; a reason is not a rule: its brackets are
@@ -109,43 +117,43 @@ export class TextPartsComponent {
       return null;
     }
     return toClauses(this.parts()).map((clause) => ({
-      mark: clause.nodeId && clause.opensNode ? this.marks().get(clause.nodeId) : undefined,
+      mark: this.named() && clause.nodeId && clause.opensNode ? this.marks().get(clause.nodeId) : undefined,
       text: clause.parts.map((part) => part.text).join(''),
     }));
   });
 
   /**
-   * The blocks of a rule as lines. A group of the top level starts a line at the edge, and takes the
-   * joining word before it to lead that line; any other group (one inside a group, or what a related node
-   * holds) starts a line one step in, and what follows it goes on from a new line at the step it left. A
-   * line that would hold no word is not made.
+   * The blocks of a rule as lines. Every group starts a line of its own and takes the joining word before
+   * it to lead that line: a group of the top level at the edge, any other group (one inside a group, or what
+   * a related node holds) one step in. What follows a group goes on from a new line at the step it left. No
+   * line is made of joining words alone: they wait for the words they join, and one that nothing follows
+   * stays at the end of the line before.
    */
   private layout(blocks: readonly Block[]): RuleLine[] {
-    const lines: RuleLine[] = [];
+    const lines: { depth: number; items: ClauseView[] }[] = [];
     const walk = (children: readonly Block[], depth: number, top: boolean, lead: ClauseView[]): void => {
       let items = [...lead];
-      const flush = () => {
-        if (items.some(hasWords)) {
-          lines.push({ depth, items });
-        }
-        items = [];
-      };
       for (const child of children) {
         if (child.kind === 'clause') {
           items.push(this.clause(child.clause));
-        } else if (top && child.logical) {
-          const joiners: ClauseView[] = [];
-          while (items.length > 0 && isJoiner(items.at(-1)!)) {
-            joiners.unshift(items.pop()!);
-          }
-          flush();
-          walk(child.children, depth, false, joiners);
-        } else {
-          flush();
-          walk(child.children, depth + 1, false, []);
+          continue;
         }
+        const joiners: ClauseView[] = [];
+        while (items.length > 0 && isJoiner(items.at(-1)!)) {
+          joiners.unshift(items.pop()!);
+        }
+        if (items.length > 0) {
+          lines.push({ depth, items });
+        }
+        items = [];
+        walk(child.children, top && child.logical ? depth : depth + 1, false, joiners);
       }
-      flush();
+      if (items.some((item) => !isJoiner(item))) {
+        lines.push({ depth, items });
+      } else if (items.some(hasWords)) {
+        // joining words that nothing follows: they close the line before, or stand as they are in a text of nothing else
+        (lines.at(-1) ?? lines[lines.push({ depth, items: [] }) - 1]).items.push(...items);
+      }
     };
     walk(blocks, 0, true, []);
     return lines;
@@ -160,6 +168,6 @@ export class TextPartsComponent {
         whole: part.role === 'value' || (actual && !this.markValues()),
       };
     });
-    return { nodeId: clause.nodeId, tone: clause.nodeId ? toneOf(this.marks(), clause.nodeId) : null, pieces };
+    return { nodeId: clause.nodeId, tone: (clause.nodeId && this.tones().get(clause.nodeId)) || null, pieces };
   }
 }

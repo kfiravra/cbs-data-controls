@@ -161,9 +161,12 @@ describe('ResultsTableComponent', () => {
       reason.getAttribute('data-node'),
       reason.querySelector('[data-testid="mark"]')!.getAttribute('data-tone'),
     ]);
-    const order = [...MARKS.keys()];
-    expect(reasonMarks.length).toBeGreaterThan(1);
-    expect(reasonMarks).toEqual(reasonMarks.map(([node]) => [node, String(order.indexOf(node!) + 1)]));
+    // the first record matched both conditions, the second only the second one
+    expect(reasonMarks).toEqual([
+      ['c1', '1'],
+      ['c2', '2'],
+      ['c2', '2'],
+    ]);
     // the reason's own words carry no colour: its letter does
     expect(host().querySelector('[data-testid="reason"] [data-tone]:not([data-testid="mark"])')).toBeNull();
   });

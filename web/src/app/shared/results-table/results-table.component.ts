@@ -1,8 +1,8 @@
-import { ChangeDetectionStrategy, Component, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 import { TranslatePipe } from '@ngx-translate/core';
 
 import { GlossaryField, ResultItem, SortDirection } from '../../core/api/api.types';
-import { toneOf } from '../../core/definition/marks';
+import { tonesOf } from '../../core/definition/marks';
 import { FormatService } from '../../core/i18n/format.service';
 import { MarkComponent } from '../mark/mark.component';
 import { SkeletonComponent } from '../skeleton/skeleton.component';
@@ -73,10 +73,8 @@ export class ResultsTableComponent {
 
   protected readonly reasons = REASONS_COLUMN;
 
-  /** The place of a condition's colour, the same its letter has in the builder and its words in the rule. */
-  protected toneOf(conditionId: string): number | null {
-    return toneOf(this.marks(), conditionId);
-  }
+  /** The place of each condition's colour, the same its letter has in the builder and its words in the rule. */
+  protected readonly tones = computed(() => tonesOf(this.marks()));
 
   protected sortedBy(column: string): SortDirection | null {
     const sort = this.sort();

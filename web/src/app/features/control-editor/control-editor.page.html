@@ -186,7 +186,7 @@
                     data-testid="ideas-toggle"
                     [attr.aria-controls]="ideasShown() ? 'ideas-list' : null"
                     [attr.aria-expanded]="ideasShown()"
-                    [attr.aria-disabled]="store.ideas.items().length === 0 ? 'true' : null"
+                    [attr.aria-disabled]="!ideasShown() && store.ideas.items().length === 0 ? 'true' : null"
                     (click)="toggleIdeas()"
                   >
                     <app-icon name="sparkle" />
@@ -196,9 +196,11 @@
                       <app-icon class="ideas__chevron" name="expand_more" />
                     }
                   </button>
+                  <!-- the row's words change in place when the offer arrives; this says the change aloud -->
+                  <span class="sr-only" role="status" data-testid="ideas-status">{{ ideasLabel() | translate }}</span>
                   <!-- once opened the list stays open while the choice of what to check changes (a bar holds
                        its place while the new suggestions are computed); it closes when one is taken -->
-                  @if (ideasOpen() && (store.ideas.loading() || store.ideas.items().length > 0)) {
+                  @if (ideasShown()) {
                     <div class="ideas__list" id="ideas-list">
                       <p class="muted t-small">{{ 'editor.ideas.hint' | translate }}</p>
                       @if (store.ideas.loading()) {
@@ -211,7 +213,7 @@
                         <button class="idea" type="button" data-testid="idea" (click)="applyIdea(idea)">
                           <span class="idea__name"><bdi>{{ idea.name }}</bdi></span>
                           <span class="idea__rule">
-                            <app-text-parts [parts]="idea.sentenceParts" [marks]="ideaMarks()[$index]" />
+                            <app-text-parts [parts]="idea.sentenceParts" [marks]="ideaMarks()[$index]" [named]="false" />
                           </span>
                           @if (idea.evidence[0]; as evidence) {
                             <span class="chip num">{{ evidence.text }}</span>

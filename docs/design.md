@@ -706,23 +706,28 @@ The signature of the system.
   no group has a ground; the only ground is the container's. The words of each condition are underlined in that
   condition's colour (The Condition Colours, below); the joining words between conditions are not. The line is
   drawn under the words, 0.2em thick, and fades out towards both of its ends; where a condition's words run on
-  to another line, each stretch has its own line with its own faded ends. So it reads everywhere a rule is
+  to another line, each stretch has its own line with its own faded ends. The line takes no room of its own:
+  it starts just under the descenders (a fifth of an em under the baseline) and ends inside its own line of
+  text, so it never reaches into the line below and adds nothing to the height of the rule. So it reads
+  everywhere a rule is
   shown: the bar of the editor, the top of the results, a suggestion card in the suggestions panel and in the
   row of a new control, the archived editor.
 - **The groups of a rule** are drawn, not written: no bracket character of the engine's sentence stands on the
-  screen, and a group has no tint. Every group of the top level stands on a line of its own, led by the word
-  that joins it to what stands before; a group inside a group, and what a condition on related records holds,
-  stands on a line of its own one step in (24px), and what follows it goes on from a new line at the edge it
-  left. Only the engine's own group marks are read: the glossary's `groupOpen` and `groupClose`, in the engine's
+  screen, and a group has no tint. Every group stands on a line of its own, led by the word that joins it to
+  what stands before: a group of the top level at the edge; a group inside a group, and what a condition on
+  related records holds, one step in (24px). What follows a group goes on from a new line at the edge it
+  left. No line ends with a joining word that belongs to the next line, and no line is a joining word alone.
+  Only the engine's own group marks are read: the glossary's `groupOpen` and `groupClose`, in the engine's
   connecting text. A bracket in a value the user typed, in a field's label or in the name of a relationship is
   data and is written as it is. The engine's text is untouched: beside the drawing the plain sentence, brackets
-  and all, with each condition named by its letter, is given to assistive technology, and the drawing is hidden
-  from it. A reason is not a rule: its brackets are its own punctuation and are written as they came.
+  and all, is given to assistive technology, and the drawing is hidden from it. Where the letters stand on the
+  screen beside the rule (the editor, the results) each condition is named by its letter in that copy; a
+  suggestion shows no letters, and its rule is read as the plain sentence. A reason is not a rule: its brackets are its own punctuation and are written as they came.
 - **The Condition Colours.** A fixed set of eight light colours at half strength (`tone-1` to `tone-8`: amber,
   sky, rose, green, violet, orange, mint, orchid), given to the conditions in the order of the rule and started
   again when the set ends; neighbours in the set are far apart in hue. A condition's colour is the ground of
   its letter wherever the letter stands (a row of the builder, a chip of the count by condition, beside a reason
-  in the records) and the line under its words in the rule. Ink on every one of them is 9:1 or more on a light
+  in the records) and the line under its words in the rule. Ink on every one of them is 8.8:1 or more on a light
   ground. The colour never stands alone where a condition must be told: the letter is there with it, and in the
   rule the order of the words and the copy that is read aloud carry it.
 - **Mark:** an 18px badge (wider for two letters), 6px radius, the condition's colour as its ground, Ink letter
@@ -795,9 +800,10 @@ tint (12px radius, 44px, Small strong in Action ink) with a sparkle, its words a
 count in a small Action chip and a chevron. The row comes in with the choice of what to check (a short rise and
 fade, none under reduced motion): the conditions come in with it, so it moves nothing that was read. Then it
 only changes its words, so nothing moves when the ideas arrive: while they are computed it says so, and when
-there are none it says that too; in those states it is not a button to press. Once opened it stays open while
-the choice of what to check changes (a bar holds the place of the new ideas while they are computed) and closes
-when an idea is taken into the form. Pressed, it opens (the chevron
+there are none it says that too; in those states it is not a button to press, and the same words are a status,
+so the change is also said aloud. Once opened it stays open while the choice of what to check changes (a bar
+holds the place of the new ideas while they are computed; a press closes the list then too) and closes when an
+idea is taken into the form. Pressed, it opens (the chevron
 turns) and shows one line of hint and up to three ideas the engine computed for that choice from the data as
 they are now: each a white button card (8px radius, a Line edge, Raised under the pointer) with its name, its
 rule in words and its first piece of evidence as a chip. One press fills the conditions, and the name and the

@@ -2,7 +2,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { provideTestTranslations, t } from '../../../testing/translate';
 import { TextPart } from '../../core/api/api.types';
-import { TONE_COUNT } from '../../core/definition/marks';
 import { TextPartsComponent } from './text-parts.component';
 
 // shapes of contracts/api.md §5: a sentence of two clauses, and a reason with its actual value
@@ -70,14 +69,13 @@ describe('TextPartsComponent', () => {
   });
 
   it('gives the conditions the colours of the set in the order of their marks, and starts the set again when it ends', async () => {
-    const many = Array.from({ length: TONE_COUNT + 2 }, (_, index) => `c${index + 1}`);
+    // ten conditions over a set of eight colours
+    const many = ['c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7', 'c8', 'c9', 'c10'];
     const parts: TextPart[] = many.flatMap((id, index) => [...(index > 0 ? [{ text: ' and ' }] : []), { text: `rule ${id}`, nodeId: id }]);
 
     await draw({ parts, marks: new Map(many.map((id, index) => [id, String(index + 1)])) });
 
-    const expected = many.map((_, index) => String((index % TONE_COUNT) + 1));
-    expect(clauses().map((clause) => clause.getAttribute('data-tone'))).toEqual(expected);
-    expect(expected.slice(-2)).toEqual(['1', '2']);
+    expect(clauses().map((clause) => clause.getAttribute('data-tone'))).toEqual(['1', '2', '3', '4', '5', '6', '7', '8', '1', '2']);
   });
 
   it('gives the plain sentence to be read, each condition named by its mark, and hides the drawing from that reading', async () => {
@@ -87,6 +85,15 @@ describe('TextPartsComponent', () => {
     expect(host().querySelector('[data-testid="plain-text"]')!.textContent).toBe(
       `${named('A')} age under 18 and ${named('B')} monthly salary over 15,000`,
     );
+    expect(host().querySelector('[data-testid="drawn-text"]')!.getAttribute('aria-hidden')).toBe('true');
+  });
+
+  it('reads the plain sentence with no condition named where no letter stands on the screen', async () => {
+    await draw({ parts: SENTENCE, marks: MARKS, named: false });
+
+    // the colours are drawn all the same, and what is read is the engine's sentence alone
+    expect(clauses().map((clause) => clause.getAttribute('data-tone'))).toEqual(['1', '2']);
+    expect(host().querySelector('[data-testid="plain-text"]')!.textContent).toBe('age under 18 and monthly salary over 15,000');
     expect(host().querySelector('[data-testid="drawn-text"]')!.getAttribute('aria-hidden')).toBe('true');
   });
 
@@ -168,17 +175,18 @@ describe('TextPartsComponent', () => {
 
     await draw({ parts: nested, marks: new Map([['c1', 'A'], ['c2', 'B'], ['c3', 'C'], ['c4', 'D'], ['c5', 'E']]) });
 
-    // the first group, the group inside it one step in, the rest of the first group back at the edge, and the
-    // second group led by the word that joins it
+    // the first group, the group inside it one step in and led by its own joining word, the rest of the
+    // first group back at the edge, and the second group led by the word that joins it
     expect(lines().map((line) => [line.getAttribute('data-depth'), line.textContent?.trim()])).toEqual([
-      ['0', 'state: open and'],
-      ['1', 'mail: empty or pay: missing'],
+      ['0', 'state: open'],
+      ['1', 'and mail: empty or pay: missing'],
       ['0', 'and age over 3'],
       ['0', 'or state: closed'],
     ]);
     const drawn = host().querySelector('[data-testid="drawn-text"]')!;
     expect(drawn.textContent).not.toMatch(/[()]/);
-    expect(drawn.querySelector('.rule-group')).toBeNull();
+    // a group is a line and nothing else: only the words of a condition are an element inside a line
+    expect([...drawn.querySelectorAll('[data-testid="rule-line"] > *')].every((child) => child.matches('[data-testid="clause"]'))).toBe(true);
     const named = (mark: string) => t('common.condition', { mark });
     expect(host().querySelector('[data-testid="plain-text"]')!.textContent).toBe(
       `(${named('A')} state: open and (${named('B')} mail: empty or ${named('C')} pay: missing) and ${named('D')} age over 3) or (${named('E')} state: closed)`,
@@ -194,6 +202,39 @@ describe('TextPartsComponent', () => {
       ['0', 'a'],
       ['0', 'and b or c'],
     ]);
+  });
+
+  it('never makes a line of a joining word alone: a group that opens a group hands its word on to it', async () => {
+    const opening: TextPart[] = [
+      { text: 'a', nodeId: 'c1' },
+      { text: ' and ' },
+      { text: '(' },
+      { text: '(' },
+      { text: 'b', nodeId: 'c2' },
+      { text: ' or ' },
+      { text: 'c', nodeId: 'c3' },
+      { text: ')' },
+      { text: ' and ' },
+      { text: 'd', nodeId: 'c4' },
+      { text: ')' },
+    ];
+
+    await draw({ parts: opening, marks: new Map([['c1', 'A'], ['c2', 'B'], ['c3', 'C'], ['c4', 'D']]) });
+
+    expect(lines().map((line) => [line.getAttribute('data-depth'), line.textContent?.trim()])).toEqual([
+      ['0', 'a'],
+      ['1', 'and b or c'],
+      ['0', 'and d'],
+    ]);
+  });
+
+  it('keeps a joining word that nothing follows at the end of the line before it', async () => {
+    const open: TextPart[] = [{ text: '(' }, { text: 'a', nodeId: 'c1' }, { text: ' or ' }, { text: 'b', nodeId: 'c2' }, { text: ')' }, { text: ' and ' }];
+
+    await draw({ parts: open, marks: new Map([['c1', 'A'], ['c2', 'B']]) });
+
+    expect(host().querySelector('[data-testid="drawn-text"]')!.textContent?.trim()).toBe('a or b and');
+    expect(lines()).toHaveLength(0);
   });
 
   it('writes a bracket that the user typed, or that a label holds, as it is, and makes no line of it', async () => {
@@ -228,6 +269,6 @@ describe('TextPartsComponent', () => {
     await draw({ parts: reason, markValues: true });
 
     expect(host().textContent).toBe('age: 16 (under 18)');
-    expect(host().querySelector('[data-testid="rule-group"]')).toBeNull();
+    expect(lines()).toHaveLength(0);
   });
 });

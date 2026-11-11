@@ -45,7 +45,7 @@ import {
   Validation,
 } from './editor.types';
 
-/** How long the marks of a rewritten clause stay flagged for the settle (its duration, and a little). */
+/** How long a rewritten clause stays flagged for the settle (its duration, and a little). */
 const SETTLE_MS = 700;
 
 const NO_MESSAGES: ReadonlyMap<string, readonly RowMessage[]> = new Map();
@@ -115,7 +115,7 @@ export class EditorStore {
   readonly outdated = signal(false);
 
   readonly sentence = signal<Sentence>({ parts: null, stale: false });
-  /** The nodes whose clause the last answer rewrote: their marks play the settle once. */
+  /** The nodes whose clause the last answer rewrote: the line under their words plays the settle once. */
   readonly settling = signal<ReadonlySet<string>>(new Set());
 
   private readonly serverErrors = signal<readonly LocatedError[]>([]);

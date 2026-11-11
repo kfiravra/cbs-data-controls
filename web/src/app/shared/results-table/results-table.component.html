@@ -57,7 +57,7 @@
                   [attr.data-node]="reason.conditionId"
                 >
                   @if (marks().get(reason.conditionId); as mark) {
-                    <app-mark [label]="mark" [tone]="toneOf(reason.conditionId)" [name]="'common.condition' | translate: { mark }" />
+                    <app-mark [label]="mark" [tone]="tones().get(reason.conditionId) ?? null" [name]="'common.condition' | translate: { mark }" />
                   }
                   <span><app-text-parts [parts]="reason.textParts" [markValues]="true" /></span>
                 </p>

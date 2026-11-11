@@ -27,18 +27,16 @@ export function orderedNodeIds(node: MarkedNode): string[] {
 export const TONE_COUNT = 8;
 
 /**
- * The place of a node's colour in the set, from 1: the nodes take the colours in the order of their marks,
- * and start the set again when it ends. Null for a node that has no mark.
+ * The place of every node's colour in the set, from 1: the nodes take the colours in the order of their
+ * marks, and start the set again when it ends. A node that has no mark has no place.
  */
+export function tonesOf(marks: ReadonlyMap<string, string>): Map<string, number> {
+  return new Map([...marks.keys()].map((id, place) => [id, (place % TONE_COUNT) + 1]));
+}
+
+/** The place of one node's colour in the set; null for a node that has no mark. */
 export function toneOf(marks: ReadonlyMap<string, string>, nodeId: string): number | null {
-  let place = 0;
-  for (const id of marks.keys()) {
-    if (id === nodeId) {
-      return (place % TONE_COUNT) + 1;
-    }
-    place += 1;
-  }
-  return null;
+  return tonesOf(marks).get(nodeId) ?? null;
 }
 
 /**

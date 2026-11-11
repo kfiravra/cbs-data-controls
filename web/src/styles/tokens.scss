@@ -39,7 +39,7 @@
   --color-success-line: #2d6a1e59;
   // The colours of the conditions: a fixed set of light colours at half strength (50%), one per condition
   // in the order of the rule, round again when the set ends. Each is the ground of a condition's letter (Ink
-  // on it is 9:1 at the least on a light ground) and the line under its words in the rule. Neighbours in
+  // on it is 8.8:1 at the least on a light ground) and the line under its words in the rule. Neighbours in
   // the set are far apart in hue.
   --color-tone-1: #f2c74480; // amber
   --color-tone-2: #7fc0f580; // sky
@@ -67,7 +67,7 @@
   --leading-tight: 1.2; // page titles, figures
   --leading-title: 1.35; // section titles, names, labels
   --leading-body: 1.5; // body and small text
-  --leading-read: 1.7; // lines that carry marks and values: the rule in words, a reason
+  --leading-read: 1.7; // lines that carry a letter and marked values: a reason, the hint under the rule
 
   // space: 4, 8, 12, 16, 24, 32, 48, 64
   --space-1: 4px;

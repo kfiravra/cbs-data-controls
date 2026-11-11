@@ -373,6 +373,34 @@ Taken on 2026-11-11 in the morning (Kfir's second message: "no questions"):
 102. "When I open the suggestions in the create, make them stay open even when I change tables; close only
     when it is taken into the form": the opened list survives a change of what to check (a bar holds the
     place of the new ones while they are computed) and closes when a suggestion is applied.
+103. Review, the one critical finding: at half strength the line under the words is faint (1.2 to 1.4:1
+    against the light grounds, 2.7 to 3.3:1 on the editor's bar), and in the sentence it is the only thing
+    that ties words to a condition; some pairs of the set are close for a colour-blind reader; the set
+    starts again after eight while a rule may hold thirty conditions. Kept as it is: the 50%, the sentence
+    without letters and the set that repeats are his own words of this round, given while he read the
+    screen. It goes to him in the report with the numbers and the fix that would keep his letters' grounds:
+    a second, full-strength token per colour for the line alone. Mine: nothing is lost that was told by
+    colour alone, since the letter stands beside the colour in the builder, the filter and the reasons, and
+    the copy that is read aloud names each condition.
+104. Lines, in place of the third sentence of decision 99 (review): the joining word leads the line of
+    every group, an inner one too, and no line is a joining word alone (a group that opens a group hands
+    its word on to it). A joining word that nothing follows stays at the end of the line before it.
+105. The line under the words takes no room (review): no padding; it is placed 0.05em above the foot of the
+    words' own box, which in Heebo is as tall as a body line, so it starts a fifth of an em under the
+    baseline and ends inside its own line of text. Measured before: the padded line reached 2.6px into the
+    line below and made a rule that fits scroll in the editor's bar.
+106. A suggestion's rule is read aloud as the plain sentence, no condition named (review): a card shows no
+    letter, so "condition A" pointed at nothing. His item 6 ("each condition named") holds where the
+    letters stand: the editor and the results. Mine, as a reading of his item.
+107. The row of suggestions (review): an open list closes on a press also while new suggestions are on
+    their way; the row says it is unavailable only when it is closed with nothing to offer; its words are
+    repeated in a status, so "computing", "none" and "suggestions" are said when they change.
+108. An unfinished row's letter keeps its hollow, red-edged look and takes no colour (review: the colour
+    rule had outranked it). Tests (review): a colour is compared as the browser paints it (the letter's
+    ground against the solid stretch of the line), the colours a spec expects are written out and never
+    computed the way the code computes them, the nested lines are checked on example 4, where a group
+    stands inside a group, and the checks that could not fail are replaced. The spec of "running again"
+    waits 1500 ms instead of 600: it failed once under load, when the run ended between two of its checks.
 
 ## Reconciliation with `contracts/` (phase 2, 2026-11-11)
 Read: `api.md`, `errors.md`, `glossary.json`, `control-definition.schema.json`, the six examples and the thirteen
@@ -394,8 +422,8 @@ invalid fixtures, as merged in `f9928bf`. Where they differ from Design E to M o
 - Nothing in `contracts/` looked wrong, and nothing blocks a screen: no line for Kfir from this step.
 
 ## Last reviewed
-`929ff6f` (api) and `0428a67` (web), 2026-11-11: the one review of the hot fixes, one opus `reviewer`
-sub-agent over both commits. Findings and what happened to each are in the Log. Before it: `b47d203` and
+`54947e8` (web), 2026-11-11: the one review of the rule in words, one opus `reviewer` sub-agent. Findings and
+what happened to each are in the Log. Before it: `929ff6f` and `0428a67` (the hot fixes), `b47d203` and
 `15658ca` (the last design round).
 
 ## Hand-over to dc-delivery
@@ -1192,3 +1220,24 @@ rewrote. A review that found nothing, or did not run, is logged as that.
   for a screen reader. Four notes arrived while it was built and are in it: an opened list of suggestions
   stays open across choices, the colours at 50%, the sentence set as a normal sentence, the underlines
   faded at their ends. Decisions 97 to 102.
+- 2026-11-11, the review of phase 12: one opus `reviewer`, read-only, over `54947e8`. One critical finding,
+  six warnings, two notes. (1, critical) the line under the words is the only tie between a clause and its
+  condition and at 50% it is faint, some pairs are close for a colour-blind reader, the set repeats after
+  eight: kept, it is Kfir's word; reported to him with the numbers (decision 103). (2) the colour rule
+  outranked the hollow letter of an unfinished row: fixed (`:not(.mark--open)`). (3) inside a group the
+  joining word stayed at the end of the line above, and a group that opens a group made a line of a joining
+  word alone: fixed, the word leads every group's line (decision 104). (4) the line's padding reached into
+  the line below and made the bar scroll: fixed, the line lies inside its own line of text (decision 105).
+  (5) tests that proved too little (the same variable compared with itself, a check skipped by an `if`, a
+  check that could not fail, expected colours computed by the code's own formula): fixed (decision 108).
+  (6) the row of suggestions said open and unavailable at once while it waited, could not be closed then,
+  and changed silently: fixed (decision 107). (7) a suggestion's read-aloud copy named conditions no letter
+  shows: fixed (decision 106). (8) the colour looked up from the template on every pass: fixed, one map per
+  set of marks (`tonesOf`). (9) leftovers, stale comments, a contrast figure of 9:1 that is 8.8:1 over the
+  surface: fixed, in `docs/design.md` too.
+- 2026-11-11, after the review fixes of phase 12 (`gates/phase-12.txt`, its last section): the client's type
+  checks, lint, 389 unit tests in 37 files, the build and the print guard green; `e2e/gate` 18 of 18 on the
+  build the api hosts, the listing of untagged controls equal before and after. `e2e/mocked`: 218 passed, 5
+  skipped by project, 1 failed: "a phone sorts the records from a select" pressed the select again while
+  the list of its first choice was closing, so nothing opened. The spec was wrong, not the client: it now
+  waits for the list to be gone, and its file passed three times over on both projects (18 of 18).

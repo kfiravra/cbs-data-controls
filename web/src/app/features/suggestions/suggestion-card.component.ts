@@ -8,7 +8,8 @@ import { IconComponent } from '../../shared/icon/icon.component';
 import { TextPartsComponent } from '../../shared/text-parts/text-parts.component';
 
 /**
- * One suggested control, as a card: a checkbox with its name, the rule in words with a mark per clause, why
+ * One suggested control, as a card: a checkbox with its name, the rule in words with each condition's words
+ * underlined in its own colour (a card shows no letters, so its rule is read aloud as the plain sentence), why
  * the engine proposes it, the evidence from the data as chips, and a way to open it in the editor. Its
  * texts arrive rendered by the engine.
  */
@@ -27,7 +28,7 @@ import { TextPartsComponent } from '../../shared/text-parts/text-parts.component
         <h2 class="suggestion__name" data-testid="suggestion-name"><bdi>{{ item().name }}</bdi></h2>
       </div>
       <p class="sentence" data-testid="suggestion-sentence">
-        <app-text-parts [parts]="item().sentenceParts" [marks]="marks()" />
+        <app-text-parts [parts]="item().sentenceParts" [marks]="marks()" [named]="false" />
       </p>
       <p class="suggestion__why">{{ item().rationale }}</p>
       <ul class="evidence" [attr.aria-label]="'suggestions.evidence' | translate">

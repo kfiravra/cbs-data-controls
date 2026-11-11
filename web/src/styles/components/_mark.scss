@@ -28,7 +28,9 @@
   font-style: normal;
 }
 
-.mark[data-tone] {
+// an unfinished row's letter stays hollow (`.mark--open`, below): the colour is the ground of a letter that
+// names a whole condition
+.mark[data-tone]:not(.mark--open) {
   background: var(--tone);
 }
 
@@ -38,10 +40,13 @@
 // The line is drawn, not a text decoration: it fades out towards both of its ends (over one em, or a
 // quarter of a short stretch), and where a condition's words run on to the next line each stretch has its
 // own line with its own two faded ends. It lies under the words; the words themselves stand on no ground.
+// The line takes no room of its own: it is placed from the foot of the words' own box (in this family the
+// box is as tall as a body line), so it starts just under the descenders, a fifth of an em under the
+// baseline, and ends inside its own line of text. It never reaches into the line below and never adds to
+// the height of what holds the rule.
 .clause[data-tone] {
   --fade: min(1em, 25%);
 
-  padding-block-end: 0.16em;
   background-image: linear-gradient(
     90deg,
     transparent,
@@ -50,7 +55,7 @@
     transparent
   );
   background-repeat: no-repeat;
-  background-position: 0 100%;
+  background-position: 0 calc(100% - 0.05em);
   background-size: 100% 0.2em;
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
@@ -98,18 +103,14 @@
   overflow-wrap: anywhere;
 }
 
-// the rule in words, for reading: its lines carry underlines and values, and are set a little apart for them
-// It is set as a sentence is: the body's size, weight and line height, nothing of its own.
+// the rule in words, for reading. It is set as a sentence is: the body's size, weight and line height,
+// nothing of its own; the lines under its words fit inside those lines.
 .sentence {
   font-size: var(--text-body);
   font-weight: var(--weight-regular);
   line-height: var(--leading-body);
   max-inline-size: 75ch;
   text-wrap: pretty;
-}
-
-.clause {
-  border-radius: var(--radius-xs);
 }
 
 // The control in words, in the editor: the bar at the foot of the panel, on the inverse ground. Its height

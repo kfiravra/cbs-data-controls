@@ -415,7 +415,8 @@ test.describe('run results', () => {
   test('running again waits on skeleton rows, then opens the new run', async ({ page, api }, testInfo) => {
     const control = controlOf(api, 1);
     const stored = api.addRun(succeededRun(control, RUN, { startedAt: '2026-11-09T07:12:00.000Z' }));
-    api.delay(`POST /controls/${control.id}/runs`, 600);
+    // long enough for every check of the waiting state, also on a loaded machine
+    api.delay(`POST /controls/${control.id}/runs`, 1500);
     await open(page, stored);
     await expect(rows(page)).toHaveCount(stored.run.totalCount!);
 
