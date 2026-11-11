@@ -53,6 +53,17 @@ public sealed class DefinitionHasherTests
         Assert.Matches("^[0-9a-f]{64}$", stored.Hash);
     }
 
+    [Fact]
+    public void Stored_definition_keeps_the_spelling_of_every_string_when_a_writer_would_escape_it()
+    {
+        var emoji = char.ConvertFromUtf32(0x1F600);
+        var sent = $$"""{ "rootEntity" : "employee", "value" : "a+b <c> & 'd' \" {{emoji}}" , "list" : [ 1 , "x  y" ] }""";
+
+        var stored = DefinitionHasher.ToStored(Parse(sent));
+
+        Assert.Equal($$"""{"rootEntity":"employee","value":"a+b <c> & 'd' \" {{emoji}}","list":[1,"x  y"]}""", stored.Json);
+    }
+
     private static JsonElement Parse(string json)
     {
         using var document = JsonDocument.Parse(json);

@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Net.Http.Headers;
+using System.Runtime.InteropServices;
 using System.Text.Json;
 using DataControls.Api.Hosting;
 using Microsoft.Extensions.Options;
@@ -69,10 +70,14 @@ public sealed class EngineClient(HttpClient http, IOptions<EngineOptions> option
     internal static bool IsProbe(HttpRequestMessage? request) =>
         request is not null && request.Options.TryGetValue(_probe, out var probe) && probe;
 
+    /// <summary>
+    /// The definition goes out as the text it is held in, not written again: the engine refuses a body
+    /// over its own limit, and a writer's escapes would make the body longer than the one the api accepted.
+    /// </summary>
     private static void WriteDefinition(Utf8JsonWriter writer, JsonElement definition)
     {
         writer.WritePropertyName("definition");
-        definition.WriteTo(writer);
+        writer.WriteRawValue(JsonMarshal.GetRawUtf8Value(definition), skipInputValidation: true);
     }
 
     private static byte[] Body(Action<Utf8JsonWriter> writeMembers)

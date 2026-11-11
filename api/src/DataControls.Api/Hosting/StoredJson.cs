@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
 
@@ -13,8 +14,43 @@ internal static class StoredJson
         return document.RootElement.Clone();
     }
 
-    /// <summary>Compact text in the order the members were sent, with Hebrew written as it is.</summary>
-    public static string Minify(JsonElement element) => Write(element.WriteTo);
+    /// <summary>
+    /// The element's own text without the layout between its tokens. Member order, numbers and the
+    /// spelling of every string stay as they were sent, so the result is never longer than the text it
+    /// came from: a writer would spell <c>+</c>, <c>&lt;</c> or an emoji as escapes, and a definition
+    /// that fitted the engine's body limit when it was validated could pass it when it is run.
+    /// </summary>
+    public static string Minify(JsonElement element)
+    {
+        var text = JsonMarshal.GetRawUtf8Value(element);
+        var compact = new byte[text.Length];
+        var length = 0;
+        var inString = false;
+        for (var index = 0; index < text.Length; index++)
+        {
+            var current = text[index];
+            if (inString)
+            {
+                compact[length++] = current;
+                if (current == (byte)'\\')
+                {
+                    // The escaped character is copied with its backslash, so an escaped quote ends nothing.
+                    compact[length++] = text[++index];
+                }
+                else if (current == (byte)'"')
+                {
+                    inString = false;
+                }
+            }
+            else if (current is not ((byte)' ' or (byte)'\t' or (byte)'\n' or (byte)'\r'))
+            {
+                compact[length++] = current;
+                inString = current == (byte)'"';
+            }
+        }
+
+        return Encoding.UTF8.GetString(compact, 0, length);
+    }
 
     public static string Write(Action<Utf8JsonWriter> write)
     {

@@ -71,11 +71,18 @@ Documents this task does not own, and what each should say about the api as buil
 - `docs/architecture.md` §7, controls: `lastRun` of the list is read in a second query for the page's controls
   (decision 20); two saves that race are a 409 whether the row version or the version number collides
   (decision 21); an archive that meets a concurrent save is applied to the row as it is now (decision 17).
-- `docs/architecture.md` §12 or `contracts/api.md` §1, wording only: "a body that is not JSON 415" is built as
-  both a media type that is not JSON and JSON text that does not parse (decision 3). If the engine reads it
-  differently the two services disagree on one status and the line needs a second sentence. In the same
-  place: an id or a version in the path may be any positive integer up to 64 bits, and one beyond 32 bits is
+- `docs/architecture.md` §12 or `contracts/api.md` §1 and the `REQUEST_INVALID` row of `contracts/errors.md`,
+  wording only: "a body that is not JSON 415". In the api 415 is a media type that is not JSON; a body sent as
+  JSON that does not parse, nests deeper than 64 levels, or holds a string that is not Unicode text (half a
+  surrogate pair, bytes that are not UTF-8) is 400 `REQUEST_INVALID` with `MALFORMED` at `""` (decisions 3,
+  33 and 35). The engine answers 415 for text that does not parse and 422 `VALUE_TYPE_MISMATCH` for half a
+  surrogate pair (its notes), so the sentence needs one clause per service. In the same place: an id or a
+  version in the path may be any positive integer up to 64 bits, and one beyond 32 bits is
   `CONTROL_NOT_FOUND`, `VERSION_NOT_FOUND` or `RUN_NOT_FOUND`, not `NOT_FOUND` (decision 19).
+- For the limitations document (decisions 32 and 34): `/suggest` shares the api's 75 s attempt timeout, so on a
+  database slow enough for its ten statements to pass it the api answers 503 `ENGINE_UNAVAILABLE`; a stored
+  definition within about 36 bytes of the engine's 1 MiB body limit can be saved and then fails its run with
+  `INTERNAL_ERROR`.
 - `docs/architecture.md` §13: the api's tests run the real app against the shared database as `dq_app`, with
   rows marked `zz-dc-api-test-` that the suite deletes before and after; the engine is a stub at the HTTP
   handler whose fixtures are generated from `contracts/` (decision 9); three tests against the real engine are

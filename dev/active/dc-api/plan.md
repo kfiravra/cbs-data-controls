@@ -265,11 +265,12 @@ Commit: `feat(api): suggestions, openapi and static hosting`
 - [x] `/check all --tests` from the worktree; the output saved as `gates/final.txt`.
 - [x] `dotnet list api package --include-transitive` shows JsonSchema.Net 8.0.5, JsonPointer.Net 6.0.1 and
       Json.More.Net 2.2.0, and no Microsoft package at 11.x.
-- [ ] Live pass, if the engine worktree answers `GET /health`: state the minutes and wait, then
+- [x] Live pass, if the engine worktree answers `GET /health`: state the minutes and wait, then
       `DC_LIVE=1 dotnet test --filter Category=Live`, and walk `api/requests.http` once. If the engine is not up,
       write the hand-off to dc-delivery into `notes.md`; the tests are ready to run there.
-      (2026-11-11: no engine answers on this machine and `feat/engine` is not merged. The hand-off is in
-      `notes.md`; by Kfir's word for the unattended run this step waits for the merge and holds the push.)
+      (2026-11-11 01:35: no engine answers on this machine and `feat/engine` is not merged; the step waited.
+      2026-11-11 08:43: done after the merge of PR #2, on Kfir's word, with the engine started from this
+      worktree: 3 live tests passed, 16 of 16 requests of the walk as expected; `gates/live.txt`.)
 - [x] `notes.md` holds the Log line of the start from another directory (Design I) and a Log line per review in
       the form of decision 27.
 - [ ] `/ship`. In its docs-drift step, edit only what decision 26 gives this task; everything else goes, item by

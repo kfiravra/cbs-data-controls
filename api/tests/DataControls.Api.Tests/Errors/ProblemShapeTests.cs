@@ -8,6 +8,11 @@ namespace DataControls.Api.Tests.Errors;
 [Collection(ApiCollection.Name)]
 public sealed class ProblemShapeTests(ApiFixture fixture)
 {
+    // The JSON escapes of the two halves of a surrogate pair: a backslash, then "ud83d" and "ude00".
+    private const string HalfPair = @"\" + "ud83d";
+    private const string OtherHalf = @"\" + "ude00";
+    private const string HalfPairMark = "<half>";
+
     private readonly HttpClient _client = fixture.CreateClient();
 
     [Fact]
@@ -34,12 +39,58 @@ public sealed class ProblemShapeTests(ApiFixture fixture)
     [InlineData("this is not json")]
     [InlineData("""{"name":"cut off""")]
     [InlineData("""{"name":"x",}""")]
-    public async Task Body_returns_415_without_errors_when_it_is_sent_as_json_and_its_text_is_not_json(string body)
+    public async Task Body_returns_400_malformed_at_the_root_when_it_is_sent_as_json_and_does_not_parse(string body)
     {
         var response = await _client.PostAsync("/_probe/items", Body.Json(body));
 
-        var problem = await HttpAssert.ProblemAsync(response, HttpStatusCode.UnsupportedMediaType, "REQUEST_INVALID");
-        Assert.False(problem.TryGetProperty("errors", out _));
+        var problem = await HttpAssert.ProblemAsync(response, HttpStatusCode.BadRequest, "REQUEST_INVALID");
+        HttpAssert.JsonEqual("""[{"path":"","code":"MALFORMED","params":{}}]""", HttpAssert.Errors(problem));
+    }
+
+    [Fact]
+    public async Task Body_returns_400_malformed_at_the_root_when_it_nests_deeper_than_the_reader_allows()
+    {
+        var nested = new string('[', 65) + new string(']', 65);
+
+        var response = await _client.PostAsync("/_probe/items", Body.Json($$"""{"name":"x","extra":{{nested}}}"""));
+
+        var problem = await HttpAssert.ProblemAsync(response, HttpStatusCode.BadRequest, "REQUEST_INVALID");
+        HttpAssert.JsonEqual("""[{"path":"","code":"MALFORMED","params":{}}]""", HttpAssert.Errors(problem));
+    }
+
+    [Theory]
+    [InlineData("""{"name":"x<half>"}""")]
+    [InlineData("""{"name":"x","<half>":1}""")]
+    [InlineData("""{"name":"x","extra":{"deep":["<half>"]}}""")]
+    public async Task Body_returns_400_malformed_at_the_root_when_a_string_holds_half_a_surrogate_pair(string template)
+    {
+        var response = await _client.PostAsync("/_probe/items", Body.Json(template.Replace(HalfPairMark, HalfPair)));
+
+        var problem = await HttpAssert.ProblemAsync(response, HttpStatusCode.BadRequest, "REQUEST_INVALID");
+        HttpAssert.JsonEqual("""[{"path":"","code":"MALFORMED","params":{}}]""", HttpAssert.Errors(problem));
+    }
+
+    [Fact]
+    public async Task Body_returns_400_malformed_at_the_root_when_a_string_holds_bytes_that_are_not_utf8()
+    {
+        byte[] bytes = [.. """{"name":"x"""u8, 0xFF, .. "\"}"u8];
+        var content = new ByteArrayContent(bytes);
+        content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+
+        var response = await _client.PostAsync("/_probe/items", content);
+
+        var problem = await HttpAssert.ProblemAsync(response, HttpStatusCode.BadRequest, "REQUEST_INVALID");
+        HttpAssert.JsonEqual("""[{"path":"","code":"MALFORMED","params":{}}]""", HttpAssert.Errors(problem));
+    }
+
+    [Fact]
+    public async Task Member_is_read_when_its_text_is_a_whole_surrogate_pair_written_as_escapes()
+    {
+        var response = await _client.PostAsync("/_probe/items", Body.Json($$"""{"name":"{{HalfPair}}{{OtherHalf}}"}"""));
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var answer = await response.ReadJsonAsync();
+        Assert.Equal(char.ConvertFromUtf32(0x1F600), answer.GetProperty("name").GetString());
     }
 
     [Theory]

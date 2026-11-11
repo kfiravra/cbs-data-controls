@@ -44,13 +44,16 @@ wait for a merge: commit, no push.
    characters after trimming and wants `max`, `min` as params; `RequestCheck` collects `REQUIRED`, `TOO_LONG`
    and `OUT_OF_RANGE` with exact pointers, and the model-state mapping only turns binder failures into
    `MALFORMED`.
-3. **A body that is not JSON is 415, by its media type or by its text** (first taken the other way, then turned
-   by the Phase 1 review). `contracts/api.md` says "a body that is not JSON 415". The first reading took that as
-   the media type only and answered unparsable text sent as `application/json` with 400 `MALFORMED` at `""`; the
-   reviewer held it against the contract's wording, and the contract is built to as written. A guard in front of
-   the binders now reads a JSON body once and answers 415 without `errors` when its text does not parse, so a
-   binder failure always means a well-formed body with a member of the wrong type (400, `MALFORMED` at the
-   member). A JSON value that is not an object (`[]`, `5`) is well-formed and stays 400 `MALFORMED` at `""`.
+3. **A JSON body that does not parse is 400; 415 is only a media type that is not JSON** (taken one way, turned
+   by the Phase 1 review, turned back by Kfir on 2026-11-11). `contracts/api.md` says "a body that is not JSON
+   415". The first reading took that as the media type and answered unparsable text sent as `application/json`
+   with 400 `MALFORMED` at `""`; the Phase 1 reviewer held it against the contract's wording and the night's
+   build answered 415 for both. Kfir's rule the next morning: "A JSON body that does not parse answers what
+   contracts/errors.md says; if the contract is silent, 400. 415 is only for a wrong Content-Type." errors.md
+   names no status for text that does not parse, so it is 400 `REQUEST_INVALID` with `MALFORMED` at `""`, the
+   same answer as a JSON value that is not an object (`[]`, `5`). The guard in front of the binders stays: it
+   reads a JSON body once, so a binder failure always means a readable body with a member of the wrong type
+   (400, `MALFORMED` at the member). The engine answers 415 for both (its line, decision 32).
 4. **JSON is read strictly**: member names are case-sensitive (`Name` is an unknown member, ignored) and a number
    is never read from a string (`"5"` for `max` is `MALFORMED`). The web defaults of System.Text.Json accept both.
 5. **The encoder is `JavaScriptEncoder.Create(UnicodeRanges.All)`**: Hebrew and `₪` are written as they are;
@@ -145,6 +148,42 @@ wait for a merge: commit, no push.
 31. **A test holds `api/requests.http` to the contract's table**, one request per row, like the mapped
     endpoints and the OpenAPI document.
 
+### After the merge of the engine (2026-11-11, Kfir's second message: finish the task, no questions)
+32. **The engine's line for dc-api, clause by clause** (`dev/active/dc-engine/notes.md`, "Lines for the other
+    sessions"). The 30 s statement timeout and the 65 s worst case of `/run`: the attempt timeout is 75 s, as
+    api.md says; nothing changed. `/suggest` sends about ten statements, each under that timeout: it shares the
+    75 s attempt, so on a database slow enough it is answered 503 `ENGINE_UNAVAILABLE` by the api before the
+    engine finishes; nothing changed, listed for the limitations document. The engine's 415 and 413 for a body:
+    the api never sends it text that does not parse, and decision 34 keeps what it sends under the engine's
+    1 MiB. A tree more than eight times past a limit: relayed as the engine answers it, up to the api's own
+    depth (decision 35). Half a surrogate pair: decision 33. `127.0.0.1:8000` with no prefix: the default
+    `Engine:BaseUrl` stays `http://localhost:8000`, which api.md names, and it reached the engine on this
+    machine in the live pass.
+33. **A body with a string the api cannot read is 400 `MALFORMED` at `""`.** Probing the engine's last clause
+    showed a fault in the api: half a surrogate pair written as an escape, or bytes that are not UTF-8, anywhere
+    in a definition (a value, a node id, a field key, a member name) was a 500, because System.Text.Json accepts
+    such a string as a token and fails only when its text is asked for, which the schema check does. The body
+    guard now reads every string and member name of a JSON body and refuses the body. The engine answers such a
+    string 422 `VALUE_TYPE_MISMATCH`; the api cannot pass it on to get that answer, because JsonSchema.Net
+    cannot evaluate it, so here the two services differ (400 and 422) on an input no client of ours can build.
+34. **A definition is forwarded and stored as the text it was sent in.** The api's writer spells `+`, `<`, `>`,
+    `&`, `'` and every character outside the BMP as `\uXXXX`, up to six bytes for one. The engine refuses a body
+    over 1 MiB with 413, which the api would have answered as 500 `INTERNAL_ERROR`: a definition of about
+    180 KB of such characters passed the api's 1 MB limit and failed on the way to the engine. `EngineClient`
+    now writes the definition's own text into the engine's body, and the stored text is the sent text without
+    the layout between its tokens (`StoredJson.Minify`), so neither is ever longer than the request. The hash
+    is unchanged (it is taken from the canonical form). What is left: a stored definition within about 36
+    bytes of 1 MiB passes validation and fails its run with `INTERNAL_ERROR`, because `/run`'s body carries
+    the date and the cap as well.
+35. **A body nested deeper than 64 levels is 400 `MALFORMED` at `""`** (it was 415 with the night's reading of
+    decision 3). The engine answers a tree far past the depth limit 422 with that limit's error; through the
+    api that answer is reached up to about 30 nested groups, and beyond it the api's own limit answers first.
+    Kept: the limit bounds the recursion of the schema check.
+36. **The walk's two controls were archived through the api.** `api/requests.http` creates one control and
+    accepts one suggestion in the shared database and archives only the first; the second (id 1463) was
+    archived with one more `DELETE`, so the default list is as empty as it was. Both stay readable with
+    `active=all`.
+
 ## Last reviewed
 `0129a3b` (Phase 5), fixes in the commit that carries this line (`fix(api): review fixes`, the last on the
 branch); `f54d6c2` (Phase 4), fixes in `90a5db1`; `96bc1e9` (Phase 3), fixes in `a619323`; `b89bd0b` (Phase 2), fixes in `638787d`; `8e80f74` (Phase 1), fixes in `a781c91`
@@ -168,11 +207,18 @@ the PR body under this heading. Each entry is something a document this task doe
 - `docs/architecture.md` §7, controls: `lastRun` of the list is read in a second query for the page's controls
   (decision 20); two saves that race are a 409 whether the row version or the version number collides
   (decision 21); an archive that meets a concurrent save is applied to the row as it is now (decision 17).
-- `docs/architecture.md` §12 or `contracts/api.md` §1, wording only: "a body that is not JSON 415" is built as
-  both a media type that is not JSON and JSON text that does not parse (decision 3). If the engine reads it
-  differently the two services disagree on one status and the line needs a second sentence. In the same
-  place: an id or a version in the path may be any positive integer up to 64 bits, and one beyond 32 bits is
+- `docs/architecture.md` §12 or `contracts/api.md` §1 and the `REQUEST_INVALID` row of `contracts/errors.md`,
+  wording only: "a body that is not JSON 415". In the api 415 is a media type that is not JSON; a body sent as
+  JSON that does not parse, nests deeper than 64 levels, or holds a string that is not Unicode text (half a
+  surrogate pair, bytes that are not UTF-8) is 400 `REQUEST_INVALID` with `MALFORMED` at `""` (decisions 3,
+  33 and 35). The engine answers 415 for text that does not parse and 422 `VALUE_TYPE_MISMATCH` for half a
+  surrogate pair (its notes), so the sentence needs one clause per service. In the same place: an id or a
+  version in the path may be any positive integer up to 64 bits, and one beyond 32 bits is
   `CONTROL_NOT_FOUND`, `VERSION_NOT_FOUND` or `RUN_NOT_FOUND`, not `NOT_FOUND` (decision 19).
+- For the limitations document (decisions 32 and 34): `/suggest` shares the api's 75 s attempt timeout, so on a
+  database slow enough for its ten statements to pass it the api answers 503 `ENGINE_UNAVAILABLE`; a stored
+  definition within about 36 bytes of the engine's 1 MiB body limit can be saved and then fails its run with
+  `INTERNAL_ERROR`.
 - `docs/architecture.md` §13: the api's tests run the real app against the shared database as `dq_app`, with
   rows marked `zz-dc-api-test-` that the suite deletes before and after; the engine is a stub at the HTTP
   handler whose fixtures are generated from `contracts/` (decision 9); three tests against the real engine are

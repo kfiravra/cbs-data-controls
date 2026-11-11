@@ -1,12 +1,15 @@
 using System.Text.Json;
+using System.Text.Unicode;
 using DataControls.Api.Errors;
 
 namespace DataControls.Api.Hosting;
 
 /// <summary>
-/// Refuses a body before anything binds it: 413 when it is over the limit, 415 when it is sent as JSON
-/// and its text is not JSON. What reaches the binders is well-formed, so a binder failure always means a
-/// member of the wrong type, which is answered per member.
+/// Refuses a body before anything binds it: 413 when it is over the limit, 400 <c>MALFORMED</c> at the
+/// root when it is sent as JSON and the api cannot read it (the text does not parse, nests deeper than
+/// the serializer allows, or holds a string that is not Unicode text). What reaches the binders is
+/// readable, so a binder failure always means a member of the wrong type, which is answered per member.
+/// A media type that is not JSON is not read here: MVC answers it 415.
 /// </summary>
 internal sealed class RequestBodyGuardMiddleware(RequestDelegate next)
 {
@@ -27,9 +30,9 @@ internal sealed class RequestBodyGuardMiddleware(RequestDelegate next)
             // Read once, into memory (the limit bounds it), and hand the same bytes to the binders.
             var body = await ReadAsync(request.Body, context.RequestAborted);
             context.Response.RegisterForDispose(body);
-            if (body.Length > 0 && !IsJson(body.GetBuffer().AsMemory(0, (int)body.Length)))
+            if (body.Length > 0 && !IsReadableJson(body.GetBuffer().AsSpan(0, (int)body.Length)))
             {
-                throw ApiException.RequestRejected(StatusCodes.Status415UnsupportedMediaType);
+                throw ApiException.RequestInvalid(path: string.Empty, RequestErrorCodes.Malformed);
             }
 
             request.Body = body;
@@ -58,14 +61,47 @@ internal sealed class RequestBodyGuardMiddleware(RequestDelegate next)
         return body;
     }
 
-    private static bool IsJson(ReadOnlyMemory<byte> text)
+    /// <summary>
+    /// One JSON value, no deeper than the serializer reads, in which every string and member name is text.
+    /// System.Text.Json takes a string that holds half a surrogate pair, or bytes that are not UTF-8, as a
+    /// token and fails only when the text is asked for: without this check that is a 500 from wherever
+    /// the string is first read.
+    /// </summary>
+    private static bool IsReadableJson(ReadOnlySpan<byte> text)
     {
+        var reader = new Utf8JsonReader(text, new JsonReaderOptions { MaxDepth = JsonDefaults.MaxDepth });
         try
         {
-            using var document = JsonDocument.Parse(text, new JsonDocumentOptions { MaxDepth = JsonDefaults.MaxDepth });
+            while (reader.Read())
+            {
+                if (reader.TokenType is JsonTokenType.String or JsonTokenType.PropertyName && !IsText(ref reader))
+                {
+                    return false;
+                }
+            }
+
             return true;
         }
         catch (JsonException)
+        {
+            return false;
+        }
+    }
+
+    private static bool IsText(ref Utf8JsonReader reader)
+    {
+        if (!reader.ValueIsEscaped)
+        {
+            return Utf8.IsValid(reader.ValueSpan);
+        }
+
+        try
+        {
+            // Only a string with an escape pays for a copy; unescaping is where a lone surrogate shows.
+            _ = reader.GetString();
+            return true;
+        }
+        catch (InvalidOperationException)
         {
             return false;
         }

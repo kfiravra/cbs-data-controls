@@ -150,6 +150,36 @@ public sealed class DefinitionValidationTests(ApiFixture fixture)
         Assert.Empty(_engine.Calls);
     }
 
+    [Theory]
+    [InlineData("""{"schemaVersion":1,"rootEntity":"employee","where":{"type":"group","op":"and","children":[{"type":"condition","id":"c1","left":{"field":"status"},"operator":"eq","value":"<half>"}]}}""")]
+    [InlineData("""{"schemaVersion":1,"rootEntity":"employee","where":{"type":"group","op":"and","children":[{"type":"condition","id":"c<half>","left":{"field":"status"},"operator":"eq","value":"active"}]}}""")]
+    [InlineData("""{"schemaVersion":1,"rootEntity":"<half>","where":{"type":"group","op":"and","children":[]}}""")]
+    public async Task Validate_returns_400_malformed_and_no_engine_call_when_a_string_of_the_definition_holds_half_a_surrogate_pair(string template)
+    {
+        // The JSON escape of the first half of a surrogate pair: a backslash, then "ud83d".
+        var definition = template.Replace("<half>", @"\" + "ud83d");
+
+        var response = await _client.PostAsync(Path, Body.Definition(definition));
+
+        var problem = await HttpAssert.ProblemAsync(response, HttpStatusCode.BadRequest, "REQUEST_INVALID");
+        HttpAssert.JsonEqual("""[{"path":"","code":"MALFORMED","params":{}}]""", HttpAssert.Errors(problem));
+        Assert.Empty(_engine.Calls);
+    }
+
+    [Fact]
+    public async Task Validate_sends_the_definition_text_as_it_came_when_a_writer_would_escape_its_strings()
+    {
+        // The engine refuses a body over its own limit; "+" written as an escape is six bytes for one.
+        var value = "a+b <c> & 'd' " + char.ConvertFromUtf32(0x1F600);
+        var definition = $$"""{"schemaVersion":1,"rootEntity":"employee","where":{"type":"group","op":"and","children":[{"type":"condition","id":"c1","left":{"field":"status"},"operator":"eq","value":"{{value}}"}]} }""";
+
+        var response = await _client.PostAsync(Path, Body.Definition(definition));
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var call = Assert.Single(_engine.CallsTo(EngineStub.Validate));
+        Assert.Equal("{\"definition\":" + definition + "}", call.Body);
+    }
+
     [Fact]
     public async Task Validate_returns_503_engine_unavailable_when_the_schema_passes_and_the_engine_is_down()
     {
