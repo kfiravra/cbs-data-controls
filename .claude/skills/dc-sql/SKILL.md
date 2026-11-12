@@ -9,7 +9,9 @@ paths:
 
 # dc-sql
 
-SQL Server 2022 in the `mcr.microsoft.com/mssql/server:2022-latest` Linux container (x86-64 only) on :1433. One
+SQL Server 2022 in the `mcr.microsoft.com/mssql/server:2022-latest` Linux container (x86-64 only), published on
+127.0.0.1 at `DB_PORT`: 14330 by default (so a grader's own SQL Server keeps 1433), and 1433 in this repository's
+development `.env`, which the harness, the worktrees and the tests assume. One
 database with collation `Hebrew_CI_AS`: schema `hr` holds the sample organization (Ministry → Department →
 Employee), schema `dq` the controls store (Control, ControlVersion, Run, RunResult); two logins. Plain T-SQL run by
 sqlcmd. Nothing lints it, so `scripts/db-init.sh` on a clean container plus `scripts/db-check.sh` is the test.
@@ -26,7 +28,7 @@ numbers leave gaps for later inserts, and every script is re-runnable.
 20_hr_tables.sql  Ministry, Department, Employee, with keys and checks
 30_dq_tables.sql  Control, ControlVersion, Run, RunResult
 40_logins.sql     dq_app, dq_engine_ro: logins, users, grants, denies
-50_indexes.sql    every FK column; birth_date, status, salary (what the examples filter by)
+50_indexes.sql    every FK column; birth_date, status, salary (what the examples filter by); (department_id, status)
 60_seed_hr.sql    the Hebrew seed with planted violations
 ```
 
@@ -95,6 +97,13 @@ it; `GETDATE()` scattered through the seed makes the expected keys drift with th
   session, and `up` from a worktree whose `docker-compose.yml` differs recreates it. `scripts/db-init.sh` refuses
   to run in a linked worktree (the test of `dc_linked_worktree`), pkgmap skips `sql-init` there, and the git guard
   asks before `docker compose down` (`down -v` deletes the seeded database).
+- `docker-compose.yml` holds the whole stack since dc-delivery: `db`, `db-init` (one-shot), `engine` (no host port;
+  starts after `db-init` completed), `api` (the client inside it; host `APP_BIND:APP_PORT`, 127.0.0.1:5000) and
+  `examples` (one-shot: `scripts/examples.py load` through the api). `docker compose up -d db` still starts the
+  database alone. Each service gets only its own settings under `environment:`, never `env_file`: the engine is
+  given `ENGINE_DB_HOST=db` and port 1433 whatever `.env` says, and never the `sa` or `dq_app` password; the api
+  never the `sa` or `dq_engine_ro` one. No service has a restart policy. `scripts/start.sh` (and `start.cmd`)
+  creates `.env` with random passwords only when there is none.
 
 ## Read before changing
 

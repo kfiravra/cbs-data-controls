@@ -1,0 +1,25 @@
+
+Running 18 tests using 1 worker
+
+  ✓   1 [mobile] › e2e/gate/examples.spec.ts:45:5 › the six examples on the real stack › example 1 is built in the editor, saved, run and read (11.6s)
+  ✓   2 [mobile] › e2e/gate/examples.spec.ts:45:5 › the six examples on the real stack › example 2 is built in the editor, saved, run and read (9.6s)
+  ✓   3 [mobile] › e2e/gate/examples.spec.ts:45:5 › the six examples on the real stack › example 3 is built in the editor, saved, run and read (11.3s)
+  ✓   4 [mobile] › e2e/gate/examples.spec.ts:45:5 › the six examples on the real stack › example 4 is built in the editor, saved, run and read (15.8s)
+  ✓   5 [mobile] › e2e/gate/examples.spec.ts:45:5 › the six examples on the real stack › example 5 is built in the editor, saved, run and read (12.5s)
+  ✓   6 [mobile] › e2e/gate/examples.spec.ts:45:5 › the six examples on the real stack › example 6 is built in the editor, saved, run and read (13.7s)
+  ✓   7 [mobile] › e2e/gate/list.spec.ts:14:1 › a control of its own is found, opened, run, read in its panel, duplicated and archived from its row (9.1s)
+  ✓   8 [mobile] › e2e/gate/suggestions.spec.ts:11:1 › the panel shows the drafts the engine proposes, and creates one as a control (2.0s)
+  ✓   9 [mobile] › e2e/gate/suggestions.spec.ts:61:1 › a new control is offered the engine's suggestions for its choice, and one fills its conditions (1.5s)
+  ✓  10 [desktop] › e2e/gate/examples.spec.ts:45:5 › the six examples on the real stack › example 1 is built in the editor, saved, run and read (4.7s)
+  ✓  11 [desktop] › e2e/gate/examples.spec.ts:45:5 › the six examples on the real stack › example 2 is built in the editor, saved, run and read (3.0s)
+  ✓  12 [desktop] › e2e/gate/examples.spec.ts:45:5 › the six examples on the real stack › example 3 is built in the editor, saved, run and read (4.5s)
+  ✓  13 [desktop] › e2e/gate/examples.spec.ts:45:5 › the six examples on the real stack › example 4 is built in the editor, saved, run and read (15.9s)
+  ✓  14 [desktop] › e2e/gate/examples.spec.ts:45:5 › the six examples on the real stack › example 5 is built in the editor, saved, run and read (5.9s)
+  ✓  15 [desktop] › e2e/gate/examples.spec.ts:45:5 › the six examples on the real stack › example 6 is built in the editor, saved, run and read (7.6s)
+  ✓  16 [desktop] › e2e/gate/list.spec.ts:14:1 › a control of its own is found, opened, run, read in its panel, duplicated and archived from its row (7.8s)
+  ✓  17 [desktop] › e2e/gate/suggestions.spec.ts:11:1 › the panel shows the drafts the engine proposes, and creates one as a control (1.7s)
+  ✓  18 [desktop] › e2e/gate/suggestions.spec.ts:61:1 › a new control is offered the engine's suggestions for its choice, and one fills its conditions (1.6s)
+
+  18 passed (2.4m)
+E2E_BASE_URL=http://localhost:5000 npx playwright test e2e/gate   --workers=1  37.18s user 15.73s system 36% cpu 2:23.00 total
+exit=0

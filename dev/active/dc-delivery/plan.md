@@ -211,20 +211,20 @@ Design section below is the specification each step builds from.
 ### Lane A: documents that need nothing built (starts when dc-contracts has merged; main tree; the three worktrees are running)
 
 #### Phase A0: branch (no commit)
-- [ ] Preconditions: dc-contracts is merged to main. `docs/PRODUCT.md` and `docs/design.md` are Kfir's (his
+- [x] Preconditions: dc-contracts is merged to main. `docs/PRODUCT.md` and `docs/design.md` are Kfir's (his
       docs+infra commit, which dc-web waits for): tracked by now, or still untracked and then left out, because
       this task stages its files by name.
-- [ ] `git switch -c feat/delivery main`.
+- [x] `git switch -c feat/delivery main`.
 
 #### Phase A1: the contract documents and the settled parts of the architecture
-- [ ] `docs/control-definition.md` per Design H.
-- [ ] `docs/glossary.md` per Design H, with the `department.manager` walkthrough written as steps a reader can
+- [x] `docs/control-definition.md` per Design H.
+- [x] `docs/glossary.md` per Design H, with the `department.manager` walkthrough written as steps a reader can
       follow.
-- [ ] `docs/assumptions-limitations-extensions.md` per Design H.
-- [ ] `docs/ai-usage.md` as a skeleton per Design K: every section present, the per-task table empty.
-- [ ] `docs/architecture.md`, the rows of Design J marked "lane A": the title and purpose, the four decision
+- [x] `docs/assumptions-limitations-extensions.md` per Design H.
+- [x] `docs/ai-usage.md` as a skeleton per Design K: every section present, the per-task table empty.
+- [x] `docs/architecture.md`, the rows of Design J marked "lane A": the title and purpose, the four decision
       records of §3.2, the pointers of §15 and §20. Nothing else in the file.
-- [ ] A throwaway check under `tools/` (not committed): every backticked token of the first two documents is an
+- [x] A throwaway check under `tools/` (not committed): every backticked token of the first two documents is an
       operator key, an entity, field or relationship key, a limit name, an error code or an existing path. The
       list of unknown tokens is empty or explained in `gates/A1.txt`.
 
@@ -239,9 +239,9 @@ contract documents are corrected in the same sitting.
 ### Lane B: integration (starts when engine, api and web have merged to main)
 
 #### Phase B0: reconcile with what was built (no commit of its own)
-- [ ] `git merge main` into `feat/delivery` (a merge, not a rebase).
-- [ ] Kfir's `.env` holds `DB_PORT=1433` and `ENGINE_DB_PORT=1433` explicitly, before the defaults move in B1.
-- [ ] Read what the three tasks left for this one. Their folders moved into the worktrees
+- [x] `git merge main` into `feat/delivery` (a merge, not a rebase).
+- [x] Kfir's `.env` holds `DB_PORT=1433` and `ENGINE_DB_PORT=1433` explicitly, before the defaults move in B1.
+- [x] Read what the three tasks left for this one. Their folders moved into the worktrees
       (`../cbs-engine/dev/active/dc-engine/`, or `dev/completed/` there after `/ship`; the same for api and web):
       - dc-engine, `notes.md` State: the variables as built, the start command, which phases were cut (the image);
       - dc-api, `notes.md`: whether the live tests ran or are handed over;
@@ -249,28 +249,28 @@ contract documents are corrected in the same sitting.
         write about each, whether the gate ran on a pre-loaded list and on the build the api hosts, and what it
         left in the dev `dq` (the six examples of its phase 7);
       - the three lists "Docs for dc-delivery", from the notes and from the PR bodies.
-- [ ] Record "As built" in `notes.md`, ten lines at most. Design A to G use the names the plans gave on
+- [x] Record "As built" in `notes.md`, ten lines at most. Design A to G use the names the plans gave on
       2026-11-10; what was built wins.
-- [ ] Each answer in the asks table holds in the code: the driver choice and the port-less URL (the engine's own
+- [x] Each answer in the asks table holds in the code: the driver choice and the port-less URL (the engine's own
       tests), the published api's content root. One that does not is fixed here per decision 23.
-- [ ] `git diff <A1 sha>..main -- contracts/ docs/` and the three "Docs for dc-delivery" lists: correct the lane-A
+- [x] `git diff <A1 sha>..main -- contracts/ docs/` and the three "Docs for dc-delivery" lists: correct the lane-A
       documents. The corrections ride in the B4 commit.
-- [ ] No session is serving from a worktree and no suite is running: `ss -ltn`, and
+- [x] No session is serving from a worktree and no suite is running: `ss -ltn`, and
       `pgrep -fa "pytest|dotnet test|ng test|vitest|playwright test"` (a bare `playwright` also matches the MCP
       servers every session starts).
 
 #### Phase B1: compose end to end
-- [ ] `.dockerignore` per Design A.
-- [ ] `engine/Dockerfile`: dc-engine's, built once as it stands; written per Design A only if its Phase 7 was cut.
-- [ ] `api/Dockerfile` per Design A.
-- [ ] `docker-compose.yml`: services `engine`, `api` and `examples`, ports and per-service environment per Design A
+- [x] `.dockerignore` per Design A.
+- [x] `engine/Dockerfile`: dc-engine's, built once as it stands; written per Design A only if its Phase 7 was cut.
+- [x] `api/Dockerfile` per Design A.
+- [x] `docker-compose.yml`: services `engine`, `api` and `examples`, ports and per-service environment per Design A
       and B.
-- [ ] `.env.example` per Design B.
-- [ ] `scripts/examples.py` per Design C.
-- [ ] `scripts/lib/env.sh` and `scripts/start.sh` per Design D (executable).
-- [ ] `scripts/lib/env.ps1`, `scripts/start.ps1` and `start.cmd` per Design D, for the Docker path from a Windows
+- [x] `.env.example` per Design B.
+- [x] `scripts/examples.py` per Design C.
+- [x] `scripts/lib/env.sh` and `scripts/start.sh` per Design D (executable).
+- [x] `scripts/lib/env.ps1`, `scripts/start.ps1` and `start.cmd` per Design D, for the Docker path from a Windows
       folder. `.gitattributes`: `*.ps1` and `*.cmd` with `eol=crlf`.
-- [ ] `.claude/skills/dc-sql/SKILL.md`: the facts this phase changed (services, ports, who reaches whom).
+- [x] `.claude/skills/dc-sql/SKILL.md`: the facts this phase changed (services, ports, who reaches whom).
 
 Verify:
 ```
@@ -298,9 +298,9 @@ Review: `/phase-review sql engine api infra` (the Dockerfiles sit in `engine/` a
 Commit: `feat(compose): full stack with engine, api and example loader`
 
 #### Phase B2: the manual path, from source
-- [ ] `engine/requirements.txt` is dc-engine's: `cd engine && uv export --no-dev --format requirements-txt | diff -
+- [x] `engine/requirements.txt` is dc-engine's: `cd engine && uv export --no-dev --format requirements-txt | diff -
       requirements.txt` prints nothing.
-- [ ] The from-source steps of Design G written out as the commands the README will carry, in
+- [x] The from-source steps of Design G written out as the commands the README will carry, in
       `gates/B2-manual.md`, and carried out once exactly as written.
 
 Verify (on WSL, the database in its container, the `engine` and `api` containers stopped through the guard; the
@@ -316,29 +316,29 @@ Review: `/phase-review infra --since <B1 sha>`
 No commit of its own: the commands ride into the README in B4.
 
 #### Phase B4: README, architecture as built, cover page, checklist
-- [ ] `README.md` per Design I, every command in it copied from a run of B1 and B2 (tick them in
+- [x] `README.md` per Design I, every command in it copied from a run of B1 and B2 (tick them in
       `gates/readme-commands.md`).
-- [ ] `docs/screenshots/`: the five files of decision 27, copied from the B1 run, with the caption of decision 31.
-- [ ] `docs/examples.md`: the frame, then `python3 scripts/examples.py docs` for the generated region.
-- [ ] `docs/architecture.md`, the rows of Design J marked "B4": what differs from what was built in §1 to §14, the
+- [x] `docs/screenshots/`: the five files of decision 27, copied from the B1 run, with the caption of decision 31.
+- [x] `docs/examples.md`: the frame, then `python3 scripts/examples.py docs` for the generated region.
+- [x] `docs/architecture.md`, the rows of Design J marked "B4": what differs from what was built in §1 to §14, the
       suggestion lines of §6 and §19, the tree of §16, the index of §17, the result column of §19, and §18 ticked
       with its evidence.
-- [ ] The three lists "Docs for dc-delivery": every line applied to its document or answered in `gates/B4.txt`.
-- [ ] `docs/ai-usage.md` completed per Design K from the notes Logs of the five tasks, the plans' Decisions and
+- [x] The three lists "Docs for dc-delivery": every line applied to its document or answered in `gates/B4.txt`.
+- [x] `docs/ai-usage.md` completed per Design K from the notes Logs of the five tasks, the plans' Decisions and
       `git log`.
-- [ ] `docs/submission.he.md` per Design L.
-- [ ] `docs/assumptions-limitations-extensions.md`, `docs/control-definition.md`, `docs/glossary.md`: the as-built
+- [x] `docs/submission.he.md` per Design L.
+- [x] `docs/assumptions-limitations-extensions.md`, `docs/control-definition.md`, `docs/glossary.md`: the as-built
       corrections of B0 and the limits learned in B1 and B2 (tested versions, the row cap value, the cuts the
       three tasks recorded, the extension of decision 32, the LLM step as a design that is not built).
-- [ ] `sql/README.md`: the host port.
-- [ ] `docs/design.md` is tracked (`git ls-files docs/design.md`) and is not edited: it is dc-web's. If it is not
+- [x] `sql/README.md`: the host port.
+- [x] `docs/design.md` is tracked (`git ls-files docs/design.md`) and is not edited: it is dc-web's. If it is not
       tracked, ask Kfir.
-- [ ] `.claude/CLAUDE.md`: rows for the §17 documents, `docs/design.md` among them (dc-web left its row to this
+- [x] `.claude/CLAUDE.md`: rows for the §17 documents, `docs/design.md` among them (dc-web left its row to this
       phase), and for the cover page; the Hebrew gotcha naming `docs/submission.he.md` and `docs/examples.md`; the
       map line for the compose services; without the "As they land" line; at most 100 lines. `.claude/README.md`:
       a changelog line.
-- [ ] `.claude/hooks/tests/infra.test.mjs`: the link test also covers `README.md`, `docs/*.md` and `sql/README.md`.
-- [ ] The `docs/glossary.md` walkthrough is carried out once exactly as written, on a scratch copy of the glossary:
+- [x] `.claude/hooks/tests/infra.test.mjs`: the link test also covers `README.md`, `docs/*.md` and `sql/README.md`.
+- [x] The `docs/glossary.md` walkthrough is carried out once exactly as written, on a scratch copy of the glossary:
       the engine starts, `/validate` accepts a definition that uses the new relationship, the editor offers it.
       Result in `gates/glossary-walkthrough.txt`; nothing of the scratch copy is committed.
 
@@ -348,23 +348,24 @@ Review: `/phase-review infra`
 Commit: `docs: readme, examples, architecture as built, hebrew cover and ai usage`
 
 ### Gate
-- [ ] **G1 Docker path, clean (WSL).** In the main tree: `docker compose down -v --rmi local` (the guard asks: it
+- [x] **G1 Docker path, clean (WSL).** In the main tree: `docker compose down -v --rmi local` (the guard asks: it
       deletes the development database, so only after the three merges). Then
       `git clone --branch feat/delivery <main tree> <scratch>/dc-clean` and the README followed to the letter:
       `scripts/start.sh`; the app in a browser, where the first screen shows six controls and no run on any
       (decision 6); `examples.py verify`; the gate specs with the command of B1, one worker, on the generated
       `.env`; the untagged listing equal before and after. Output in `gates/G1-docker-wsl.txt`.
-- [ ] **G2 Docker path, Windows host.** The same from a Windows folder with `start.cmd`, without the gate specs.
-- [ ] **G3 Manual path, from source.** On the fresh clone of G1, with the `engine` and `api` containers stopped:
+- [x] **G2 Docker path, Windows host.** The same from a Windows folder with `start.cmd`, without the gate specs.
+- [x] **G3 Manual path, from source.** On the fresh clone of G1, with the `engine` and `api` containers stopped:
       the README's from-source section followed to the letter, then `examples.py verify`, and by hand in the
       browser one example run with a reason on every record. Output in `gates/G3-manual.txt`.
-- [ ] **G5 Security audit.** One `security-auditor` on opus over the merged repository (say it first): logins and
+- [x] **G5 Security audit.** One `security-auditor` on opus over the merged repository (say it first): logins and
       grants, the compose network and ports, the per-service environment, error bodies, CORS, secrets. The report is saved as `reviews/security.md`. Critical findings are fixed (decision 23); the rest
       are added to the limitations document; the Log line lists both.
-- [ ] **G6 Checklist.** Every item of §18 is ticked and its evidence exists. An item that cannot be ticked
+- [x] **G6 Checklist.** Every item of §18 is ticked and its evidence exists. An item that cannot be ticked
       honestly is a blocker for Kfir, not a tick.
-- [ ] **G7 Kfir reads** `docs/ai-usage.md` and `docs/submission.he.md` (both speak in his name) and the first
-      screen of the README. The Log says what he changed or rejected, in his words where he gave them.
+- [x] **G7 Kfir reads** `docs/ai-usage.md`, `submission-he/README.he.md` and `submission-he/ai-usage.he.md` (they
+      speak in his name) and the first screen of the README. (Done 2026-11-12: his word, "I finished reading the
+      Hebrew documents (G7 is done)"; he then revised the Hebrew documents by hand, Log 14:21.) The Log says what he changed or rejected, in his words where he gave them.
 - [ ] **G8** `/check all --tests`, then `/ship dc-delivery`; the PR and the merge on Kfir's word.
 - [ ] **G9 After the merge**, each on Kfir's word: tag `v1.0.0`; a fresh `git clone` from GitHub with
       `scripts/start.sh` as the last sanity check; the graders as collaborators.

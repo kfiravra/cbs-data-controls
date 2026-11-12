@@ -169,6 +169,7 @@ hr.Department.IX_Department_manager_employee_id
 hr.Department.IX_Department_ministry_id
 hr.Employee.IX_Employee_birth_date
 hr.Employee.IX_Employee_department_id
+hr.Employee.IX_Employee_department_id_status
 hr.Employee.IX_Employee_salary
 hr.Employee.IX_Employee_status'
 

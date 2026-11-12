@@ -1,0 +1,21 @@
+# The build context of the api image is the repository root (api/Dockerfile reads web/, api/ and contracts/).
+# The engine image has its own, narrower list in engine/Dockerfile.dockerignore, which BuildKit prefers.
+# No secret and no build output of the host may reach an image.
+.git
+.env
+.env.*
+!.env.example
+.claude
+dev
+docs
+**/node_modules
+**/.venv
+**/bin
+**/obj
+**/dist
+**/.angular
+**/TestResults
+**/test-results
+**/playwright-report
+**/__pycache__
+web/e2e/screenshots

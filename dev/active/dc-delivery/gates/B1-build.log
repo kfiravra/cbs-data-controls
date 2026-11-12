@@ -1,0 +1,481 @@
+ Image data-controls-api Building 
+ Image data-controls-engine Building 
+#1 [internal] load local bake definitions
+#1 reading from stdin 988B done
+#1 DONE 0.0s
+
+#2 [engine internal] load build definition from Dockerfile
+#2 transferring dockerfile: 2.32kB done
+#2 DONE 0.0s
+
+#3 [api internal] load build definition from Dockerfile
+#3 transferring dockerfile: 1.68kB done
+#3 DONE 0.1s
+
+#4 [api] resolve image config for docker-image://docker.io/docker/dockerfile:1
+#4 DONE 2.2s
+
+#5 [engine] docker-image://docker.io/docker/dockerfile:1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e
+#5 resolve docker.io/docker/dockerfile:1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e 0.1s done
+#5 CACHED
+
+#6 [api internal] load metadata for docker.io/library/node:22-bookworm-slim
+#6 ...
+
+#7 [api internal] load metadata for mcr.microsoft.com/dotnet/sdk:10.0
+#7 DONE 1.1s
+
+#8 [api internal] load metadata for mcr.microsoft.com/dotnet/aspnet:10.0
+#8 DONE 1.1s
+
+#9 [engine internal] load metadata for docker.io/library/python:3.12-slim-trixie
+#9 DONE 1.4s
+
+#6 [api internal] load metadata for docker.io/library/node:22-bookworm-slim
+#6 ...
+
+#10 [engine internal] load build context
+#10 DONE 0.0s
+
+#11 [engine 1/8] FROM docker.io/library/python:3.12-slim-trixie@sha256:5e2bdb1b0d542d5039cffb8181c65930093949194a65c365dfb1b0fe13a4fa5b
+#11 resolve docker.io/library/python:3.12-slim-trixie@sha256:5e2bdb1b0d542d5039cffb8181c65930093949194a65c365dfb1b0fe13a4fa5b 0.1s done
+#11 DONE 0.1s
+
+#10 [engine internal] load build context
+#10 transferring context: 332.35kB 0.0s done
+#10 DONE 0.1s
+
+#6 [api internal] load metadata for docker.io/library/node:22-bookworm-slim
+#6 ...
+
+#12 [engine 3/8] WORKDIR /srv/engine
+#12 CACHED
+
+#13 [engine 4/8] COPY engine/requirements.txt ./requirements.txt
+#13 CACHED
+
+#14 [engine 2/8] RUN apt-get update  && apt-get install -y --no-install-recommends ca-certificates curl  && curl -fsSL -o /tmp/packages-microsoft-prod.deb       https://packages.microsoft.com/config/debian/13/packages-microsoft-prod.deb  && dpkg -i /tmp/packages-microsoft-prod.deb  && rm /tmp/packages-microsoft-prod.deb  && apt-get update  && ACCEPT_EULA=Y apt-get install -y --no-install-recommends msodbcsql18 unixodbc libgssapi-krb5-2  && apt-get purge -y --auto-remove curl  && rm -rf /var/lib/apt/lists/*
+#14 CACHED
+
+#15 [engine 5/8] RUN python -m pip install --require-hashes -r requirements.txt
+#15 CACHED
+
+#16 [engine 6/8] COPY contracts /srv/contracts
+#16 DONE 0.1s
+
+#6 [api internal] load metadata for docker.io/library/node:22-bookworm-slim
+#6 DONE 2.0s
+
+#17 [engine 7/8] COPY engine/app ./app
+#17 DONE 0.2s
+
+#18 [api internal] load .dockerignore
+#18 transferring context: 515B done
+#18 DONE 0.1s
+
+#19 [engine 8/8] RUN useradd --system --uid 10001 --no-create-home engine
+#19 ...
+
+#20 [api internal] load build context
+#20 DONE 0.0s
+
+#21 [api stage-2 1/4] FROM mcr.microsoft.com/dotnet/aspnet:10.0@sha256:bfd912c83295ce66d4b706ebb8541b9f14259b0e76fbb88b2751f58ce2399d2e
+#21 resolve mcr.microsoft.com/dotnet/aspnet:10.0@sha256:bfd912c83295ce66d4b706ebb8541b9f14259b0e76fbb88b2751f58ce2399d2e 0.2s done
+#21 ...
+
+#20 [api internal] load build context
+#20 transferring context: 1.62MB 0.5s done
+#20 DONE 1.0s
+
+#21 [api stage-2 1/4] FROM mcr.microsoft.com/dotnet/aspnet:10.0@sha256:bfd912c83295ce66d4b706ebb8541b9f14259b0e76fbb88b2751f58ce2399d2e
+#21 DONE 1.2s
+
+#22 [api web 1/6] FROM docker.io/library/node:22-bookworm-slim@sha256:18052396bf1d0c6e0a8c58181b5c1457da19409efbd5032a3f4d86974e74d13c
+#22 resolve docker.io/library/node:22-bookworm-slim@sha256:18052396bf1d0c6e0a8c58181b5c1457da19409efbd5032a3f4d86974e74d13c 0.1s done
+#22 sha256:0c4023204e5b4bcd551170279c40ff58285cc8ea87ddf9ff25cb3713e6ecda79 0B / 49.90MB 0.2s
+#22 sha256:cce880541c96dc730321857781d113e3c75c0cb383f9510300922762006d734e 0B / 448B 0.2s
+#22 sha256:aa4e8910862263c3bad50c754fb555bbbb7661c41e35ba703ae082ec6749c175 0B / 1.71MB 0.2s
+#22 sha256:076cba098ace87d6950e8fa4cc530bfe59834eba28f30061e8526d6f00bf52c8 0B / 3.31kB 0.2s
+#22 sha256:cce880541c96dc730321857781d113e3c75c0cb383f9510300922762006d734e 448B / 448B 0.7s done
+#22 sha256:076cba098ace87d6950e8fa4cc530bfe59834eba28f30061e8526d6f00bf52c8 3.31kB / 3.31kB 1.1s done
+#22 ...
+
+#19 [engine 8/8] RUN useradd --system --uid 10001 --no-create-home engine
+#19 2.581 useradd warning: engine's uid 10001 is greater than SYS_UID_MAX 999
+#19 DONE 2.9s
+
+#22 [api web 1/6] FROM docker.io/library/node:22-bookworm-slim@sha256:18052396bf1d0c6e0a8c58181b5c1457da19409efbd5032a3f4d86974e74d13c
+#22 extracting sha256:076cba098ace87d6950e8fa4cc530bfe59834eba28f30061e8526d6f00bf52c8
+#22 extracting sha256:076cba098ace87d6950e8fa4cc530bfe59834eba28f30061e8526d6f00bf52c8 0.5s done
+#22 ...
+
+#23 [engine] exporting to image
+#23 exporting layers 0.8s done
+#23 exporting manifest sha256:d0bb9d6e8b50351436a9339470f40453440990f7e526d66b7321e06a6390caed 0.1s done
+#23 exporting config sha256:c7aa06f0f97fe395fecc24c5e107b979b971d03b05b6de06d7f3dbd1548f15f3 0.1s done
+#23 exporting attestation manifest sha256:b5665cd2d12892b149bb8d9c887912d7d15c7efa28e08fd47a045b14691bf0ab 0.1s done
+#23 exporting manifest list sha256:6601b0bac545d7bc48425a305c5811ba027e09cfe21753aa20eb46818b51e7c9 0.1s done
+#23 naming to docker.io/library/data-controls-engine:latest 0.0s done
+#23 unpacking to docker.io/library/data-controls-engine:latest 0.3s done
+#23 DONE 1.6s
+
+#22 [api web 1/6] FROM docker.io/library/node:22-bookworm-slim@sha256:18052396bf1d0c6e0a8c58181b5c1457da19409efbd5032a3f4d86974e74d13c
+#22 ...
+
+#24 [engine] resolving provenance for metadata file
+#24 DONE 0.0s
+
+#22 [api web 1/6] FROM docker.io/library/node:22-bookworm-slim@sha256:18052396bf1d0c6e0a8c58181b5c1457da19409efbd5032a3f4d86974e74d13c
+#22 sha256:0c4023204e5b4bcd551170279c40ff58285cc8ea87ddf9ff25cb3713e6ecda79 3.15MB / 49.90MB 5.3s
+#22 sha256:aa4e8910862263c3bad50c754fb555bbbb7661c41e35ba703ae082ec6749c175 0B / 1.71MB 5.3s
+#22 sha256:aa4e8910862263c3bad50c754fb555bbbb7661c41e35ba703ae082ec6749c175 1.05MB / 1.71MB 5.6s
+#22 sha256:aa4e8910862263c3bad50c754fb555bbbb7661c41e35ba703ae082ec6749c175 1.71MB / 1.71MB 8.2s done
+#22 ...
+
+#25 [api build 1/8] FROM mcr.microsoft.com/dotnet/sdk:10.0@sha256:fe0fd4e93bd2fbb47c883b7a6369e5c8d3db8bf01cdc5981f6ee35fbdf3ff4fb
+#25 resolve mcr.microsoft.com/dotnet/sdk:10.0@sha256:fe0fd4e93bd2fbb47c883b7a6369e5c8d3db8bf01cdc5981f6ee35fbdf3ff4fb 0.1s done
+#25 ...
+
+#22 [api web 1/6] FROM docker.io/library/node:22-bookworm-slim@sha256:18052396bf1d0c6e0a8c58181b5c1457da19409efbd5032a3f4d86974e74d13c
+#22 ...
+
+#21 [api stage-2 1/4] FROM mcr.microsoft.com/dotnet/aspnet:10.0@sha256:bfd912c83295ce66d4b706ebb8541b9f14259b0e76fbb88b2751f58ce2399d2e
+#21 sha256:fdbd9a0d3e999cfd510670f29092f7303d208d82fd4ed8d15f56691c1b28fa97 5.24MB / 13.11MB 9.8s
+#21 sha256:22d6c03b5fd089637da59148309ebf59e100aba4568f9c7a5bffef18f48b8083 158B / 158B 0.5s done
+#21 sha256:5234006b2751f6b28f7df63972191876bbe82d1fede1677791f7702569dfd8fc 8.39MB / 37.60MB 9.8s
+#21 sha256:2134cabc5f328f9c3919aeef221f7171dbb93bbe2a41e7bc01281c2a6653d575 12.58MB / 17.16MB 9.8s
+#21 sha256:f4520a21f3bde37067edbd4fba642a137f671a83f10b2e526fa86c524b177345 3.61kB / 3.61kB 0.3s done
+#21 sha256:f8cdc4d30f6153f5575f21aec13f25c6825fb4433f788e78c946cd460e2c6d9f 5.24MB / 29.79MB 8.9s
+#21 sha256:2134cabc5f328f9c3919aeef221f7171dbb93bbe2a41e7bc01281c2a6653d575 13.63MB / 17.16MB 9.9s
+#21 ...
+
+#22 [api web 1/6] FROM docker.io/library/node:22-bookworm-slim@sha256:18052396bf1d0c6e0a8c58181b5c1457da19409efbd5032a3f4d86974e74d13c
+#22 sha256:0c4023204e5b4bcd551170279c40ff58285cc8ea87ddf9ff25cb3713e6ecda79 4.19MB / 49.90MB 10.4s
+#22 sha256:0c4023204e5b4bcd551170279c40ff58285cc8ea87ddf9ff25cb3713e6ecda79 7.34MB / 49.90MB 15.3s
+#22 ...
+
+#21 [api stage-2 1/4] FROM mcr.microsoft.com/dotnet/aspnet:10.0@sha256:bfd912c83295ce66d4b706ebb8541b9f14259b0e76fbb88b2751f58ce2399d2e
+#21 sha256:fdbd9a0d3e999cfd510670f29092f7303d208d82fd4ed8d15f56691c1b28fa97 6.29MB / 13.11MB 16.1s
+#21 sha256:5234006b2751f6b28f7df63972191876bbe82d1fede1677791f7702569dfd8fc 13.63MB / 37.60MB 16.1s
+#21 sha256:2134cabc5f328f9c3919aeef221f7171dbb93bbe2a41e7bc01281c2a6653d575 17.16MB / 17.16MB 12.7s done
+#21 sha256:f8cdc4d30f6153f5575f21aec13f25c6825fb4433f788e78c946cd460e2c6d9f 9.44MB / 29.79MB 15.0s
+#21 ...
+
+#22 [api web 1/6] FROM docker.io/library/node:22-bookworm-slim@sha256:18052396bf1d0c6e0a8c58181b5c1457da19409efbd5032a3f4d86974e74d13c
+#22 sha256:0c4023204e5b4bcd551170279c40ff58285cc8ea87ddf9ff25cb3713e6ecda79 9.44MB / 49.90MB 20.4s
+#22 ...
+
+#21 [api stage-2 1/4] FROM mcr.microsoft.com/dotnet/aspnet:10.0@sha256:bfd912c83295ce66d4b706ebb8541b9f14259b0e76fbb88b2751f58ce2399d2e
+#21 sha256:fdbd9a0d3e999cfd510670f29092f7303d208d82fd4ed8d15f56691c1b28fa97 8.39MB / 13.11MB 22.5s
+#21 sha256:5234006b2751f6b28f7df63972191876bbe82d1fede1677791f7702569dfd8fc 18.87MB / 37.60MB 22.5s
+#21 sha256:f8cdc4d30f6153f5575f21aec13f25c6825fb4433f788e78c946cd460e2c6d9f 13.63MB / 29.79MB 21.4s
+#21 ...
+
+#25 [api build 1/8] FROM mcr.microsoft.com/dotnet/sdk:10.0@sha256:fe0fd4e93bd2fbb47c883b7a6369e5c8d3db8bf01cdc5981f6ee35fbdf3ff4fb
+#25 sha256:12074025c48415b1e438e97bb114451bfe2fd2a9aec5c0c991f7d192166c943e 18.47MB / 18.47MB 8.7s done
+#25 sha256:7cf7cfa94d9067a9f9f6fc01f4f78dc53560f51f01cb14074457d3e830f9fc46 531B / 531B 0.2s done
+#25 sha256:fea22b9d2d76fc11091e3d68a0c1c7a1b15a907c0b56ae159d74ec956cba6ea7 2.10MB / 18.59MB 1.2s
+#25 ...
+
+#21 [api stage-2 1/4] FROM mcr.microsoft.com/dotnet/aspnet:10.0@sha256:bfd912c83295ce66d4b706ebb8541b9f14259b0e76fbb88b2751f58ce2399d2e
+#21 sha256:fdbd9a0d3e999cfd510670f29092f7303d208d82fd4ed8d15f56691c1b28fa97 9.44MB / 13.11MB 23.8s
+#21 sha256:f8cdc4d30f6153f5575f21aec13f25c6825fb4433f788e78c946cd460e2c6d9f 15.73MB / 29.79MB 23.4s
+#21 sha256:5234006b2751f6b28f7df63972191876bbe82d1fede1677791f7702569dfd8fc 20.97MB / 37.60MB 24.9s
+#21 sha256:fdbd9a0d3e999cfd510670f29092f7303d208d82fd4ed8d15f56691c1b28fa97 10.49MB / 13.11MB 25.8s
+#21 sha256:f8cdc4d30f6153f5575f21aec13f25c6825fb4433f788e78c946cd460e2c6d9f 17.83MB / 29.79MB 26.4s
+#21 sha256:5234006b2751f6b28f7df63972191876bbe82d1fede1677791f7702569dfd8fc 23.07MB / 37.60MB 27.7s
+#21 sha256:fdbd9a0d3e999cfd510670f29092f7303d208d82fd4ed8d15f56691c1b28fa97 11.53MB / 13.11MB 27.9s
+#21 sha256:fdbd9a0d3e999cfd510670f29092f7303d208d82fd4ed8d15f56691c1b28fa97 12.58MB / 13.11MB 30.1s
+#21 sha256:fdbd9a0d3e999cfd510670f29092f7303d208d82fd4ed8d15f56691c1b28fa97 13.11MB / 13.11MB 30.6s done
+#21 sha256:5234006b2751f6b28f7df63972191876bbe82d1fede1677791f7702569dfd8fc 25.17MB / 37.60MB 30.6s
+#21 sha256:f8cdc4d30f6153f5575f21aec13f25c6825fb4433f788e78c946cd460e2c6d9f 19.92MB / 29.79MB 29.8s
+#21 sha256:5234006b2751f6b28f7df63972191876bbe82d1fede1677791f7702569dfd8fc 27.26MB / 37.60MB 32.2s
+#21 ...
+
+#22 [api web 1/6] FROM docker.io/library/node:22-bookworm-slim@sha256:18052396bf1d0c6e0a8c58181b5c1457da19409efbd5032a3f4d86974e74d13c
+#22 sha256:0c4023204e5b4bcd551170279c40ff58285cc8ea87ddf9ff25cb3713e6ecda79 12.58MB / 49.90MB 32.8s
+#22 ...
+
+#21 [api stage-2 1/4] FROM mcr.microsoft.com/dotnet/aspnet:10.0@sha256:bfd912c83295ce66d4b706ebb8541b9f14259b0e76fbb88b2751f58ce2399d2e
+#21 ...
+
+#25 [api build 1/8] FROM mcr.microsoft.com/dotnet/sdk:10.0@sha256:fe0fd4e93bd2fbb47c883b7a6369e5c8d3db8bf01cdc5981f6ee35fbdf3ff4fb
+#25 sha256:fea22b9d2d76fc11091e3d68a0c1c7a1b15a907c0b56ae159d74ec956cba6ea7 18.59MB / 18.59MB 11.5s done
+#25 sha256:ed308b3f1c865e8137e77432f7b6a0215058eb6ab7f47b7c9740e76679a5411e 1.05MB / 197.32MB 2.6s
+#25 sha256:67d9bba9ad22e4d10f39e0082c8589c0524d1190d56ead35f805d524f81b2c8d 0B / 26.97MB 0.2s
+#25 ...
+
+#21 [api stage-2 1/4] FROM mcr.microsoft.com/dotnet/aspnet:10.0@sha256:bfd912c83295ce66d4b706ebb8541b9f14259b0e76fbb88b2751f58ce2399d2e
+#21 sha256:5234006b2751f6b28f7df63972191876bbe82d1fede1677791f7702569dfd8fc 29.36MB / 37.60MB 33.6s
+#21 sha256:f8cdc4d30f6153f5575f21aec13f25c6825fb4433f788e78c946cd460e2c6d9f 22.02MB / 29.79MB 32.5s
+#21 sha256:5234006b2751f6b28f7df63972191876bbe82d1fede1677791f7702569dfd8fc 31.46MB / 37.60MB 35.2s
+#21 sha256:5234006b2751f6b28f7df63972191876bbe82d1fede1677791f7702569dfd8fc 33.55MB / 37.60MB 36.3s
+#21 sha256:f8cdc4d30f6153f5575f21aec13f25c6825fb4433f788e78c946cd460e2c6d9f 24.12MB / 29.79MB 35.5s
+#21 sha256:5234006b2751f6b28f7df63972191876bbe82d1fede1677791f7702569dfd8fc 35.65MB / 37.60MB 37.3s
+#21 sha256:5234006b2751f6b28f7df63972191876bbe82d1fede1677791f7702569dfd8fc 37.60MB / 37.60MB 38.2s
+#21 sha256:5234006b2751f6b28f7df63972191876bbe82d1fede1677791f7702569dfd8fc 37.60MB / 37.60MB 38.3s done
+#21 sha256:f8cdc4d30f6153f5575f21aec13f25c6825fb4433f788e78c946cd460e2c6d9f 26.21MB / 29.79MB 37.8s
+#21 sha256:f8cdc4d30f6153f5575f21aec13f25c6825fb4433f788e78c946cd460e2c6d9f 28.31MB / 29.79MB 39.6s
+#21 ...
+
+#25 [api build 1/8] FROM mcr.microsoft.com/dotnet/sdk:10.0@sha256:fe0fd4e93bd2fbb47c883b7a6369e5c8d3db8bf01cdc5981f6ee35fbdf3ff4fb
+#25 sha256:ed308b3f1c865e8137e77432f7b6a0215058eb6ab7f47b7c9740e76679a5411e 13.63MB / 197.32MB 10.4s
+#25 sha256:67d9bba9ad22e4d10f39e0082c8589c0524d1190d56ead35f805d524f81b2c8d 10.49MB / 26.97MB 7.8s
+#25 sha256:67d9bba9ad22e4d10f39e0082c8589c0524d1190d56ead35f805d524f81b2c8d 12.58MB / 26.97MB 9.5s
+#25 ...
+
+#22 [api web 1/6] FROM docker.io/library/node:22-bookworm-slim@sha256:18052396bf1d0c6e0a8c58181b5c1457da19409efbd5032a3f4d86974e74d13c
+#22 sha256:0c4023204e5b4bcd551170279c40ff58285cc8ea87ddf9ff25cb3713e6ecda79 18.87MB / 49.90MB 43.0s
+#22 ...
+
+#25 [api build 1/8] FROM mcr.microsoft.com/dotnet/sdk:10.0@sha256:fe0fd4e93bd2fbb47c883b7a6369e5c8d3db8bf01cdc5981f6ee35fbdf3ff4fb
+#25 ...
+
+#21 [api stage-2 1/4] FROM mcr.microsoft.com/dotnet/aspnet:10.0@sha256:bfd912c83295ce66d4b706ebb8541b9f14259b0e76fbb88b2751f58ce2399d2e
+#21 sha256:f8cdc4d30f6153f5575f21aec13f25c6825fb4433f788e78c946cd460e2c6d9f 29.79MB / 29.79MB 41.5s done
+#21 extracting sha256:f8cdc4d30f6153f5575f21aec13f25c6825fb4433f788e78c946cd460e2c6d9f 1.1s done
+#21 DONE 45.1s
+
+#25 [api build 1/8] FROM mcr.microsoft.com/dotnet/sdk:10.0@sha256:fe0fd4e93bd2fbb47c883b7a6369e5c8d3db8bf01cdc5981f6ee35fbdf3ff4fb
+#25 ...
+
+#21 [api stage-2 1/4] FROM mcr.microsoft.com/dotnet/aspnet:10.0@sha256:bfd912c83295ce66d4b706ebb8541b9f14259b0e76fbb88b2751f58ce2399d2e
+#21 extracting sha256:2134cabc5f328f9c3919aeef221f7171dbb93bbe2a41e7bc01281c2a6653d575 0.5s done
+#21 DONE 45.6s
+
+#25 [api build 1/8] FROM mcr.microsoft.com/dotnet/sdk:10.0@sha256:fe0fd4e93bd2fbb47c883b7a6369e5c8d3db8bf01cdc5981f6ee35fbdf3ff4fb
+#25 ...
+
+#21 [api stage-2 1/4] FROM mcr.microsoft.com/dotnet/aspnet:10.0@sha256:bfd912c83295ce66d4b706ebb8541b9f14259b0e76fbb88b2751f58ce2399d2e
+#21 extracting sha256:f4520a21f3bde37067edbd4fba642a137f671a83f10b2e526fa86c524b177345 0.1s done
+#21 extracting sha256:5234006b2751f6b28f7df63972191876bbe82d1fede1677791f7702569dfd8fc 1.4s done
+#21 extracting sha256:22d6c03b5fd089637da59148309ebf59e100aba4568f9c7a5bffef18f48b8083 0.1s done
+#21 DONE 47.1s
+
+#25 [api build 1/8] FROM mcr.microsoft.com/dotnet/sdk:10.0@sha256:fe0fd4e93bd2fbb47c883b7a6369e5c8d3db8bf01cdc5981f6ee35fbdf3ff4fb
+#25 ...
+
+#21 [api stage-2 1/4] FROM mcr.microsoft.com/dotnet/aspnet:10.0@sha256:bfd912c83295ce66d4b706ebb8541b9f14259b0e76fbb88b2751f58ce2399d2e
+#21 extracting sha256:fdbd9a0d3e999cfd510670f29092f7303d208d82fd4ed8d15f56691c1b28fa97 0.3s done
+#21 DONE 47.4s
+
+#25 [api build 1/8] FROM mcr.microsoft.com/dotnet/sdk:10.0@sha256:fe0fd4e93bd2fbb47c883b7a6369e5c8d3db8bf01cdc5981f6ee35fbdf3ff4fb
+#25 sha256:ed308b3f1c865e8137e77432f7b6a0215058eb6ab7f47b7c9740e76679a5411e 16.78MB / 197.32MB 15.5s
+#25 ...
+
+#26 [api stage-2 2/4] WORKDIR /app
+#26 DONE 0.5s
+
+#25 [api build 1/8] FROM mcr.microsoft.com/dotnet/sdk:10.0@sha256:fe0fd4e93bd2fbb47c883b7a6369e5c8d3db8bf01cdc5981f6ee35fbdf3ff4fb
+#25 sha256:67d9bba9ad22e4d10f39e0082c8589c0524d1190d56ead35f805d524f81b2c8d 14.68MB / 26.97MB 13.4s
+#25 sha256:67d9bba9ad22e4d10f39e0082c8589c0524d1190d56ead35f805d524f81b2c8d 16.78MB / 26.97MB 15.3s
+#25 sha256:67d9bba9ad22e4d10f39e0082c8589c0524d1190d56ead35f805d524f81b2c8d 18.87MB / 26.97MB 17.4s
+#25 sha256:ed308b3f1c865e8137e77432f7b6a0215058eb6ab7f47b7c9740e76679a5411e 24.12MB / 197.32MB 20.6s
+#25 sha256:67d9bba9ad22e4d10f39e0082c8589c0524d1190d56ead35f805d524f81b2c8d 20.97MB / 26.97MB 19.7s
+#25 ...
+
+#22 [api web 1/6] FROM docker.io/library/node:22-bookworm-slim@sha256:18052396bf1d0c6e0a8c58181b5c1457da19409efbd5032a3f4d86974e74d13c
+#22 sha256:0c4023204e5b4bcd551170279c40ff58285cc8ea87ddf9ff25cb3713e6ecda79 27.26MB / 49.90MB 53.3s
+#22 ...
+
+#25 [api build 1/8] FROM mcr.microsoft.com/dotnet/sdk:10.0@sha256:fe0fd4e93bd2fbb47c883b7a6369e5c8d3db8bf01cdc5981f6ee35fbdf3ff4fb
+#25 sha256:67d9bba9ad22e4d10f39e0082c8589c0524d1190d56ead35f805d524f81b2c8d 23.07MB / 26.97MB 21.6s
+#25 sha256:ed308b3f1c865e8137e77432f7b6a0215058eb6ab7f47b7c9740e76679a5411e 32.51MB / 197.32MB 25.7s
+#25 sha256:67d9bba9ad22e4d10f39e0082c8589c0524d1190d56ead35f805d524f81b2c8d 25.17MB / 26.97MB 23.4s
+#25 sha256:67d9bba9ad22e4d10f39e0082c8589c0524d1190d56ead35f805d524f81b2c8d 26.97MB / 26.97MB 24.3s done
+#25 extracting sha256:67d9bba9ad22e4d10f39e0082c8589c0524d1190d56ead35f805d524f81b2c8d
+#25 extracting sha256:67d9bba9ad22e4d10f39e0082c8589c0524d1190d56ead35f805d524f81b2c8d 1.2s done
+#25 sha256:ed308b3f1c865e8137e77432f7b6a0215058eb6ab7f47b7c9740e76679a5411e 42.99MB / 197.32MB 29.1s
+#25 sha256:ed308b3f1c865e8137e77432f7b6a0215058eb6ab7f47b7c9740e76679a5411e 53.48MB / 197.32MB 32.3s
+#25 ...
+
+#22 [api web 1/6] FROM docker.io/library/node:22-bookworm-slim@sha256:18052396bf1d0c6e0a8c58181b5c1457da19409efbd5032a3f4d86974e74d13c
+#22 sha256:0c4023204e5b4bcd551170279c40ff58285cc8ea87ddf9ff25cb3713e6ecda79 38.80MB / 49.90MB 63.6s
+#22 ...
+
+#25 [api build 1/8] FROM mcr.microsoft.com/dotnet/sdk:10.0@sha256:fe0fd4e93bd2fbb47c883b7a6369e5c8d3db8bf01cdc5981f6ee35fbdf3ff4fb
+#25 sha256:ed308b3f1c865e8137e77432f7b6a0215058eb6ab7f47b7c9740e76679a5411e 63.96MB / 197.32MB 36.0s
+#25 sha256:ed308b3f1c865e8137e77432f7b6a0215058eb6ab7f47b7c9740e76679a5411e 74.45MB / 197.32MB 39.7s
+#25 ...
+
+#22 [api web 1/6] FROM docker.io/library/node:22-bookworm-slim@sha256:18052396bf1d0c6e0a8c58181b5c1457da19409efbd5032a3f4d86974e74d13c
+#22 sha256:0c4023204e5b4bcd551170279c40ff58285cc8ea87ddf9ff25cb3713e6ecda79 46.14MB / 49.90MB 73.7s
+#22 ...
+
+#25 [api build 1/8] FROM mcr.microsoft.com/dotnet/sdk:10.0@sha256:fe0fd4e93bd2fbb47c883b7a6369e5c8d3db8bf01cdc5981f6ee35fbdf3ff4fb
+#25 sha256:ed308b3f1c865e8137e77432f7b6a0215058eb6ab7f47b7c9740e76679a5411e 84.93MB / 197.32MB 44.7s
+#25 ...
+
+#22 [api web 1/6] FROM docker.io/library/node:22-bookworm-slim@sha256:18052396bf1d0c6e0a8c58181b5c1457da19409efbd5032a3f4d86974e74d13c
+#22 sha256:0c4023204e5b4bcd551170279c40ff58285cc8ea87ddf9ff25cb3713e6ecda79 49.90MB / 49.90MB 76.5s done
+#22 extracting sha256:0c4023204e5b4bcd551170279c40ff58285cc8ea87ddf9ff25cb3713e6ecda79 2.0s done
+#22 DONE 79.8s
+
+#22 [api web 1/6] FROM docker.io/library/node:22-bookworm-slim@sha256:18052396bf1d0c6e0a8c58181b5c1457da19409efbd5032a3f4d86974e74d13c
+#22 extracting sha256:aa4e8910862263c3bad50c754fb555bbbb7661c41e35ba703ae082ec6749c175 0.1s done
+#22 DONE 80.0s
+
+#25 [api build 1/8] FROM mcr.microsoft.com/dotnet/sdk:10.0@sha256:fe0fd4e93bd2fbb47c883b7a6369e5c8d3db8bf01cdc5981f6ee35fbdf3ff4fb
+#25 sha256:ed308b3f1c865e8137e77432f7b6a0215058eb6ab7f47b7c9740e76679a5411e 95.42MB / 197.32MB 47.7s
+#25 ...
+
+#22 [api web 1/6] FROM docker.io/library/node:22-bookworm-slim@sha256:18052396bf1d0c6e0a8c58181b5c1457da19409efbd5032a3f4d86974e74d13c
+#22 extracting sha256:cce880541c96dc730321857781d113e3c75c0cb383f9510300922762006d734e 0.1s done
+#22 DONE 80.1s
+
+#25 [api build 1/8] FROM mcr.microsoft.com/dotnet/sdk:10.0@sha256:fe0fd4e93bd2fbb47c883b7a6369e5c8d3db8bf01cdc5981f6ee35fbdf3ff4fb
+#25 ...
+
+#27 [api web 2/6] WORKDIR /src/web
+#27 DONE 1.4s
+
+#25 [api build 1/8] FROM mcr.microsoft.com/dotnet/sdk:10.0@sha256:fe0fd4e93bd2fbb47c883b7a6369e5c8d3db8bf01cdc5981f6ee35fbdf3ff4fb
+#25 ...
+
+#28 [api web 3/6] COPY web/package.json web/package-lock.json ./
+#28 DONE 0.3s
+
+#25 [api build 1/8] FROM mcr.microsoft.com/dotnet/sdk:10.0@sha256:fe0fd4e93bd2fbb47c883b7a6369e5c8d3db8bf01cdc5981f6ee35fbdf3ff4fb
+#25 sha256:ed308b3f1c865e8137e77432f7b6a0215058eb6ab7f47b7c9740e76679a5411e 105.91MB / 197.32MB 49.8s
+#25 sha256:ed308b3f1c865e8137e77432f7b6a0215058eb6ab7f47b7c9740e76679a5411e 116.39MB / 197.32MB 51.6s
+#25 sha256:ed308b3f1c865e8137e77432f7b6a0215058eb6ab7f47b7c9740e76679a5411e 122.68MB / 197.32MB 56.7s
+#25 ...
+
+#29 [api web 4/6] RUN npm ci --no-audit --no-fund
+#29 ...
+
+#25 [api build 1/8] FROM mcr.microsoft.com/dotnet/sdk:10.0@sha256:fe0fd4e93bd2fbb47c883b7a6369e5c8d3db8bf01cdc5981f6ee35fbdf3ff4fb
+#25 sha256:ed308b3f1c865e8137e77432f7b6a0215058eb6ab7f47b7c9740e76679a5411e 130.02MB / 197.32MB 61.8s
+#25 sha256:ed308b3f1c865e8137e77432f7b6a0215058eb6ab7f47b7c9740e76679a5411e 131.07MB / 197.32MB 66.9s
+#25 sha256:ed308b3f1c865e8137e77432f7b6a0215058eb6ab7f47b7c9740e76679a5411e 131.07MB / 197.32MB 72.0s
+#25 sha256:ed308b3f1c865e8137e77432f7b6a0215058eb6ab7f47b7c9740e76679a5411e 132.12MB / 197.32MB 77.1s
+#25 sha256:ed308b3f1c865e8137e77432f7b6a0215058eb6ab7f47b7c9740e76679a5411e 139.46MB / 197.32MB 82.2s
+#25 sha256:ed308b3f1c865e8137e77432f7b6a0215058eb6ab7f47b7c9740e76679a5411e 149.95MB / 197.32MB 84.7s
+#25 ...
+
+#29 [api web 4/6] RUN npm ci --no-audit --no-fund
+#29 36.94 
+#29 36.94 added 602 packages in 36s
+#29 36.95 npm notice
+#29 36.95 npm notice New major version of npm available! 10.9.9 -> 12.2.2
+#29 36.95 npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.2
+#29 36.95 npm notice To update run: npm install -g npm@12.2.2
+#29 36.95 npm notice
+#29 DONE 37.4s
+
+#30 [api web 5/6] COPY web/ ./
+#30 DONE 0.6s
+
+#25 [api build 1/8] FROM mcr.microsoft.com/dotnet/sdk:10.0@sha256:fe0fd4e93bd2fbb47c883b7a6369e5c8d3db8bf01cdc5981f6ee35fbdf3ff4fb
+#25 sha256:ed308b3f1c865e8137e77432f7b6a0215058eb6ab7f47b7c9740e76679a5411e 161.48MB / 197.32MB 87.4s
+#25 sha256:ed308b3f1c865e8137e77432f7b6a0215058eb6ab7f47b7c9740e76679a5411e 171.97MB / 197.32MB 89.7s
+#25 sha256:ed308b3f1c865e8137e77432f7b6a0215058eb6ab7f47b7c9740e76679a5411e 182.45MB / 197.32MB 91.3s
+#25 sha256:ed308b3f1c865e8137e77432f7b6a0215058eb6ab7f47b7c9740e76679a5411e 192.94MB / 197.32MB 93.0s
+#25 sha256:ed308b3f1c865e8137e77432f7b6a0215058eb6ab7f47b7c9740e76679a5411e 197.32MB / 197.32MB 94.0s done
+#25 extracting sha256:ed308b3f1c865e8137e77432f7b6a0215058eb6ab7f47b7c9740e76679a5411e
+#25 ...
+
+#31 [api web 6/6] RUN npx ng build
+#31 1.632 ❯ Building...
+#31 19.54 ✔ Building...
+#31 19.54 Initial chunk files | Names                        |  Raw size | Estimated transfer size
+#31 19.54 chunk-66I4FOTY.js   | -                            | 236.53 kB |                67.06 kB
+#31 19.54 chunk-MSJOO2TO.js   | -                            | 121.99 kB |                27.77 kB
+#31 19.54 chunk-Y7LJVEFY.js   | -                            |  74.98 kB |                18.73 kB
+#31 19.54 styles-J3R36MIP.css | styles                       |  57.12 kB |                 8.98 kB
+#31 19.54 chunk-FXIOWTZ5.js   | -                            |  26.10 kB |                 6.25 kB
+#31 19.54 chunk-YWO4C7EO.js   | -                            |  22.80 kB |                 4.60 kB
+#31 19.54 main-EDSXTJOU.js    | main                         |  16.48 kB |                 5.35 kB
+#31 19.54 chunk-EZA6FX6H.js   | -                            |   6.96 kB |                 1.61 kB
+#31 19.54 chunk-2KSWVTTC.js   | -                            |  90 bytes |                90 bytes
+#31 19.54 
+#31 19.54                     | Initial total                | 563.04 kB |               140.44 kB
+#31 19.54 
+#31 19.54 Lazy chunk files    | Names                        |  Raw size | Estimated transfer size
+#31 19.54 chunk-UM6MFTX7.js   | control-editor-page          | 148.82 kB |                26.95 kB
+#31 19.54 chunk-FIDQDOLN.js   | -                            | 112.30 kB |                20.67 kB
+#31 19.54 chunk-TDKVXBQG.js   | -                            |  48.05 kB |                 8.26 kB
+#31 19.54 chunk-P66X2HTL.js   | suggestions-dialog-component |  37.99 kB |                 7.42 kB
+#31 19.54 chunk-MV6XFQX2.js   | run-results-page             |  31.85 kB |                 8.62 kB
+#31 19.54 chunk-D3J3CNIZ.js   | controls-list-page           |  28.44 kB |                 8.20 kB
+#31 19.54 chunk-HOWM5WBW.js   | -                            |  23.06 kB |                 6.43 kB
+#31 19.54 chunk-FGMMRJV2.js   | -                            |   7.79 kB |                 2.85 kB
+#31 19.54 chunk-U4YSX6XD.js   | -                            |   5.99 kB |                 2.05 kB
+#31 19.54 chunk-27XKF54K.js   | -                            |   1.17 kB |               600 bytes
+#31 19.54 chunk-6E4NH235.js   | -                            | 825 bytes |               825 bytes
+#31 19.54 chunk-JDAS4MMW.js   | -                            | 715 bytes |               715 bytes
+#31 19.54 chunk-HJFYUOGT.js   | -                            | 714 bytes |               714 bytes
+#31 19.54 chunk-TDY5FUSI.js   | -                            | 386 bytes |               386 bytes
+#31 19.54 chunk-3M2QZOQG.js   | -                            | 283 bytes |               283 bytes
+#31 19.54 ...and 1 more lazy chunks files. Use "--verbose" to show all the files.
+#31 19.54 
+#31 19.54 Application bundle generation complete. [17.728 seconds] - 2026-11-11T20:37:03.508Z
+#31 19.54 
+#31 19.55 Output location: /src/web/dist/web
+#31 19.55 
+#31 DONE 21.4s
+
+#25 [api build 1/8] FROM mcr.microsoft.com/dotnet/sdk:10.0@sha256:fe0fd4e93bd2fbb47c883b7a6369e5c8d3db8bf01cdc5981f6ee35fbdf3ff4fb
+#25 extracting sha256:ed308b3f1c865e8137e77432f7b6a0215058eb6ab7f47b7c9740e76679a5411e 15.8s done
+#25 DONE 142.1s
+
+#25 [api build 1/8] FROM mcr.microsoft.com/dotnet/sdk:10.0@sha256:fe0fd4e93bd2fbb47c883b7a6369e5c8d3db8bf01cdc5981f6ee35fbdf3ff4fb
+#25 extracting sha256:fea22b9d2d76fc11091e3d68a0c1c7a1b15a907c0b56ae159d74ec956cba6ea7
+#25 extracting sha256:fea22b9d2d76fc11091e3d68a0c1c7a1b15a907c0b56ae159d74ec956cba6ea7 0.2s done
+#25 DONE 142.3s
+
+#25 [api build 1/8] FROM mcr.microsoft.com/dotnet/sdk:10.0@sha256:fe0fd4e93bd2fbb47c883b7a6369e5c8d3db8bf01cdc5981f6ee35fbdf3ff4fb
+#25 extracting sha256:7cf7cfa94d9067a9f9f6fc01f4f78dc53560f51f01cb14074457d3e830f9fc46 0.1s done
+#25 extracting sha256:12074025c48415b1e438e97bb114451bfe2fd2a9aec5c0c991f7d192166c943e
+#25 extracting sha256:12074025c48415b1e438e97bb114451bfe2fd2a9aec5c0c991f7d192166c943e 0.5s done
+#25 DONE 142.9s
+
+#32 [api build 2/8] WORKDIR /src
+#32 DONE 1.1s
+
+#33 [api build 3/8] COPY api/Directory.Build.props api/Directory.Packages.props api/
+#33 DONE 0.2s
+
+#34 [api build 4/8] COPY api/src/DataControls.Api/DataControls.Api.csproj api/src/DataControls.Api/
+#34 DONE 0.2s
+
+#35 [api build 5/8] RUN dotnet restore api/src/DataControls.Api/DataControls.Api.csproj
+#35 1.174   Determining projects to restore...
+#35 22.56   Restored /src/api/src/DataControls.Api/DataControls.Api.csproj (in 21 sec).
+#35 DONE 23.6s
+
+#36 [api build 6/8] COPY contracts/control-definition.schema.json contracts/
+#36 DONE 0.2s
+
+#37 [api build 7/8] COPY api/src/ api/src/
+#37 DONE 0.4s
+
+#38 [api build 8/8] RUN dotnet publish api/src/DataControls.Api/DataControls.Api.csproj -c Release --no-restore -o /out
+#38 4.888   DataControls.Api -> /src/api/src/DataControls.Api/bin/Release/net10.0/DataControls.Api.dll
+#38 6.084   DataControls.Api -> /out/
+#38 DONE 6.2s
+
+#39 [api stage-2 3/4] COPY --from=build /out ./
+#39 DONE 0.8s
+
+#40 [api stage-2 4/4] COPY --from=web /src/web/dist/web/browser ./wwwroot
+#40 DONE 0.2s
+
+#41 [api] exporting to image
+#41 exporting layers
+#41 exporting layers 3.4s done
+#41 exporting manifest sha256:d4a8951edca642e19d62f2771ab078d60184aa668f3598143da02baf831ccc8a 0.1s done
+#41 exporting config sha256:f378b012cba0cff3ee2494e050775608e3da16a97cb4d3924a586dbd7c07bfd3 0.1s done
+#41 exporting attestation manifest sha256:3f85e31ce77469ef284eca3c0b0b3544a25873e112b34940d0a3858d832974e4 0.1s done
+#41 exporting manifest list sha256:ddf037798714e2a3205ca922c366cb372813107fac2cb41ac02aecdcd9b3d2c6
+#41 exporting manifest list sha256:ddf037798714e2a3205ca922c366cb372813107fac2cb41ac02aecdcd9b3d2c6 0.1s done
+#41 naming to docker.io/library/data-controls-api:latest done
+#41 unpacking to docker.io/library/data-controls-api:latest
+#41 unpacking to docker.io/library/data-controls-api:latest 3.4s done
+#41 DONE 7.1s
+
+#42 [api] resolving provenance for metadata file
+#42 DONE 0.0s
+ Image data-controls-engine Built 
+ Image data-controls-api Built 
+exit=0

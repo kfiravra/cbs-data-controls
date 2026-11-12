@@ -1,7 +1,11 @@
-# SQL Server for Data Controls and the one-shot container that initialises it.
-#   docker compose up -d db && scripts/db-init.sh
-# The project name is fixed, so compose run from any checkout addresses the same container.
-# The engine and api services arrive with the dc-delivery task.
+# The whole system: SQL Server, the one-shot container that initialises it, the engine, the api (which also
+# serves the client) and the one-shot loader of the six example controls.
+#   scripts/start.sh             creates .env on the first start, builds, starts and waits (start.cmd on Windows)
+#   docker compose up -d db && scripts/db-init.sh     the database alone, for development
+# The project name is fixed, so compose run from any checkout addresses the same containers.
+# Each service receives only its own settings, by name: no env_file, and .env is in no image. The engine never
+# sees the sa or dq_app password, and the api never sees the sa or dq_engine_ro password.
+# No service restarts on its own: an engine that refuses to start on a glossary mismatch stays visibly stopped.
 name: data-controls
 
 services:
@@ -16,12 +20,16 @@ services:
       MSSQL_COLLATION: Hebrew_CI_AS
       MSSQL_PID: Developer
     ports:
-      - "127.0.0.1:${DB_PORT:-1433}:1433"
+      # 14330 by default, so a SQL Server of the host keeps its 1433. SSMS: 127.0.0.1,14330
+      - "127.0.0.1:${DB_PORT:-14330}:1433"
     volumes:
       - db-data:/var/opt/mssql
     healthcheck:
-      # $$ defers expansion to the container's shell, where the password lives.
-      test: ["CMD-SHELL", "SQLCMDPASSWORD=\"$$MSSQL_SA_PASSWORD\" /opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -l 3 -b -Q 'SELECT 1' -o /dev/null"]
+      # $$ defers expansion to the container's shell, where the password lives. Healthy means more than an
+      # answer: on a new volume the server answers for a moment under its default collation and then changes
+      # to MSSQL_COLLATION, and a database created inside that moment is caught by the change (db-init then
+      # fails on its collation check). So the check waits for the server collation itself.
+      test: ["CMD-SHELL", "SQLCMDPASSWORD=\"$$MSSQL_SA_PASSWORD\" /opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -l 3 -b -Q \"IF CONVERT(NVARCHAR(128), SERVERPROPERTY('Collation')) <> N'$$MSSQL_COLLATION' RAISERROR('the server collation is not set yet', 16, 1)\" -o /dev/null"]
       interval: 5s
       timeout: 5s
       retries: 20
@@ -46,6 +54,85 @@ services:
     # Arguments of `docker compose run --rm db-init ...` (such as --reset) are appended to the script.
     entrypoint: ["bash", "/work/scripts/db-init.sh"]
     command: []
+    restart: "no"
+
+  engine:
+    build:
+      context: .
+      dockerfile: engine/Dockerfile
+    depends_on:
+      # Initialised, not merely healthy: on a half-built schema the engine reports a glossary mismatch and exits.
+      db-init:
+        condition: service_completed_successfully
+    environment:
+      # The container's own address of the database, never the host's ENGINE_DB_HOST and DB_PORT of .env.
+      ENGINE_DB_HOST: db
+      ENGINE_DB_PORT: "1433"
+      DQ_ENGINE_RO_PASSWORD: ${DQ_ENGINE_RO_PASSWORD:?copy .env.example to .env (cp .env.example .env) and set it}
+      # An empty value means the engine's default. The database name is not passed: sql/ and the api fix it.
+      ENGINE_ROW_CAP: ${ENGINE_ROW_CAP:-}
+      ENGINE_QUERY_TIMEOUT_SECONDS: ${ENGINE_QUERY_TIMEOUT_SECONDS:-}
+      ENGINE_STARTUP_DB_WAIT_SECONDS: ${ENGINE_STARTUP_DB_WAIT_SECONDS:-}
+      ENGINE_TIME_ZONE: ${ENGINE_TIME_ZONE:-}
+      ENGINE_DEBUG_COMPILE: ${ENGINE_DEBUG_COMPILE:-}
+      ENGINE_LOG_LEVEL: ${ENGINE_LOG_LEVEL:-}
+      ENGINE_SUGGEST_MAX: ${ENGINE_SUGGEST_MAX:-}
+    # No host port: the engine has no sign-in, and the api reaches it by its service name.
+    healthcheck:
+      # The image has no curl. /health answers 200 only when the database answers and the glossary fits it.
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=4)"]
+      interval: 5s
+      timeout: 6s
+      retries: 12
+      # Longer than the engine's own wait for the database (30 seconds by default).
+      start_period: 45s
+    restart: "no"
+
+  api:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    depends_on:
+      engine:
+        condition: service_healthy
+    environment:
+      # The container's own address of the database, never the host's DB_PORT of .env.
+      DB_HOST: db
+      DB_PORT: "1433"
+      DQ_APP_PASSWORD: ${DQ_APP_PASSWORD:?copy .env.example to .env (cp .env.example .env) and set it}
+      Engine__BaseUrl: http://engine:8000
+      # One knob for both services: the api sends its own row cap and resolves "today" itself, so it follows
+      # the engine's two settings of .env. The attempt timeout must stay above two statement timeouts.
+      Runs__RowCap: ${ENGINE_ROW_CAP:-5000}
+      Runs__TimeZone: ${ENGINE_TIME_ZONE:-Asia/Jerusalem}
+      Engine__AttemptTimeout: ${Engine__AttemptTimeout:-00:01:15}
+    ports:
+      # The app has no sign-in, so it is published on this machine only; APP_BIND=0.0.0.0 opens it to the network.
+      - "${APP_BIND:-127.0.0.1}:${APP_PORT:-5000}:8080"
+    healthcheck:
+      # The image has no curl or wget. /api/v1/health is always 200; its body says whether the database and the
+      # engine answer, so the check reads the body.
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/8080 && printf 'GET /api/v1/health HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n' >&3 && grep -q '\"status\":\"ok\"' <&3"]
+      interval: 5s
+      timeout: 6s
+      retries: 12
+      start_period: 20s
+    restart: "no"
+
+  # Posts the six controls of contracts/examples through the api, once: a control whose name already exists is
+  # left alone, and nothing is run. LOAD_EXAMPLES=false in .env turns it off.
+  examples:
+    image: python:3.12-slim-trixie
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      LOAD_EXAMPLES: ${LOAD_EXAMPLES:-true}
+    volumes:
+      - ./scripts/examples.py:/work/scripts/examples.py:ro
+      - ./contracts/examples:/work/contracts/examples:ro
+    working_dir: /work
+    command: ["python", "scripts/examples.py", "load", "--base-url", "http://api:8080"]
     restart: "no"
 
 volumes:

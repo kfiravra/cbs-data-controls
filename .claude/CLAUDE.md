@@ -10,8 +10,8 @@ setup, task order and parallel rules: [dev/briefs/cbs-kickoff.md](../dev/briefs/
 `web/` Angular :4200 → `api/` .NET 10 :5000 → `engine/` FastAPI :8000 → SQL Server :1433 (schema `hr` holds the
 organization data, schema `dq` the controls store). `contracts/` (definition schema, glossary, examples, `api.md`,
 `errors.md`) is the only channel between the services: no service imports another's code, and no SQL text crosses
-a boundary. `sql/` creates and seeds the database; `scripts/db-init.sh` and `scripts/db-check.sh` drive it. Only
-the api writes, and only to `dq`; only the engine reads `hr`.
+a boundary. `sql/` creates and seeds the database (`scripts/db-init.sh`, `scripts/db-check.sh`). Only the api writes,
+and only to `dq`; only the engine reads `hr`. `docker-compose.yml` holds the whole stack; `scripts/start.sh` starts it.
 
 ## Verify (`/check` picks the right subset for the parts you touched)
 
@@ -38,9 +38,10 @@ the api writes, and only to `dq`; only the engine reads `hr`.
   sits in the wrong service.
 - `dir="rtl"` for Hebrew, the default language, and logical CSS only (`margin-inline-start`, `inset-inline-end`,
   `text-align: start`); a physical `left` or `right` is an RTL bug.
-- English-only code, identifiers, logs, comments and tests. Hebrew text lives only in `web/src/assets/i18n/he.json`
-  and `contracts/glossary.json`; seed values in `sql/` and control names in `contracts/examples/` are data and may be
-  Hebrew. Errors cross a service boundary as codes and parameters; sentences and reasons come rendered by the engine.
+- English-only code, identifiers, logs, comments and tests. Hebrew lives only in `web/src/assets/i18n/he.json` and
+  `contracts/glossary.json`, in data (seed values in `sql/`, names in `contracts/examples/`), in the Hebrew
+  documents of `submission-he/`, and where a document quotes the engine's output (`docs/examples.md` is generated).
+  Errors cross a service boundary as codes and parameters; sentences and reasons come rendered by the engine.
 - A contract change is one commit to `contracts/` on main plus one line pasted into the other sessions; nothing
   else coordinates the worktrees.
 - Port 8000 may be held by another project's container on this machine (`docker ps`); ask before stopping it.
@@ -91,8 +92,8 @@ the api writes, and only to `dq`; only the engine reads `hr`.
 | Error codes, reason keys, the matched, NULL and rendering rules | [contracts/errors.md](../contracts/errors.md) |
 | Scripts, logins, planted and boundary rows per example | [sql/README.md](../sql/README.md) |
 | Visual direction, tokens, screens | [docs/design.md](../docs/design.md) |
-
-As they land, the §17 documents get rows here.
+| The definition JSON; the glossary and how to extend it; the six examples | [control-definition.md](../docs/control-definition.md), [glossary.md](../docs/glossary.md), [examples.md](../docs/examples.md) |
+| The short architecture, limits and open items, AI usage, the Hebrew documents | [summarize-architecture.md](../docs/summarize-architecture.md), [assumptions…](../docs/assumptions-limitations-extensions.md), [ai-usage.md](../docs/ai-usage.md), [submission-he/README.he.md](../submission-he/README.he.md) |
 
 ## Skills
 

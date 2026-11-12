@@ -27,7 +27,7 @@ is the service that answers with the code: `engine`, `api`, `both`, or `client` 
 
 | Code | Status | From | Run error | Params | Meaning |
 |---|---|---|---|---|---|
-| `REQUEST_INVALID` | 400 (413 for a body over the size limit, 415 for a body that is not JSON) | both | no | none; the problem's `errors` lists the faults (Request error codes) | The request is malformed: a member missing or of the wrong form, a value out of range, a bad query parameter |
+| `REQUEST_INVALID` | 400 (413 for a body over the size limit; 415 for a body whose media type is not JSON, and in the engine also for a JSON body that does not parse: api.md, Common rules) | both | no | none; the problem's `errors` lists the faults (Request error codes) | The request is malformed: a member missing or of the wrong form, a value out of range, a bad query parameter |
 | `DEFINITION_INVALID` | 422 | both | no | none, or `index` on `POST /api/v1/suggestions/accept`; the problem's `errors` lists the definition errors | The definition fails the schema or the glossary |
 | `CONTROL_NOT_FOUND` | 404 | api | no | `id` | No control has this id |
 | `VERSION_NOT_FOUND` | 404 | api | no | `id`, `version` | The control exists and has no such version |
@@ -228,10 +228,24 @@ comparable, at that field's reference. The two fields must have the same type: `
 1. `UNSUPPORTED_SCHEMA_VERSION`, before the schema runs, in both services. When it applies it is the only error. A
    definition without a `schemaVersion` goes to the schema. A `definition` that is not a JSON object never gets
    here: the request is malformed (400 `REQUEST_INVALID` with `MALFORMED`; api.md, Definitions).
-2. The schema layer: every `SCHEMA_VIOLATION`. Any schema error ends validation; the semantic layer runs only on a
+2. The oversize check (the engine only). A tree more than eight times past a limit of the glossary is not
+   checked further: deeper than 8 × `limits.maxDepth` (32 levels), more than 8 × `limits.maxConditions` nodes
+   (240), or more than 8 × `limits.maxTotalValues` literal values (4,000), each counted as in Rules. The answer
+   is that limit's own error and nothing else: `TOO_DEEP`, `TOO_MANY_CONDITIONS`, or `TOO_MANY_VALUES` with
+   `limit: "total"`, at `/where` with `max` and `actual`; one per limit passed, in the order of the code table.
+   It is decided before the schema, so such a tree gets no `SCHEMA_VIOLATION` even where its shape is wrong as
+   well (300 conditions in one group answer `TOO_MANY_CONDITIONS`, 40 answer the schema's `maxItems`). The reason
+   is cost: the layers below spend time on every node, and one request must not buy seconds of it. A tree within
+   eight times a limit takes the ordinary path, and the same three codes then come from the semantic layer.
+3. The schema layer: every `SCHEMA_VIOLATION`. Any schema error ends validation; the semantic layer runs only on a
    schema-valid definition. The api answers this layer itself and does not call the engine for a definition that
-   fails it.
-3. The semantic layer (the engine only): everything it finds. A check that needs a key the validator could not
+   fails it. The api's layer has its own bound: it reads a definition of at most 240 nodes (objects and arrays
+   that are items of an array) and 10,000 JSON values, and passes a larger one to the engine unjudged, where the
+   oversize check or the engine's schema layer answers. Between the two bounds the services can differ: 30 lists
+   of 134 values are 30 `SCHEMA_VIOLATION`s from the api and one `TOO_MANY_VALUES` from the engine asked
+   directly. A tree deeper than 30 groups never reaches the engine through the api: its body does not parse
+   there (api.md, Common rules).
+4. The semantic layer (the engine only): everything it finds. A check that needs a key the validator could not
    resolve (an unknown root entity, relationship or field) is skipped; every other check runs.
 
 Errors are listed in document order: the order in which their paths appear in the definition's JSON text, an object

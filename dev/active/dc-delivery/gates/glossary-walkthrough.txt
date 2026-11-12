@@ -1,0 +1,27 @@
+# The worked example of docs/glossary.md, carried out once as written
+
+2026-11-11, on a scratch clone of feat/delivery (b35d72a) with the development .env; its engine from source on
+127.0.0.1:8010 and its published api on 127.0.0.1:5010, against the shared database (read only: nothing was
+saved, the run went to the engine's /run directly). Nothing of the scratch copy is committed.
+
+step 1-2  relationship `department.manager` appended last to contracts/glossary.json; glossaryVersion 1.1.0
+step 3    uv run scripts/contracts-check.py
+          contracts-check: ok, 5 checks passed (schema, glossary, agreement, examples, invalid fixtures)
+step 4    engine restarted from source; GET /health
+          {"status":"ok","database":"ok","glossaryVersion":"1.1.0","engineVersion":"0.1.0"}
+step 5    POST /api/v1/controls/validate with the definition of the document
+          before (the running stack, glossary 1.0.0): 422 DEFINITION_INVALID,
+            UNKNOWN_RELATIONSHIP at /where/children/0/left, nodeId c1, params.relationship department.manager
+          after (the scratch stack): 200, valid true, one condition, and the sentence and its three parts
+            exactly as the document prints them
+          engine POST /run on 2026-11-01: totalCount 3, keys 104, 203, 403 (as the document says)
+step 6    GET /api/v1/glossary on the scratch api lists department.manager last, version 1.1.0.
+          The editor, new control, "what to check" = department, the field picker (Chromium, 1440):
+            running stack: groups for the department and for its ministry; 6 options
+            scratch stack: the same, plus a group for the manager and a two-hop group for the manager's
+            department; 22 options
+step 7    POST /api/v1/suggestions (max 20): 7 items on the running stack, 8 on the scratch stack; the new
+          one is rooted at department (active departments whose manager is inactive) and flags 2 records
+
+Not carried out: the compose form of step 4 (`docker compose up -d --build engine`), because it would rebuild
+the running stack's image from the scratch glossary; and the control rooted at `employee` of step 6.

@@ -19,8 +19,13 @@ the complete list of what is served under `/api/v1`.
 - **Format.** JSON in UTF-8 with camelCase member names. A request sends `Content-Type: application/json`; a success
   answers `application/json`, an error `application/problem+json`. Glossary keys, node ids and record keys are data
   and keep their own spelling (`display` is keyed by field keys such as `first_name`). A body over the service's
-  size limit (1 MB in the api) answers 413 and a body that is not JSON 415, each as a `Problem` with the code
-  `REQUEST_INVALID` and no `errors`.
+  size limit (1 MB in the api) answers 413, and a body whose media type is not JSON (`Content-Type` absent, or
+  neither `application/json` nor a `+json` type) answers 415, each as a `Problem` with the code `REQUEST_INVALID`
+  and no `errors`. A body that declares JSON and does not parse (broken syntax, bytes that are not UTF-8, or
+  nesting deeper than 64 levels, which is a definition of 31 nested groups) is a malformed request in the api:
+  400 `REQUEST_INVALID` with one `MALFORMED` at the path `""`. The engine does not tell that case from a wrong
+  media type and answers it 415 with no `errors`; its only caller is the api, which always sends JSON that
+  parses. A body that parses and is not an object is 400 with `MALFORMED` at `""` in both services.
 - **Notation.** In the shape tables `name?` marks a member that may be absent: a response leaves it out when it has
   no value and never sends it as null. `T or null` marks a member that is always present. In a request an optional
   member may be absent or null, and both mean "not given". `date` is a `YYYY-MM-DD` string, `timestamp` an ISO 8601

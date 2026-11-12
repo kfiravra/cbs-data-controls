@@ -1,6 +1,7 @@
 dev/**/screenshots/
 dev/active/design/
 .env
+.env.new.*
 **/.venv/
 **/node_modules/
 **/bin/
