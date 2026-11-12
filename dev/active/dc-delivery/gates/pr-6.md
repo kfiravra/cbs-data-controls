@@ -1,6 +1,6 @@
 # PR #6: feat(delivery): one-command start, the examples loader and the submission documents
 
-State: OPEN · opened 2026-11-12 · branch `feat/delivery` into `main` · https://github.com/kfiravra/cbs-data-controls/pull/6 · body revised 2026-11-12 09:31 after Kfir's decisions
+State: MERGED 2026-11-12 17:41 as the squash commit `c1467de` on main (head `5b2cafb`, the branch kept) · opened 2026-11-12 · branch `feat/delivery` into `main` · https://github.com/kfiravra/cbs-data-controls/pull/6 · body revised 2026-11-12 09:31 after Kfir's decisions
 
 The body:
 

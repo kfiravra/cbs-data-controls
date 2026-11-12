@@ -366,9 +366,12 @@ Commit: `docs: readme, examples, architecture as built, hebrew cover and ai usag
 - [x] **G7 Kfir reads** `docs/ai-usage.md`, `submission-he/README.he.md` and `submission-he/ai-usage.he.md` (they
       speak in his name) and the first screen of the README. (Done 2026-11-12: his word, "I finished reading the
       Hebrew documents (G7 is done)"; he then revised the Hebrew documents by hand, Log 14:21.) The Log says what he changed or rejected, in his words where he gave them.
-- [ ] **G8** `/check all --tests`, then `/ship dc-delivery`; the PR and the merge on Kfir's word.
-- [ ] **G9 After the merge**, each on Kfir's word: tag `v1.0.0`; a fresh `git clone` from GitHub with
-      `scripts/start.sh` as the last sanity check; the graders as collaborators.
+- [x] **G8** `/check all --tests`, then `/ship dc-delivery`; the PR and the merge on Kfir's word. (Done
+      2026-11-12: `gates/final.txt`; PR #6 squash-merged as `c1467de`, the branch kept.)
+- [x] **G9 After the merge**, each on Kfir's word: tag `v1.0.0`; a fresh `git clone` from GitHub with
+      `scripts/start.sh` as the last sanity check; the graders as collaborators. (Done 2026-11-12:
+      `gates/G9-fresh-clone.txt`; the tag is on the commit that records it. No collaborators: the repository is
+      public, Kfir's word.)
 
 ## Design
 

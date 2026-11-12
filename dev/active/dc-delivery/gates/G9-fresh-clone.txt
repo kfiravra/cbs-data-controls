@@ -1,0 +1,71 @@
+# G9: the last sanity check, a fresh clone of main from GitHub, 2026-11-12 17:46
+# After the squash merge of PR #6 (c1467de on main). Run the way G1 was: the development stack, its database
+# volume and the two built images removed first, the clone in a new empty folder, nothing copied into it.
+
+$ docker compose down -v --rmi local     (main tree, 17:45: containers, the volume db-data and both built images removed)
+
+$ git clone https://github.com/kfiravra/cbs-data-controls.git dc-clean && cd dc-clean
+c1467de feat(delivery): one-command start, the examples loader and the submission documents (#6)
+branch main; 0 modified files; no .env before the start
+
+$ scripts/start.sh     (exit 0 in 66 s; base images and build cache present, so this is not a first-pull time)
+start: waiting for the app
+
+Data Controls is running.
+
+  The app            http://localhost:5000
+  The api's pages    http://localhost:5000/api/docs
+  The database       127.0.0.1,14330 (SQL Server; the logins and their passwords are in .env)
+
+  Stop it            docker compose stop        (docker compose start brings it back)
+  Remove it          docker compose down        (the data stays in its volume)
+  Wipe the data too  docker compose down -v
+
+$ docker compose ps -a
+api	Up 18 seconds (healthy)
+db	Up 59 seconds (healthy)
+db-init	Exited (0) 24 seconds ago
+engine	Up 23 seconds (healthy)
+examples	Exited (0) 10 seconds ago
+
+$ docker compose logs examples
+LOAD active-in-inactive-department: control 1 created
+LOAD department-without-active-employees: control 2 created
+LOAD inactive-ministry-salary-out-of-range: control 3 created
+LOAD minor-high-salary: control 4 created
+LOAD missing-mandatory-data: control 5 created
+LOAD termination-before-hire: control 6 created
+
+$ stat -c "%a %n" .env
+600 .env
+
+$ curl -s http://localhost:5000/api/v1/health
+{"status":"ok","database":"ok","engine":"ok","version":"1.0.0"}
+
+$ GET /api/v1/controls?pageSize=100, before verify
+total 6; ids [1, 2, 3, 4, 5, 6]; lastRun null on every one (the names are the six examples' Hebrew names)
+
+$ python3 scripts/examples.py verify
+SKIP active-in-inactive-department: control 1 exists
+SKIP department-without-active-employees: control 2 exists
+SKIP inactive-ministry-salary-out-of-range: control 3 exists
+SKIP minor-high-salary: control 4 exists
+SKIP missing-mandatory-data: control 5 exists
+SKIP termination-before-hire: control 6 exists
+PASS active-in-inactive-department: control 1: run 1 on 2026-11-01: 6 violations; keys and matched ids as expected
+PASS department-without-active-employees: control 2: run 2 on 2026-11-01: 3 violations; keys and matched ids as expected
+PASS inactive-ministry-salary-out-of-range: control 3: run 3 on 2026-11-01: 3 violations; keys and matched ids as expected
+PASS minor-high-salary: control 4: run 4 on 2026-10-31: 4 violations, run 5 on 2026-11-01: 3 violations; keys and matched ids as expected
+PASS missing-mandatory-data: control 5: run 6 on 2026-11-01: 10 violations; keys and matched ids as expected
+PASS termination-before-hire: control 6: run 7 on 2026-11-01: 3 violations; keys and matched ids as expected
+verify exit=0
+
+$ git status --short | wc -l
+0
+
+# Afterwards: docker compose down -v --rmi local in the clone, the clone folder deleted, and the development
+# stack back from the main tree on Kfir's .env (scripts/start.sh exit 0 in 49 s, examples.py verify six PASS,
+# health ok). Not part of this run: the gate specs (they ran on the development stack at 17:33, 18 of 18, same
+# tree: gates/final.txt), the Windows path (G2) and the from-source path (G3).
+# The clock: the journal's last "Time jumped backwards" line is of 17:28:37, just before the Windows clock was
+# stepped (notes.md, Log 17:30); it has none during G8 or this run. Nothing here failed or was rerun.

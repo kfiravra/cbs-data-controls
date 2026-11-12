@@ -1,14 +1,12 @@
 # dc-delivery notes
 
 ## State
-All phases and the gate items G1, G2, G3, G5 and G6 are done on `feat/delivery`, and PR #6 is open. On 2026-11-12
-Kfir gave nine decisions (Log, 08:50) and they are carried out: the index, the contract wording, the one-page
-`docs/ai-usage.md`, the chat's role, §15. Later that day Kfir moved the Hebrew documents to their own folder
-(seven documents, one per deliverable; Log, 11:03), which replaces decision 8 of the plan; he read them (G7 is
-done), revised them by hand and named the folder `submission-he/` (Log, 14:21). G8 was started at 15:52 on
-Kfir's word and stopped before `/ship`: one api test was red once, from the machine's clock (Log, 15:59 and
-17:30). It ran again at 17:31 and is green: the full check, the gate specs and `/ship` (Log, 17:37). Left, on
-Kfir's word of 17:27: the push, the squash merge of PR #6, G9 on a fresh clone of main, and the tag `v1.0.0`.
+Done. Every phase and every gate item, G1 to G9, is ticked. PR #6 is squash-merged to main as `c1467de`
+(2026-11-12 17:41, the branch `feat/delivery` kept), G9 ran on a fresh clone of main from GitHub
+(`gates/G9-fresh-clone.txt`), and the tag `v1.0.0` is on the commit that records it. On 2026-11-12 Kfir gave
+nine decisions (Log, 08:50), moved the Hebrew documents to their own folder and read them (G7; Log, 11:03 and
+14:21). G8 was red once at 15:54 from a backward step of the machine's clock, and green at 17:31 (Log, 15:59,
+17:30 and 17:37).
 
 ## The night brief (Kfir, 2026-11-11, pasted before going to sleep; it wins over plan.md where they differ)
 - Run to the end, no questions, decide and write it here. Stay on Fable 5.2. The guard is off for the session:
@@ -81,14 +79,15 @@ Kfir's word of 17:27: the push, the squash merge of PR #6, G9 on a fresh clone o
     service of `docker-compose.yml`: Kfir's call.
 
 ## Next
-1. Push `feat/delivery`, then the squash merge of PR #6 (the branch stays).
-2. G9 on a fresh clone of main from GitHub: `scripts/start.sh`, `python3 scripts/examples.py verify`; the record
-   as one commit on main; the tag `v1.0.0` on the head of main. No collaborators: the repository is public.
-3. Still Kfir's: the branch `feat/contracts`, which holds `43745cc` with three former passwords; it stays until
-   after the merge (his word, 2026-11-12).
+1. Nothing in this task. The folder is still in `dev/active`: `/ship` offers the move to `dev/completed`, and
+   it waits for Kfir's word.
+2. Kfir's: the branch `feat/contracts`, which holds `43745cc` with three former passwords; it was to stay
+   until after the merge (his word, 2026-11-12), and the merge is done.
+3. Kfir's: the machine's clock. The Windows clock gains about 1.15 s a day and its service steps only above
+   1 s, so the WSL jumps return some hours after each correction (Log, 17:30).
 
 ## Blockers
-- None. The machine's clock is Kfir's to watch (Log, 17:30): a suite that fails is rerun up to three times.
+- None.
 
 ## Last reviewed
 `0d9767f`: the documents (`reviews/docs.md`) and the security audit of the whole repository (`reviews/security.md`). Before it: `b35d72a` (B1), `reviews/B1.md`.
@@ -362,3 +361,15 @@ Kfir's word of 17:27: the push, the squash merge of PR #6, G9 on a fresh clone o
   changed on this branch; the secrets scan of `git diff main...HEAD` and the working tree has placeholders only,
   and the three password values of the local `.env` occur in no tracked file; no document to update. The
   folder stays in `dev/active` and the G8 box unticked until the merge.
+- 2026-11-12 17:50 the closing run, on Kfir's word of 17:27. Pushed `feat/delivery` at `5b2cafb`. PR #6
+  squash-merged into main as `c1467de` (17:41), the branch kept; main's tree equals the branch's. G9
+  (`gates/G9-fresh-clone.txt`): the dev stack, its volume and the two built images removed from the main tree; a
+  fresh clone of main from GitHub over https in a new folder, at `c1467de`, no modified file and no `.env`;
+  `scripts/start.sh` exit 0 in 66 s with the base images and the build cache present; `.env` mode 600; five
+  services in their expected states; six LOAD lines; six controls with no run; `examples.py verify` six PASS.
+  Not part of G9: the gate specs (18 of 18 on the dev stack at 17:33, same tree), the Windows path and the
+  from-source path. Then the clone's stack and folder were removed and the dev stack came back on Kfir's `.env`
+  (start exit 0 in 49 s, verify six PASS); the dev `dq` is new again. No suite failed and none was rerun. The
+  journal has no "Time jumped backwards" line after 17:28:37, the last one before the Windows clock was
+  stepped. Boxes G8 and G9 ticked; this record is one commit on main, and the tag `v1.0.0` goes on it. No
+  collaborators: the repository is public. Not done: the folder is not moved to `dev/completed`.
