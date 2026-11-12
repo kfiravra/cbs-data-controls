@@ -5,7 +5,10 @@ All phases and the gate items G1, G2, G3, G5 and G6 are done on `feat/delivery`,
 Kfir gave nine decisions (Log, 08:50) and they are carried out: the index, the contract wording, the one-page
 `docs/ai-usage.md`, the chat's role, §15. Later that day Kfir moved the Hebrew documents to their own folder
 (seven documents, one per deliverable; Log, 11:03), which replaces decision 8 of the plan; he read them (G7 is
-done), revised them by hand and named the folder `submission-he/` (Log, 14:21). Left: the merge, and G9 after it.
+done), revised them by hand and named the folder `submission-he/` (Log, 14:21). G8 was started at 15:52 on
+Kfir's word and stopped before `/ship`: one api test was red once, from the machine's clock (Log, 15:59 and
+17:30). It ran again at 17:31 and is green: the full check, the gate specs and `/ship` (Log, 17:37). Left, on
+Kfir's word of 17:27: the push, the squash merge of PR #6, G9 on a fresh clone of main, and the tag `v1.0.0`.
 
 ## The night brief (Kfir, 2026-11-11, pasted before going to sleep; it wins over plan.md where they differ)
 - Run to the end, no questions, decide and write it here. Stay on Fable 5.2. The guard is off for the session:
@@ -78,12 +81,14 @@ done), revised them by hand and named the folder `submission-he/` (Log, 14:21). 
     service of `docker-compose.yml`: Kfir's call.
 
 ## Next
-1. The merge of PR #6 on Kfir's word; then G9, each step on his word. No merge and no tag before that.
-2. Still his: the branch `feat/contracts`, which holds `43745cc` with three former passwords; it stays until
+1. Push `feat/delivery`, then the squash merge of PR #6 (the branch stays).
+2. G9 on a fresh clone of main from GitHub: `scripts/start.sh`, `python3 scripts/examples.py verify`; the record
+   as one commit on main; the tag `v1.0.0` on the head of main. No collaborators: the repository is public.
+3. Still Kfir's: the branch `feat/contracts`, which holds `43745cc` with three former passwords; it stays until
    after the merge (his word, 2026-11-12).
 
 ## Blockers
-- None. The merge and G9 wait for Kfir.
+- None. The machine's clock is Kfir's to watch (Log, 17:30): a suite that fails is rerun up to three times.
 
 ## Last reviewed
 `0d9767f`: the documents (`reviews/docs.md`) and the security audit of the whole repository (`reviews/security.md`). Before it: `b35d72a` (B1), `reviews/B1.md`.
@@ -321,3 +326,39 @@ done), revised them by hand and named the folder `submission-he/` (Log, 14:21). 
   harness tests 227 pass; 26 Markdown targets and 34 `href`/`src` attributes in `submission-he/*.md` all resolve;
   nothing under the folder but the seven documents and the six pictures. The services' suites were not run: no
   code changed.
+- 2026-11-12 15:59 G8, `/check all --tests` at `992b957`: 14 of 15 checks green at the first pass (db-check 27,
+  contracts 5, engine 521, web 390 in 37 files, hooks 227, both builds, lint, format, print guard); `api-test`
+  red: 388 passed, 1 failed, 3 skipped. The failure:
+  `RunTests.Run_carries_the_previous_succeeded_run_and_the_history_is_newest_first`, the failed run's
+  `previousRun` was null where the first run (started 13:54:20.945Z) was expected. The journal has
+  "Time jumped backwards" at 15:54:20 local, the same second, and 99 such lines since 15:04 (about one every 30
+  seconds): the second run got a start time earlier than the first, and the api orders runs by `started_at`.
+  `api-test` run three more times, one after the other: 389 passed each time. No code changed since the green
+  run at `c36732f`. Stopped before `/ship`, the e2e run, the merge and G9, as Kfir's brief says for a red check.
+  Not done: nothing was fixed or changed; the test and the api are as they were.
+- 2026-11-12 17:30 the clock, corrected: the Log line of 15:59 and the Next of that hour say the clock steps back
+  "since 15:04", and that is wrong. The journal keeps 100 files and every jump starts a new one, so it only ever
+  shows the last 48 minutes or so. Syslog has the jumps on every day back to 2026-10-11, the oldest log kept,
+  about 1,900 a day: every earlier green run happened under them, and 15:54 was the one time a step fell between
+  two runs of one test. Shown on demand by a temporary test, deleted afterwards and never committed: the test
+  clock pinned at 09:00:00 for the first run and at 08:59:58 for the second gives the second run a null
+  `previousRun`; pinned at 09:00:02 it gives the first run. A sampler outside the repository saw 11 backward
+  steps in three minutes (16:49), in pairs every 30 s, and the WSL clock ran about 5% fast against internet time.
+  Cause as measured: two time-keepers in WSL. One pulls the Linux clock to the Windows clock (the kernel's tick
+  rewritten to about 10,500 every 8 s, a step onto Windows time every 30 s; its process was not identified);
+  `systemd-timesyncd` steps it back to internet time. The Windows clock stood 0.96 s ahead: it gains about
+  1.15 s a day, and its time service steps only above 1 s. The jump lines of 2026-11-11 stop at 21:32:13, one
+  second after that day's Windows sync. Nothing happened at 15:04: no sleep, wake or time change in the Windows
+  System log. What was tried, each on Kfir's word: `wsl --shutdown` (his, 16:22; no effect), "Sync now" (his; no
+  sync took place), `net start w32time` and `w32tm /resync /force` elevated (17:21; success reported, the clock
+  not stepped), then `Set-Date -Adjust` by -968 ms elevated (17:28): the Windows clock was then within 30 ms of
+  internet time. The `w32time` service is left running. The sampler was not run after the step: Kfir's word of
+  17:27 is to go on whatever the clock shows, with one rule for the closing run, a suite that fails is rerun up
+  to three times and a failure that repeats three times is real.
+- 2026-11-12 17:37 G8 again, at `992b957`, after the dev stack came back by `scripts/start.sh` (exit 0 in 55 s):
+  `/check all --tests`, 15 checks exit 0 at the first pass, no rerun (`gates/final.txt`: db-check 27, contracts
+  5, engine 521, api 389 and 3 live skipped, web 390 in 37 files, hooks 227). The gate specs on that stack: 18
+  of 18, the untagged listing of six controls equal before and after. `/ship dc-delivery`: no file under `web/`
+  changed on this branch; the secrets scan of `git diff main...HEAD` and the working tree has placeholders only,
+  and the three password values of the local `.env` occur in no tracked file; no document to update. The
+  folder stays in `dev/active` and the G8 box unticked until the merge.

@@ -1,23 +1,33 @@
-# G8: /check all --tests on feat/delivery at c36732f, 2026-11-12 09:06
-# label, exit code, seconds, the summary line of the tool. 15 checks, all exit 0. The three skipped api tests are
-# the live ones, which need a running engine by their own switch. This run replaces the one at 76cc249: it
-# follows the index on hr.Employee (department_id, status), the contract wording and the one-page ai-usage.
+# G8: /check all --tests on feat/delivery at 992b957, 2026-11-12 17:31 to 17:33
+# label, exit code, the summary line of the tool. 15 checks, all exit 0 at the first pass, no rerun. The three
+# skipped api tests are the live ones, which need a running engine by their own switch. This run replaces the
+# one at c36732f (09:06). The run of 15:54 at this same commit had api-test red once, 388 passed and 1 failed
+# (RunTests.Run_carries_the_previous_succeeded_run_and_the_history_is_newest_first), from a backward step of the
+# machine's clock between two runs: notes.md, Log 15:59 and 17:30. No file changed between that run and this one.
 
-sql-init	0	1s	
-sql-check	0	6s	db-check: 27 passed, 0 failed (structure permissions glossary hebrew examples)
-contracts-check	0	1s	contracts-check: ok, 5 checks passed (schema, glossary, agreement, examples, invalid fixtures)
-engine-ruff	0	0s	All checks passed!
-engine-pyright	0	8s	0 errors, 0 warnings, 0 informations
-engine-test	0	26s	============================= 521 passed in 24.97s =============================
-api-build	0	12s	
-api-format	0	20s	
-api-test	0	31s	Passed!  - Failed:     0, Passed:   389, Skipped:     3, Total:   392, Duration: 27 s - DataControls.Api.Tests.dll (net10.0)
-web-ngc	0	4s	
-web-eslint	0	6s	
-web-test	0	29s	Tests  390 passed (390)
-web-build	0	6s	
-print-guard	0	1s	
-hooks	0	6s	# pass 227
+sql-init	0	db-init: DataControls is ready on db,1433 (7 scripts)
+sql-check	0	db-check: 27 passed, 0 failed (structure permissions glossary hebrew examples)
+contracts-check	0	contracts-check: ok, 5 checks passed (schema, glossary, agreement, examples, invalid fixtures)
+engine-ruff	0	All checks passed!
+engine-pyright	0	0 errors, 0 warnings, 0 informations
+engine-test	0	============================= 521 passed in 25.04s =============================
+api-build	0	
+api-format	0	
+api-test	0	Passed!  - Failed:     0, Passed:   389, Skipped:     3, Total:   392, Duration: 27 s - DataControls.Api.Tests.dll (net10.0)
+web-ngc	0	
+web-eslint	0	All files pass linting.
+web-test	0	Tests  390 passed (390)
+web-build	0	
+print-guard	0	
+hooks	0	# pass 227
 
-# After this run one commit followed, e18da5e: the db health check line of docker-compose.yml. It was exercised
-# by the third G1 (fresh clone, start, verify, 18 gate specs), db-check (27 passed) and the infra tests (30).
+# The gate specs, 17:33 to 17:36, on the dev stack started by scripts/start.sh from the main tree:
+# cd web && E2E_BASE_URL=http://localhost:5000 npm run e2e:gate -> 18 passed (2.3m), mobile and desktop, one worker.
+# The untagged listing of GET /api/v1/controls (id, name, version, last run) held six controls and was equal
+# before and after.
+
+# /ship dc-delivery, 17:36: no file under web/ changed on this branch. Secrets scan of git diff main...HEAD
+# (10,407 lines) and the working tree: no token pattern; every password assignment in an added line is a
+# placeholder ('<the dq_app password of .env>', '...', '<from .env>') or reads .env; .env is not tracked; the
+# three password values of the local .env occur in no tracked file. Documents: no code changed since c36732f
+# but the one health check line of e18da5e, so nothing to update.
