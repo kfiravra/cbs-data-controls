@@ -348,7 +348,7 @@ Every error has a stable code, an HTTP status, parameters, and a translated mess
 
 ## 15. AI-assisted development policy (required by the assignment)
 
-AI coding tools were used throughout the build, for scaffolding, code, tests, documentation drafts and refactoring: Claude Code with a project harness (`CLAUDE.md`, skills, rules, hooks, task plans with gates and review passes), which lives in the repository (`.claude/`) and is part of the submission, so the graders see how the work was organised; the claude.ai chat, used to analyse the assignment's requirements, to review and revise the architecture and the work plan, to word the briefs and instructions the developer gave the sessions, and as a second opinion on their plans and reports; and two third-party design skills. Runtime SQL generation is deterministic code, never an AI call, and no AI runs anywhere in the product.
+AI coding tools were used throughout the build, for scaffolding, code, tests, documentation drafts and refactoring: Claude Code with a project harness (`CLAUDE.md`, skills, rules, hooks, task plans with gates and review passes), which lives in the repository (`.claude/`) and is part of the submission, so the graders see how the work was organised; the claude.ai chat, used to analyse the assignment's requirements, to review and revise the architecture and the work plan, to word the briefs and instructions the developer gave the sessions, as a second opinion on their plans and reports, and to draft the submission documents in Hebrew; and two third-party design skills. Runtime SQL generation is deterministic code, never an AI call, and no AI runs anywhere in the product.
 
 The code was written by Claude Code under plans the developer approved. Every phase was checked by tests, and the work was reviewed by separate review agents, with three security audits (the engine, the api, the whole repository). The developer directed the build through the plan interviews, his decisions and repeated reads of the rendered output and the running app; he did not review every diff line by line. He owns and must be able to explain every design decision in this document.
 
@@ -371,6 +371,7 @@ data-controls/
   web/                  Angular app (src/app, src/assets/i18n/he.json, e2e/mocked, e2e/gate)
   scripts/              start.sh and start.ps1, db-init.sh, db-check.sh, examples.py, contracts-check.py
   docs/                 the documents of §17, and screenshots/
+  submission/           the submission documents in Hebrew, one for each deliverable of the assignment
   .claude/              Claude Code harness: CLAUDE.md, skills, rules, hooks, agents (committed)
   dev/                  briefs, and the plan and notes of every task (completed/, active/)
 ```
@@ -382,7 +383,7 @@ data-controls/
 | File | Content |
 |---|---|
 | [`README.md`](../README.md) | What the system is, the architecture diagram, running with Docker, running from source, a walk through the system, configuration, tests, operations, links to the documents below |
-| [`docs/submission.he.md`](submission.he.md) | The cover page in Hebrew: the assignment's deliverables in its own words and where each one is |
+| [`submission/README.he.md`](../submission/README.he.md) | The submission documents in Hebrew: a cover page with the assignment's deliverables in its own words, and a short document for each |
 | [`docs/summarize-architecture.md`](summarize-architecture.md) | The short document the assignment asks for: the architecture and the controls mechanism (definition, validation, one parameterized SELECT, reasons), and the design of the AI suggestions |
 | [`docs/architecture.md`](architecture.md) | This document: components and responsibilities, boundaries and prohibitions, data model, flows, security layers, performance decisions, decision record, the assignment checklist |
 | [`docs/design.md`](design.md) | The visual design decisions for the client (direction, tokens, components, responsive rules) |

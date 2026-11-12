@@ -4,7 +4,7 @@ Which AI tools were used to build this system, for what, and how their output wa
 "General"). Every fact here comes from the records of the five tasks: each `plan.md` (its Decisions) and
 `notes.md` (its Log and its list "Decisions taken unattended"), `git log`, and the five pull requests as saved in
 `../dev/active/dc-delivery/gates/pr-1.md` to `pr-5.md`. The finished tasks are in `../dev/completed/dc-<name>/`,
-the delivery task in [../dev/active/dc-delivery/](../dev/active/dc-delivery/). Where a record gives a verdict and
+the delivery task in [../dev/active/dc-delivery/](../active/dc-delivery/). Where a record gives a verdict and
 not the findings, this document says "not recorded"; it says that the developer read, reviewed or decided
 something only where a record says so.
 
@@ -45,8 +45,8 @@ Nowhere in the product. No service calls a model, holds a model key or depends o
   decision 38). The optional AI task of the assignment is answered by a design that is not built: an advisor
   service, `advisor/`, the only part that would talk to a model, which returns definitions in the contract's JSON
   through the same validator and compiler and sees metadata and statistics, never record values
-  ([summarize-architecture.md](summarize-architecture.md), "The optional task"). Its plan,
-  [../dev/active/dc-ai-suggestions/plan.md](../dev/active/dc-ai-suggestions/plan.md), is marked "planned, not
+  ([summarize-architecture.md](../../docs/summarize-architecture.md), "The optional task"). Its plan,
+  [../dev/active/dc-ai-suggestions/plan.md](../active/dc-ai-suggestions/plan.md), is marked "planned, not
   started" and was written without an interview from the developer's brief (its decisions 1 to 9); its decisions
   10 to 23 are the planner's and wait for his objection.
 

@@ -39,8 +39,8 @@ and only to `dq`; only the engine reads `hr`. `docker-compose.yml` holds the who
 - `dir="rtl"` for Hebrew, the default language, and logical CSS only (`margin-inline-start`, `inset-inline-end`,
   `text-align: start`); a physical `left` or `right` is an RTL bug.
 - English-only code, identifiers, logs, comments and tests. Hebrew lives only in `web/src/assets/i18n/he.json` and
-  `contracts/glossary.json`, in data (seed values in `sql/`, names in `contracts/examples/`), in the cover page
-  `docs/submission.he.md`, and where a document quotes the engine's output (`docs/examples.md` is generated).
+  `contracts/glossary.json`, in data (seed values in `sql/`, names in `contracts/examples/`), in the Hebrew
+  documents of `submission/`, and where a document quotes the engine's output (`docs/examples.md` is generated).
   Errors cross a service boundary as codes and parameters; sentences and reasons come rendered by the engine.
 - A contract change is one commit to `contracts/` on main plus one line pasted into the other sessions; nothing
   else coordinates the worktrees.
@@ -93,7 +93,7 @@ and only to `dq`; only the engine reads `hr`. `docker-compose.yml` holds the who
 | Scripts, logins, planted and boundary rows per example | [sql/README.md](../sql/README.md) |
 | Visual direction, tokens, screens | [docs/design.md](../docs/design.md) |
 | The definition JSON; the glossary and how to extend it; the six examples | [control-definition.md](../docs/control-definition.md), [glossary.md](../docs/glossary.md), [examples.md](../docs/examples.md) |
-| The short architecture, limits and open items, AI usage, the Hebrew cover | [summarize-architecture.md](../docs/summarize-architecture.md), [assumptions…](../docs/assumptions-limitations-extensions.md), [ai-usage.md](../docs/ai-usage.md), [submission.he.md](../docs/submission.he.md) |
+| The short architecture, limits and open items, AI usage, the Hebrew documents | [summarize-architecture.md](../docs/summarize-architecture.md), [assumptions…](../docs/assumptions-limitations-extensions.md), [ai-usage.md](../docs/ai-usage.md), [submission/README.he.md](../submission/README.he.md) |
 
 ## Skills
 

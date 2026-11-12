@@ -3,7 +3,9 @@
 ## State
 All phases and the gate items G1, G2, G3, G5 and G6 are done on `feat/delivery`, and PR #6 is open. On 2026-11-12
 Kfir gave nine decisions (Log, 08:50) and they are carried out: the index, the contract wording, the one-page
-`docs/ai-usage.md`, the chat's role, §15. Left: Kfir's read (G7), the merge, and G9 after it.
+`docs/ai-usage.md`, the chat's role, §15. Later that day Kfir moved the Hebrew documents to their own folder,
+`submission/` (seven documents, one per deliverable; Log, 11:03), which replaces decision 8 of the plan. Left:
+Kfir's read (G7), the merge, and G9 after it.
 
 ## The night brief (Kfir, 2026-11-11, pasted before going to sleep; it wins over plan.md where they differ)
 - Run to the end, no questions, decide and write it here. Stay on Fable 5.2. The guard is off for the session:
@@ -76,10 +78,11 @@ Kfir gave nine decisions (Log, 08:50) and they are carried out: the index, the c
     service of `docker-compose.yml`: Kfir's call.
 
 ## Next
-1. G7, Kfir: read the new `docs/ai-usage.md` (one page), `docs/submission.he.md` and the README's first screen.
-   Two wordings differ from his item 6 because the records differ; both are in the Log line of 09:35.
-2. The merge of PR #6 on Kfir's word; then G9, each step on his word.
-3. Still his: `chmod 600 .env`; the branch `feat/contracts`, which holds `43745cc` with three former passwords.
+1. G7, Kfir: read `docs/ai-usage.md` (one page), `submission/README.he.md`, `submission/ai-usage.he.md` and the
+   README's first screen. The three wordings of the Log line of 09:35 he confirmed on 2026-11-12 (Log, 11:03).
+2. The merge of PR #6 on Kfir's word; then G9, each step on his word. No merge and no tag before that.
+3. Still his: the branch `feat/contracts`, which holds `43745cc` with three former passwords; it stays until
+   after the merge (his word, 2026-11-12).
 
 ## Blockers
 - None. G7, the merge and G9 wait for Kfir.
@@ -294,3 +297,20 @@ Kfir gave nine decisions (Log, 08:50) and they are carried out: the index, the c
   reviewed "at the phase ends of four of the tasks and once at the end of the first" and points to the record
   for the few commits that had no agent review. The chat's "how it was checked" cell is my wording of what
   item 7 implies (its output reached the repository only through him); he should confirm it.
+- 2026-11-12 11:03 Kfir's decision of 2026-11-12, replacing decision 8 (one Hebrew cover page): "the Hebrew
+  documents live in their own folder, submission/ in the repo root, one document per deliverable of the
+  assignment. Every English document stays in docs/." He supplied the finished files in a zip; they were copied
+  byte for byte (`cmp` equal, the U+200E marks counted in place), not written or edited here. Placed:
+  `submission/README.he.md` (the cover), `install.he.md`, `summarize-architecture.he.md`, `examples.he.md`,
+  `assumptions-limitations-extensions.he.md`, `ai-usage.he.md`, `ai-suggestions.he.md`; and his versions of
+  `README.md`, `docs/architecture.md`, `docs/ai-usage.md` and `.claude/CLAUDE.md`, each differing from `1e3d776`
+  in three places (the link to the cover, the new folder in the repository map, the chat drafting the Hebrew
+  documents). Removed: `docs/submission.he.md`. His untracked `dev/active/dc-ai-suggestions/brief.he.md` was
+  already gone from the tree. In `dev/completed/ai-usage-record.md` the three relative link targets now resolve
+  from that folder; nothing else in it changed (two link texts still show the old paths). Checked: harness
+  tests 227 pass; 62 relative targets in `submission/*.md` and the record all resolve; no `submission.he.md`
+  left in `README.md`, `docs` or `.claude`. The services' suites were not run: no code changed. `.env` is now
+  mode 600. His answers to the report of 09:35: the three wordings (three security audits; reviews at the phase
+  ends of four of the tasks and once at the end of the first; the chat's output reached the repository only
+  through him) "are accurate and stay as they are"; `IX_Employee_department_id` stays; `feat/contracts` stays
+  until after the merge.
