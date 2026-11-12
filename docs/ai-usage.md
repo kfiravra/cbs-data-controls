@@ -245,14 +245,18 @@ were dealt by the skill and taken by the session (decisions 69 to 71).
 documents of the submission: this one, `summarize-architecture.md`, `control-definition.md`, `glossary.md`,
 `examples.md` (its tables generated from real runs), `assumptions-limitations-extensions.md`, the Hebrew cover
 page, the corrections of `architecture.md`, and the plan of the AI suggestions task. One unattended night
-(2026-11-11 to 12) on Fable 5.2, on a brief the developer pasted before going to sleep; one message from him
-during the night (to stop the `gh pr` prompts). Four drafting sub-agents on opus wrote the two contract
+(2026-11-11) on Fable 5.2, on a brief the developer pasted before going to sleep; one message from him
+during the night (to stop the `gh pr` prompts). The night stalled at its first clean-clone run, on a shell
+command that hung; the developer found it in the morning and the three gate runs below were made then
+(2026-11-12), in the same session. Four drafting sub-agents on opus wrote the two contract
 documents, the first version of this document, the plan of dc-ai-suggestions, and the ticks that closed the four
 finished plans.
 
 **Checked.** Both paths were run from a fresh clone: Docker on WSL and from a Windows folder, and the
 from-source path on WSL (`gates/G1-docker-wsl.txt`, `G2-docker-windows.txt`, `G3-manual.txt` under
-`../dev/active/dc-delivery/`). The client's end-to-end specs ran against the composed system, 18 of 18. The
+`../dev/active/dc-delivery/`). The clean-clone run found one defect: a start straight after a stop could fail
+while SQL Server was still recovering the database; `scripts/db-init.sh` now waits for it, and five restarts
+passed after the fix. The client's end-to-end specs ran against the composed system, 18 of 18. The
 worked example of `glossary.md` was carried out on a scratch stack before it was committed. Every backticked key,
 code and path of the two contract documents was checked against the tree by a script.
 

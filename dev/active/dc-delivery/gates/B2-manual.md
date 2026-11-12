@@ -1,6 +1,6 @@
 # B2: the from-source path, carried out once as the README writes it
 
-2026-11-12, WSL (Ubuntu), in a scratch clone of `feat/delivery` at `b35d72a` with the development `.env` copied
+2026-11-11, WSL (Ubuntu), in a scratch clone of `feat/delivery` at `b35d72a` with the development `.env` copied
 in. The database was the compose container on 127.0.0.1:1433, already initialised; the `engine` and `api`
 containers were stopped first (`docker compose stop api engine`). The host has no `sqlcmd`, so step 2 was not
 run as a host command here: `scripts/db-init.sh` hands over to the `db-init` container on such a machine.

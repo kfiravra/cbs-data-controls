@@ -1,4 +1,4 @@
-# Review of the documents (phases A1 and B4, 2026-11-12)
+# Review of the documents (phases A1 and B4, 2026-11-11)
 
 Two `reviewer` agents on opus, read-only, on the commits `5639436` and `db92c3d`. One checked
 `docs/control-definition.md`, `docs/glossary.md` and the frame of `docs/examples.md` against `contracts/` and the

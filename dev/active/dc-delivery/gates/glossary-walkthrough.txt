@@ -1,6 +1,6 @@
 # The worked example of docs/glossary.md, carried out once as written
 
-2026-11-12, on a scratch clone of feat/delivery (b35d72a) with the development .env; its engine from source on
+2026-11-11, on a scratch clone of feat/delivery (b35d72a) with the development .env; its engine from source on
 127.0.0.1:8010 and its published api on 127.0.0.1:5010, against the shared database (read only: nothing was
 saved, the run went to the engine's /run directly). Nothing of the scratch copy is committed.
 

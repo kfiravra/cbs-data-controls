@@ -1,0 +1,101 @@
+# G3: the from-source path of the README, on the fresh clone (WSL), 2026-11-12 07:27
+
+The clone of G1, brought to the fix commit. The SQL Server is the compose db container alone, on 127.0.0.1:14330,
+standing in for a host server; engine, api and client run on the host from source. The volume is removed first,
+so the database and the examples are created by this path.
+
+$ git pull -q && git log --oneline -1
+10ab7eb fix(scripts): db-init waits for a database that is still recovering
+
+$ docker compose down -v
+7 objects removed
+
+step 1: .env is the one scripts/start.sh generated in G1 (three passwords, DB_PORT=14330, ENGINE_DB_PORT=14330)
+DB_PORT=14330
+ENGINE_DB_HOST=127.0.0.1
+ENGINE_DB_PORT=14330
+APP_PORT=5000
+
+step 2 (no sqlcmd on this host, as the README says: the same script through its container)
+$ docker compose up -d db && scripts/db-init.sh
+ Container data-controls-db-1 Started 
+ Container data-controls-db-init-run-d993cafc32cb Created 
+db-init: sql/00_database.sql
+db-init: sql/10_schemas.sql
+db-init: sql/20_hr_tables.sql
+db-init: sql/30_dq_tables.sql
+db-init: sql/40_logins.sql
+db-init: sql/50_indexes.sql
+db-init: sql/60_seed_hr.sql
+db-init: DataControls is ready on db,1433 (7 scripts)
+exit=0
+db running;
+
+step 3: the engine
+$ cd engine && python3 -m venv .venv && .venv/bin/python -m pip install -r requirements.txt
+exit=0
+Python 3.12.3
+$ .venv/bin/python -m uvicorn app.main:create_app --factory --host 127.0.0.1 --port 8000   (left running)
+$ curl -s localhost:8000/health
+{"status":"ok","database":"ok","glossaryVersion":"1.0.0","engineVersion":"0.1.0"}
+
+(the clone stays at 10ab7eb: the later commit ccdc3b3 only re-stores one vendored .cmd file with LF)
+
+step 4: the client and the api
+$ (cd web && npm ci && npx ng build)
+
+added 602 packages in 19s
+                    | Initial total                | 563.04 kB |               140.44 kB
+Application bundle generation complete. [8.031 seconds] - 2026-11-12T05:29:32.630Z
+Output location: <clone>/web/dist/web
+$ dotnet publish api/src/DataControls.Api -c Release -o publish -p:TreatWarningsAsErrors=false
+  Determining projects to restore...
+  Restored <clone>/api/src/DataControls.Api/DataControls.Api.csproj (in 1.78 sec).
+  DataControls.Api -> <clone>/api/src/DataControls.Api/bin/Release/net10.0/DataControls.Api.dll
+  DataControls.Api -> <clone>/publish/
+exit=0
+$ cp -r web/dist/web/browser publish/wwwroot
+assets
+chunk-27XKF54K.js
+chunk-2KSWVTTC.js
+chunk-3M2QZOQG.js
+
+$ DQ_APP_PASSWORD='<from .env>' DB_HOST=localhost DB_PORT=14330 Engine__BaseUrl=http://localhost:8000 ASPNETCORE_URLS=http://localhost:5000 dotnet publish/DataControls.Api.dll   (left running; DB_PORT is 14330 here, the container's host port)
+$ curl -s localhost:5000/api/v1/health
+{"status":"ok","database":"ok","engine":"ok","version":"1.0.0"}
+$ curl -s -o /dev/null -w "%{http_code} %{content_type}" localhost:5000/
+200 text/html
+
+step 5: the examples
+$ python3 scripts/examples.py load
+LOAD active-in-inactive-department: control 1 created
+LOAD department-without-active-employees: control 2 created
+LOAD inactive-ministry-salary-out-of-range: control 3 created
+LOAD minor-high-salary: control 4 created
+LOAD missing-mandatory-data: control 5 created
+LOAD termination-before-hire: control 6 created
+exit=0
+
+$ python3 scripts/examples.py verify
+PASS active-in-inactive-department: control 1: run 1 on 2026-11-01: 6 violations; keys and matched ids as expected
+PASS department-without-active-employees: control 2: run 2 on 2026-11-01: 3 violations; keys and matched ids as expected
+PASS inactive-ministry-salary-out-of-range: control 3: run 3 on 2026-11-01: 3 violations; keys and matched ids as expected
+PASS minor-high-salary: control 4: run 4 on 2026-10-31: 4 violations, run 5 on 2026-11-01: 3 violations; keys and matched ids as expected
+PASS missing-mandatory-data: control 5: run 6 on 2026-11-01: 10 violations; keys and matched ids as expected
+PASS termination-before-hire: control 6: run 7 on 2026-11-01: 3 violations; keys and matched ids as expected
+exit=0
+
+One example in a browser (Chromium through the Playwright MCP), http://localhost:5000
+- The list shows the six examples, each with the run that `verify` made.
+- The "הרצה" button of "קטינים בשכר גבוה" was pressed. The status line read
+  "הרצת הבקרה ”קטינים בשכר גבוה” הסתיימה: 3 חריגות", and the row's last run moved to 07:30.
+- The control's link then led to /runs/8 (page title "בקרות נתונים: תוצאות הרצה"). Columns: שם פרטי, שם משפחה,
+  מספר עובד, סיבת החריגה. Three records, a reason on every one:
+    אריאל מור   1051   גיל: 16 (מתחת ל־18); שכר: 16,500 ₪ (מעל 15,000 ₪)
+    רותם יוסף   1052   גיל: 15 (מתחת ל־18); שכר: 22,000 ₪ (מעל 15,000 ₪)
+    גל עמר      1053   גיל: 16 (מתחת ל־18); שכר: 15,000.01 ₪ (מעל 15,000 ₪)
+
+Not covered here, as in the README: step 2's host command (`DB_HOST=localhost DB_PORT=1433 scripts/db-init.sh`
+with a host sqlcmd) and the PowerShell forms. The database of this run is the container's, reached on 14330.
+
+The two host processes were then stopped by pid.

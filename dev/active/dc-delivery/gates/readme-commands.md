@@ -4,7 +4,7 @@
 |---|---|---|
 | Run with Docker | [x] `scripts/start.sh` | B1 (`gates/B1.txt`), again after the review fixes, and G1 on a fresh clone |
 | Run with Docker | [x] `start.cmd` | G2 (`gates/G2-docker-windows.txt`); its `.env` generator and both scripts' parsing in B1 |
-| Run with Docker | [x] `docker compose stop`, `start`, `down`, `down -v` | `stop` and `start` in B2; `down -v` in G1 |
+| Run with Docker | [x] `docker compose stop`, `start`, `down`, `down -v` | `stop` and `start` in B2 and G1 (G1 found the restart failure that `scripts/db-init.sh` now waits out; five rounds after the fix); `down -v` in G1, G3 and G2 |
 | Run from source | [x] `cp .env.example .env` and the port lines | G3 on the fresh clone |
 | Run from source | [x] `DB_HOST=localhost DB_PORT=1433 scripts/db-init.sh` | not run as a host command: this machine has no `sqlcmd`; the same script runs inside the `db-init` container at every start (B1, G1). Named as not proven in the limitations document |
 | Run from source | [x] `python3 -m venv .venv`, `pip install -r requirements.txt`, the uvicorn line | B2 (`gates/B2-manual.md`), G3 |

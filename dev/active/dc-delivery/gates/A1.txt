@@ -1,4 +1,4 @@
-# A1 verify, 2026-11-12 (the lane-A documents, written as built: lanes A and B ran back to back)
+# A1 verify, 2026-11-11 (the lane-A documents, written as built: lanes A and B ran back to back)
 
 $ uv run scripts/contracts-check.py
 contracts-check: ok, 5 checks passed (schema, glossary, agreement, examples, invalid fixtures)

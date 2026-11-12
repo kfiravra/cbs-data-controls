@@ -2,7 +2,7 @@
 // Run after `scripts/examples.py verify` and before any gate spec:
 //   node dev/active/dc-delivery/tools/readme-shots.cjs <example id> [base url]
 // The example id names the file of contracts/examples whose control the editor and results shots show (the
-// shots of 2026-11-12 used missing-mandatory-data: nested groups and ten records).
+// shots of 2026-11-11 used missing-mandatory-data: nested groups and ten records).
 // It reads through the interface and the api's GET endpoints only; it creates, changes and runs nothing.
 const path = require('node:path');
 const { createRequire } = require('node:module');

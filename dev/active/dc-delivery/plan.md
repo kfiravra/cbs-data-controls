@@ -348,20 +348,20 @@ Review: `/phase-review infra`
 Commit: `docs: readme, examples, architecture as built, hebrew cover and ai usage`
 
 ### Gate
-- [ ] **G1 Docker path, clean (WSL).** In the main tree: `docker compose down -v --rmi local` (the guard asks: it
+- [x] **G1 Docker path, clean (WSL).** In the main tree: `docker compose down -v --rmi local` (the guard asks: it
       deletes the development database, so only after the three merges). Then
       `git clone --branch feat/delivery <main tree> <scratch>/dc-clean` and the README followed to the letter:
       `scripts/start.sh`; the app in a browser, where the first screen shows six controls and no run on any
       (decision 6); `examples.py verify`; the gate specs with the command of B1, one worker, on the generated
       `.env`; the untagged listing equal before and after. Output in `gates/G1-docker-wsl.txt`.
-- [ ] **G2 Docker path, Windows host.** The same from a Windows folder with `start.cmd`, without the gate specs.
-- [ ] **G3 Manual path, from source.** On the fresh clone of G1, with the `engine` and `api` containers stopped:
+- [x] **G2 Docker path, Windows host.** The same from a Windows folder with `start.cmd`, without the gate specs.
+- [x] **G3 Manual path, from source.** On the fresh clone of G1, with the `engine` and `api` containers stopped:
       the README's from-source section followed to the letter, then `examples.py verify`, and by hand in the
       browser one example run with a reason on every record. Output in `gates/G3-manual.txt`.
-- [ ] **G5 Security audit.** One `security-auditor` on opus over the merged repository (say it first): logins and
+- [x] **G5 Security audit.** One `security-auditor` on opus over the merged repository (say it first): logins and
       grants, the compose network and ports, the per-service environment, error bodies, CORS, secrets. The report is saved as `reviews/security.md`. Critical findings are fixed (decision 23); the rest
       are added to the limitations document; the Log line lists both.
-- [ ] **G6 Checklist.** Every item of §18 is ticked and its evidence exists. An item that cannot be ticked
+- [x] **G6 Checklist.** Every item of §18 is ticked and its evidence exists. An item that cannot be ticked
       honestly is a blocker for Kfir, not a tick.
 - [ ] **G7 Kfir reads** `docs/ai-usage.md` and `docs/submission.he.md` (both speak in his name) and the first
       screen of the README. The Log says what he changed or rejected, in his words where he gave them.

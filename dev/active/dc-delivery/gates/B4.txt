@@ -1,4 +1,4 @@
-# B4 verify, 2026-11-12
+# B4 verify, 2026-11-11
 
 $ node --test .claude/hooks/tests/*.test.mjs
 # tests 227, pass 227, fail 0   (CLAUDE.md is 100 lines; every relative link of README.md, docs/*.md,

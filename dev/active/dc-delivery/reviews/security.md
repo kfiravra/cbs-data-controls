@@ -1,4 +1,4 @@
-# Security audit of the whole repository (gate item G5, 2026-11-12)
+# Security audit of the whole repository (gate item G5, 2026-11-11)
 
 One `security-auditor` agent on opus, read-only, on `feat/delivery` at `0d9767f` with the composed stack running.
 It read the compose file, both Dockerfiles, the start scripts, `sql/`, the engine's compiler, executor and

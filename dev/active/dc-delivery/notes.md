@@ -1,9 +1,10 @@
 # dc-delivery notes
 
 ## State
-Running unattended in the evening and night of 2026-11-11, on Kfir's night brief (below). Both lanes run back to back
-on `feat/delivery`, cut from main at `d66670d` with all five PRs merged. Phase A0 is done; the phases in progress
-are named in the last Log lines.
+All phases and the gate items G1, G2, G3, G5 and G6 are done on `feat/delivery`, cut from main at `d66670d`. The
+night of 2026-11-11 ran the phases unattended on Kfir's brief (below) and stalled at the start of G1; the gate
+runs were made on the morning of 2026-11-12. Left: G8 (final check, ship, push, PR), then G7 and G9, which are
+Kfir's.
 
 ## The night brief (Kfir, 2026-11-11, pasted before going to sleep; it wins over plan.md where they differ)
 - Run to the end, no questions, decide and write it here. Stay on Fable 5.2. The guard is off for the session:
@@ -76,10 +77,14 @@ are named in the last Log lines.
     service of `docker-compose.yml`: Kfir's call.
 
 ## Next
-1. The Gate: G1 on a fresh clone, G3 on it, G2 from a Windows folder, G5 the audit, G6, G8.
+1. G8: `/check all --tests` into `gates/final.txt`, `/ship dc-delivery`, push and the PR (Kfir's word is in the brief).
+2. G7, Kfir: read `docs/ai-usage.md`, `docs/submission.he.md` and the README's first screen.
+3. Kfir's calls, listed in the PR body: the `(department_id, status)` index, `AllowedHosts`, decisions 10 to 23
+   of dc-ai-suggestions, `chmod 600 .env`, the branch `feat/contracts`.
+4. G9 after the merge, each on Kfir's word.
 
 ## Blockers
-- None for the night. G2 and G7 are named in the brief.
+- None. G7 and G9 wait for Kfir.
 
 ## Last reviewed
 `0d9767f`: the documents (`reviews/docs.md`) and the security audit of the whole repository (`reviews/security.md`). Before it: `b35d72a` (B1), `reviews/B1.md`.
@@ -216,7 +221,7 @@ are named in the last Log lines.
   this machine; that process hung and `scripts/start.sh` never began. Kfir found it in the morning; the process
   was ended by pid and the start ran from there. Nothing ran between 23:15 and 07:18. From here on a command
   uses `command ls`.
-- 2026-11-12 07:35 G1 (`gates/G1-docker-wsl.txt`), on a fresh clone at `c9eca2a` after `down -v --rmi local`:
+- 2026-11-12 07:27 G1 (`gates/G1-docker-wsl.txt`), on a fresh clone at `c9eca2a` after `down -v --rmi local`:
   `scripts/start.sh` exit 0 in 115 s (base images present, pulls not timed); `.env` mode 600; five services in
   the expected states; six LOAD lines; six controls with `lastRun` null; `examples.py verify` six PASS; gate
   specs 18 of 18; untagged listing equal before and after. Found: a second `scripts/start.sh` after
@@ -225,3 +230,23 @@ are named in the last Log lines.
   and two `compose start` rounds then came back healthy with the controls and runs intact. README: the
   unmeasured "about 8 minutes" is replaced by what was measured (2 minutes with the images present, about half
   a minute later).
+- 2026-11-12 07:28 a fresh clone showed one modified file: the vendored `.claude/skills/impeccable/scripts/impeccable.cmd`
+  was stored with CRLF under the `*.cmd eol=crlf` rule. Re-stored with LF (`ccdc3b3`); a new clone then reports
+  nothing. In the scratch clone only, `git checkout -- scripts/db-init.sh` put back the file that was copied in
+  to test the fix; Kfir's tree was not touched by it.
+- 2026-11-12 07:30 G3 (`gates/G3-manual.txt`), the README's from-source section on the clone at `10ab7eb`, the
+  volume removed first and the compose `db` alone as the server on 14330: `db-init.sh` through its container
+  (no host `sqlcmd`), the engine from a pip venv, `npm ci`, `ng build`, `dotnet publish` with the README's
+  switch, the api's start line, `examples.py load` six LOAD lines, `verify` six PASS; in a browser "קטינים בשכר
+  גבוה" was run from the list and its page showed three records with a reason on each. Not covered: the host
+  `sqlcmd` command and the PowerShell forms.
+- 2026-11-12 07:33 G2 (`gates/G2-docker-windows.txt`): `set DC_NO_PAUSE=1&& start.cmd` through `cmd.exe` from
+  `C:\Users\Public\dc-g2`, a Git for Windows clone at `ccdc3b3` (CRLF for `.cmd` and `.ps1`, LF for `.sh` and
+  `.sql`): exit 0 in 117 s with the images present; `.env` created with three passwords; five services in the
+  expected states; six LOAD lines; health ok through the Windows `curl.exe`; `verify` six PASS from WSL (the
+  host has no Python). Not seen: a double-click and the pause after it. The stack, the folder and the bundle
+  were then removed.
+- 2026-11-12 07:34 the dev stack is back from the main tree on Kfir's `.env` (database on 1433): `scripts/start.sh`
+  exit 0 in 42 s, `verify` six PASS. The dev `dq` is new: six examples and the runs of that verify.
+- 2026-11-12 07:36 G6: §18 of `docs/architecture.md` has 35 ticked items and none open; every path and link named
+  as evidence exists (checked by a script). Gate boxes G1, G2, G3, G5 and G6 ticked in `plan.md`.
