@@ -90,9 +90,12 @@ run_direct() {
   local base=("$sqlcmd" -S "$server" -U sa -C -b -m 1 -I -f 65001)
 
   # A server that is still starting refuses connections and logins for a while, so every failure is retried;
-  # the last error is shown when the wait runs out (a wrong sa password reads "Login failed").
+  # the last error is shown when the wait runs out (a wrong sa password reads "Login failed"). A server that
+  # was stopped and started again answers on master while DataControls is still being recovered (error 904,
+  # "cannot be autostarted during server shutdown or startup"), so an existing database is read as well.
   local deadline=$((SECONDS + 120)) answer
-  until answer=$("${base[@]}" -d master -l 5 -Q "SELECT 1" 2>&1); do
+  local probe="SET NOCOUNT ON; IF DB_ID(N'DataControls') IS NOT NULL EXEC(N'SELECT TOP (1) 1 FROM DataControls.sys.objects;') ELSE SELECT 1;"
+  until answer=$("${base[@]}" -d master -l 5 -Q "$probe" 2>&1); do
     if ((SECONDS >= deadline)); then
       die "no answer from SQL Server at $server after 120 seconds. Last error: ${answer:-none}"
     fi

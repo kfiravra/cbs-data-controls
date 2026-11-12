@@ -1,0 +1,156 @@
+# G1: the Docker path on a fresh clone (WSL), 2026-11-11 23:15
+
+$ docker compose down -v --rmi local     (main tree: removes the development database and the two built images)
+ Container data-controls-db-1 Stopping 
+ Container data-controls-db-1 Stopped 
+ Container data-controls-db-1 Removing 
+ Container data-controls-db-1 Removed 
+ Network data-controls_default Removing 
+ Volume data-controls_db-data Removing 
+ Volume data-controls_db-data Removed 
+ Network data-controls_default Removed 
+ Image data-controls-engine:latest Removing 
+ Image data-controls-api:latest Removing 
+ Image data-controls-api:latest Removed 
+ Image data-controls-engine:latest Removed 
+
+containers left: 0
+volumes left: 0
+
+$ git clone --branch feat/delivery <main tree> dc-clean && cd dc-clean
+c9eca2a docs: review fixes
+
+
+$ time scripts/start.sh
+start: created .env with three random passwords (they are in that file and are not printed)
+start: building and starting the containers (the first build takes several minutes)
+ Image data-controls-engine Built 
+ Image data-controls-api Built 
+ Volume data-controls_db-data Created 
+ Volume data-controls_db-data Created 
+ Network data-controls_default Created 
+ Network data-controls_default Created 
+ Container data-controls-db-1 Created 
+ Container data-controls-db-init-1 Created 
+ Container data-controls-engine-1 Created 
+ Container data-controls-api-1 Created 
+ Container data-controls-examples-1 Created 
+ Container data-controls-db-1 Started 
+ Container data-controls-db-1 Healthy 
+ Container data-controls-db-init-1 Started 
+ Container data-controls-db-init-1 Exited 
+ Container data-controls-engine-1 Started 
+ Container data-controls-engine-1 Healthy 
+ Container data-controls-api-1 Started 
+ Container data-controls-api-1 Healthy 
+ Container data-controls-examples-1 Started 
+start: waiting for the app
+Data Controls is running.
+  The app            http://localhost:5000
+  The api's pages    http://localhost:5000/api/docs
+  The database       127.0.0.1,14330 (SQL Server; the logins and their passwords are in .env)
+  Stop it            docker compose stop        (docker compose start brings it back)
+  Remove it          docker compose down        (the data stays in its volume)
+  Wipe the data too  docker compose down -v
+exit=0  elapsed=115s
+(the build cache of the base layers was present: 115 s is a rebuild, not a first build with pulls)
+
+$ docker compose ps -a
+SERVICE    STATE     STATUS                      PORTS
+api        running   Up 22 seconds (healthy)     127.0.0.1:5000->8080/tcp
+db         running   Up 57 seconds (healthy)     127.0.0.1:14330->1433/tcp
+db-init    exited    Exited (0) 27 seconds ago   
+engine     running   Up 27 seconds (healthy)     8000/tcp
+examples   exited    Exited (0) 14 seconds ago   
+
+$ docker compose logs examples
+LOAD active-in-inactive-department: control 1 created
+LOAD department-without-active-employees: control 2 created
+LOAD inactive-ministry-salary-out-of-range: control 3 created
+LOAD minor-high-salary: control 4 created
+LOAD missing-mandatory-data: control 5 created
+LOAD termination-before-hire: control 6 created
+
+$ stat -c "%a %n" .env
+600 .env
+
+$ curl -s http://localhost:5000/api/v1/controls | summary
+total: 6 items: 6
+   חריגות שכר במשרד לא פעיל | lastRun: None
+   מחלקות פעילות ללא עובדים פעילים | lastRun: None
+   נתוני חובה חסרים | lastRun: None
+   סיום העסקה לפני תחילתה | lastRun: None
+   עובדים פעילים במחלקה לא פעילה | lastRun: None
+   קטינים בשכר גבוה | lastRun: None
+
+$ curl -s -o /dev/null -w "%{http_code} %{content_type}" http://localhost:5000/
+200 text/html
+$ curl -s http://localhost:5000/api/v1/health
+{"status":"ok","database":"ok","engine":"ok","version":"1.0.0"}
+
+$ python3 scripts/examples.py verify     (in the clone)
+SKIP active-in-inactive-department: control 1 exists
+SKIP department-without-active-employees: control 2 exists
+SKIP inactive-ministry-salary-out-of-range: control 3 exists
+SKIP minor-high-salary: control 4 exists
+SKIP missing-mandatory-data: control 5 exists
+SKIP termination-before-hire: control 6 exists
+PASS active-in-inactive-department: control 1: run 1 on 2026-11-01: 6 violations; keys and matched ids as expected
+PASS department-without-active-employees: control 2: run 2 on 2026-11-01: 3 violations; keys and matched ids as expected
+PASS inactive-ministry-salary-out-of-range: control 3: run 3 on 2026-11-01: 3 violations; keys and matched ids as expected
+PASS minor-high-salary: control 4: run 4 on 2026-10-31: 4 violations, run 5 on 2026-11-01: 3 violations; keys and matched ids as expected
+PASS missing-mandatory-data: control 5: run 6 on 2026-11-01: 10 violations; keys and matched ids as expected
+PASS termination-before-hire: control 6: run 7 on 2026-11-01: 3 violations; keys and matched ids as expected
+exit=0
+
+$ python3 dev/active/dc-delivery/tools/untagged.py > before     (the controls that carry no test tag)
+[1, "עובדים פעילים במחלקה לא פעילה", 1, true, 1]
+[2, "מחלקות פעילות ללא עובדים פעילים", 1, true, 2]
+[3, "חריגות שכר במשרד לא פעיל", 1, true, 3]
+[4, "קטינים בשכר גבוה", 1, true, 5]
+[5, "נתוני חובה חסרים", 1, true, 6]
+[6, "סיום העסקה לפני תחילתה", 1, true, 7]
+
+$ cd web && E2E_BASE_URL=http://localhost:5000 npx playwright test e2e/gate --project=mobile --project=desktop --workers=1     (from the main tree: the clone has no node_modules)
+  ✓   1 [mobile] › e2e/gate/examples.spec.ts:45:5 › the six examples on the real stack › example 1 is built in the editor, saved, run and read (12.7s)
+  ✓   2 [mobile] › e2e/gate/examples.spec.ts:45:5 › the six examples on the real stack › example 2 is built in the editor, saved, run and read (9.4s)
+  ✓   3 [mobile] › e2e/gate/examples.spec.ts:45:5 › the six examples on the real stack › example 3 is built in the editor, saved, run and read (10.9s)
+  ✓   4 [mobile] › e2e/gate/examples.spec.ts:45:5 › the six examples on the real stack › example 4 is built in the editor, saved, run and read (15.2s)
+  ✓   5 [mobile] › e2e/gate/examples.spec.ts:45:5 › the six examples on the real stack › example 5 is built in the editor, saved, run and read (12.5s)
+  ✓   6 [mobile] › e2e/gate/examples.spec.ts:45:5 › the six examples on the real stack › example 6 is built in the editor, saved, run and read (14.0s)
+  ✓   7 [mobile] › e2e/gate/list.spec.ts:14:1 › a control of its own is found, opened, run, read in its panel, duplicated and archived from its row (8.7s)
+  ✓   8 [mobile] › e2e/gate/suggestions.spec.ts:11:1 › the panel shows the drafts the engine proposes, and creates one as a control (1.9s)
+  ✓   9 [mobile] › e2e/gate/suggestions.spec.ts:61:1 › a new control is offered the engine's suggestions for its choice, and one fills its conditions (1.5s)
+  ✓  10 [desktop] › e2e/gate/examples.spec.ts:45:5 › the six examples on the real stack › example 1 is built in the editor, saved, run and read (4.3s)
+  ✓  11 [desktop] › e2e/gate/examples.spec.ts:45:5 › the six examples on the real stack › example 2 is built in the editor, saved, run and read (2.8s)
+  ✓  12 [desktop] › e2e/gate/examples.spec.ts:45:5 › the six examples on the real stack › example 3 is built in the editor, saved, run and read (4.3s)
+  ✓  13 [desktop] › e2e/gate/examples.spec.ts:45:5 › the six examples on the real stack › example 4 is built in the editor, saved, run and read (15.5s)
+  ✓  14 [desktop] › e2e/gate/examples.spec.ts:45:5 › the six examples on the real stack › example 5 is built in the editor, saved, run and read (5.4s)
+  ✓  15 [desktop] › e2e/gate/examples.spec.ts:45:5 › the six examples on the real stack › example 6 is built in the editor, saved, run and read (7.5s)
+  ✓  16 [desktop] › e2e/gate/list.spec.ts:14:1 › a control of its own is found, opened, run, read in its panel, duplicated and archived from its row (8.5s)
+  ✓  17 [desktop] › e2e/gate/suggestions.spec.ts:11:1 › the panel shows the drafts the engine proposes, and creates one as a control (1.9s)
+  ✓  18 [desktop] › e2e/gate/suggestions.spec.ts:61:1 › a new control is offered the engine's suggestions for its choice, and one fills its conditions (1.7s)
+  18 passed (2.4m)
+
+$ python3 dev/active/dc-delivery/tools/untagged.py > after && diff before after
+equal: the gate specs changed no control but their own
+
+G1 finished 2026-11-12 07:23. The start was issued at 23:15 and began at 07:18: the listing of the clone (ls, an alias of eza on this machine) hung for eight hours and was ended by pid; nothing of the stack ran in between.
+
+$ docker compose stop && time scripts/start.sh     (a later start)
+FOUND: exit=1 after 18 s. db-init ran sql/10_schemas.sql while the restarted server was still recovering the
+database: "Msg 904 ... Database 5 cannot be autostarted during server shutdown or startup". The db health check
+and db-init's own wait both read master only, which answers first.
+FIX: scripts/db-init.sh now waits until an existing DataControls can be read (same 120 s deadline).
+
+With the fix, three rounds of `docker compose stop && scripts/start.sh`:
+  round 1 exit=0 elapsed=33s
+  round 2 exit=0 elapsed=29s
+  round 3 exit=0 elapsed=29s
+  db-init: DataControls is ready on db,1433 (7 scripts)
+  examples: six SKIP lines (control 1 to 6 exist)
+Two rounds of `docker compose stop && docker compose start`: /api/v1/health reads
+{"status":"ok","database":"ok","engine":"ok","version":"1.0.0"} within 2 s of the command's return, both times.
+The untagged listing after all five restarts equals the one above: the controls and their last runs survive.
+
+Measured: first start 115 s with the base images present (the pulls were not timed); a later start about 30 s.

@@ -1,7 +1,7 @@
 # dc-delivery notes
 
 ## State
-Running unattended in the night of 2026-11-11 to 12, on Kfir's night brief (below). Both lanes run back to back
+Running unattended in the evening and night of 2026-11-11, on Kfir's night brief (below). Both lanes run back to back
 on `feat/delivery`, cut from main at `d66670d` with all five PRs merged. Phase A0 is done; the phases in progress
 are named in the last Log lines.
 
@@ -28,7 +28,7 @@ are named in the last Log lines.
 - f. Last and skippable past 30 minutes: a script that loads about 200,000 employees into a separate scratch
   database, and a table of the six examples' timings on it.
 
-## Decisions taken unattended (2026-11-11 to 12)
+## Decisions taken unattended (2026-11-11)
 1. Four opus sub-agents draft beside the compose work, each on files nobody else touches: the two contract
    documents, `docs/ai-usage.md`, the plan of dc-ai-suggestions, and the ticks of the four finished plans. The
    brief's word names builds, pulls, browser runs, reviews and audits; drafting agents are my call, taken to
@@ -51,7 +51,7 @@ are named in the last Log lines.
    `DOCKER_CONFIG` pointing at an empty config in the scratchpad: all images are public. Nothing in the
    repository depends on it.
 
-8. Kfir, in a message during the night (about 01:00): `gh pr` asks him every time. The bodies of PRs 1 to 5
+8. Kfir, in a message during the evening (about 22:45): `gh pr` asks him every time. The bodies of PRs 1 to 5
    were fetched once and saved as `gates/pr-1.md` to `pr-5.md`; this session and every agent read those, and
    no `gh pr` command runs again before the final PR.
 
@@ -137,30 +137,30 @@ are named in the last Log lines.
 - 2026-11-10 platform facts read during planning, with their sources: `research/facts.md`. Not confirmed there and
   left to the B3 rehearsal: what a SQL Server 2022 Express install adds to a machine (ODBC driver, sqlcmd), its
   support on Windows 10 Home, and whether `docker compose up --wait` still fails on one-shot services in v5.6.
-- 2026-11-11 23:50 resumed on Fable 5.2 with the night brief. Found: all five PRs merged (main at `d66670d`),
+- 2026-11-11 22:25 resumed on Fable 5.2 with the night brief. Found: all five PRs merged (main at `d66670d`),
   the notes stale (lane A never started, both waits over, the Windows-host blocker removed by the scope
   decision). The web worktree's api and engine were serving on 5000 and 8000 and were stopped (`pkill`, as the
   brief says). `feat/delivery` cut from main. The four finished task folders moved to `dev/completed/`.
-- 2026-11-12 00:55 Phase B0 and B1 done. Built: `.dockerignore`, `api/Dockerfile`, the `engine`, `api` and
+- 2026-11-11 22:46 Phase B0 and B1 done. Built: `.dockerignore`, `api/Dockerfile`, the `engine`, `api` and
   `examples` services, `.env.example` (ports 14330, the app block), `scripts/examples.py`, `scripts/start.sh`
   with `lib/env.sh`, `scripts/start.ps1` with `lib/env.ps1`, `start.cmd`. Gate: `gates/B1.txt` (five services
   in their expected states; no foreign password in either service's environment; `examples.py verify` seven
   PASS lines; `db-check.sh` 27 passed; the gate specs 18 of 18 with the untagged listing equal before and
   after). The first build failed on the credential helper (decision 7); the second took the images to 261 MB
   (engine) and 461 MB (api). The README shots were taken on the six-example list (`docs/screenshots/`).
-- 2026-11-12 01:25 Phase B2 done, in a scratch clone at `b35d72a` (`gates/B2-manual.md`): `requirements.txt`
+- 2026-11-11 22:49 Phase B2 done, in a scratch clone at `b35d72a` (`gates/B2-manual.md`): `requirements.txt`
   equals a fresh export; the engine from a pip-installed virtual environment and the published api with the
   client in its `wwwroot` ran as host processes against the container's database; `examples.py verify` seven
   PASS lines; `docs/examples.md` generated and its `--check` green. Not run as a host command: `db-init.sh`
   against a host SQL Server (no `sqlcmd` on this machine). The stop command killed its own shell once (`pkill
   -f` matched the shell's command line); the engine's host process was then stopped by its pid.
-- 2026-11-12 01:30 change d: the sub-agent ticked the 8 open boxes of the four finished plans (contracts 2,
+- 2026-11-11 22:50 change d: the sub-agent ticked the 8 open boxes of the four finished plans (contracts 2,
   engine 3, api 1, web 2), none left open, and wrote State, Next, a Log line and the ARCHIVED line in each
   notes file. Two ticks rest on thin evidence and it says so in those Logs: engine plan line 315 (Kfir's read
   of the Hebrew, on the brief's word alone) and web plan line 526 (the last two commits of PR #5 had the
   client's checks and the mocked specs only). Before the "no gh" message reached it, it had run read-only
   `gh pr view` for PRs 1 to 5.
-- 2026-11-12 02:10 Phase B1 review (`reviews/B1.md`): two opus `reviewer` agents read `d66670d..b35d72a`.
+- 2026-11-11 22:59 Phase B1 review (`reviews/B1.md`): two opus `reviewer` agents read `d66670d..b35d72a`.
   Compose and the api image: 0 critical, 1 warning, 4 info. The warning (`docker-compose.yml`: the engine's row
   cap and time zone were passed from `.env` and the api's were not, so changing them did nothing) is fixed; of
   the info findings two are fixed (the database-name passthrough, a tolerant image build), one is left with
@@ -170,7 +170,7 @@ are named in the last Log lines.
   firing for a `cmd /c` caller; `DC_NO_PAUSE=1` skips it). After the fixes: the stack rebuilt and restarted by
   `scripts/start.sh`, `examples.py verify` six PASS lines, `docs --check` green. Fix commit: `fix(compose):
   review fixes`.
-- 2026-11-12 02:40 Phase A1 and B4 done, written as built in one pass (lanes A and B ran back to back).
+- 2026-11-11 23:00 Phase A1 and B4 done, written as built in one pass (lanes A and B ran back to back).
   Sub-agents on opus drafted `docs/control-definition.md` and `docs/glossary.md` (one agent), `docs/ai-usage.md`
   (one) and the plan of dc-ai-suggestions (one `Plan` agent); this session wrote
   `docs/summarize-architecture.md`, `docs/assumptions-limitations-extensions.md`, `docs/submission.he.md`, the
@@ -186,12 +186,12 @@ are named in the last Log lines.
   In `docs/ai-usage.md` two statements were corrected by this session against tonight's facts (architecture
   §15 no longer holds the sentence it quoted; the push of `9b5f79a` was on Kfir's recorded word). Its last
   section lists, from the records, where no read by Kfir is recorded: that section is his to read (G7).
-- 2026-11-12 03:10 change f done: `scripts/scale-test.sh` and `sql/scale/load_scale.sql`; the table is in
+- 2026-11-11 23:06 change f done: `scripts/scale-test.sh` and `sql/scale/load_scale.sql`; the table is in
   architecture §11 and the finding in the limitations document (unattended decision 11). The scratch database
   and the second engine were removed after the run; `DataControls` was only read.
-- 2026-11-12 03:50 `/check all --tests`, first pass, before the gate: 15 checks green (db-check 27, contracts 5,
+- 2026-11-11 23:10 `/check all --tests`, first pass, before the gate: 15 checks green (db-check 27, contracts 5,
   engine 521, api 389 with the 3 live tests skipped, client 390, harness 227).
-- 2026-11-12 04:00 review of the documents (`reviews/docs.md`): two opus `reviewer` agents on `5639436` and
+- 2026-11-11 23:13 review of the documents (`reviews/docs.md`): two opus `reviewer` agents on `5639436` and
   `db92c3d`. Contract documents: 0 critical, 4 warnings, 4 info, all in `docs/glossary.md`'s "how to add"
   recipes (the db-check lists and the live test's version assertion follow an addition; the order of a new
   relationship; what a new computed kind really touches) and all fixed; nothing false in the tables. README and
@@ -201,10 +201,27 @@ are named in the last Log lines.
   warnings-as-errors; the audit's result stated before the audit had run; wrong evidence for "an edit creates
   a version" in §18; and the unmeasured start times, replaced by G1's. Info fixed: all seven, among them the
   two lines and the two §15 sentences that the "not trimmed" brief wanted kept, now back.
-- 2026-11-12 04:05 G5, the security audit of the whole repository (`reviews/security.md`): one opus
+- 2026-11-11 23:14 G5, the security audit of the whole repository (`reviews/security.md`): one opus
   `security-auditor`. 0 critical, 0 high, 1 medium, 2 low, 3 info. Medium: `AllowedHosts: *`, an open item of
   the api's audit, reaches further than the documents said (a rebinding page can create and run a control and
   so read `hr`); the limitations document is corrected, the setting is left (unattended decision 12). Low: one
   compose network for all five services (to the limitations); a second engine on 127.0.0.1:8009 seen during
   the audit (this session's scale test, already removed). Info, for Kfir: his local `.env` is mode 0644;
   `43745cc` with the three former passwords is only on the branch `feat/contracts`, not in main's history.
+- 2026-11-11 23:20 the clock. Every Log time above this line was first written from a guess and stood hours
+  ahead (up to "04:05", and tomorrow's date in several files); `date` at the start of G1 showed 23:15. The
+  times above are now the commit times of `git log` (the resume and the first-pass check are within five
+  minutes), and the date in every file written tonight is 2026-11-11. From here on a time is read from `date`.
+- 2026-11-12 07:18 the night stalled. The G1 command of 23:15 listed the clone with `ls`, an alias of `eza` on
+  this machine; that process hung and `scripts/start.sh` never began. Kfir found it in the morning; the process
+  was ended by pid and the start ran from there. Nothing ran between 23:15 and 07:18. From here on a command
+  uses `command ls`.
+- 2026-11-12 07:35 G1 (`gates/G1-docker-wsl.txt`), on a fresh clone at `c9eca2a` after `down -v --rmi local`:
+  `scripts/start.sh` exit 0 in 115 s (base images present, pulls not timed); `.env` mode 600; five services in
+  the expected states; six LOAD lines; six controls with `lastRun` null; `examples.py verify` six PASS; gate
+  specs 18 of 18; untagged listing equal before and after. Found: a second `scripts/start.sh` after
+  `docker compose stop` failed (db-init exit 1, error 904: the database was still recovering while master
+  answered). Fixed in `scripts/db-init.sh` (its wait reads an existing DataControls); three stop/start rounds
+  and two `compose start` rounds then came back healthy with the controls and runs intact. README: the
+  unmeasured "about 8 minutes" is replaced by what was measured (2 minutes with the images present, about half
+  a minute later).

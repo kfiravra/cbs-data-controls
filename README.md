@@ -65,8 +65,9 @@ Data Controls is running.
   The database       127.0.0.1,14330 (SQL Server; the logins and their passwords are in .env)
 ```
 
-The first start downloads the SQL Server image (2.2 GB) and builds two images; it took about 8 minutes on the
-development machine. Later starts take about half a minute.
+The first start downloads the base images (SQL Server alone is 2.2 GB) and builds two images, so its length
+depends on the connection: allow several minutes. With the base images already downloaded, the build and the
+start took 2 minutes on the development machine. A later start takes about half a minute.
 
 **What appears.** The list at http://localhost:5000 holds six example controls, ready to run and never run. Run
 each one with its button; on the sample data they find:
