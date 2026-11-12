@@ -14,32 +14,27 @@
 
 ## הרכיבים
 
-```mermaid
-flowchart TB
-    U(["משתמש עסקי"]) --> W["Angular<br/>הלקוח: ממשק בעברית, מימין לשמאל"]
-    W -- "JSON" --> A["API<br/>בקרות, גרסאות, הרצות ותוצאות שמורות"]
-    A -- "הגדרת הבקרה בלבד" --> E["Python<br/>מנוע הבקרות: בדיקה, תרגום לשאילתה, הרצה וסיבות"]
-    A -- "קריאה וכתיבה" --> DQ[("dq<br/>מאגר הבקרות")]
-    E -- "קריאה בלבד" --> HR[("hr<br/>נתוני הארגון")]
-```
+<p align="center"><img src="diagrams/architecture-components.png" alt="הרכיבים: הלקוח, ה־API, מנוע הבקרות, מאגר הבקרות ונתוני הארגון" width="860"></p>
 
-| רכיב | אחראי על | אף פעם לא |
-|---|---|---|
-| הלקוח, Angular | רשימת הבקרות, בניית הכלל והצגת התוצאות. כל רשימת בחירה נבנית ממילון המונחים | מחזיק שם של טבלה או עמודה, או שולח SQL |
-| ה־API, ‎.NET 10 | חיי הבקרה: יצירה, עריכה, גרסאות וארכיון. ההרצות והתוצאות השמורות | בונה או מריץ SQL דינמי, או קורא את נתוני הארגון |
-| המנוע, Python | מילון המונחים, בדיקת המשמעות, התרגום לשאילתה, ההרצה, הסיבות וההצעות | כותב לבסיס נתונים, או מקבל מבחוץ שם של טבלה או עמודה |
-| בסיס הנתונים, SQL Server | שתי סכמות, `hr` ו־`dq`, ושני משתמשים שכל אחד מהם יכול לעשות דבר אחד | |
+<table dir="rtl">
+<thead>
+<tr dir="rtl"><th dir="rtl" align="right">&rlm;רכיב</th><th dir="rtl" align="right">&rlm;אחראי על</th><th dir="rtl" align="right">&rlm;אף פעם לא</th></tr>
+</thead>
+<tbody>
+<tr dir="rtl"><td dir="rtl" align="right">&rlm;הלקוח, Angular</td><td dir="rtl" align="right">&rlm;רשימת הבקרות, בניית הכלל והצגת התוצאות. כל רשימת בחירה נבנית ממילון המונחים</td><td dir="rtl" align="right">&rlm;מחזיק שם של טבלה או עמודה, או שולח SQL</td></tr>
+<tr dir="rtl"><td dir="rtl" align="right">&rlm;ה־API, &lrm;.NET 10</td><td dir="rtl" align="right">&rlm;חיי הבקרה: יצירה, עריכה, גרסאות וארכיון. ההרצות והתוצאות השמורות</td><td dir="rtl" align="right">&rlm;בונה או מריץ SQL דינמי, או קורא את נתוני הארגון</td></tr>
+<tr dir="rtl"><td dir="rtl" align="right">&rlm;המנוע, Python</td><td dir="rtl" align="right">&rlm;מילון המונחים, בדיקת המשמעות, התרגום לשאילתה, ההרצה, הסיבות וההצעות</td><td dir="rtl" align="right">&rlm;כותב לבסיס נתונים, או מקבל מבחוץ שם של טבלה או עמודה</td></tr>
+<tr dir="rtl"><td dir="rtl" align="right">&rlm;בסיס הנתונים, SQL Server</td><td dir="rtl" align="right">&rlm;שתי סכמות, <code>hr</code> ו־<code>dq</code>, ושני משתמשים שכל אחד מהם יכול לעשות דבר אחד</td><td dir="rtl" align="right"></td></tr>
+</tbody>
+</table>
 
-שלושת השירותים חולקים דבר אחד בלבד: התיקייה [`contracts/`‎](../contracts), ובה מילון המונחים, סכמת הגדרת הבקרה, שש בקרות לדוגמה ותיאור שני ממשקי ה־HTTP. אף שירות אינו משתמש בקוד של שירות אחר.
+שלושת השירותים חולקים דבר אחד בלבד: התיקייה [`contracts/`&lrm;](../contracts), ובה מילון המונחים, סכמת הגדרת הבקרה, שש בקרות לדוגמה ותיאור שני ממשקי ה־HTTP. אף שירות אינו משתמש בקוד של שירות אחר.
 
 **ההפרדה שהמטלה מבקשת**, בין הגדרת הבקרה לבין מימוש השאילתה, היא כאן גבול בין שירותים. ה־API מחזיק את ההגדרות ויכול לכתוב, אבל אינו יכול להגיע לנתוני הארגון. המנוע בונה ומריץ את ה־SQL, והמשתמש שלו בבסיס הנתונים יכול רק לקרוא. באג במנוע אינו יכול לשנות נתונים, ובאג ב־API אינו יכול להריץ שאילתה על נתוני הארגון. טקסט SQL אינו עובר בין השירותים באף כיוון.
 
 ## מנגנון הבקרות
 
-```mermaid
-flowchart RL
-    S1["הגדרה<br/>JSON"] --> S2["בדיקה<br/>סכמה ומילון"] --> S3["תרגום<br/>שאילתה אחת עם פרמטרים"] --> S4["הרצה<br/>קריאה בלבד"] --> S5["סיבה<br/>לכל רשומה"] --> S6["עותק שמור<br/>דפדוף, חיפוש ומיון"]
-```
+<p align="center"><img src="diagrams/architecture-mechanism.png" alt="מנגנון הבקרות בשישה שלבים: הגדרה, בדיקה, תרגום, הרצה, סיבה ועותק שמור" width="860"></p>
 
 ### 1. ההגדרה היא נתון
 
@@ -105,25 +100,7 @@ FROM (SELECT e0.id AS k, e0.first_name AS d0, e0.last_name AS d1, e0.id AS d2, e
 
 ## מה קורה כשלוחצים "הרצה"
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant B as דפדפן
-    participant A as API
-    participant E as מנוע
-    participant Q as dq
-    participant H as hr
-    B->>A: בקשה להריץ בקרה
-    A->>Q: קריאת הגדרת הבקרה
-    A->>E: הגדרת הבקרה בלבד
-    Note over E: בדיקה מול המילון ותרגום לשאילתה אחת
-    E->>H: ספירה ועמוד רשומות, בקריאה בלבד
-    E-->>A: מספר החריגות, הרשומות והסיבות
-    A->>Q: שמירת התוצאות
-    A-->>B: ההרצה
-    B->>A: עמוד תוצאות, חיפוש או מיון
-    A-->>B: מתוך העותק השמור
-```
+<p align="center"><img src="diagrams/architecture-run.png" alt="מה קורה כשלוחצים הרצה: הדפדפן, ה־API, מנוע הבקרות ונתוני הארגון" width="860"></p>
 
 ## מה שומר על ה־SQL הדינמי
 
@@ -152,11 +129,16 @@ sequenceDiagram
 
 המסמכים שלהלן כתובים באנגלית.
 
-| נושא | מסמך |
-|---|---|
-| הארכיטקטורה המלאה | [docs/architecture.md](../docs/architecture.md) |
-| מבנה הגדרת הבקרה | [docs/control-definition.md](../docs/control-definition.md) |
-| מילון המונחים ואיך מרחיבים אותו | [docs/glossary.md](../docs/glossary.md) |
-| שני ממשקי ה־HTTP וקודי השגיאה | [contracts/api.md](../contracts/api.md) ו־[contracts/errors.md](../contracts/errors.md) |
+<table dir="rtl">
+<thead>
+<tr dir="rtl"><th dir="rtl" align="right">&rlm;נושא</th><th dir="rtl" align="right">&rlm;מסמך</th></tr>
+</thead>
+<tbody>
+<tr dir="rtl"><td dir="rtl" align="right">&rlm;הארכיטקטורה המלאה</td><td dir="rtl" align="right">&rlm;<a href="../docs/architecture.md">docs/architecture.md</a></td></tr>
+<tr dir="rtl"><td dir="rtl" align="right">&rlm;מבנה הגדרת הבקרה</td><td dir="rtl" align="right">&rlm;<a href="../docs/control-definition.md">docs/control-definition.md</a></td></tr>
+<tr dir="rtl"><td dir="rtl" align="right">&rlm;מילון המונחים ואיך מרחיבים אותו</td><td dir="rtl" align="right">&rlm;<a href="../docs/glossary.md">docs/glossary.md</a></td></tr>
+<tr dir="rtl"><td dir="rtl" align="right">&rlm;שני ממשקי ה־HTTP וקודי השגיאה</td><td dir="rtl" align="right">&rlm;<a href="../contracts/api.md">contracts/api.md</a> ו־<a href="../contracts/errors.md">contracts/errors.md</a></td></tr>
+</tbody>
+</table>
 
 </div>

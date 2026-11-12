@@ -3,9 +3,9 @@
 ## State
 All phases and the gate items G1, G2, G3, G5 and G6 are done on `feat/delivery`, and PR #6 is open. On 2026-11-12
 Kfir gave nine decisions (Log, 08:50) and they are carried out: the index, the contract wording, the one-page
-`docs/ai-usage.md`, the chat's role, §15. Later that day Kfir moved the Hebrew documents to their own folder,
-`submission/` (seven documents, one per deliverable; Log, 11:03), which replaces decision 8 of the plan. Left:
-Kfir's read (G7), the merge, and G9 after it.
+`docs/ai-usage.md`, the chat's role, §15. Later that day Kfir moved the Hebrew documents to their own folder
+(seven documents, one per deliverable; Log, 11:03), which replaces decision 8 of the plan; he read them (G7 is
+done), revised them by hand and named the folder `submission-he/` (Log, 14:21). Left: the merge, and G9 after it.
 
 ## The night brief (Kfir, 2026-11-11, pasted before going to sleep; it wins over plan.md where they differ)
 - Run to the end, no questions, decide and write it here. Stay on Fable 5.2. The guard is off for the session:
@@ -78,14 +78,12 @@ Kfir's read (G7), the merge, and G9 after it.
     service of `docker-compose.yml`: Kfir's call.
 
 ## Next
-1. G7, Kfir: read `docs/ai-usage.md` (one page), `submission/README.he.md`, `submission/ai-usage.he.md` and the
-   README's first screen. The three wordings of the Log line of 09:35 he confirmed on 2026-11-12 (Log, 11:03).
-2. The merge of PR #6 on Kfir's word; then G9, each step on his word. No merge and no tag before that.
-3. Still his: the branch `feat/contracts`, which holds `43745cc` with three former passwords; it stays until
+1. The merge of PR #6 on Kfir's word; then G9, each step on his word. No merge and no tag before that.
+2. Still his: the branch `feat/contracts`, which holds `43745cc` with three former passwords; it stays until
    after the merge (his word, 2026-11-12).
 
 ## Blockers
-- None. G7, the merge and G9 wait for Kfir.
+- None. The merge and G9 wait for Kfir.
 
 ## Last reviewed
 `0d9767f`: the documents (`reviews/docs.md`) and the security audit of the whole repository (`reviews/security.md`). Before it: `b35d72a` (B1), `reviews/B1.md`.
@@ -314,3 +312,12 @@ Kfir's read (G7), the merge, and G9 after it.
   ends of four of the tasks and once at the end of the first; the chat's output reached the repository only
   through him) "are accurate and stay as they are"; `IX_Employee_department_id` stays; `feat/contracts` stays
   until after the merge.
+- 2026-11-12 14:21 G7 done, on Kfir's word ("I finished reading the Hebrew documents (G7 is done)"). After his
+  read the Hebrew documents were revised by hand, by him: tables as HTML with an explicit direction, six PNG
+  diagrams in `diagrams/` in place of Mermaid, and ai-usage, examples and assumptions shortened. The thirteen
+  files match the sha256 sums he gave. During this step he renamed the folder from `submission/` to
+  `submission-he/`; the references to it in `README.md`, `docs/architecture.md`, `docs/ai-usage.md` and
+  `.claude/CLAUDE.md` follow the new name (the path only, twelve occurrences, no other wording). Checked:
+  harness tests 227 pass; 26 Markdown targets and 34 `href`/`src` attributes in `submission-he/*.md` all resolve;
+  nothing under the folder but the seven documents and the six pictures. The services' suites were not run: no
+  code changed.

@@ -371,7 +371,7 @@ data-controls/
   web/                  Angular app (src/app, src/assets/i18n/he.json, e2e/mocked, e2e/gate)
   scripts/              start.sh and start.ps1, db-init.sh, db-check.sh, examples.py, contracts-check.py
   docs/                 the documents of §17, and screenshots/
-  submission/           the submission documents in Hebrew, one for each deliverable of the assignment
+  submission-he/        the submission documents in Hebrew, one for each deliverable of the assignment
   .claude/              Claude Code harness: CLAUDE.md, skills, rules, hooks, agents (committed)
   dev/                  briefs, and the plan and notes of every task (completed/, active/)
 ```
@@ -383,7 +383,7 @@ data-controls/
 | File | Content |
 |---|---|
 | [`README.md`](../README.md) | What the system is, the architecture diagram, running with Docker, running from source, a walk through the system, configuration, tests, operations, links to the documents below |
-| [`submission/README.he.md`](../submission/README.he.md) | The submission documents in Hebrew: a cover page with the assignment's deliverables in its own words, and a short document for each |
+| [`submission-he/README.he.md`](../submission-he/README.he.md) | The submission documents in Hebrew: a cover page with the assignment's deliverables in its own words, and a short document for each |
 | [`docs/summarize-architecture.md`](summarize-architecture.md) | The short document the assignment asks for: the architecture and the controls mechanism (definition, validation, one parameterized SELECT, reasons), and the design of the AI suggestions |
 | [`docs/architecture.md`](architecture.md) | This document: components and responsibilities, boundaries and prohibitions, data model, flows, security layers, performance decisions, decision record, the assignment checklist |
 | [`docs/design.md`](design.md) | The visual design decisions for the client (direction, tokens, components, responsive rules) |

@@ -1,6 +1,6 @@
 # Data Controls
 
-**עברית: [מסמכי ההגשה](submission/README.he.md)** (the submission documents in Hebrew, one for each deliverable of the assignment).
+**עברית: [מסמכי ההגשה](submission-he/README.he.md)** (the submission documents in Hebrew, one for each deliverable of the assignment).
 
 Generic data-quality controls for business users. A user builds a rule from business terms in a Hebrew
 interface, the engine compiles it into one parameterized SELECT, and the records that break the rule come back
@@ -513,7 +513,7 @@ web/                  Angular client
 scripts/              start.sh and start.ps1 (the Docker path), db-init.sh, db-check.sh, examples.py,
                       contracts-check.py, scale-test.sh
 docs/                 the documents listed below
-submission/           the submission documents in Hebrew, one for each deliverable; README.he.md is the cover page
+submission-he/        the submission documents in Hebrew, one for each deliverable; README.he.md is the cover page
 docker-compose.yml    the whole system: db, db-init, engine, api, examples
 start.cmd             the Docker path on Windows
 .env.example          configuration template, copied to .env
@@ -525,7 +525,7 @@ dev/                  the task plans and notes of the build (completed/ and acti
 
 | Document | Content |
 |---|---|
-| [submission/README.he.md](submission/README.he.md) | the submission documents in Hebrew: a cover page with the assignment's deliverables, and a short document for each |
+| [submission-he/README.he.md](submission-he/README.he.md) | the submission documents in Hebrew: a cover page with the assignment's deliverables, and a short document for each |
 | [docs/summarize-architecture.md](docs/summarize-architecture.md) | the short document: the architecture, the controls mechanism, the design of the AI suggestions |
 | [docs/examples.md](docs/examples.md) | the six example controls, with the records each flags and why |
 | [docs/assumptions-limitations-extensions.md](docs/assumptions-limitations-extensions.md) | working assumptions, limitations, what was not proven, possible extensions |
