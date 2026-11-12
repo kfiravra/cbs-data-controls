@@ -250,3 +250,9 @@ Kfir's.
   exit 0 in 42 s, `verify` six PASS. The dev `dq` is new: six examples and the runs of that verify.
 - 2026-11-12 07:36 G6: §18 of `docs/architecture.md` has 35 ticked items and none open; every path and link named
   as evidence exists (checked by a script). Gate boxes G1, G2, G3, G5 and G6 ticked in `plan.md`.
+- 2026-11-12 07:38 G8, first half: `/check all --tests` at `76cc249`, 15 checks exit 0 (`gates/final.txt`: engine 521,
+  api 389 and 3 live skipped, web 390, hooks 227, db-check 27, contracts 5). `/ship dc-delivery`: no file under
+  `web/` changed on this branch, so the full Playwright run is not part of it (the gate specs ran in G1); the
+  secrets scan of `git diff main...HEAD` has one hit, a `DQ_APP_PASSWORD=...` placeholder in a table, and the
+  six generated and local password values occur in no tracked file; the folder stays in `dev/active` because
+  G7, G8's merge and G9 are open. The G8 box stays unticked until the merge, which is Kfir's.

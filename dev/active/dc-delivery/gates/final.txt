@@ -1,0 +1,19 @@
+# G8: /check all --tests on feat/delivery at 76cc249, 2026-11-12 07:38
+# label, exit code, seconds, the summary line of the tool. 15 checks, all exit 0. The three skipped api tests are
+# the live ones, which need a running engine by their own switch.
+
+sql-init	0	1s	
+sql-check	0	6s	db-check: 27 passed, 0 failed (structure permissions glossary hebrew examples)
+contracts-check	0	1s	contracts-check: ok, 5 checks passed (schema, glossary, agreement, examples, invalid fixtures)
+engine-ruff	0	1s	All checks passed!
+engine-pyright	0	11s	0 errors, 0 warnings, 0 informations
+engine-test	0	26s	============================= 521 passed in 25.58s =============================
+api-build	0	7s	
+api-format	0	19s	
+api-test	0	34s	Passed!  - Failed:     0, Passed:   389, Skipped:     3, Total:   392, Duration: 29 s - DataControls.Api.Tests.dll (net10.0)
+web-ngc	0	4s	
+web-eslint	0	6s	
+web-test	0	24s	Tests  390 passed (390)
+web-build	0	6s	
+print-guard	0	1s	
+hooks	0	7s	# pass 227
