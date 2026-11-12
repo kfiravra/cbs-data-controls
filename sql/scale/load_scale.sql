@@ -86,6 +86,7 @@ ALTER TABLE hr.Department ADD CONSTRAINT FK_Department_Employee FOREIGN KEY (man
 CREATE NONCLUSTERED INDEX IX_Department_ministry_id ON hr.Department (ministry_id);
 CREATE NONCLUSTERED INDEX IX_Department_manager_employee_id ON hr.Department (manager_employee_id);
 CREATE NONCLUSTERED INDEX IX_Employee_department_id ON hr.Employee (department_id);
+CREATE NONCLUSTERED INDEX IX_Employee_department_id_status ON hr.Employee (department_id, status);
 CREATE NONCLUSTERED INDEX IX_Employee_birth_date ON hr.Employee (birth_date);
 CREATE NONCLUSTERED INDEX IX_Employee_status ON hr.Employee (status);
 CREATE NONCLUSTERED INDEX IX_Employee_salary ON hr.Employee (salary);

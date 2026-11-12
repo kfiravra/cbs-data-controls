@@ -22,7 +22,7 @@ are not part of the init.
 | `20_hr_tables.sql` | `hr.Ministry`, `hr.Department`, `hr.Employee`: keys, foreign keys, the unique national id and the status domain, nothing else (the business rules are what the controls detect, so the data must be able to break them); explicit ids, no IDENTITY |
 | `30_dq_tables.sql` | `dq.Control` (with a `ROWVERSION` concurrency token), `dq.ControlVersion`, `dq.Run`, `dq.RunResult` (cascading from its run); JSON columns carry `ISJSON` checks |
 | `40_logins.sql` | the logins and users `dq_app` and `dq_engine_ro` and their schema permissions |
-| `50_indexes.sql` | an index per foreign key column, `hr.Employee` `birth_date`, `status` and `salary`, and `dq.Run (control_id, started_at DESC)` |
+| `50_indexes.sql` | an index per foreign key column, `hr.Employee` `birth_date`, `status`, `salary` and `(department_id, status)`, and `dq.Run (control_id, started_at DESC)` |
 | `60_seed_hr.sql` | the Hebrew seed with planted violations, in one transaction |
 
 `cleanup_runs.sql` is outside the init order: see [Retention](#retention).

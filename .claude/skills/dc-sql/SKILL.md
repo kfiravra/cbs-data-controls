@@ -28,7 +28,7 @@ numbers leave gaps for later inserts, and every script is re-runnable.
 20_hr_tables.sql  Ministry, Department, Employee, with keys and checks
 30_dq_tables.sql  Control, ControlVersion, Run, RunResult
 40_logins.sql     dq_app, dq_engine_ro: logins, users, grants, denies
-50_indexes.sql    every FK column; birth_date, status, salary (what the examples filter by)
+50_indexes.sql    every FK column; birth_date, status, salary (what the examples filter by); (department_id, status)
 60_seed_hr.sql    the Hebrew seed with planted violations
 ```
 
