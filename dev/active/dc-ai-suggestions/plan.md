@@ -1,8 +1,8 @@
 # dc-ai-suggestions: an advisor service that proposes controls
 Status: planned, not started · Created: 2026-11-11 · Branch: `feat/ai-suggestions` (main tree, cut from main)
 Written without an interview, from Kfir's brief of 2026-11-11, by the dc-delivery session's planner. Decisions 1 to
-9 are the brief, line for line. Decisions 10 to 23 are the planner's and wait for Kfir's objection. Facts were
-looked up in the code and the contracts and are cited by file.
+9 are the brief, line for line. Decisions 10 to 23 are the planner's; Kfir read them on 2026-11-12 and they
+stand. Facts were looked up in the code and the contracts and are cited by file.
 
 ## Goal
 
@@ -223,7 +223,7 @@ minutes (a recording, the live evaluation, an image build, Playwright) say so in
 - [ ] The submission of 2026-11-15 is handed in (decision 10: main's api suite goes red in phase 1).
 - [ ] dc-delivery is merged: `docker-compose.yml` holds `engine` and `api` (on 2026-11-11 it holds `db` and
       `db-init` only), and the §17 documents exist.
-- [ ] Kfir has answered decisions 10 to 23, or let them stand.
+- [x] Kfir has answered decisions 10 to 23, or let them stand. (2026-11-12: they stand.)
 - [ ] Read `contracts/api.md` §2 to §4 and `contracts/errors.md` again; write any drift from "Contract changes"
       into `notes.md`. `contracts/` wins.
 
