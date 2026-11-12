@@ -77,7 +77,7 @@ Kfir's.
     service of `docker-compose.yml`: Kfir's call.
 
 ## Next
-1. G8: `/check all --tests` into `gates/final.txt`, `/ship dc-delivery`, push and the PR (Kfir's word is in the brief).
+1. PR #6 is open (`gates/pr-6.md`); the merge is Kfir's word. One local commit (this file and `pr-6.md`) is not pushed.
 2. G7, Kfir: read `docs/ai-usage.md`, `docs/submission.he.md` and the README's first screen.
 3. Kfir's calls, listed in the PR body: the `(department_id, status)` index, `AllowedHosts`, decisions 10 to 23
    of dc-ai-suggestions, `chmod 600 .env`, the branch `feat/contracts`.
@@ -256,3 +256,6 @@ Kfir's.
   secrets scan of `git diff main...HEAD` has one hit, a `DQ_APP_PASSWORD=...` placeholder in a table, and the
   six generated and local password values occur in no tracked file; the folder stays in `dev/active` because
   G7, G8's merge and G9 are open. The G8 box stays unticked until the merge, which is Kfir's.
+- 2026-11-12 08:42 pushed `feat/delivery` at `6cbbaa9` and opened PR #6 on the word of the night brief
+  (`gates/pr-6.md` holds the body). No merge, no tag. This Log line and `pr-6.md` are one local commit after
+  the push; it goes up with Kfir's next push.
