@@ -154,3 +154,125 @@ Two rounds of `docker compose stop && docker compose start`: /api/v1/health read
 The untagged listing after all five restarts equals the one above: the controls and their last runs survive.
 
 Measured: first start 115 s with the base images present (the pulls were not timed); a later start about 30 s.
+
+
+# G1 once more, 2026-11-12 09:06, after the index, the contract wording and the documents of 2026-11-12
+
+$ docker compose down -v --rmi local     (main tree)
+9 objects removed
+containers left: 0, volumes left: 0
+
+$ git clone --branch feat/delivery <main tree> dc-clean && cd dc-clean && git log --oneline -1 && git status --short | wc -l
+c36732f chore(dev): two ticks say what was read and where
+0
+
+$ time scripts/start.sh
+start: created .env with three random passwords (they are in that file and are not printed)
+start: building and starting the containers (the first build takes several minutes)
+ Image data-controls-engine Built 
+ Image data-controls-api Built 
+ Container data-controls-db-1 Healthy 
+ Container data-controls-db-init-1 Exited 
+ Container data-controls-engine-1 Healthy 
+ Container data-controls-api-1 Healthy 
+start: waiting for the app
+Data Controls is running.
+  The app            http://localhost:5000
+  The api's pages    http://localhost:5000/api/docs
+  The database       127.0.0.1,14330 (SQL Server; the logins and their passwords are in .env)
+  Stop it            docker compose stop        (docker compose start brings it back)
+  Remove it          docker compose down        (the data stays in its volume)
+  Wipe the data too  docker compose down -v
+exit=0  elapsed=118s
+
+services:
+api  running  Up 25 seconds (healthy)  127.0.0.1:5000->8080/tcp
+db  running  Up About a minute (healthy)  127.0.0.1:14330->1433/tcp
+db-init  exited  Exited (0) 32 seconds ago  
+engine  running  Up 32 seconds (healthy)  8000/tcp
+examples  exited  Exited (0) 16 seconds ago  
+
+loader: 6 LOAD lines;  .env mode: 600
+controls: total 6 | with a last run: 0
+
+the new index, read as sa inside the db container:
+IX_Employee_department_id_status (department_id, status)
+
+$ python3 scripts/examples.py verify
+PASS active-in-inactive-department: control 1: run 1 on 2026-11-01: 6 violations; keys and matched ids as expected
+PASS department-without-active-employees: control 2: run 2 on 2026-11-01: 3 violations; keys and matched ids as expected
+PASS inactive-ministry-salary-out-of-range: control 3: run 3 on 2026-11-01: 3 violations; keys and matched ids as expected
+PASS minor-high-salary: control 4: run 4 on 2026-10-31: 4 violations, run 5 on 2026-11-01: 3 violations; keys and matched ids as expected
+PASS missing-mandatory-data: control 5: run 6 on 2026-11-01: 10 violations; keys and matched ids as expected
+PASS termination-before-hire: control 6: run 7 on 2026-11-01: 3 violations; keys and matched ids as expected
+exit=0
+
+$ cd web && E2E_BASE_URL=http://localhost:5000 npx playwright test e2e/gate --project=mobile --project=desktop --workers=1     (from the main tree)
+  18 passed (2.5m)
+
+$ untagged.py before and after the specs
+equal (6 controls): the gate specs changed no control but their own
+G1 (second run) finished 2026-11-12 09:14; the clone's stack was removed and the dev stack started again from the main tree.
+
+FOUND after that run, 2026-11-12 09:25, when the dev stack was started again from the main tree on a new volume:
+scripts/start.sh exit 1, db-init failed in sql/00_database.sql with its own message "DataControls exists with a
+collation other than Hebrew_CI_AS". On a new volume SQL Server answers for a moment under its default collation
+(SQL_Latin1_General_CP1_CI_AS was read once in a watch of a fresh server) and then changes to MSSQL_COLLATION;
+the db health check asked only SELECT 1, so db-init could create the database inside that moment. One failure
+in about seven new volumes today.
+FIX: the db health check in docker-compose.yml waits until SERVERPROPERTY('Collation') equals MSSQL_COLLATION.
+The check run by hand: exit 1 against a wrong collation name, exit 0 against the real one. Then five new
+volumes in a row (docker compose down -v; docker compose up -d db db-init): db-init exit 0 each time, 19 to 21 s.
+
+
+# G1 a third time, 2026-11-12 09:25, on the commit that holds the health check fix
+
+$ docker compose down -v --rmi local     (main tree)
+6 objects removed
+containers left: 0, volumes left: 0
+
+$ git clone --branch feat/delivery <main tree> dc-clean && cd dc-clean && git log --oneline -1 && git status --short | wc -l
+e18da5e fix(compose): the db is healthy only under its final collation
+0
+
+$ time scripts/start.sh
+start: created .env with three random passwords (they are in that file and are not printed)
+start: building and starting the containers (the first build takes several minutes)
+ Image data-controls-engine Built 
+ Image data-controls-api Built 
+ Container data-controls-db-1 Healthy 
+ Container data-controls-db-init-1 Exited 
+ Container data-controls-engine-1 Healthy 
+ Container data-controls-api-1 Healthy 
+start: waiting for the app
+Data Controls is running.
+  The app            http://localhost:5000
+  The database       127.0.0.1,14330 (SQL Server; the logins and their passwords are in .env)
+exit=0  elapsed=50s
+
+clone at: e18da5e fix(compose): the db is healthy only under its final collation
+services:
+api  running  Up 21 seconds (healthy)  127.0.0.1:5000->8080/tcp
+db  running  Up 47 seconds (healthy)  127.0.0.1:14330->1433/tcp
+db-init  exited  Exited (0) 27 seconds ago  
+engine  running  Up 27 seconds (healthy)  8000/tcp
+examples  exited  Exited (0) 13 seconds ago  
+
+loader: 6 LOAD lines;  .env mode: 600
+controls: total 6 | with a last run: 0
+
+$ python3 scripts/examples.py verify
+PASS active-in-inactive-department: control 1: run 1 on 2026-11-01: 6 violations; keys and matched ids as expected
+PASS department-without-active-employees: control 2: run 2 on 2026-11-01: 3 violations; keys and matched ids as expected
+PASS inactive-ministry-salary-out-of-range: control 3: run 3 on 2026-11-01: 3 violations; keys and matched ids as expected
+PASS minor-high-salary: control 4: run 4 on 2026-10-31: 4 violations, run 5 on 2026-11-01: 3 violations; keys and matched ids as expected
+PASS missing-mandatory-data: control 5: run 6 on 2026-11-01: 10 violations; keys and matched ids as expected
+PASS termination-before-hire: control 6: run 7 on 2026-11-01: 3 violations; keys and matched ids as expected
+exit=0
+
+$ the gate specs, as above (one worker, from the main tree)
+  18 passed (2.4m)
+
+$ untagged.py before and after the specs
+equal (6 controls): the gate specs changed no control but their own
+G1 (third run) finished 2026-11-12 09:30; the clone's stack was removed and the dev stack started again from the main tree (scripts/start.sh exit 0, verify six PASS, db-check 27 passed).

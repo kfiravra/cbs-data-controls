@@ -1,19 +1,23 @@
-# G8: /check all --tests on feat/delivery at 76cc249, 2026-11-12 07:38
+# G8: /check all --tests on feat/delivery at c36732f, 2026-11-12 09:06
 # label, exit code, seconds, the summary line of the tool. 15 checks, all exit 0. The three skipped api tests are
-# the live ones, which need a running engine by their own switch.
+# the live ones, which need a running engine by their own switch. This run replaces the one at 76cc249: it
+# follows the index on hr.Employee (department_id, status), the contract wording and the one-page ai-usage.
 
 sql-init	0	1s	
 sql-check	0	6s	db-check: 27 passed, 0 failed (structure permissions glossary hebrew examples)
 contracts-check	0	1s	contracts-check: ok, 5 checks passed (schema, glossary, agreement, examples, invalid fixtures)
-engine-ruff	0	1s	All checks passed!
-engine-pyright	0	11s	0 errors, 0 warnings, 0 informations
-engine-test	0	26s	============================= 521 passed in 25.58s =============================
-api-build	0	7s	
-api-format	0	19s	
-api-test	0	34s	Passed!  - Failed:     0, Passed:   389, Skipped:     3, Total:   392, Duration: 29 s - DataControls.Api.Tests.dll (net10.0)
+engine-ruff	0	0s	All checks passed!
+engine-pyright	0	8s	0 errors, 0 warnings, 0 informations
+engine-test	0	26s	============================= 521 passed in 24.97s =============================
+api-build	0	12s	
+api-format	0	20s	
+api-test	0	31s	Passed!  - Failed:     0, Passed:   389, Skipped:     3, Total:   392, Duration: 27 s - DataControls.Api.Tests.dll (net10.0)
 web-ngc	0	4s	
 web-eslint	0	6s	
-web-test	0	24s	Tests  390 passed (390)
+web-test	0	29s	Tests  390 passed (390)
 web-build	0	6s	
 print-guard	0	1s	
-hooks	0	7s	# pass 227
+hooks	0	6s	# pass 227
+
+# After this run one commit followed, e18da5e: the db health check line of docker-compose.yml. It was exercised
+# by the third G1 (fresh clone, start, verify, 18 gate specs), db-check (27 passed) and the infra tests (30).

@@ -1,10 +1,9 @@
 # dc-delivery notes
 
 ## State
-All phases and the gate items G1, G2, G3, G5 and G6 are done on `feat/delivery`, cut from main at `d66670d`. The
-night of 2026-11-11 ran the phases unattended on Kfir's brief (below) and stalled at the start of G1; the gate
-runs were made on the morning of 2026-11-12. Left: G8 (final check, ship, push, PR), then G7 and G9, which are
-Kfir's.
+All phases and the gate items G1, G2, G3, G5 and G6 are done on `feat/delivery`, and PR #6 is open. On 2026-11-12
+Kfir gave nine decisions (Log, 08:50) and they are carried out: the index, the contract wording, the one-page
+`docs/ai-usage.md`, the chat's role, §15. Left: Kfir's read (G7), the merge, and G9 after it.
 
 ## The night brief (Kfir, 2026-11-11, pasted before going to sleep; it wins over plan.md where they differ)
 - Run to the end, no questions, decide and write it here. Stay on Fable 5.2. The guard is off for the session:
@@ -77,14 +76,13 @@ Kfir's.
     service of `docker-compose.yml`: Kfir's call.
 
 ## Next
-1. PR #6 is open (`gates/pr-6.md`); the merge is Kfir's word. One local commit (this file and `pr-6.md`) is not pushed.
-2. G7, Kfir: read `docs/ai-usage.md`, `docs/submission.he.md` and the README's first screen.
-3. Kfir's calls, listed in the PR body: the `(department_id, status)` index, `AllowedHosts`, decisions 10 to 23
-   of dc-ai-suggestions, `chmod 600 .env`, the branch `feat/contracts`.
-4. G9 after the merge, each on Kfir's word.
+1. G7, Kfir: read the new `docs/ai-usage.md` (one page), `docs/submission.he.md` and the README's first screen.
+   Two wordings differ from his item 6 because the records differ; both are in the Log line of 09:35.
+2. The merge of PR #6 on Kfir's word; then G9, each step on his word.
+3. Still his: `chmod 600 .env`; the branch `feat/contracts`, which holds `43745cc` with three former passwords.
 
 ## Blockers
-- None. G7 and G9 wait for Kfir.
+- None. G7, the merge and G9 wait for Kfir.
 
 ## Last reviewed
 `0d9767f`: the documents (`reviews/docs.md`) and the security audit of the whole repository (`reviews/security.md`). Before it: `b35d72a` (B1), `reviews/B1.md`.
@@ -259,3 +257,40 @@ Kfir's.
 - 2026-11-12 08:42 pushed `feat/delivery` at `6cbbaa9` and opened PR #6 on the word of the night brief
   (`gates/pr-6.md` holds the body). No merge, no tag. This Log line and `pr-6.md` are one local commit after
   the push; it goes up with Kfir's next push.
+- 2026-11-12 08:50 Kfir's decisions, pasted (the guard is back on; his word covers the container steps and the
+  push): 1 add the index `hr.Employee (department_id, status)`, re-run the scale test, update the table and the
+  limitation, re-run db-check and the engine tests; 2 `AllowedHosts` stays `*` ("the app is published to this
+  machine only, and a grader may open it under another host name"), kept in the limitations; 3 decisions 10 to
+  23 of dc-ai-suggestions stand; 4 contracts as built: 400 for a JSON body that does not parse in the api, 415
+  only for a wrong media type, say what the engine answers, add the "eight times past a limit" rule to
+  `errors.md`; 5 the two thin ticks stay, worded as what happened; 6 `docs/ai-usage.md` rewritten to about one
+  page, the long document moved unchanged to `dev/completed/ai-usage-record.md` and linked once; 7 the chat's
+  role in three documents; 8 §15 says what item 6 says; 9 `/check all --tests`, G1 once more, push to PR #6.
+- 2026-11-12 08:58 items 1 to 8, five commits (`9154dae` to `c36732f`). The index is
+  `IX_Employee_department_id_status`, in `sql/50_indexes.sql`, the scale script and db-check's expected list;
+  `IX_Employee_department_id` is kept, although the new index's first column now serves that foreign key too.
+  Scale test on 200,005 employees: `department-without-active-employees` 35 ms (was 9,198), the other five 217
+  to 550 ms. Contracts, each line first read from the running services: the api answers a JSON body that does
+  not parse (broken syntax, not UTF-8, deeper than 64 levels, which is 31 nested groups) with 400 and one
+  `MALFORMED` at `""`, and a wrong or absent media type with 415; the engine answers both with 415 and no
+  `errors`. The oversize check is step 2 of "Order of checks" in `errors.md`, with the api's own bound (240
+  nodes, 10,000 JSON values) and the one case found where the two services differ (30 lists of 134 values).
+- 2026-11-12 09:01 `/check all --tests` at `c36732f`: 15 checks exit 0 (`gates/final.txt`).
+- 2026-11-12 09:14 G1 a second time on a fresh clone at `c36732f`: start exit 0 in 118 s, six LOAD lines, no run on
+  any control, the new index present, `verify` six PASS, gate specs 18 of 18, untagged listing equal. Then the
+  dev stack's own start on a new volume failed: db-init, "DataControls exists with a collation other than
+  Hebrew_CI_AS". Cause, seen in a watch of a fresh server: it answers for a moment under its default collation
+  before it changes to `MSSQL_COLLATION`, and the health check asked only `SELECT 1`. About one new volume in
+  seven today. Fixed in `docker-compose.yml` (`e18da5e`): the db is healthy only under its final collation;
+  the check fails by hand on a wrong name; five new volumes in a row then initialised.
+- 2026-11-12 09:30 G1 a third time, on a fresh clone at `e18da5e` after `down -v --rmi local`: start exit 0 in 50 s,
+  `verify` six PASS, gate specs 18 of 18, untagged listing equal (`gates/G1-docker-wsl.txt`). The dev stack is
+  back on Kfir's `.env`: `verify` six PASS, db-check 27 passed. The full check was not repeated after `e18da5e`:
+  that commit changes one health check line of compose, which the third G1 and the infra tests (30) exercise.
+- 2026-11-12 09:35 two wordings of item 6 follow the records and not the brief's sentence, for Kfir's read (G7):
+  the brief says "two security audits", the records hold three (the engine, the api, the whole repository in
+  G5), and the page says three; the brief says every phase was reviewed by review agents, and the records show
+  that dc-contracts had one review at its end and dc-web's phase 13 none, so the page says the work was
+  reviewed "at the phase ends of four of the tasks and once at the end of the first" and points to the record
+  for the few commits that had no agent review. The chat's "how it was checked" cell is my wording of what
+  item 7 implies (its output reached the repository only through him); he should confirm it.
