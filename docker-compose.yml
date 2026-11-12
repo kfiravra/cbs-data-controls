@@ -25,8 +25,11 @@ services:
     volumes:
       - db-data:/var/opt/mssql
     healthcheck:
-      # $$ defers expansion to the container's shell, where the password lives.
-      test: ["CMD-SHELL", "SQLCMDPASSWORD=\"$$MSSQL_SA_PASSWORD\" /opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -l 3 -b -Q 'SELECT 1' -o /dev/null"]
+      # $$ defers expansion to the container's shell, where the password lives. Healthy means more than an
+      # answer: on a new volume the server answers for a moment under its default collation and then changes
+      # to MSSQL_COLLATION, and a database created inside that moment is caught by the change (db-init then
+      # fails on its collation check). So the check waits for the server collation itself.
+      test: ["CMD-SHELL", "SQLCMDPASSWORD=\"$$MSSQL_SA_PASSWORD\" /opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -l 3 -b -Q \"IF CONVERT(NVARCHAR(128), SERVERPROPERTY('Collation')) <> N'$$MSSQL_COLLATION' RAISERROR('the server collation is not set yet', 16, 1)\" -o /dev/null"]
       interval: 5s
       timeout: 5s
       retries: 20
