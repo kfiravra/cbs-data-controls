@@ -124,7 +124,7 @@ Three related tables so that relationships of two hops can be demonstrated: **Mi
 - Employee: id, department_id (FK), national_id, first_name, last_name, email, birth_date, hire_date, termination_date (nullable), salary, status (active/inactive).
 - Text columns are `NVARCHAR` (Unicode); the database collation is `Hebrew_CI_AS`. Seed values are Hebrew where a real CBS user would expect Hebrew (ministry and department names, people's names); column and table names are English.
 - Seed data: 5 ministries, 16 departments and 85 employees, all invented. For every example control there are several rows that pass and several that fail, each planted violation marked with a comment in the seed script. Include boundary cases (an employee who turns 18 on the run date, NULL salaries, NULL termination dates, an employee with no department, an active employee with an empty email, an inactive employee with no termination date).
-- Indexes: on every FK column and on the columns the example controls filter by (birth_date, status, salary).
+- Indexes: on every FK column, on the columns the example controls filter by (birth_date, status, salary), and on `hr.Employee (department_id, status)` for rules about related records (§11).
 
 ### 4.2 Schema `dq` — controls store (written only by .NET)
 - **Control**: id, name, description, root_entity_key, current_version, is_active, created/updated timestamps, concurrency token.
@@ -307,14 +307,14 @@ Additional: the .NET login cannot read `hr`; configuration and secrets come from
 
 | Example | Root records | Violations found | Rows returned | Engine time (ms) |
 |---|---|---|---|---|
-| `minor-high-salary` | 200,005 employees | 7,059 | 5,000 | 357 |
-| `termination-before-hire` | 200,005 employees | 7,059 | 5,000 | 248 |
-| `active-in-inactive-department` | 200,005 employees | 14,118 | 5,000 | 384 |
-| `missing-mandatory-data` | 200,005 employees | 23,530 | 5,000 | 453 |
-| `department-without-active-employees` | 2,000 departments | 375 | 375 | 9,198 |
-| `inactive-ministry-salary-out-of-range` | 200,005 employees | 7,059 | 5,000 | 579 |
+| `minor-high-salary` | 200,005 employees | 7,059 | 5,000 | 387 |
+| `termination-before-hire` | 200,005 employees | 7,059 | 5,000 | 217 |
+| `active-in-inactive-department` | 200,005 employees | 14,118 | 5,000 | 400 |
+| `missing-mandatory-data` | 200,005 employees | 23,530 | 5,000 | 418 |
+| `department-without-active-employees` | 2,000 departments | 375 | 375 | 35 |
+| `inactive-ministry-salary-out-of-range` | 200,005 employees | 7,059 | 5,000 | 550 |
 
-Five of the six stay under 0.6 seconds, with the count exact and the page cut at the row cap. The fifth does not: "a department with no active employee" compiles to `NOT EXISTS` over the employees of each department with a status test, and the indexes of the seed serve the department and the status separately. With one more index on `hr.Employee (department_id, status)` the same run took 36 ms on the same data. That index is not part of v1: the seed and its checks were left as they are for the submission, and in an organization's own database the indexes belong to its administrators. The finding stands as a limitation, and as the first thing to add before running controls with related-record conditions on large tables.
+All six stay under 0.6 seconds, with the count exact and the page cut at the row cap. The first measurement found one that did not: "a department with no active employee" compiles to `NOT EXISTS` over the employees of each department with a status test, and with the department and the status indexed separately it took 9.2 seconds. The index `hr.Employee (department_id, status)` was added to `sql/50_indexes.sql` for it, and the table above is the run after that. The lesson holds beyond the sample data: a rule about related records needs an index on the child table's foreign key together with the field it tests, and in an organization's own database that index belongs to its administrators.
 
 ---
 
@@ -348,11 +348,11 @@ Every error has a stable code, an HTTP status, parameters, and a translated mess
 
 ## 15. AI-assisted development policy (required by the assignment)
 
-AI coding tools were used throughout the build, for scaffolding, code, tests, documentation drafts and refactoring: Claude Code with a project harness (`CLAUDE.md`, skills, rules, hooks, task plans with gates and review passes), which lives in the repository (`.claude/`) and is part of the submission, so the graders see how the work was organised; the claude.ai chat as a second reviewer; and two third-party design skills. Runtime SQL generation is deterministic code, never an AI call, and no AI runs anywhere in the product.
+AI coding tools were used throughout the build, for scaffolding, code, tests, documentation drafts and refactoring: Claude Code with a project harness (`CLAUDE.md`, skills, rules, hooks, task plans with gates and review passes), which lives in the repository (`.claude/`) and is part of the submission, so the graders see how the work was organised; the claude.ai chat, used to analyse the assignment's requirements, to review and revise the architecture and the work plan, to word the briefs and instructions the developer gave the sessions, and as a second opinion on their plans and reports; and two third-party design skills. Runtime SQL generation is deterministic code, never an AI call, and no AI runs anywhere in the product.
 
-The policy set before the build: all generated code is reviewed by the developer before merge, and the developer owns and must be able to explain every design decision in this document. What the records of the build show of those reviews, and where they show none, is stated in ai-usage.md, section 6.
+The code was written by Claude Code under plans the developer approved. Every phase was checked by tests, and the work was reviewed by separate review agents, with three security audits (the engine, the api, the whole repository). The developer directed the build through the plan interviews, his decisions and repeated reads of the rendered output and the running app; he did not review every diff line by line. He owns and must be able to explain every design decision in this document.
 
-Which tool was used for what, how its output was checked, what the reviews found and what the developer decided himself are in [ai-usage.md](ai-usage.md).
+Which tool was used for what, how its output was checked and what the developer decided himself are in [ai-usage.md](ai-usage.md).
 
 ---
 
@@ -390,7 +390,7 @@ data-controls/
 | [`docs/glossary.md`](glossary.md) | How the business glossary is structured, how to add an entity, field, relationship, computed field or language, startup validation |
 | [`docs/examples.md`](examples.md) | The four assignment controls plus two more, each with its Hebrew description, its JSON definition, the records it flags in the seed data and why |
 | [`docs/assumptions-limitations-extensions.md`](assumptions-limitations-extensions.md) | Assumptions, limitations (the open items of the reviews and audits among them), what was not proven, extensions |
-| [`docs/ai-usage.md`](ai-usage.md) | AI tools used in development, the harness, for what, and the review policy |
+| [`docs/ai-usage.md`](ai-usage.md) | AI tools used in development and what each was for, how their output was checked, where no AI runs, the developer's own decisions |
 | [`sql/README.md`](../sql/README.md) | Order of scripts, what each creates, the planted violations and the expected results per example control |
 | [`contracts/api.md`](../contracts/api.md), [`contracts/errors.md`](../contracts/errors.md) | Both HTTP APIs, and the closed lists of codes and keys |
 | [`web/README.md`](../web/README.md) | The client: structure, commands, the end-to-end specs |

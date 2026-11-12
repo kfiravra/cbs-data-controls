@@ -126,7 +126,9 @@ decision about deployment:
 1. `AllowedHosts` is `*`. A web page open in a browser on the same machine could rebind its host name to
    127.0.0.1 and call the api as if it were the app: read what is stored, and also create a control and run it,
    which returns the records of `hr` that the control flags. The gate's audit rated this medium, the highest of
-   the open items. A deployment sets the host names it serves (`AllowedHosts`), and sign-in closes the rest.
+   the open items. It stays `*` on purpose: the app is published to this machine only (127.0.0.1), and whoever
+   runs it may open it under another host name. A deployment sets the host names it serves (`AllowedHosts`), and
+   sign-in closes the rest.
 2. Nothing limits concurrent runs (above).
 3. An unsafe method is not checked for a cross-site origin. A page could start a run with a body-less POST; it
    could not read the answer, but each such run stores a snapshot. Sign-in with anti-forgery closes it.
@@ -169,11 +171,12 @@ started with only its own variables, but nothing stops that user from reading bo
   statement on purpose. In the client, a timeout, the row cap, an engine or a database that is down, and a save
   conflict were shown on the mocked api only, never provoked on the real stack.
 - **Performance was measured once, on one machine.** On the sample data (85 employees) a run takes about 10 ms.
-  On a scratch database of 200,005 employees (`scripts/scale-test.sh`) five of the six examples ran in 0.25 to
-  0.6 seconds; the rule about related records ("a department with no active employee") took 9.2 seconds, and 36 ms
-  once `hr.Employee` had an index on `(department_id, status)`. That index is not in v1
-  ([architecture.md §11](architecture.md#11-performance-and-scale) has the table). A run of 5,000 violations is
-  stored and answered by the api in about 2 seconds.
+  On a scratch database of 200,005 employees (`scripts/scale-test.sh`) the six examples ran in 0.04 to 0.6
+  seconds ([architecture.md §11](architecture.md#11-performance-and-scale) has the table). The first measurement
+  had the rule about related records ("a department with no active employee") at 9.2 seconds; the index
+  `hr.Employee (department_id, status)` was added for it and it now takes 35 ms. A related-records rule over
+  another pair of tables has no such index until someone adds one. A run of 5,000 violations is stored and
+  answered by the api in about 2 seconds.
 - **Windows without Docker, and macOS.** Nothing was run on a Windows host outside Docker: the engine's
   packages all have Windows wheels for Python 3.12 to 3.14 and its suite passed under those versions on Linux,
   but the engine, the published api and `db-init.sh` under Git Bash never ran there. Nothing was run on macOS;
@@ -204,8 +207,8 @@ started with only its own variables, but nothing stops that user from reading bo
 - **Templated controls** applied across several entities (the same "required field" rule for every entity).
 - **Marking a violation as handled**, with a note, so that the next run tells new violations from known ones.
 - **Restoring an archived control**, and unique names if the users ask for them.
-- **Indexes for related-record rules**: an index on a child table's foreign key together with its lifecycle
-  field (for the sample data, `hr.Employee (department_id, status)`), which the scale test shows is what such a
-  rule needs on a large table.
+- **Indexes for related-record rules**: an index on a child table's foreign key together with the field the
+  rule tests. The sample data has the one its examples need, `hr.Employee (department_id, status)`; the scale
+  test shows that such a rule needs it on a large table. Other relationships get theirs when they are added.
 - **More computed kinds** (years of service, days since a date) and more languages.
 - **Horizontal scaling of the engine**, which is stateless.
