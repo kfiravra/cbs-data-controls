@@ -312,10 +312,10 @@ Commit: `build(engine): container image`
 - [x] The §19 gate item by item, each with the test that proves it: goldens for the six examples; every
       rejection path; injection values bound; the exact planted ids from the seed; `/suggest` yields examples 2 to
       5 exactly.
-- [x] (open, Kfir's: the files are `engine/tests/golden/*.text.json` and `gates/suggest-answer.json`) Kfir reads
-      `tests/golden/*.text.json` and one `/suggest` answer, in Hebrew. The Log says what
-      he changed or rejected, in his words where he gave them. (read by Kfir in the Hebrew interface on
-      2026-11-11, as he stated on 2026-11-11; the Log line of 2026-11-11)
+- [x] Kfir reads `tests/golden/*.text.json` and one `/suggest` answer, in Hebrew. The Log says what
+      he changed or rejected, in his words where he gave them. (What happened: Kfir read the Hebrew in the
+      running interface on 2026-11-11, where the engine's sentences, reasons and suggestions are shown. He did
+      not read the files `engine/tests/golden/*.text.json` and `gates/suggest-answer.json`.)
 - [x] `security-auditor` on `git diff origin/main...HEAD` (one agent on opus: state it); fix critical and high.
       The report is saved as `reviews/security.md` and logged per decision 25.
 - [x] (written in `notes.md`, "Lines for the other sessions", and in the PR body; Kfir pastes it) One line to the

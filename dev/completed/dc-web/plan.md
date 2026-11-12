@@ -520,7 +520,8 @@ morning. Open: his reading of the Hebrew interface, and the merge, which is his.
       list and, where phase 7 could run it, on the build the api hosts; `/check all --tests` green. The output
       goes to `gates/final.txt`, the screenshots to `gates/final/`.
 - [x] Kfir reads the Hebrew interface, on the preview script or the screenshots. It is the last cheap moment for a
-      wording change. (read by Kfir on 2026-11-11, as he stated on 2026-11-11)
+      wording change. (What happened: Kfir read the Hebrew in the running interface on 2026-11-11, not on the
+      preview script or the screenshot files.)
 - [x] `notes.md` is complete for dc-delivery (Design Q): the hand-over block, a Log line per review, and the drift
       list checked line by line against the documents on main.
 - [x] `/ship`. Its docs-drift step edits only this task's own files (decision 26). Every other row of its table
